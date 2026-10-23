@@ -879,7 +879,8 @@ b {
   border: none;
   background: none;
   position: relative;
-  border-radius: 50%;
+  // * exteraless avatarCorners, same as .avatar
+  border-radius: var(--oe-avatar-radius, 50%);
   cursor: pointer;
   overflow: hidden;
 

@@ -4,7 +4,8 @@
   &-section {
     background-color: var(--surface-color);
     padding: .5rem 0;
-    border-radius: #{$section-rounded-border-radius};
+    // * exteraless sectionRadius: unset keeps Web K's stock radius
+    border-radius: var(--oe-section-radius, #{$section-rounded-border-radius});
     box-shadow: var(--section-box-shadow);
 
     &.no-shadow {

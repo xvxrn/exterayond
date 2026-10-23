@@ -68,7 +68,8 @@
 }
 
 .avatar {
-  border-radius: 50%;
+  // * exteraless avatarCorners: 50% (the stock circle) until the hub says otherwise
+  border-radius: var(--oe-avatar-radius, 50%);
   /* overflow: hidden; */
 
   &-icon {

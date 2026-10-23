@@ -49,9 +49,10 @@ ported as-is.
 
 Classify every Android setting before porting:
 
-1. **Direct** — Web K has the component (e.g. avatarCorners, dividerStyle,
-   sectionRadius, hidden reactions, removeMessageTail, reply colors).
-2. **Adapted** — a web analog exists (navigation drawer → left sidebar).
+1. **Direct** — Web K has the component (e.g. avatarCorners, sectionRadius,
+   hidden reactions, removeMessageTail, reply colors).
+2. **Adapted** — a web analog exists (navigation drawer → left sidebar;
+   dividerStyle → section-card look: Web K has no inner row hairlines).
 3. **Unsupported** — no web counterpart (camera hardware, volume buttons, app icon
    packs, JNI/reflection). Shown as unsupported in the hub, not hidden and not faked.
 

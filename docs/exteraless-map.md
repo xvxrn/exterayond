@@ -53,7 +53,7 @@ counterpart is decided per task by reading the owning K component.
 
 | key (default) | mechanism / consumer | effect | class |
 |---|---|---|---|
-| avatarCorners (28=circle) | `ImageReceiver.applyRoundRadiusInternal` + `AvatarDrawable.drawBackgroundShape` + `AvatarSpan`; ~20 `getAvatarCorners()` call sites | 0 square … 28 circle, everywhere | 1 |
+| avatarCorners (28=circle) | `ImageReceiver.applyRoundRadiusInternal` + `AvatarDrawable.drawBackgroundShape` + `AvatarSpan`; ~20 `getAvatarCorners()` call sites | 0 square … 28 circle, everywhere | **1 — ported**: `.avatar` (+ `.avatar-edit`) reads `--oe-avatar-radius`; forum/topic/monoforum keep their dedicated shapes (singleCornerRadius pending) |
 | singleCornerRadius (false) | corner-type branch in `getAvatarCorners` | forum/community avatars same radius | 1 |
 | senderMiniAvatars (true) | `DialogCell.addSenderAvatar` → `AvatarSpan` in preview | mini sender avatar in dialog list | 1 |
 | gooeyAvatarAnimation (true) | `ProfileActivity.updateGooey` pull-progress branch | avatar stretch on profile pull | 2 |
@@ -61,9 +61,9 @@ counterpart is decided per task by reading the owning K component.
 | titleText (0) | `TypefaceHelper.getTitleText` → ActionBar/DialogsActivity title + marquee | title = app/username/name/Chats/custom | 2 |
 | monetStyle (0) | `Theme.monetAssetName` picks `.attheme` token dict | which monet palette loads | 2 |
 | squareFab (true) | `UIUtil.createFabSelectorDrawable` radius math | squircle vs round FAB | 1 |
-| sectionRadius (20) | `RecyclerListView.setSections` + `SectionCardRecyclerView` | corner radius of settings section cards | 1 |
+| sectionRadius (20) | `RecyclerListView.setSections` + `SectionCardRecyclerView` | corner radius of settings section cards | **1 — ported**: `.sidebar-left-section` reads `--oe-section-radius`; store maps Android default 20 → stock Web K radius |
 | separateHeaders (true) | `HeaderCell` excluded from section card | headers float as own pill | 1 |
-| dividerStyle (1) | `Theme.getColor(key_divider)` transparent (HIDDEN) / `useSegmentedSections` (SEGMENTS); volatile cache | no dividers / lines / row-cards | 1 |
+| dividerStyle (1) | `Theme.getColor(key_divider)` transparent (HIDDEN) / `useSegmentedSections` (SEGMENTS); volatile cache | no dividers / lines / row-cards | **2** — Web K has no inner row hairlines to hide (verified: `_row.scss` has none); only the section-card look maps; revisit with sectionRadius/m3 work |
 | m3ListItems (false) | `M3ListItems` metrics in stock cells' onMeasure + tonal icons; forces segments+separated+hidden | M3 settings rows | 1 |
 | glassOutlineStyle (0) | `blur3/GlassOutlineStyle` enum in blur drawables | glare / stroke / none on glass | 2 (CSS backdrop-filter) |
 | glassMessageMenu (true) | `GlassMenuHelper` → `ChatActivity` menus + `ReactionsContainerLayout` | frosted message menu/reactions | 2 |

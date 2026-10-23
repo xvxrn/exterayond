@@ -254,6 +254,21 @@ export const AppGeneralSettingsTab =
   });
 
 
+// ── exteraless Preferences (the hub ported from OpenExteraSettingsActivity) ───
+
+export const AppExteralessTab =
+  scaffoldSolidJSTab({
+    title: 'Exteraless',
+    getComponentModule: () => import('../sidebarLeft/tabs/exteralessTab')
+  });
+
+export const AppExteralessAppearanceTab =
+  scaffoldSolidJSTab({
+    title: 'Exteraless.Appearance',
+    getComponentModule: () => import('../sidebarLeft/tabs/exteralessAppearanceTab')
+  });
+
+
 export const AppChatBackgroundTab =
   scaffoldSolidJSTab({
     title: 'ChatBackground',

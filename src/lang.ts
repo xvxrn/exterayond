@@ -6054,6 +6054,32 @@ const lang = {
   'ChatTips.NextTip': 'Next Tip',
   'EmptyPeer.Description': 'Select a chat to start messaging',
 
+  // exteraless Preferences (the hub ported from OpenExteraSettingsActivity;
+  // section titles follow the Android strings_oe.xml values)
+  'Exteraless': 'exteraless',
+  'Exteraless.Preferences': 'exteraless Preferences',
+  'Exteraless.Info': 'Make the client truly yours',
+  'Exteraless.Categories': 'Categories',
+  'Exteraless.Links': 'Links',
+  'Exteraless.Design': 'Design',
+  'Exteraless.General': 'General',
+  'Exteraless.Appearance': 'Appearance',
+  'Exteraless.Chats': 'Chats',
+  'Exteraless.Plugins': 'Plugins',
+  'Exteraless.Other': 'Other',
+  'Exteraless.Channel': 'Channel',
+  'Exteraless.Source': 'Source code',
+  'Exteraless.Designer': 'Icons and design',
+  'Exteraless.DesignStudio': 'Design studio',
+  'Exteraless.NotPorted': 'Not ported yet',
+  'Exteraless.AvatarCorners': 'Avatar Corners',
+  'Exteraless.AvatarCorners.Square': 'Square',
+  'Exteraless.AvatarCorners.Circle': 'Circle',
+  'Exteraless.SectionRadius': 'Section Radius',
+  'Exteraless.SectionRadius.Off': 'Off',
+  'Exteraless.SectionRadius.Max': 'Max',
+  'Exteraless.SectionRadius.StockHint': 'The default value (20) keeps the original Web K radius.',
+
   'Apply': 'Apply'
 };
 

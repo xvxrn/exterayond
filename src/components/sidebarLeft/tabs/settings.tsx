@@ -376,6 +376,11 @@ const Settings = () => {
       {peerProfileElement}
       <Section>
         <div class="profile-buttons">
+          <Row clickable={() => tab.slider.createTab(hotReloadGuard.tabs.AppExteralessTab).open()}>
+            <Row.Icon icon="star_filled" />
+            <Row.Title>{i18n('Exteraless.Preferences')}</Row.Title>
+            <Row.Subtitle>{i18n('Exteraless.Info')}</Row.Subtitle>
+          </Row>
           <For each={subTabConfigs}>
             {(item) => (
               <Row clickable={onSubTabClick(item)}>

@@ -255,6 +255,12 @@ export default defineConfig({
       // e2e/ Playwright specs, which vitest cannot run at all) then fail this
       // checkout's `pnpm test`.
       '**/.pnpm-store/**',
+      // read-only reference clones (exteraless android, official tweb) live
+      // here with a full copy of the tweb test suite — they resolve this
+      // checkout's aliases (src/) against their own sources, so any honest
+      // divergence (new lang keys, regenerated indexes) fails their copies of
+      // the suite inside `pnpm test`
+      '**/.research/**',
       '**/cypress/**',
       '**/.{idea,git,cache,output,temp}/**',
       '**/{karma,rollup,webpack,vite,vitest,jest,ava,babel,nyc,cypress,tsup,build}.config.*',

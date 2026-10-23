@@ -1,5 +1,6 @@
 import {createEffect, createRoot} from 'solid-js';
 import {createStore, unwrap} from 'solid-js/store';
+import {hotEffect} from '@helpers/hotModule';
 
 /**
  * exteraless Preferences — the `OE*` settings store.
@@ -119,8 +120,9 @@ export const sectionRadiusToCss = (radius: number) => {
 };
 
 if(typeof document !== 'undefined') {
-  // * one effect owns the custom properties: every consumer reads them in CSS
-  createRoot(() => {
+  // * one effect owns the custom properties: every consumer reads them in CSS.
+  // * hotEffect keeps a hot edit of this module from running a second root
+  hotEffect(import.meta.hot, () => createRoot((dispose) => {
     createEffect(() => {
       const {OEAppearanceAvatarCorners, OEAppearanceSectionRadius} = unwrap(exteralessSettings);
       const style = document.documentElement.style;
@@ -132,7 +134,9 @@ if(typeof document !== 'undefined') {
         style.setProperty('--oe-section-radius', sectionRadius);
       }
     });
-  });
+
+    return dispose;
+  }));
 }
 
 export {
@@ -141,3 +145,8 @@ export {
   setExteralessSetting,
   useExteralessSettings
 };
+
+// * a self-accepting module, like the other singletons: an edit hot-updates it
+// * (the dev transform keeps the store across evaluations) instead of
+// * reloading the page (scripts/import-graph.mjs)
+if(import.meta.hot) import.meta.hot.accept();

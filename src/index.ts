@@ -22,6 +22,11 @@ import IS_TOUCH_SUPPORTED from '@environment/touchSupport';
 import I18n, {checkLangPackForUpdates, i18n, LangPackKey} from '@lib/langPack';
 import '@helpers/peerIdPolyfill';
 import '@lib/polyfill';
+// * the exteraless settings apply their CSS custom properties at boot, like
+// * Android's ApplicationLoader.init() reads the configs before any UI shows.
+// * Dynamic: a static import would put the store into the page's
+// * reload-on-edit set (scripts/import-graph.mjs) for nothing
+void import('@stores/exteralessSettings');
 import '@lib/debug/mountLogExport'; // main-thread-only: wires window.downloadLogs / collectLogs
 import '@lib/debug/memoryReport'; // main-thread-only: wires window.memoryReport
 import '@lib/debug/memoryWatch'; // main-thread-only: wires window.memoryWatch (crash-proof memory series)

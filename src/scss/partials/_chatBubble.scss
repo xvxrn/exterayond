@@ -4218,7 +4218,10 @@
 .oe-remove-message-tail {
   .bubble.is-group-last.can-have-tail,
   .bubble.is-forced-rounded.can-have-tail {
+    // * the notch sits on the tail's side: end-start for incoming bubbles,
+    // * end-end for outgoing ones (the is-out block zeroes that one)
     --border-end-start-radius: #{$bubble-border-radius-big} !important;
+    --border-end-end-radius: #{$bubble-border-radius-big} !important;
   }
 
   .bubble .bubble-tail {

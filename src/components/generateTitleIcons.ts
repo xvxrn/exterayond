@@ -8,6 +8,7 @@ import generatePremiumIcon from '@components/generatePremiumIcon';
 import generateVerifiedIcon from '@components/generateVerifiedIcon';
 import {wrapAdaptiveCustomEmoji} from '@components/wrappers/customEmojiSimple';
 import wrapEmojiStatus from '@components/wrappers/emojiStatus';
+import {exteralessSettings} from '@stores/exteralessSettings';
 import {hotReloadGuard} from '@lib/solidjs/hotReloadGuardProvider';
 import {bindManagersToSession} from '@lib/accounts/bindManagersToAccount';
 
@@ -42,7 +43,10 @@ export default async function generateTitleIcons({
     elements.push(generateFakeIcon((peer as User.user).pFlags.scam));
   }
 
-  if(!noPremiumIcon && wrapOptions?.middleware) {
+  // * exteraless hideActionBarStatus: no emoji status / premium star by titles,
+  // * exactly ActionBar.getVisibleTitleRightDrawable() returning null — the
+  // * verified / scam icons are separate drawables there and stay
+  if(!noPremiumIcon && wrapOptions?.middleware && !exteralessSettings.OEAppearanceHideActionBarStatus) {
     const emojiStatus = (peer as User.user | Chat.channel).emoji_status;
     const isPremiumFeaturesHidden = await apiManagerProxy.isPremiumFeaturesHidden();
     if(emojiStatus && 'document_id' in emojiStatus && !isPremiumFeaturesHidden) {

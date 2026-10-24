@@ -244,6 +244,11 @@ describe('the exteraless Chats tab', () => {
       'Exteraless.RemoveMessageTail',
       'Exteraless.HideCallButton',
       'Exteraless.HideSearchButton',
+      'Exteraless.StickerTimeSide',
+      'Exteraless.ReplyColors',
+      'Exteraless.ReplyEmoji',
+      'Exteraless.ReplyBackground',
+      'Exteraless.ShowResultsBeforeVoting',
       'Exteraless.HideReactions.Channels',
       'Exteraless.HideReactions.Groups',
       'Exteraless.HideReactions.Private'

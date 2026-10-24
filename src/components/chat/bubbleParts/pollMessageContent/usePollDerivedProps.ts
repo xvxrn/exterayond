@@ -6,6 +6,7 @@ import getPeerId from '@lib/appManagers/utils/peers/getPeerId';
 import {useHotReloadGuard} from '@lib/solidjs/hotReloadGuard';
 import {Accessor, createMemo, createResource} from 'solid-js';
 import {unwrap} from 'solid-js/store';
+import {exteralessSettings} from '@stores/exteralessSettings';
 import {PollMessageContentProps} from './PollMessageContent';
 import {getRoundedPercentsFromResults} from './roundPercents';
 import {shouldShufflePollOptions} from './shuffle';
@@ -105,9 +106,23 @@ export function usePollDerivedProps({props, pollOptions, chosenIndexes, newOptio
     props.poll.answers.some(a => !!getPhoto(a.media) || !!getStickerMedia(a.media) || !!getGeo(a.media) || !!getVideoDocument(a.media) || !!getWebPageMedia(a.media))
   );
 
+  // * exteraless showResultsBeforeVoting: results show as a preview before
+  // * voting, exactly `ChatMessageCell.isPollResultsPreviewEnabled()` — needs
+  // * results on the message, hidden only until the poll closes (or for its
+  // * creator), and never for a closed poll
+  const pollResultsPreview = createMemo(() =>
+    exteralessSettings.OEChatsShowResultsBeforeVoting &&
+    !closed() &&
+    !hideResults() &&
+    !!props.results &&
+    props.results.total_voters > 0 &&
+    !!props.results.results?.length
+  );
+
   const isShowingResult = createMemo(() =>
     !!props.poll.chosenIndexes?.length ||
     props.poll.pFlags.closed ||
+    pollResultsPreview() ||
     getPollVoteRestrictionDisplayState(activeVoteRestriction(), hideResults()).forceResults
   );
   const hasExplanation = createMemo(() => isShowingResult() && (!!props.results.solution || !!props.results.solution_media));
@@ -211,6 +226,7 @@ export function usePollDerivedProps({props, pollOptions, chosenIndexes, newOptio
     hasExplanation,
     hasSelectedSomething,
     isShowingResult,
+    pollResultsPreview,
     hasTypedNewOption,
     canShowAddOption,
     canShowCloseTimer,

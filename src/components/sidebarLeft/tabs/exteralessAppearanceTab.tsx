@@ -89,6 +89,27 @@ const ExteralessAppearance = () => {
           <Row.Title>{i18n('Exteraless.SquareFab')}</Row.Title>
           <Row.Subtitle>{i18n('Exteraless.SquareFab.Info')}</Row.Subtitle>
         </Row>
+        <Row>
+          <Row.CheckboxFieldToggle>
+            <CheckboxFieldTsx
+              toggle
+              checked={exteralessSettings.OEAppearanceHideActionBarStatus}
+              onChange={(value) => setExteralessSetting('OEAppearanceHideActionBarStatus', value)}
+            />
+          </Row.CheckboxFieldToggle>
+          <Row.Title>{i18n('Exteraless.HideActionBarStatus')}</Row.Title>
+        </Row>
+        <Row>
+          <Row.CheckboxFieldToggle>
+            <CheckboxFieldTsx
+              toggle
+              checked={exteralessSettings.OEAppearanceCustomThemes}
+              onChange={(value) => setExteralessSetting('OEAppearanceCustomThemes', value)}
+            />
+          </Row.CheckboxFieldToggle>
+          <Row.Title>{i18n('Exteraless.CustomThemes')}</Row.Title>
+          <Row.Subtitle>{i18n('Exteraless.CustomThemes.Info')}</Row.Subtitle>
+        </Row>
       </Section>
     </>
   );

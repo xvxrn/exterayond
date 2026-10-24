@@ -1,5 +1,21 @@
 @use "../shared" as *;
 
+// * exteraless replyColors / replyEmoji / replyBackground (all default true):
+// * the off states fall back to the message's own colors, the way
+// * ReplyMessageLine.check() gates them on Android
+:root.oe-no-reply-colors .reply.quote-like {
+  --peer-color-rgb: var(--message-primary-color-rgb, var(--peer-color-rgb));
+}
+
+:root.oe-no-reply-background .reply.quote-like,
+:root.oe-no-reply-background .reply.quote-like-hoverable {
+  background-color: transparent;
+}
+
+:root.oe-no-reply-emoji .reply.quote-like .quote-like-pattern {
+  display: none;
+}
+
 .quote-like {
   --border-radius: .25rem;
   --primary-color: rgb(var(--peer-color-rgb));

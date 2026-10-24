@@ -56,6 +56,8 @@ export const PollOption = (props: {
   uploadingFileName?: string;
 
   result?: PollOptionResult;
+  /** exteraless showResultsBeforeVoting: results are a preview, the option stays votable */
+  preview?: boolean;
   voteRestricted?: boolean;
 }) => {
   const {TranslatableMessageTsx} = useHotReloadGuard();
@@ -121,7 +123,7 @@ export const PollOption = (props: {
         ref={clickableAreaElement}
         class={styles.clickableArea}
         classList={{
-          [styles.pointerDisabled]: isShowingResult() && !props.voteRestricted,
+          [styles.pointerDisabled]: isShowingResult() && !props.voteRestricted && !props.preview,
           [styles.outgoing]: contextProps.isOutgoing,
           [styles.hovered]: props.highlighted && !props.slowHighlighted
         }}

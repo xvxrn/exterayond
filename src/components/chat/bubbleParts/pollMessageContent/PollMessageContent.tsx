@@ -223,6 +223,7 @@ export const PollMessageContent =
       hasExplanation,
       hasSelectedSomething,
       isShowingResult,
+      pollResultsPreview,
       hasTypedNewOption,
       canShowAddOption,
       canShowCloseTimer,
@@ -573,6 +574,7 @@ export const PollMessageContent =
                   pollViewerPayload={[mediaViewerPayload().indexes.options.get(initialIdx()), elementByIndexMap]}
                   initialIdx={initialIdx()}
                   result={getResultForOption(initialIdx())}
+                  preview={pollResultsPreview()}
                   voteRestricted={!!activeVoteRestriction()}
                   isPendingVote={delayedSendVotePending()}
                   hideResults={hideResults()}

@@ -6099,6 +6099,15 @@ const lang = {
   'Exteraless.RelativeLastSeen.Info': '«Last seen» is shown as «5 minutes ago» within a day.',
   'Exteraless.AddCommaAfterMention': 'Add comma after mention',
   'Exteraless.AddCommaAfterMention.Info': 'Picking a mention inserts «@user, » instead of «@user ».',
+  'Exteraless.HideActionBarStatus': 'Hide Status',
+  'Exteraless.CustomThemes': 'Custom Themes in Chats',
+  'Exteraless.CustomThemes.Info': 'Each chat will display the theme that was specifically chosen for it.',
+  'Exteraless.StickerTimeSide': 'Time on Stickers: On the Side',
+  'Exteraless.ReplyColors': 'Replies: Background Colors',
+  'Exteraless.ReplyEmoji': 'Replies: Emoji',
+  'Exteraless.ReplyBackground': 'Replies: Background',
+  'Exteraless.ShowResultsBeforeVoting': 'Show Results Before Voting',
+  'Exteraless.ShowResultsBeforeVoting.Info': 'Results of public polls will be visible without casting a vote.',
 
   'Apply': 'Apply'
 };

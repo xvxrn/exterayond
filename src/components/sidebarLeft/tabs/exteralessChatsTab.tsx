@@ -11,10 +11,15 @@ import type {ExteralessSettingsKey} from '@stores/exteralessSettings';
  * ported Android `ChatsConfig` setting with its behavior wired into Web K.
  * Labels and ranges follow strings_oe_chats.xml / `OpenExteraChatsActivity`.
  */
-const TOGGLES: Array<[key: ExteralessSettingsKey, langKey: LangPackKey]> = [
+const TOGGLES: Array<[key: ExteralessSettingsKey, langKey: LangPackKey, infoKey?: LangPackKey]> = [
   ['OEChatsRemoveMessageTail', 'Exteraless.RemoveMessageTail'],
   ['OEChatsHideCallButton', 'Exteraless.HideCallButton'],
-  ['OEChatsHideChannelSearchButton', 'Exteraless.HideSearchButton']
+  ['OEChatsHideChannelSearchButton', 'Exteraless.HideSearchButton'],
+  ['OEChatsStickerTimeSide', 'Exteraless.StickerTimeSide'],
+  ['OEChatsReplyColors', 'Exteraless.ReplyColors'],
+  ['OEChatsReplyEmoji', 'Exteraless.ReplyEmoji'],
+  ['OEChatsReplyBackground', 'Exteraless.ReplyBackground'],
+  ['OEChatsShowResultsBeforeVoting', 'Exteraless.ShowResultsBeforeVoting', 'Exteraless.ShowResultsBeforeVoting.Info']
 ];
 
 const REACTION_TOGGLES: Array<[key: ExteralessSettingsKey, langKey: LangPackKey]> = [
@@ -39,7 +44,7 @@ const ExteralessChats = () => {
   return (
     <>
       <Section name="Exteraless.Chats">
-        {TOGGLES.map(([key, langKey]) => (
+        {TOGGLES.map(([key, langKey, infoKey]) => (
           <Row>
             <Row.CheckboxFieldToggle>
               <CheckboxFieldTsx
@@ -49,6 +54,7 @@ const ExteralessChats = () => {
               />
             </Row.CheckboxFieldToggle>
             <Row.Title>{i18n(langKey)}</Row.Title>
+            {infoKey && <Row.Subtitle>{i18n(infoKey)}</Row.Subtitle>}
           </Row>
         ))}
       </Section>

@@ -5,6 +5,7 @@ import type {AppImManager, ChatSetPeerOptions} from '@lib/appImManager';
 import EventListenerBase from '@helpers/eventListenerBase';
 import {logger, LogTypes} from '@lib/logger';
 import rootScope from '@lib/rootScope';
+import {exteralessSettings} from '@stores/exteralessSettings';
 import ChatBubbles, {FullMid, splitFullMid} from '@components/chat/bubbles';
 import ChatContextMenu from '@components/chat/contextMenu';
 import ChatInput from '@components/chat/input';
@@ -569,7 +570,9 @@ export default class Chat extends EventListenerBase<{
       let wallPaper: WallPaper;
       let theme: Chat['currentTheme'];
 
-      if(_fullPeer) {
+      // * exteraless customThemes: with it off the chat stays in the app's own
+      // * theme, exactly ChatActivity.setupChatTheme's early return
+      if(_fullPeer && exteralessSettings.OEAppearanceCustomThemes) {
         wallPaper = unwrap((_fullPeer as ChatFull.channelFull).wallpaper);
         const emoticon = (_fullPeer as ChatFull.channelFull).theme_emoticon ||
           ((_fullPeer as UserFull.userFull).theme as ChatTheme.chatTheme)?.emoticon ||

@@ -1892,6 +1892,21 @@
     }
   }
 
+  // * exteraless stickerTimeSide: the time sits beside the sticker instead of
+  // * over it (StickerTime.isBeside: after the sticker for incoming, before it
+  // * for outgoing)
+  :root.oe-sticker-time-side &.sticker .time {
+    inset-inline-end: auto !important;
+  }
+
+  :root.oe-sticker-time-side &.sticker.is-in .time {
+    inset-inline-start: calc(100% + 4px) !important;
+  }
+
+  :root.oe-sticker-time-side &.sticker.is-out .time {
+    inset-inline-end: calc(100% + 4px) !important;
+  }
+
   .video-time,
   .video-play {
     pointer-events: none;

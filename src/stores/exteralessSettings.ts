@@ -39,10 +39,17 @@ export const OE_DEFAULTS = {
   OEAppearanceSingleCornerRadius: false,
   OEAppearanceSquareFab: true,
   OEAppearanceSeparateHeaders: true,
+  OEAppearanceHideActionBarStatus: false,
+  OEAppearanceCustomThemes: true,
   OEChatsRemoveMessageTail: true,
   OEChatsHideCallButton: false,
   OEChatsHideChannelSearchButton: false,
   OEChatsStickerShape: 1,
+  OEChatsStickerTimeSide: false,
+  OEChatsShowResultsBeforeVoting: false,
+  OEChatsReplyColors: true,
+  OEChatsReplyEmoji: true,
+  OEChatsReplyBackground: true,
   OEChatsHideReactionsChannels: false,
   OEChatsHideReactionsGroups: false,
   OEChatsHideReactionsPrivate: false,
@@ -201,6 +208,14 @@ if(typeof document !== 'undefined') {
       classList.toggle('oe-separate-headers', exteralessSettings.OEAppearanceSeparateHeaders);
 
       classList.toggle('oe-remove-message-tail', exteralessSettings.OEChatsRemoveMessageTail);
+
+      classList.toggle('oe-sticker-time-side', exteralessSettings.OEChatsStickerTimeSide);
+
+      // * the replyColors / replyEmoji / replyBackground trio defaults to true;
+      // * the classes mark only the off states, so the default adds nothing
+      classList.toggle('oe-no-reply-colors', !exteralessSettings.OEChatsReplyColors);
+      classList.toggle('oe-no-reply-emoji', !exteralessSettings.OEChatsReplyEmoji);
+      classList.toggle('oe-no-reply-background', !exteralessSettings.OEChatsReplyBackground);
 
       style.setProperty('--oe-sticker-radius', stickerShapeToCss(exteralessSettings.OEChatsStickerShape));
     });

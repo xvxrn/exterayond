@@ -8,6 +8,26 @@ Paths below are relative to `TMessagesProj/src/main/` (`java/` = J, `kotlin/` = 
 Portability classes (see AGENTS.md): **1** = Web K has the component (direct port),
 **2** = web analog exists (adapt), **3** = no web counterpart (unsupported, shown as such).
 
+## Port status (updated as slices land)
+
+Ported with wired web behavior (keys verbatim, Android defaults):
+avatarCorners, singleCornerRadius, squareFab, sectionRadius, separateHeaders,
+hideActionBarStatus, senderMiniAvatars, customThemes, removeMessageTail,
+hideCallButton, hideChannelSearchButton, stickerShape, stickerTimeSide,
+replyColors, replyEmoji, replyBackground, showResultsBeforeVoting,
+hideReactionsChannels/Groups/Private, bottomButton, alwaysSendInHD,
+stripTrackingOnOpen/OnPaste, pauseOnMinimizeVoice/Round, relativeLastSeen,
+addCommaAfterMention. The General tab exists; the hub renders the Android
+About header, categories, links and design credits.
+
+Corrections since the first pass:
+- `keepAttachButton` — web N/A: Web K's composer never morphs the attach
+  button while typing, there is nothing to keep.
+- `proxyDisableConditions` — class 3, not 1: browsers expose no network
+  transport API (no VPN/wifi/data knowledge), the condition can never fire.
+- `inlineMathResult/inlineMathCurrency` — class 3 (the map's class 1 was
+  wrong): K has no inline-math controller to gate.
+
 ## 1. Architecture of the changes
 
 Four layers, cleanly separable:

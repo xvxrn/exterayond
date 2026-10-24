@@ -252,6 +252,8 @@ describe('the exteraless Chats tab', () => {
       'Exteraless.AlwaysSendInHD',
       'Exteraless.StripTrackingOnOpen',
       'Exteraless.StripTrackingOnPaste',
+      'Exteraless.PauseVoice',
+      'Exteraless.PauseRound',
       'Exteraless.HideReactions.Channels',
       'Exteraless.HideReactions.Groups',
       'Exteraless.HideReactions.Private'

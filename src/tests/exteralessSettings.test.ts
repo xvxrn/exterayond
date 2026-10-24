@@ -46,6 +46,7 @@ describe('exteraless settings store', () => {
       OEAppearanceSquareFab: true,
       OEAppearanceSeparateHeaders: true,
       OEAppearanceHideActionBarStatus: false,
+      OEAppearanceSenderMiniAvatars: true,
       OEAppearanceCustomThemes: true,
       OEChatsRemoveMessageTail: true,
       OEChatsHideCallButton: false,
@@ -61,11 +62,11 @@ describe('exteraless settings store', () => {
       OEChatsReplyColors: true,
       OEChatsReplyEmoji: true,
       OEChatsReplyBackground: true,
+      OEChatsPauseVoice: false,
+      OEChatsPauseRound: false,
       OEChatsHideReactionsChannels: false,
       OEChatsHideReactionsGroups: false,
       OEChatsHideReactionsPrivate: false,
-      OEChatsPauseVoice: false,
-      OEChatsPauseRound: false,
       OERelativeLastSeen: false,
       OEAddCommaAfterMention: true
     });

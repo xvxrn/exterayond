@@ -6116,6 +6116,9 @@ const lang = {
   'Exteraless.StripTracking': 'Remove tracking from links',
   'Exteraless.StripTrackingOnOpen': 'When opening links',
   'Exteraless.StripTrackingOnPaste': 'When pasting links',
+  'Exteraless.PauseOnMinimize': 'Auto-Pause',
+  'Exteraless.PauseVoice': 'Voice',
+  'Exteraless.PauseRound': 'Round',
 
   'Apply': 'Apply'
 };

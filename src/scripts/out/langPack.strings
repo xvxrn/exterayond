@@ -5410,6 +5410,9 @@
 "Exteraless.StripTracking" = "Remove tracking from links";
 "Exteraless.StripTrackingOnOpen" = "When opening links";
 "Exteraless.StripTrackingOnPaste" = "When pasting links";
+"Exteraless.PauseOnMinimize" = "Auto-Pause";
+"Exteraless.PauseVoice" = "Voice";
+"Exteraless.PauseRound" = "Round";
 "Apply" = "Apply";
 "Login.Title" = "Sign in to Telegram";
 "Login.PhoneLabel" = "Phone Number";

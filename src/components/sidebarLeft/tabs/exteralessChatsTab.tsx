@@ -28,6 +28,11 @@ const STRIP_TRACKING_TOGGLES: Array<[key: ExteralessSettingsKey, langKey: LangPa
   ['OEChatsStripTrackingOnPaste', 'Exteraless.StripTrackingOnPaste']
 ];
 
+const PAUSE_TOGGLES: Array<[key: ExteralessSettingsKey, langKey: LangPackKey]> = [
+  ['OEChatsPauseVoice', 'Exteraless.PauseVoice'],
+  ['OEChatsPauseRound', 'Exteraless.PauseRound']
+];
+
 const REACTION_TOGGLES: Array<[key: ExteralessSettingsKey, langKey: LangPackKey]> = [
   ['OEChatsHideReactionsChannels', 'Exteraless.HideReactions.Channels'],
   ['OEChatsHideReactionsGroups', 'Exteraless.HideReactions.Groups'],
@@ -99,6 +104,20 @@ const ExteralessChats = () => {
           maxValue={2}
           onChange={(value) => setExteralessSetting('OEChatsStickerShape', value)}
         />
+      </Section>
+      <Section name="Exteraless.PauseOnMinimize">
+        {PAUSE_TOGGLES.map(([key, langKey]) => (
+          <Row>
+            <Row.CheckboxFieldToggle>
+              <CheckboxFieldTsx
+                toggle
+                checked={exteralessSettings[key] as boolean}
+                onChange={(value) => setExteralessSetting(key, value)}
+              />
+            </Row.CheckboxFieldToggle>
+            <Row.Title>{i18n(langKey)}</Row.Title>
+          </Row>
+        ))}
       </Section>
       <Section name="Exteraless.HideReactions">
         {REACTION_TOGGLES.map(([key, langKey]) => (

@@ -5,6 +5,8 @@ import deferredPromise, {CancellablePromise} from '@helpers/cancellablePromise';
 import {IS_APPLE, IS_SAFARI} from '@environment/userAgent';
 import {MOUNT_CLASS_TO} from '@config/debug';
 import {getAppWindow} from '@helpers/appWindow';
+import {hotListen} from '@helpers/hotModule';
+import {exteralessSettings} from '@stores/exteralessSettings';
 import simulateEvent from '@helpers/dom/dispatchEvent';
 import {Document, Message, PhotoSize} from '@layer';
 import getAudioTitles from '@appManagers/utils/docs/getAudioTitles';
@@ -127,6 +129,9 @@ export class AppMediaPlaybackController extends EventListenerBase<{
   private mediaDetails: Map<HTMLMediaElement, MediaDetails> = new Map();
   private playingMedia: HTMLMediaElement;
   private playingMediaType: PlaybackMediaType;
+  // * exteraless pauseOnMinimize: voice notes and round videos share K's
+  // * 'voice' bucket, so the document type decides which toggle applies
+  private playingDocType: string;
 
   private waitingMediaForLoad: Map<PeerId, Map<number, CancellablePromise<void>>> = new Map();
   private waitingScheduledMediaForLoad: AppMediaPlaybackController['waitingMediaForLoad'] = new Map();
@@ -225,6 +230,21 @@ export class AppMediaPlaybackController extends EventListenerBase<{
 
       if(!this.pause() && this.pip) {
         this.pip.pause();
+      }
+    });
+
+    // * exteraless pauseOnMinimizeVoice / pauseOnMinimizeRound: media pauses
+    // * when the tab hides (MediaController.pauseInBackgroundIfNeeded)
+    hotListen(import.meta.hot, getAppWindow().document, 'visibilitychange', () => {
+      if(!getAppWindow().document.hidden || !this.playingMedia || this.playingMedia.paused) {
+        return;
+      }
+
+      const shouldPause = this.playingDocType === 'round' ?
+        exteralessSettings.OEChatsPauseRound :
+        this.playingDocType === 'voice' && exteralessSettings.OEChatsPauseVoice;
+      if(shouldPause) {
+        this.pause();
       }
     });
 
@@ -1222,6 +1242,7 @@ export class AppMediaPlaybackController extends EventListenerBase<{
 
   public setMedia(media: HTMLMediaElement, message: Message.message, standalone?: boolean) {
     const mediaType = this.getPlaybackMediaTypeFromMessage(message);
+    this.playingDocType = (getMediaFromMessage(message, true) as MyDocument)?.type as string;
 
     this._playbackRate = this.playbackRates[mediaType];
 

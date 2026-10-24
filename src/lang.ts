@@ -6087,6 +6087,7 @@ const lang = {
   'Exteraless.HideCallButton': 'Hide Call Button',
   'Exteraless.HideSearchButton': 'Hide Search Button in Channels',
   'Exteraless.SeparateHeaders': 'Separate Headers',
+  'Exteraless.GlassMessageMenu': 'Frosted Message Menu',
   'Exteraless.StickerShape': 'Sticker Shape',
   'Exteraless.StickerShape.Default': 'Default',
   'Exteraless.StickerShape.Rounded': 'Rounded',

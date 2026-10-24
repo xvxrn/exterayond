@@ -42,6 +42,7 @@ export const OE_DEFAULTS = {
   OEAppearanceHideActionBarStatus: false,
   OEAppearanceSenderMiniAvatars: true,
   OEAppearanceCustomThemes: true,
+  OEAppearanceGlassMessageMenu: true,
   OEChatsRemoveMessageTail: true,
   OEChatsHideCallButton: false,
   OEChatsHideChannelSearchButton: false,
@@ -220,6 +221,7 @@ if(typeof document !== 'undefined') {
 
       // * the replyColors / replyEmoji / replyBackground trio defaults to true;
       // * the classes mark only the off states, so the default adds nothing
+      classList.toggle('oe-no-glass-menus', !exteralessSettings.OEAppearanceGlassMessageMenu);
       classList.toggle('oe-no-reply-colors', !exteralessSettings.OEChatsReplyColors);
       classList.toggle('oe-no-reply-emoji', !exteralessSettings.OEChatsReplyEmoji);
       classList.toggle('oe-no-reply-background', !exteralessSettings.OEChatsReplyBackground);

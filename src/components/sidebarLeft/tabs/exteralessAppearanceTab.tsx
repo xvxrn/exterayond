@@ -76,6 +76,16 @@ const ExteralessAppearance = () => {
           </Row.CheckboxFieldToggle>
           <Row.Title>{i18n('Exteraless.SeparateHeaders')}</Row.Title>
         </Row>
+        <Row>
+          <Row.CheckboxFieldToggle>
+            <CheckboxFieldTsx
+              toggle
+              checked={exteralessSettings.OEAppearanceGlassMessageMenu}
+              onChange={(value) => setExteralessSetting('OEAppearanceGlassMessageMenu', value)}
+            />
+          </Row.CheckboxFieldToggle>
+          <Row.Title>{i18n('Exteraless.GlassMessageMenu')}</Row.Title>
+        </Row>
       </Section>
       <Section>
         <Row>

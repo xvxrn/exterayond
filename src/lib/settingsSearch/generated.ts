@@ -201,6 +201,7 @@ const generated: GeneratedSettingsSearchData = {
     {id: 'AppExteralessAppearanceTab:Exteraless.AvatarCorners.Circle', sectionId: 'AppExteralessAppearanceTab', kind: 'row', titleLangKey: 'Exteraless.AvatarCorners.Circle'},
     {id: 'AppExteralessAppearanceTab:Exteraless.AvatarCorners.Square', sectionId: 'AppExteralessAppearanceTab', kind: 'row', titleLangKey: 'Exteraless.AvatarCorners.Square'},
     {id: 'AppExteralessAppearanceTab:Exteraless.CustomThemes', sectionId: 'AppExteralessAppearanceTab', kind: 'toggle', titleLangKey: 'Exteraless.CustomThemes'},
+    {id: 'AppExteralessAppearanceTab:Exteraless.GlassMessageMenu', sectionId: 'AppExteralessAppearanceTab', kind: 'toggle', titleLangKey: 'Exteraless.GlassMessageMenu'},
     {id: 'AppExteralessAppearanceTab:Exteraless.HideActionBarStatus', sectionId: 'AppExteralessAppearanceTab', kind: 'toggle', titleLangKey: 'Exteraless.HideActionBarStatus'},
     {id: 'AppExteralessAppearanceTab:Exteraless.SectionRadius', sectionId: 'AppExteralessAppearanceTab', kind: 'row', titleLangKey: 'Exteraless.SectionRadius'},
     {id: 'AppExteralessAppearanceTab:Exteraless.SectionRadius.Max', sectionId: 'AppExteralessAppearanceTab', kind: 'row', titleLangKey: 'Exteraless.SectionRadius.Max'},

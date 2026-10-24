@@ -45,10 +45,9 @@ const Exteraless = () => {
           <Row.Title>{i18n('Exteraless.Plugins')}</Row.Title>
           <Row.Subtitle>{i18n('Exteraless.NotPorted')}</Row.Subtitle>
         </Row>
-        <Row>
+        <Row clickable={() => tab.slider.createTab(hotReloadGuard.tabs.AppExteralessOtherTab).open()}>
           <Row.Icon icon="more" />
           <Row.Title>{i18n('Exteraless.Other')}</Row.Title>
-          <Row.Subtitle>{i18n('Exteraless.NotPorted')}</Row.Subtitle>
         </Row>
       </Section>
       <Section name="Exteraless.Links">

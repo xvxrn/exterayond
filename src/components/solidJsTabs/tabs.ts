@@ -268,6 +268,12 @@ export const AppExteralessGeneralTab =
     getComponentModule: () => import('../sidebarLeft/tabs/exteralessGeneralTab')
   });
 
+export const AppExteralessOtherTab =
+  scaffoldSolidJSTab({
+    title: 'Exteraless.Other',
+    getComponentModule: () => import('../sidebarLeft/tabs/exteralessOtherTab')
+  });
+
 export const AppExteralessAppearanceTab =
   scaffoldSolidJSTab({
     title: 'Exteraless.Appearance',

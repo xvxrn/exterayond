@@ -128,17 +128,19 @@ describe('the exteraless Preferences hub tab', () => {
     ]);
 
     const subtitles = [...document.querySelectorAll<HTMLElement>('.row-subtitle')].map((el) => el.textContent);
-    expect(subtitles.filter((text) => text === 'Exteraless.NotPorted')).toHaveLength(2);
-    // * the three working categories carry no not-ported mark
+    expect(subtitles.filter((text) => text === 'Exteraless.NotPorted')).toHaveLength(1);
+    // * the working categories carry no not-ported mark
     expect(rowByIcon('general_filled').querySelector('.row-subtitle')).toBeNull();
     expect(rowByIcon('appearance_filled').querySelector('.row-subtitle')).toBeNull();
     expect(rowByIcon('message_filled').querySelector('.row-subtitle')).toBeNull();
+    expect(rowByIcon('more').querySelector('.row-subtitle')).toBeNull();
   });
 
   it('marks the sections that are not ported as not clickable', () => {
     expect(rowByIcon('general_filled').dataset.clickable).toBe('true');
     expect(rowByIcon('appearance_filled').dataset.clickable).toBe('true');
     expect(rowByIcon('message_filled').dataset.clickable).toBe('true');
+    expect(rowByIcon('more').dataset.clickable).toBe('true');
     expect(rowByIcon('bots').dataset.clickable).toBe('false');
   });
 

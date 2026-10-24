@@ -53,8 +53,11 @@ Classify every Android setting before porting:
    hidden reactions, removeMessageTail, reply colors).
 2. **Adapted** — a web analog exists (navigation drawer → left sidebar;
    dividerStyle → section-card look: Web K has no inner row hairlines).
-3. **Unsupported** — no web counterpart (camera hardware, volume buttons, app icon
-   packs, JNI/reflection). Shown as unsupported in the hub, not hidden and not faked.
+3. **Unsupported** — no web counterpart. Hardware-bound Android settings (camera
+   engines, volume buttons, Nothing Phone glyphs, app icon packs) are **removed from
+   the hub entirely** — the web client has no device for them to act on. Settings that
+   could exist on the web but wait on a Web K primitive are shown as unsupported, not
+   faked. JNI/reflection plugin capabilities are surfaced as unsupported, never faked.
 
 Web K lags Telegram Android. If a setting depends on a primitive Web K lacks, it is
 class 3 until Web K gains the primitive upstream; do not speculatively rebuild Telegram

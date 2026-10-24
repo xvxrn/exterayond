@@ -44,9 +44,18 @@ describe('exteraless settings store', () => {
       OEAppearanceSectionRadius: 20,
       OEAppearanceSingleCornerRadius: false,
       OEAppearanceSquareFab: true,
+      OEAppearanceSeparateHeaders: true,
       OEChatsRemoveMessageTail: true,
       OEChatsHideCallButton: false,
-      OEChatsHideChannelSearchButton: false
+      OEChatsHideChannelSearchButton: false,
+      OEChatsStickerShape: 1,
+      OEChatsHideReactionsChannels: false,
+      OEChatsHideReactionsGroups: false,
+      OEChatsHideReactionsPrivate: false,
+      OEChatsPauseVoice: false,
+      OEChatsPauseRound: false,
+      OERelativeLastSeen: false,
+      OEAddCommaAfterMention: true
     });
     expect(OE_AVATAR_CORNERS_MAX).toBe(28);
     expect(OE_SECTION_RADIUS_STOCK).toBe(20);

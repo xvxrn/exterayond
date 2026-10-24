@@ -6086,6 +6086,19 @@ const lang = {
   'Exteraless.RemoveMessageTail': 'Remove Message Tail',
   'Exteraless.HideCallButton': 'Hide Call Button',
   'Exteraless.HideSearchButton': 'Hide Search Button in Channels',
+  'Exteraless.SeparateHeaders': 'Separate Headers',
+  'Exteraless.StickerShape': 'Sticker Shape',
+  'Exteraless.StickerShape.Default': 'Default',
+  'Exteraless.StickerShape.Rounded': 'Rounded',
+  'Exteraless.StickerShape.AsMessage': 'Message',
+  'Exteraless.HideReactions': 'Hide Reactions',
+  'Exteraless.HideReactions.Channels': 'Channels',
+  'Exteraless.HideReactions.Groups': 'Groups',
+  'Exteraless.HideReactions.Private': 'Private Chats',
+  'Exteraless.RelativeLastSeen': 'Relative Last Seen',
+  'Exteraless.RelativeLastSeen.Info': '«Last seen» is shown as «5 minutes ago» within a day.',
+  'Exteraless.AddCommaAfterMention': 'Add comma after mention',
+  'Exteraless.AddCommaAfterMention.Info': 'Picking a mention inserts «@user, » instead of «@user ».',
 
   'Apply': 'Apply'
 };

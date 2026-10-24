@@ -73,6 +73,7 @@ import CommandsHelper from '@components/chat/commandsHelper';
 import AutocompleteHelperController from '@components/chat/autocompleteHelperController';
 import AutocompleteHelper from '@components/chat/autocompleteHelper';
 import MentionsHelper from '@components/chat/mentionsHelper';
+import {exteralessSettings} from '@stores/exteralessSettings';
 import fixSafariStickyInput from '@helpers/dom/fixSafariStickyInput';
 import ReplyKeyboard from '@components/chat/replyKeyboard';
 import InlineHelper from '@components/chat/inlineHelper';
@@ -2671,7 +2672,8 @@ export default class ChatInput {
         };
       }
 
-      str += ' ';
+      // * exteraless addCommaAfterMention: «@user, » instead of «@user »
+      str += exteralessSettings.OEAddCommaAfterMention ? ', ' : ' ';
       this.insertAtCaret(str, entity, isHelper);
     });
   }

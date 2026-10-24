@@ -28,10 +28,9 @@ const Exteraless = () => {
         </div>
       </Section>
       <Section name="Exteraless.Categories">
-        <Row>
+        <Row clickable={() => tab.slider.createTab(hotReloadGuard.tabs.AppExteralessGeneralTab).open()}>
           <Row.Icon icon="general_filled" />
           <Row.Title>{i18n('Exteraless.General')}</Row.Title>
-          <Row.Subtitle>{i18n('Exteraless.NotPorted')}</Row.Subtitle>
         </Row>
         <Row clickable={() => tab.slider.createTab(hotReloadGuard.tabs.AppExteralessAppearanceTab).open()}>
           <Row.Icon icon="appearance_filled" />

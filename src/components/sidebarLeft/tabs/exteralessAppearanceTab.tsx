@@ -66,6 +66,16 @@ const ExteralessAppearance = () => {
           maxValue={OE_AVATAR_CORNERS_MAX}
           onChange={(value) => setExteralessSetting('OEAppearanceSectionRadius', value)}
         />
+        <Row>
+          <Row.CheckboxFieldToggle>
+            <CheckboxFieldTsx
+              toggle
+              checked={exteralessSettings.OEAppearanceSeparateHeaders}
+              onChange={(value) => setExteralessSetting('OEAppearanceSeparateHeaders', value)}
+            />
+          </Row.CheckboxFieldToggle>
+          <Row.Title>{i18n('Exteraless.SeparateHeaders')}</Row.Title>
+        </Row>
       </Section>
       <Section>
         <Row>

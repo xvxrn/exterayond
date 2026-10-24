@@ -128,14 +128,15 @@ describe('the exteraless Preferences hub tab', () => {
     ]);
 
     const subtitles = [...document.querySelectorAll<HTMLElement>('.row-subtitle')].map((el) => el.textContent);
-    expect(subtitles.filter((text) => text === 'Exteraless.NotPorted')).toHaveLength(3);
-    // * the two working categories carry no not-ported mark
+    expect(subtitles.filter((text) => text === 'Exteraless.NotPorted')).toHaveLength(2);
+    // * the three working categories carry no not-ported mark
+    expect(rowByIcon('general_filled').querySelector('.row-subtitle')).toBeNull();
     expect(rowByIcon('appearance_filled').querySelector('.row-subtitle')).toBeNull();
     expect(rowByIcon('message_filled').querySelector('.row-subtitle')).toBeNull();
   });
 
   it('marks the sections that are not ported as not clickable', () => {
-    expect(rowByIcon('general_filled').dataset.clickable).toBe('false');
+    expect(rowByIcon('general_filled').dataset.clickable).toBe('true');
     expect(rowByIcon('appearance_filled').dataset.clickable).toBe('true');
     expect(rowByIcon('message_filled').dataset.clickable).toBe('true');
     expect(rowByIcon('bots').dataset.clickable).toBe('false');
@@ -237,12 +238,15 @@ describe('the exteraless Chats tab', () => {
     document.body.replaceChildren();
   });
 
-  it('renders the three wired toggles with their labels', () => {
+  it('renders the wired toggles with their labels', () => {
     const titles = [...document.querySelectorAll<HTMLElement>('.row-title')].map((el) => el.textContent);
     expect(titles).toEqual([
       'Exteraless.RemoveMessageTail',
       'Exteraless.HideCallButton',
-      'Exteraless.HideSearchButton'
+      'Exteraless.HideSearchButton',
+      'Exteraless.HideReactions.Channels',
+      'Exteraless.HideReactions.Groups',
+      'Exteraless.HideReactions.Private'
     ]);
   });
 

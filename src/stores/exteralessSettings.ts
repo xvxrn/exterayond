@@ -26,14 +26,30 @@ export const OE_SECTION_RADIUS_STOCK = 20;
 /** Android `UIUtil.fabCornerRadius`: the Material squircle is 16 of a 56 FAB. */
 export const OE_FAB_SQUIRCLE_RADIUS = '28.571%';
 
+/**
+ * Android `ChatsConfig.stickerShape`: 0 as-is, 1 rounded (dp(6)), 2 as the
+ * message bubble (the bubble's big corner radius).
+ */
+export const OE_STICKER_SHAPE_ROUNDED_RADIUS = '6px';
+export const OE_STICKER_SHAPE_BUBBLE_RADIUS = '15px';
+
 export const OE_DEFAULTS = {
   OEAppearanceAvatarCorners: OE_AVATAR_CORNERS_MAX,
   OEAppearanceSectionRadius: OE_SECTION_RADIUS_STOCK,
   OEAppearanceSingleCornerRadius: false,
   OEAppearanceSquareFab: true,
+  OEAppearanceSeparateHeaders: true,
   OEChatsRemoveMessageTail: true,
   OEChatsHideCallButton: false,
-  OEChatsHideChannelSearchButton: false
+  OEChatsHideChannelSearchButton: false,
+  OEChatsStickerShape: 1,
+  OEChatsHideReactionsChannels: false,
+  OEChatsHideReactionsGroups: false,
+  OEChatsHideReactionsPrivate: false,
+  OEChatsPauseVoice: false,
+  OEChatsPauseRound: false,
+  OERelativeLastSeen: false,
+  OEAddCommaAfterMention: true
 } as const;
 
 export type ExteralessSettingsKey = keyof typeof OE_DEFAULTS;
@@ -47,7 +63,8 @@ type NumericKey = {
 
 const NUMERIC_RANGES: {[K in NumericKey]: readonly [min: number, max: number]} = {
   OEAppearanceAvatarCorners: [0, OE_AVATAR_CORNERS_MAX],
-  OEAppearanceSectionRadius: [0, OE_AVATAR_CORNERS_MAX]
+  OEAppearanceSectionRadius: [0, OE_AVATAR_CORNERS_MAX],
+  OEChatsStickerShape: [0, 2]
 };
 
 /** A value of the wrong type or out of range falls back like an untrusted import. */
@@ -141,6 +158,19 @@ export const sectionRadiusToCss = (radius: number) => {
   return clamped === OE_SECTION_RADIUS_STOCK ? undefined : clamped + 'px';
 };
 
+/**
+ * stickerShape 0..2 → the sticker media's border radius: 0 as-is, 1 rounded
+ * (dp(6), `ChatMessageCell`), 2 as the message bubble ($bubble-border-radius-big).
+ */
+export const stickerShapeToCss = (shape: number) => {
+  const clamped = clampExteralessSetting('OEChatsStickerShape', shape);
+  if(clamped === 1) {
+    return OE_STICKER_SHAPE_ROUNDED_RADIUS;
+  }
+
+  return clamped === 2 ? OE_STICKER_SHAPE_BUBBLE_RADIUS : '0px';
+};
+
 if(typeof document !== 'undefined') {
   // * one effect owns the custom properties and the root classes: every
   // * consumer reads them in CSS. The store's properties are read directly —
@@ -168,7 +198,11 @@ if(typeof document !== 'undefined') {
         style.setProperty('--oe-section-radius', sectionRadius);
       }
 
+      classList.toggle('oe-separate-headers', exteralessSettings.OEAppearanceSeparateHeaders);
+
       classList.toggle('oe-remove-message-tail', exteralessSettings.OEChatsRemoveMessageTail);
+
+      style.setProperty('--oe-sticker-radius', stickerShapeToCss(exteralessSettings.OEChatsStickerShape));
     });
 
     return dispose;

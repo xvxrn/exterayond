@@ -17,6 +17,7 @@ import pause from '@helpers/schedulers/pause';
 import {Accessor, Setter} from 'solid-js';
 import {hotReloadGuard} from '@lib/solidjs/hotReloadGuardProvider';
 import {hotListen} from '@helpers/hotModule';
+import {exteralessSettings} from '@stores/exteralessSettings';
 
 
 const CLASS_NAME = 'reactions';
@@ -284,7 +285,61 @@ export default class ReactionsElement extends HTMLElement {
     return available;
   }
 
+  /**
+   * exteraless hideReactions*: reactions hidden per chat kind, exactly
+   * `MessageObject.oeReactionsHiddenForDialog()` — private (a user peer),
+   * channel (broadcast, not a megagroup) or group. The kind is cached like the
+   * Android one: the kind of chat a message belongs to does not change.
+   */
+  private oeChatKind?: 1 | 2 | 3;
+
+  private oeReactionsHiddenForDialog(): boolean {
+    const {OEChatsHideReactionsChannels, OEChatsHideReactionsGroups, OEChatsHideReactionsPrivate} = exteralessSettings;
+    if(!OEChatsHideReactionsChannels && !OEChatsHideReactionsGroups && !OEChatsHideReactionsPrivate) {
+      this.oeChatKind = undefined;
+      return false;
+    }
+
+    if(!this.oeChatKind) {
+      const peerId = this.context.peerId;
+      if(peerId.isUser()) {
+        this.oeChatKind = 1;
+      } else {
+        // * the chat cache keeps promises: assume group until it settles, then
+        // * correct the kind and re-render if this element is still mounted
+        this.oeChatKind = 3;
+        this.managers.appChatsManager.getChat(peerId.toChatId()).then((chat) => {
+          // * forbidden/community variants carry no flags at all
+          const flags = (chat as {pFlags?: {broadcast?: boolean, megagroup?: boolean}} | undefined)?.pFlags;
+          const kind: 1 | 2 | 3 = flags?.broadcast && !flags.megagroup ? 2 : 3;
+          if(this.oeChatKind !== kind) {
+            this.oeChatKind = kind;
+            if(this.middleware?.()) {
+              this.render();
+            }
+          }
+        }).catch(() => {});
+      }
+    }
+
+    switch(this.oeChatKind) {
+      case 1:
+        return OEChatsHideReactionsPrivate;
+      case 2:
+        return OEChatsHideReactionsChannels;
+      default:
+        return OEChatsHideReactionsGroups;
+    }
+  }
+
   public render(changedResults?: ReactionCount[], waitPromise?: Promise<any>) {
+    if(this.oeReactionsHiddenForDialog()) {
+      this.style.display = 'none';
+      return;
+    }
+
+    this.style.removeProperty('display');
+
     const reactions = this.context.reactions;
     const hasReactions = !!(reactions && reactions.results.length);
     this.classList.toggle('has-no-reactions', !hasReactions);

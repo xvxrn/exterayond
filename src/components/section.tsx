@@ -1,7 +1,8 @@
-import {JSX, ParentComponent, Ref, splitProps} from 'solid-js';
+import {JSX, ParentComponent, Ref, Show, splitProps} from 'solid-js';
 import {LangPackKey, FormatterArguments, i18n} from '@lib/langPack';
 import classNames from '@helpers/string/classNames';
 import {generateDelimiter} from '@components/generateDelimiter';
+import {useExteralessSettings} from '@stores/exteralessSettings';
 
 export type SectionOptions = {
   name?: LangPackKey | HTMLElement | DocumentFragment | JSX.Element,
@@ -81,6 +82,11 @@ const SectionCaption = (props: Pick<SectionOptions, 'caption' | 'captionArgs' | 
 };
 const Section: ParentComponent<SectionProps> = (props) => {
   const [, rest] = splitProps(props, ['name', 'nameRef', 'nameArgs', 'nameRight', 'innerClass', 'caption', 'captionArgs', 'captionOld', 'captionTop', 'captionRef', 'noDelimiter', 'fakeGradientDelimiter', 'noShadow', 'noMarginBottom', 'noContent', 'class', 'contentProps', 'ref']);
+  // * exteraless separateHeaders: the header floats free of the card, the way
+  // * Android's RecyclerListView excludes the HeaderCell from the section
+  // * background (`sectionsSeparatedHeaders()`)
+  const [exteralessSettings] = useExteralessSettings();
+  const separateName = () => !!props.name && exteralessSettings.OEAppearanceSeparateHeaders;
   return (
     <div
       class={classNames(className + '-container', props.noMarginBottom && 'no-margin-bottom', props.class)}
@@ -88,6 +94,11 @@ const Section: ParentComponent<SectionProps> = (props) => {
       {...rest}
     >
       {props.caption && props.captionTop && <SectionCaption {...props} />}
+      <Show when={separateName()}>
+        <SectionName ref={props.nameRef} class="is-separated" right={props.nameRight}>
+          {typeof(props.name) === 'string' ? i18n(props.name as LangPackKey, props.nameArgs) : props.name}
+        </SectionName>
+      </Show>
       {!props.noContent && (
         <div
           class={classNames(
@@ -99,11 +110,13 @@ const Section: ParentComponent<SectionProps> = (props) => {
         >
           {props.fakeGradientDelimiter && generateDelimiter()}
           <SectionContent {...props.contentProps}>
-            {props.name && (
-              <SectionName ref={props.nameRef} right={props.nameRight}>
-                {typeof(props.name) === 'string' ? i18n(props.name as LangPackKey, props.nameArgs) : props.name}
-              </SectionName>
-            )}
+            <Show when={!separateName()}>
+              {props.name && (
+                <SectionName ref={props.nameRef} right={props.nameRight}>
+                  {typeof(props.name) === 'string' ? i18n(props.name as LangPackKey, props.nameArgs) : props.name}
+                </SectionName>
+              )}
+            </Show>
             {props.children}
           </SectionContent>
           {props.caption && !props.captionTop && props.captionOld && <SectionCaption {...props} />}

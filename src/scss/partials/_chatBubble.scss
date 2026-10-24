@@ -886,6 +886,13 @@
       border-radius: 0;
       z-index: 1;
     }
+
+    // * exteraless stickerShape: 0 as-is, 1 rounded dp(6), 2 as the message
+    // * bubble ($bubble-border-radius-big); the store maps the value to a pixel
+    // * radius (`ChatMessageCell`'s setRoundRadius branch)
+    .media-sticker {
+      border-radius: var(--oe-sticker-radius, 0);
+    }
   }
 
   &.round {

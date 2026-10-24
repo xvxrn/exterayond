@@ -49,6 +49,14 @@
       &-right {
         font-weight: var(--font-weight-normal);
       }
+
+      // * exteraless separateHeaders: the header is excluded from the section
+      // * card (RecyclerListView.setSections skips the HeaderCell when
+      // * sectionsSeparatedHeaders()), so it floats free above it
+      &.is-separated {
+        margin: 0 var(--section-margin-inline) .25rem;
+        padding: .5rem 1rem;
+      }
     }
 
     &-caption {

@@ -3,6 +3,7 @@ import numberThousandSplitter from '@helpers/number/numberThousandSplitter';
 import {User} from '@layer';
 import {LangPackKey, i18n} from '@lib/langPack';
 import {REPLIES_PEER_ID, SERVICE_PEER_ID} from '@appManagers/constants';
+import {exteralessSettings} from '@stores/exteralessSettings';
 
 export default function getUserStatusString(user: User.user): HTMLElement {
   if(!user) {
@@ -64,7 +65,10 @@ export default function getUserStatusString(user: User.user): HTMLElement {
             key = 'Peer.Status.minAgo';
             const c = diff / 60 | 0;
             args = [c];
-          } else if(diff < 86400 && today.getDate() === new Date(date * 1000).getDate()) {
+          } else if(diff < 86400 && (exteralessSettings.OERelativeLastSeen || today.getDate() === new Date(date * 1000).getDate())) {
+            // * exteraless relativeLastSeen: «N hours ago» up to a day back
+            // * (Android's formatDateOnline(relative) branch), not only within
+            // * the same calendar day
             key = 'LastSeen.HoursAgo';
             const c = diff / 3600 | 0;
             args = [c];

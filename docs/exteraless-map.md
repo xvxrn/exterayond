@@ -17,8 +17,25 @@ hideCallButton, hideChannelSearchButton, stickerShape, stickerTimeSide,
 replyColors, replyEmoji, replyBackground, showResultsBeforeVoting,
 hideReactionsChannels/Groups/Private, bottomButton, alwaysSendInHD,
 stripTrackingOnOpen/OnPaste, pauseOnMinimizeVoice/Round, relativeLastSeen,
-addCommaAfterMention. The General tab exists; the hub renders the Android
-About header, categories, links and design credits.
+addCommaAfterMention, glassMessageMenu, newChatHeaderStyle (the flat-header
+half). General, Appearance, Chats and Other tabs are live; the Other tab
+carries the `.extera` backup import/export (EtgBackup byte-port: sections,
+InvisibleEncryptor, the exteraGram mapping table with Android range rules,
+unsupported-key reporting). The hub renders the Android About header,
+categories, links and design credits; Plugins is the remaining category.
+
+More verdicts since the first pass:
+- `hideCameraTile` — web N/A: K's attach UI has no camera tile to hide.
+- `downloadEmojiPacks` — class 3: K has no emoji-pack catalog consumer.
+- `translateInSheet` — class 3: K has a single translation flow, no sheet
+  analog to switch to.
+- `downloadSpeedBoost` — deferred: it rewrites MTProto download chunking
+  internals; needs a dedicated slice against K's own loader.
+- `wideChannelPosts` / `wideFeedPosts` — deferred: ~15 bubble layout sites,
+  a dedicated slice.
+- drawer trio (`navigationDrawer`, `mainMenuLayout`,
+  `immersiveDrawerAnimation`) — deferred: K's left sidebar is the analog;
+  the menu reorder needs its own slice.
 
 Corrections since the first pass:
 - `keepAttachButton` — web N/A: Web K's composer never morphs the attach

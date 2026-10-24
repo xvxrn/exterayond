@@ -27,6 +27,14 @@ Corrections since the first pass:
   transport API (no VPN/wifi/data knowledge), the condition can never fire.
 - `inlineMathResult/inlineMathCurrency` — class 3 (the map's class 1 was
   wrong): K has no inline-math controller to gate.
+- `titleText` — class 3 on the web: the chat list header has no action-bar
+  title (it is a search field), there is nothing to override.
+- `monetStyle` — class 3: browsers expose no system Material You palette.
+- `newNavigationBarStyle / iosNavigationBarStyle` — class 3: Web K has no
+  bottom navigation bar (Android's MainTabsLayout), nothing to restyle.
+- `iosChatHeader` and the geometry half of `newChatHeaderStyle` (bigger
+  avatar, taller fade) — deferred until an authenticated screenshot pass can
+  verify them; `newChatHeaderStyle`'s no-glass-pill half is ported.
 
 ## 1. Architecture of the changes
 

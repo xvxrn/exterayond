@@ -1968,7 +1968,11 @@ export class AppImManager extends EventListenerBase<{
     });
   }
 
-  public openUrl(url: string, newWindowIfNoClick?: boolean) {
+  public async openUrl(url: string, newWindowIfNoClick?: boolean) {
+    // * exteraless stripTrackingOnOpen: tracking parameters come off links
+    // * before they are opened (LinkCleaner.clean in Browser.openUrl)
+    url = await import('@lib/linkCleaner').then(({cleanLink}) => cleanLink(url, 'open'));
+
     const {url: wrappedUrl, onclick} = wrapUrl(url);
     if(!onclick) {
       if(newWindowIfNoClick) {

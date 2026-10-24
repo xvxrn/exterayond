@@ -36,6 +36,7 @@ import {moveSelectionToDetailsSummaryOnClose} from '@components/chat/inputEditor
 import {moveSelectedTopLevelBlock, selectedStructuralTopLevelRange} from '@components/chat/inputEditor/extensions/blockStructure';
 import {wrapBareChatInputTables} from '@components/chat/inputEditor/extensions/tableNodes';
 import {markProseMirrorPaste} from '@components/chat/inputEditor/paste';
+import {exteralessSettings} from '@stores/exteralessSettings';
 import {startBlockMarkerLine} from '@components/chat/inputEditor/blockMarkers';
 import {
   getChatInputEditor,
@@ -1924,6 +1925,20 @@ class TiptapChatInputEditor implements ChatInputEditor {
           // The editor document is the source of truth. Keep ProseMirror's parsed
           // structure except for Chromium's closed single-paragraph mismatch.
           markProseMirrorPaste(event);
+          // * exteraless stripTrackingOnPaste: tracking comes off the links of a
+          // * plain-text paste (LinkCleaner's paste wrapper). Rich pastes pass
+          // * through untouched — there are no URL spans to clean there.
+          const plainText = event.clipboardData?.getData('text/plain');
+          if(exteralessSettings.OEChatsStripTrackingOnPaste && plainText && !event.clipboardData?.getData('text/html')) {
+            void import('@lib/linkCleaner').then(async({cleanLinksInText}) => {
+              const cleaned = await cleanLinksInText(plainText, 'paste');
+              if(cleaned === plainText) return;
+              const {selection} = view.state;
+              if(!(selection instanceof TextSelection)) return;
+              view.dispatch(view.state.tr.insertText(cleaned, selection.from, selection.to).scrollIntoView());
+            });
+            return true;
+          }
           if(this.options.singleLine) {
             view.dispatch(view.state.tr.replaceSelection(flattenSliceToInline(slice)).scrollIntoView());
             return true;

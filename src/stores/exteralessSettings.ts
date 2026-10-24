@@ -45,8 +45,13 @@ export const OE_DEFAULTS = {
   OEChatsHideCallButton: false,
   OEChatsHideChannelSearchButton: false,
   OEChatsStickerShape: 1,
+  OEChatsBottomButton: 1,
+  OEChatsAlwaysSendInHD: true,
+  OEChatsKeepAttachButton: false,
   OEChatsStickerTimeSide: false,
   OEChatsShowResultsBeforeVoting: false,
+  OEChatsStripTrackingOnOpen: true,
+  OEChatsStripTrackingOnPaste: true,
   OEChatsReplyColors: true,
   OEChatsReplyEmoji: true,
   OEChatsReplyBackground: true,
@@ -71,7 +76,8 @@ type NumericKey = {
 const NUMERIC_RANGES: {[K in NumericKey]: readonly [min: number, max: number]} = {
   OEAppearanceAvatarCorners: [0, OE_AVATAR_CORNERS_MAX],
   OEAppearanceSectionRadius: [0, OE_AVATAR_CORNERS_MAX],
-  OEChatsStickerShape: [0, 2]
+  OEChatsStickerShape: [0, 2],
+  OEChatsBottomButton: [0, 2]
 };
 
 /** A value of the wrong type or out of range falls back like an untrusted import. */

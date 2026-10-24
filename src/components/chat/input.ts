@@ -1805,6 +1805,19 @@ export default class ChatInput {
     }, {listenerSetter: this.listenerSetter});
     this.joinBtn && attachClickEvent(this.joinBtn, this.chat.topbar.onJoinClick.bind(this.chat.topbar, this.joinBtn), {listenerSetter: this.listenerSetter});
     attachClickEvent(this.channelMuteBtn, () => {
+      // * exteraless bottomButton DISCUSS: the plate button opens the linked
+      // * discussion chat, as the topbar's ViewDiscussion item does
+      if(exteralessSettings.OEChatsBottomButton === 2) {
+        Promise.resolve(this.managers.appProfileManager.getChannelFull(this.chat.peerId.toChatId())).then((channelFull) => {
+          if(channelFull?.linked_chat_id) {
+            this.chat.appImManager.setInnerPeer({
+              peerId: channelFull.linked_chat_id.toPeerId(true)
+            });
+          }
+        });
+        return;
+      }
+
       this.managers.appMessagesManager.togglePeerMute({peerId: this.chat.peerId});
     }, {listenerSetter: this.listenerSetter});
 
@@ -3033,8 +3046,18 @@ export default class ChatInput {
           this.joinBtn.replaceChildren(i18n(joinKey));
         }
 
-        this.channelMuteBtn.classList.toggle('hide', !(good && showMute));
-        if(good && showMute) {
+        // * exteraless bottomButton: hide the plate button / make it open the
+        // * discussion (ChatActivity.shouldShowDiscussButton)
+        this.channelMuteBtn.classList.toggle('hide', !(good && showMute) || exteralessSettings.OEChatsBottomButton === 0);
+        if(good && showMute && exteralessSettings.OEChatsBottomButton === 2) {
+          this.channelMuteBtn.replaceChildren(i18n('ViewDiscussion'));
+          // * no linked discussion to open: fall back to the mute label
+          Promise.resolve(this.managers.appProfileManager.getCachedFullChat(peerId.toChatId())).then((chatFull) => {
+            if(middleware() && !(chatFull as ChatFull.channelFull)?.linked_chat_id) {
+              this.updateChannelMuteButton();
+            }
+          });
+        } else if(good && showMute) {
           // Synchronous initial label (no flash); live toggles are handled by
           // the dialog_notify_settings listener -> updateChannelMuteButton().
           this.channelMuteBtn.replaceChildren(i18n(peerMuted ? 'ChatList.Context.Unmute' : 'ChatList.Context.Mute'));

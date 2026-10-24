@@ -249,6 +249,9 @@ describe('the exteraless Chats tab', () => {
       'Exteraless.ReplyEmoji',
       'Exteraless.ReplyBackground',
       'Exteraless.ShowResultsBeforeVoting',
+      'Exteraless.AlwaysSendInHD',
+      'Exteraless.StripTrackingOnOpen',
+      'Exteraless.StripTrackingOnPaste',
       'Exteraless.HideReactions.Channels',
       'Exteraless.HideReactions.Groups',
       'Exteraless.HideReactions.Private'

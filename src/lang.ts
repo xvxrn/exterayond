@@ -6108,6 +6108,14 @@ const lang = {
   'Exteraless.ReplyBackground': 'Replies: Background',
   'Exteraless.ShowResultsBeforeVoting': 'Show Results Before Voting',
   'Exteraless.ShowResultsBeforeVoting.Info': 'Results of public polls will be visible without casting a vote.',
+  'Exteraless.BottomButton': 'Bottom Button',
+  'Exteraless.BottomButton.Hide': 'Hide',
+  'Exteraless.BottomButton.Mute': 'Mute',
+  'Exteraless.BottomButton.Discuss': 'Discuss',
+  'Exteraless.AlwaysSendInHD': 'Always Send in HD',
+  'Exteraless.StripTracking': 'Remove tracking from links',
+  'Exteraless.StripTrackingOnOpen': 'When opening links',
+  'Exteraless.StripTrackingOnPaste': 'When pasting links',
 
   'Apply': 'Apply'
 };

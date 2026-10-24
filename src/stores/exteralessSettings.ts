@@ -40,6 +40,7 @@ export const OE_DEFAULTS = {
   OEAppearanceSquareFab: true,
   OEAppearanceSeparateHeaders: true,
   OEAppearanceHideActionBarStatus: false,
+  OEAppearanceSenderMiniAvatars: true,
   OEAppearanceCustomThemes: true,
   OEChatsRemoveMessageTail: true,
   OEChatsHideCallButton: false,

@@ -88,7 +88,15 @@ $select-lane-shift: var(--select-lane-shift, #{1.5rem + .625rem});
   overflow: hidden;
 }
 
-ul.chatlist {
+ul// * exteraless senderMiniAvatars: the sender's mini avatar rides in the
+// * preview line, in front of their name
+.dialog-sender-mini-avatar {
+  display: inline-block;
+  vertical-align: middle;
+  margin-inline-end: .25rem;
+}
+
+.chatlist {
   padding: 0 .5rem/*  .5rem */;
 
   @include respond-to(handhelds) {

@@ -113,6 +113,16 @@ const ExteralessAppearance = () => {
           <Row.CheckboxFieldToggle>
             <CheckboxFieldTsx
               toggle
+              checked={exteralessSettings.OEAppearanceNewChatHeaderStyle}
+              onChange={(value) => setExteralessSetting('OEAppearanceNewChatHeaderStyle', value)}
+            />
+          </Row.CheckboxFieldToggle>
+          <Row.Title>{i18n('Exteraless.NewChatHeaderStyle')}</Row.Title>
+        </Row>
+        <Row>
+          <Row.CheckboxFieldToggle>
+            <CheckboxFieldTsx
+              toggle
               checked={exteralessSettings.OEAppearanceCustomThemes}
               onChange={(value) => setExteralessSetting('OEAppearanceCustomThemes', value)}
             />

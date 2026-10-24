@@ -6088,6 +6088,7 @@ const lang = {
   'Exteraless.HideSearchButton': 'Hide Search Button in Channels',
   'Exteraless.SeparateHeaders': 'Separate Headers',
   'Exteraless.GlassMessageMenu': 'Frosted Message Menu',
+  'Exteraless.NewChatHeaderStyle': 'Flat Chat Header',
   'Exteraless.StickerShape': 'Sticker Shape',
   'Exteraless.StickerShape.Default': 'Default',
   'Exteraless.StickerShape.Rounded': 'Rounded',

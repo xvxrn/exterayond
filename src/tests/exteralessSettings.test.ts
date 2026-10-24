@@ -48,6 +48,8 @@ describe('exteraless settings store', () => {
       OEAppearanceHideActionBarStatus: false,
       OEAppearanceSenderMiniAvatars: true,
       OEAppearanceCustomThemes: true,
+      OEAppearanceGlassMessageMenu: true,
+      OEAppearanceNewChatHeaderStyle: false,
       OEChatsRemoveMessageTail: true,
       OEChatsHideCallButton: false,
       OEChatsHideChannelSearchButton: false,

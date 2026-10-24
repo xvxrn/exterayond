@@ -72,6 +72,13 @@ body.is-pinned-audio-shown, body.is-calling.forwards {
     @include animation-level-transition(transform var(--transition-standard-in), margin-bottom 0s 0s, background-color var(--transition-standard-in));
   }
 
+  // * exteraless newChatHeaderStyle: the header stops being a floating card
+  // * (ChatHeaderUiHelper's no-glass-pill state) — flat, full width of the chat
+  :root.oe-new-chat-header & {
+    border-radius: 0;
+    box-shadow: none;
+  }
+
 	@include respond-to(not-handhelds) {
 		&.is-pinned-message-shown:not(.hide-pinned) {
 			.pinned-message {

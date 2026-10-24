@@ -54,13 +54,13 @@ counterpart is decided per task by reading the owning K component.
 | key (default) | mechanism / consumer | effect | class |
 |---|---|---|---|
 | avatarCorners (28=circle) | `ImageReceiver.applyRoundRadiusInternal` + `AvatarDrawable.drawBackgroundShape` + `AvatarSpan`; ~20 `getAvatarCorners()` call sites | 0 square … 28 circle, everywhere | **1 — ported**: `.avatar` (+ `.avatar-edit`) reads `--oe-avatar-radius`; forum/topic/monoforum keep their dedicated shapes (singleCornerRadius pending) |
-| singleCornerRadius (false) | corner-type branch in `getAvatarCorners` | forum/community avatars same radius | 1 |
+| singleCornerRadius (false) | corner-type branch in `getAvatarCorners` | forum/community avatars same radius | **1 — ported**: `oe-single-corner-radius` root class routes `.avatar.is-forum` through `--oe-avatar-radius` |
 | senderMiniAvatars (true) | `DialogCell.addSenderAvatar` → `AvatarSpan` in preview | mini sender avatar in dialog list | 1 |
 | gooeyAvatarAnimation (true) | `ProfileActivity.updateGooey` pull-progress branch | avatar stretch on profile pull | 2 |
 | hideActionBarStatus (false) | `ActionBar.getVisibleTitleRightDrawable` nulled | no emoji-status/premium star by titles | 1 |
 | titleText (0) | `TypefaceHelper.getTitleText` → ActionBar/DialogsActivity title + marquee | title = app/username/name/Chats/custom | 2 |
 | monetStyle (0) | `Theme.monetAssetName` picks `.attheme` token dict | which monet palette loads | 2 |
-| squareFab (true) | `UIUtil.createFabSelectorDrawable` radius math | squircle vs round FAB | 1 |
+| squareFab (true) | `UIUtil.createFabSelectorDrawable` radius math (16/56) | squircle vs round FAB | **1 — ported**: `.btn-corner.btn-circle` reads `--oe-fab-radius` (28.571% = 16/56) |
 | sectionRadius (20) | `RecyclerListView.setSections` + `SectionCardRecyclerView` | corner radius of settings section cards | **1 — ported**: `.sidebar-left-section` reads `--oe-section-radius`; store maps Android default 20 → stock Web K radius |
 | separateHeaders (true) | `HeaderCell` excluded from section card | headers float as own pill | 1 |
 | dividerStyle (1) | `Theme.getColor(key_divider)` transparent (HIDDEN) / `useSegmentedSections` (SEGMENTS); volatile cache | no dividers / lines / row-cards | **2** — Web K has no inner row hairlines to hide (verified: `_row.scss` has none); only the section-card look maps; revisit with sectionRadius/m3 work |
@@ -99,10 +99,10 @@ counterpart is decided per task by reading the owning K component.
 | hdrPhotos (true) | `PhotoViewer.updateWindowHdrColorMode` | HDR display of gainmap photos | 3 (browser HDR) |
 | hideReactionsInChannels/Groups/Private (false) | `MessageObject.oeReactionsHiddenForDialog` → draw + panel visibility | hide reactions per chat kind | 1 |
 | wideChannelPosts / wideFeedPosts (false) | `MessageObject.isWideChannelPost` → ~15 `ChatMessageCell` layout sites | edge-to-edge channel posts | 2 |
-| removeMessageTail (true) | `MessageDrawable.invalidatePath` branch + cell geometry | no bubble tail | 1 |
+| removeMessageTail (true) | `MessageDrawable.invalidatePath` branch + cell geometry | no bubble tail | **1 — ported**: `oe-remove-message-tail` hides `.bubble-tail` and restores the corner notch |
 | showResultsBeforeVoting (false) | `ChatMessageCell.isPollResultsPreviewEnabled` | poll results before voting | 1 |
-| hideChannelSearchButton (false) | `ChatActivity.updateBottomOverlay` | channel bottom search button | 1 |
-| hideCallButton (false) | `ChatActivity` menu/icon flags | call button in chat | 1 |
+| hideChannelSearchButton (false) | `ChatActivity.updateBottomOverlay` | channel bottom search button | **1 — ported**: `canHaveSearch` drops the topbar search for broadcasts |
+| hideCallButton (false) | `ChatActivity` menu/icon flags | call button in chat | **1 — ported**: gate in `topbar.ts` `verifyCallButton` (topbar + profile menu) |
 | hideMoneyButton (false) | `ChatAttachAlert` buttons count | wallet tab in attach drawer | 2 |
 | translateInSheet (false) | `ChatActivity` menu → `TranslateAlert2` Neko providers | in-sheet translate flow | 2 |
 | stripTrackingOnOpen / OnPaste (true) | `LinkCleaner.clean` in `Browser.openUrl` / `EditTextCaption` paste wrapper | tracking-param stripping | 1 |

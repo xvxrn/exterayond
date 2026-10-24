@@ -3,6 +3,7 @@ import {render} from 'solid-js/web';
 import {JSX} from 'solid-js';
 import Exteraless from '@components/sidebarLeft/tabs/exteralessTab';
 import ExteralessAppearance from '@components/sidebarLeft/tabs/exteralessAppearanceTab';
+import ExteralessChats from '@components/sidebarLeft/tabs/exteralessChatsTab';
 import {
   OE_DEFAULTS,
   setExteralessSetting,
@@ -16,7 +17,8 @@ const mocks = vi.hoisted(() => ({
     }
   } as any,
   openUrl: vi.fn(),
-  appearanceTabCtor: class AppExteralessAppearanceTab {}
+  appearanceTabCtor: class AppExteralessAppearanceTab {},
+  chatsTabCtor: class AppExteralessChatsTab {}
 }));
 
 vi.mock('@components/solidJsTabs/superTabProvider', () => ({
@@ -26,7 +28,8 @@ vi.mock('@components/solidJsTabs/superTabProvider', () => ({
 vi.mock('@lib/solidjs/hotReloadGuardProvider', () => ({
   hotReloadGuard: {
     tabs: {
-      AppExteralessAppearanceTab: mocks.appearanceTabCtor
+      AppExteralessAppearanceTab: mocks.appearanceTabCtor,
+      AppExteralessChatsTab: mocks.chatsTabCtor
     }
   }
 }));
@@ -59,9 +62,22 @@ vi.mock('@components/rowTsx', () => {
     <div class="row-title">{props.children}<i class="row-title-right">{props.titleRight}</i></div>
   );
   Row.Subtitle = (props: {children: JSX.Element}) => <div class="row-subtitle">{props.children}</div>;
+  Row.CheckboxFieldToggle = (props: {children: JSX.Element}) => (
+    <div class="row-checkbox-toggle">{props.children}</div>
+  );
 
   return {default: Row};
 });
+
+vi.mock('@components/checkboxFieldTsx', () => ({
+  default: (props: {checked: boolean, onChange: (checked: boolean) => void}) => (
+    <input
+      type="checkbox"
+      checked={props.checked}
+      onClick={() => props.onChange(!props.checked)}
+    />
+  )
+}));
 
 vi.mock('@components/rangeSettingSelector', () => ({
   default: (props: {textLeft: JSX.Element, value: number, minValue: number, maxValue: number, onChange: (value: number) => void}) => (
@@ -105,29 +121,39 @@ describe('the exteraless Preferences hub tab', () => {
     document.body.replaceChildren();
   });
 
-  it('renders the Android category structure with honest not-ported marks', () => {    expect(rowIcons()).toEqual([
+  it('renders the Android category structure with honest not-ported marks', () => {
+    expect(rowIcons()).toEqual([
       'general_filled', 'appearance_filled', 'message_filled', 'bots', 'more',
       'channel_filled', 'link', 'brush', 'group_filled'
     ]);
 
     const subtitles = [...document.querySelectorAll<HTMLElement>('.row-subtitle')].map((el) => el.textContent);
-    expect(subtitles.filter((text) => text === 'Exteraless.NotPorted')).toHaveLength(4);
-    // * the Appearance row is the one working category — it has no not-ported mark
+    expect(subtitles.filter((text) => text === 'Exteraless.NotPorted')).toHaveLength(3);
+    // * the two working categories carry no not-ported mark
     expect(rowByIcon('appearance_filled').querySelector('.row-subtitle')).toBeNull();
+    expect(rowByIcon('message_filled').querySelector('.row-subtitle')).toBeNull();
   });
 
   it('marks the sections that are not ported as not clickable', () => {
     expect(rowByIcon('general_filled').dataset.clickable).toBe('false');
     expect(rowByIcon('appearance_filled').dataset.clickable).toBe('true');
+    expect(rowByIcon('message_filled').dataset.clickable).toBe('true');
+    expect(rowByIcon('bots').dataset.clickable).toBe('false');
   });
 
-  it('opens the Appearance tab from its row', () => {
+  it('opens the Appearance and Chats tabs from their rows', () => {
     const created = {open: vi.fn()};
     mocks.tab.slider.createTab.mockReturnValueOnce(created);
 
     rowByIcon('appearance_filled').click();
     expect(mocks.tab.slider.createTab).toHaveBeenCalledWith(mocks.appearanceTabCtor);
     expect(created.open).toHaveBeenCalled();
+
+    const createdChats = {open: vi.fn()};
+    mocks.tab.slider.createTab.mockReturnValueOnce(createdChats);
+    rowByIcon('message_filled').click();
+    expect(mocks.tab.slider.createTab).toHaveBeenCalledWith(mocks.chatsTabCtor);
+    expect(createdChats.open).toHaveBeenCalled();
   });
 
   it('opens the exteraless links and design credits', () => {
@@ -185,5 +211,48 @@ describe('the exteraless Appearance tab', () => {
 
   it('shows three live avatar previews', () => {
     expect(document.querySelectorAll('.exteraless-avatar-preview .avatar')).toHaveLength(3);
+  });
+
+  it('moves a toggle into the store', () => {
+    expect(useExteralessSettings()[0].OEAppearanceSingleCornerRadius).toBe(OE_DEFAULTS.OEAppearanceSingleCornerRadius);
+
+    const checkboxes = [...document.querySelectorAll<HTMLElement>('.row-checkbox-toggle input')] as HTMLInputElement[];
+    // * the first toggle in the Appearance tab is singleCornerRadius
+    checkboxes[0].click();
+    expect(useExteralessSettings()[0].OEAppearanceSingleCornerRadius).toBe(!OE_DEFAULTS.OEAppearanceSingleCornerRadius);
+
+    setExteralessSetting('OEAppearanceSingleCornerRadius', OE_DEFAULTS.OEAppearanceSingleCornerRadius);
+  });
+});
+
+describe('the exteraless Chats tab', () => {
+  let dispose: () => void;
+
+  beforeEach(() => {
+    dispose = mount(() => <ExteralessChats />);
+  });
+
+  afterEach(() => {
+    dispose();
+    document.body.replaceChildren();
+  });
+
+  it('renders the three wired toggles with their labels', () => {
+    const titles = [...document.querySelectorAll<HTMLElement>('.row-title')].map((el) => el.textContent);
+    expect(titles).toEqual([
+      'Exteraless.RemoveMessageTail',
+      'Exteraless.HideCallButton',
+      'Exteraless.HideSearchButton'
+    ]);
+  });
+
+  it('flips a setting from its toggle', () => {
+    expect(useExteralessSettings()[0].OEChatsHideCallButton).toBe(OE_DEFAULTS.OEChatsHideCallButton);
+
+    const checkboxes = [...document.querySelectorAll<HTMLElement>('.row-checkbox-toggle input')] as HTMLInputElement[];
+    checkboxes[1].click();
+    expect(useExteralessSettings()[0].OEChatsHideCallButton).toBe(!OE_DEFAULTS.OEChatsHideCallButton);
+
+    setExteralessSetting('OEChatsHideCallButton', OE_DEFAULTS.OEChatsHideCallButton);
   });
 });

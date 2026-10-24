@@ -268,6 +268,12 @@ export const AppExteralessAppearanceTab =
     getComponentModule: () => import('../sidebarLeft/tabs/exteralessAppearanceTab')
   });
 
+export const AppExteralessChatsTab =
+  scaffoldSolidJSTab({
+    title: 'Exteraless.Chats',
+    getComponentModule: () => import('../sidebarLeft/tabs/exteralessChatsTab')
+  });
+
 
 export const AppChatBackgroundTab =
   scaffoldSolidJSTab({

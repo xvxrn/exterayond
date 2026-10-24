@@ -1252,6 +1252,12 @@ $btn-menu-z-index: 4;
   }
 }
 
+// * exteraless squareFab: the corner floating buttons take the Material
+// * squircle (16 of 56, as a percentage so it follows --size); unset = circle
+.btn-corner.btn-circle {
+  border-radius: var(--oe-fab-radius, 50%);
+}
+
 // * `Button.Tile`: an icon over a short label, one of a row of equal buttons (a profile's header, a
 // * gift's), 58px high as iOS has them; the row gives the colours
 .btn-tile {

@@ -6079,6 +6079,13 @@ const lang = {
   'Exteraless.SectionRadius.Off': 'Off',
   'Exteraless.SectionRadius.Max': 'Max',
   'Exteraless.SectionRadius.StockHint': 'The default value (20) keeps the original Web K radius.',
+  'Exteraless.SingleCornerRadius': 'Single Corner Radius',
+  'Exteraless.SingleCornerRadius.Info': 'Forums will have the same avatar shape as chats.',
+  'Exteraless.SquareFab': 'Square FAB',
+  'Exteraless.SquareFab.Info': 'The floating button takes the Material squircle shape.',
+  'Exteraless.RemoveMessageTail': 'Remove Message Tail',
+  'Exteraless.HideCallButton': 'Hide Call Button',
+  'Exteraless.HideSearchButton': 'Hide Search Button in Channels',
 
   'Apply': 'Apply'
 };

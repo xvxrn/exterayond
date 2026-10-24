@@ -888,6 +888,11 @@ b {
     border-radius: var(--avatar-border-radius-forum);
   }
 
+  // * exteraless singleCornerRadius, same as .avatar.is-forum
+  .oe-single-corner-radius & {
+    border-radius: var(--oe-avatar-radius, var(--avatar-border-radius-forum));
+  }
+
   // * the photo on a tab's edit screen, in a sidebar or in a popup's slider
   .sidebar-slider & {
     width: 120px;

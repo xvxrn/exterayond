@@ -37,16 +37,22 @@ describe('exteraless settings store', () => {
     localStorageStub.clear();
   });
 
-  test('defaults are the Android AppearanceConfig values', async() => {
+  test('defaults are the Android config values', async() => {
     const {OE_DEFAULTS, OE_AVATAR_CORNERS_MAX, OE_SECTION_RADIUS_STOCK, exteralessSettings} = await loadStore();
     expect(OE_DEFAULTS).toEqual({
       OEAppearanceAvatarCorners: 28,
-      OEAppearanceSectionRadius: 20
+      OEAppearanceSectionRadius: 20,
+      OEAppearanceSingleCornerRadius: false,
+      OEAppearanceSquareFab: true,
+      OEChatsRemoveMessageTail: true,
+      OEChatsHideCallButton: false,
+      OEChatsHideChannelSearchButton: false
     });
     expect(OE_AVATAR_CORNERS_MAX).toBe(28);
     expect(OE_SECTION_RADIUS_STOCK).toBe(20);
     expect(exteralessSettings.OEAppearanceAvatarCorners).toBe(28);
     expect(exteralessSettings.OEAppearanceSectionRadius).toBe(20);
+    expect(exteralessSettings.OEChatsRemoveMessageTail).toBe(true);
   });
 
   test('clamps out-of-range and non-finite values', async() => {
@@ -56,6 +62,13 @@ describe('exteraless settings store', () => {
     expect(clampExteralessSetting('OEAppearanceAvatarCorners', 14.6)).toBe(15);
     expect(clampExteralessSetting('OEAppearanceSectionRadius', NaN)).toBe(OE_DEFAULTS.OEAppearanceSectionRadius);
     expect(clampExteralessSetting('OEAppearanceSectionRadius', Infinity)).toBe(OE_DEFAULTS.OEAppearanceSectionRadius);
+  });
+
+  test('boolean settings reject non-boolean values', async() => {
+    const {clampExteralessSetting, OE_DEFAULTS} = await loadStore();
+    expect(clampExteralessSetting('OEChatsHideCallButton', true)).toBe(true);
+    expect(clampExteralessSetting('OEChatsHideCallButton', 1 as any)).toBe(OE_DEFAULTS.OEChatsHideCallButton);
+    expect(clampExteralessSetting('OEChatsRemoveMessageTail', 'yes' as any)).toBe(OE_DEFAULTS.OEChatsRemoveMessageTail);
   });
 
   test('a persisted record is loaded back', async() => {
@@ -73,12 +86,14 @@ describe('exteraless settings store', () => {
     localStorageStub.setItem(STORAGE_KEY, JSON.stringify({
       OEAppearanceAvatarCorners: 500,
       OEAppearanceSectionRadius: 'not a number',
+      OEChatsRemoveMessageTail: 'yes',
       somethingElse: true
     }));
 
     const {exteralessSettings} = await loadStore();
     expect(exteralessSettings.OEAppearanceAvatarCorners).toBe(28);
     expect(exteralessSettings.OEAppearanceSectionRadius).toBe(20);
+    expect(exteralessSettings.OEChatsRemoveMessageTail).toBe(true);
   });
 
   test('garbage storage is ignored', async() => {
@@ -90,9 +105,11 @@ describe('exteraless settings store', () => {
   test('setting a value clamps it and writes the record back', async() => {
     const {setExteralessSetting} = await loadStore();
     setExteralessSetting('OEAppearanceAvatarCorners', 100);
+    setExteralessSetting('OEChatsRemoveMessageTail', false);
     const persisted = JSON.parse(localStorageStub.getItem(STORAGE_KEY));
     expect(persisted.OEAppearanceAvatarCorners).toBe(28);
     expect(persisted.OEAppearanceSectionRadius).toBe(20);
+    expect(persisted.OEChatsRemoveMessageTail).toBe(false);
   });
 });
 
@@ -112,5 +129,48 @@ describe('exteraless CSS mappings', () => {
     expect(sectionRadiusToCss(21)).toBe('21px');
     expect(sectionRadiusToCss(0)).toBe('0px');
     expect(sectionRadiusToCss(28)).toBe('28px');
+  });
+});
+
+describe('exteraless settings application (jsdom)', () => {
+  beforeEach(() => {
+    localStorageStub.clear();
+  });
+
+  // * the store's effect owns the root custom properties and classes; these
+  // * are the runtime contract the SCSS choke points read. Solid runs the
+  // * effect on its own queue, so every write is awaited a tick
+  const flush = () => new Promise((resolve) => setTimeout(resolve, 0));
+
+  test('the effect applies the CSS variables and root classes', async() => {
+    const {setExteralessSetting} = await loadStore();
+    const root = document.documentElement;
+
+    // * Android defaults: circle avatars, squircle FAB, no message tails
+    expect(root.style.getPropertyValue('--oe-avatar-radius')).toBe('50%');
+    expect(root.style.getPropertyValue('--oe-fab-radius')).toBe('28.571%');
+    expect(root.style.getPropertyValue('--oe-section-radius')).toBe('');
+    expect(root.classList.contains('oe-remove-message-tail')).toBe(true);
+    expect(root.classList.contains('oe-single-corner-radius')).toBe(false);
+
+    setExteralessSetting('OEAppearanceAvatarCorners', 7);
+    await flush();
+    expect(root.style.getPropertyValue('--oe-avatar-radius')).toBe('12.5%');
+
+    setExteralessSetting('OEChatsRemoveMessageTail', false);
+    await flush();
+    expect(root.classList.contains('oe-remove-message-tail')).toBe(false);
+
+    setExteralessSetting('OEAppearanceSquareFab', false);
+    await flush();
+    expect(root.style.getPropertyValue('--oe-fab-radius')).toBe('');
+
+    setExteralessSetting('OEAppearanceSingleCornerRadius', true);
+    await flush();
+    expect(root.classList.contains('oe-single-corner-radius')).toBe(true);
+
+    setExteralessSetting('OEAppearanceSectionRadius', 8);
+    await flush();
+    expect(root.style.getPropertyValue('--oe-section-radius')).toBe('8px');
   });
 });

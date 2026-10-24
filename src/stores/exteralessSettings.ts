@@ -6,11 +6,11 @@ import {hotEffect} from '@helpers/hotModule';
  * exteraless Preferences — the `OE*` settings store.
  *
  * Keys, types, defaults and ranges are the Android configs verbatim
- * (`TMessagesProj/src/main/kotlin/app/exteraless/appearance/AppearanceConfig.kt`,
- * read via `git -C .research/android show HEAD:<path>`); the record is a
- * namespaced browser record with no account or session material. Only the
- * settings with a wired web behavior live here — the rest arrive with their
- * slices, classified in docs/exteraless-map.md.
+ * (`TMessagesProj/src/main/kotlin/app/exteraless/`, read via
+ * `git -C .research/android show HEAD:<path>`); the record is a namespaced
+ * browser record with no account or session material. Only the settings with
+ * a wired web behavior live here — the rest arrive with their slices,
+ * classified in docs/exteraless-map.md.
  */
 
 /** Android `AppearanceConfig.AVATAR_CORNERS_MAX`. */
@@ -18,35 +18,58 @@ export const OE_AVATAR_CORNERS_MAX = 28;
 
 /**
  * Android `AppearanceConfig.sectionRadius` default. On the web this is the
- * neutral value: it keeps Web K's own stock section radius, so an untouched
- * exterayond looks exactly like stock tweb.
+ * neutral value: it keeps Web K's own stock section radius, so the slider at
+ * its Android default does not restyle every card on first run.
  */
 export const OE_SECTION_RADIUS_STOCK = 20;
 
+/** Android `UIUtil.fabCornerRadius`: the Material squircle is 16 of a 56 FAB. */
+export const OE_FAB_SQUIRCLE_RADIUS = '28.571%';
+
 export const OE_DEFAULTS = {
   OEAppearanceAvatarCorners: OE_AVATAR_CORNERS_MAX,
-  OEAppearanceSectionRadius: OE_SECTION_RADIUS_STOCK
+  OEAppearanceSectionRadius: OE_SECTION_RADIUS_STOCK,
+  OEAppearanceSingleCornerRadius: false,
+  OEAppearanceSquareFab: true,
+  OEChatsRemoveMessageTail: true,
+  OEChatsHideCallButton: false,
+  OEChatsHideChannelSearchButton: false
 } as const;
 
 export type ExteralessSettingsKey = keyof typeof OE_DEFAULTS;
-export type ExteralessSettings = {[K in ExteralessSettingsKey]: number};
+/** The stored kind of a setting: `number` for sliders, `boolean` for switches. */
+export type ExteralessSettings = {[K in ExteralessSettingsKey]: (typeof OE_DEFAULTS)[K] extends boolean ? boolean : number};
+export type ExteralessSettingValue<K extends ExteralessSettingsKey> = ExteralessSettings[K];
 
-const RANGES: {[K in ExteralessSettingsKey]: readonly [min: number, max: number]} = {
+type NumericKey = {
+  [K in ExteralessSettingsKey]: (typeof OE_DEFAULTS)[K] extends number ? K : never
+}[ExteralessSettingsKey];
+
+const NUMERIC_RANGES: {[K in NumericKey]: readonly [min: number, max: number]} = {
   OEAppearanceAvatarCorners: [0, OE_AVATAR_CORNERS_MAX],
   OEAppearanceSectionRadius: [0, OE_AVATAR_CORNERS_MAX]
 };
 
-const STORAGE_KEY = 'exterayond-exteraless-settings';
+/** A value of the wrong type or out of range falls back like an untrusted import. */
+const clampAnySetting = (key: ExteralessSettingsKey, value: unknown): boolean | number => {
+  const fallback = OE_DEFAULTS[key];
+  if(typeof fallback === 'number') {
+    const [min, max] = NUMERIC_RANGES[key as NumericKey];
+    if(typeof value !== 'number' || !Number.isFinite(value)) {
+      return fallback;
+    }
 
-/** A value out of range (or of the wrong type) is clamped back, like an untrusted import. */
-export const clampExteralessSetting = (key: ExteralessSettingsKey, value: number) => {
-  const [min, max] = RANGES[key];
-  if(!Number.isFinite(value)) {
-    return OE_DEFAULTS[key];
+    return Math.max(min, Math.min(max, Math.round(value)));
   }
 
-  return Math.max(min, Math.min(max, Math.round(value)));
+  return typeof value === 'boolean' ? value : fallback;
 };
+
+export const clampExteralessSetting = <K extends ExteralessSettingsKey>(key: K, value: ExteralessSettingValue<K>): ExteralessSettingValue<K> => {
+  return clampAnySetting(key, value) as ExteralessSettingValue<K>;
+};
+
+const STORAGE_KEY = 'exterayond-exteraless-settings';
 
 const readPersisted = (): Partial<ExteralessSettings> => {
   let raw: string;
@@ -67,15 +90,14 @@ const readPersisted = (): Partial<ExteralessSettings> => {
     return {};
   }
 
-  const out: Partial<ExteralessSettings> = {};
+  const out = {} as Record<ExteralessSettingsKey, boolean | number>;
   if(parsed && typeof parsed === 'object') {
     for(const key of Object.keys(OE_DEFAULTS) as ExteralessSettingsKey[]) {
-      const value = parsed[key];
-      out[key] = clampExteralessSetting(key, typeof value === 'number' ? value : NaN);
+      out[key] = clampAnySetting(key, parsed[key]);
     }
   }
 
-  return out;
+  return out as Partial<ExteralessSettings>;
 };
 
 const persist = (settings: ExteralessSettings) => {
@@ -91,8 +113,8 @@ const [exteralessSettings, setExteralessSettings] = createStore<ExteralessSettin
   ...readPersisted()
 });
 
-/** Sets one setting (clamped) and writes the whole record back. */
-const setExteralessSetting = (key: ExteralessSettingsKey, value: number) => {
+/** Sets one setting (validated) and writes the whole record back. */
+const setExteralessSetting = <K extends ExteralessSettingsKey>(key: K, value: ExteralessSettingValue<K>) => {
   setExteralessSettings({[key]: clampExteralessSetting(key, value)} as Partial<ExteralessSettings>);
   persist(unwrap(exteralessSettings));
 };
@@ -120,19 +142,33 @@ export const sectionRadiusToCss = (radius: number) => {
 };
 
 if(typeof document !== 'undefined') {
-  // * one effect owns the custom properties: every consumer reads them in CSS.
-  // * hotEffect keeps a hot edit of this module from running a second root
+  // * one effect owns the custom properties and the root classes: every
+  // * consumer reads them in CSS. The store's properties are read directly —
+  // * an unwrap() snapshot would track nothing and freeze the effect at its
+  // * first run. hotEffect keeps a hot edit of this module from running a
+  // * second root
   hotEffect(import.meta.hot, () => createRoot((dispose) => {
     createEffect(() => {
-      const {OEAppearanceAvatarCorners, OEAppearanceSectionRadius} = unwrap(exteralessSettings);
-      const style = document.documentElement.style;
-      style.setProperty('--oe-avatar-radius', avatarCornersToRadiusPercent(OEAppearanceAvatarCorners));
-      const sectionRadius = sectionRadiusToCss(OEAppearanceSectionRadius);
+      const {classList, style} = document.documentElement;
+
+      // * every property read here is what the effect tracks
+      style.setProperty('--oe-avatar-radius', avatarCornersToRadiusPercent(exteralessSettings.OEAppearanceAvatarCorners));
+      classList.toggle('oe-single-corner-radius', exteralessSettings.OEAppearanceSingleCornerRadius);
+
+      if(exteralessSettings.OEAppearanceSquareFab) {
+        style.setProperty('--oe-fab-radius', OE_FAB_SQUIRCLE_RADIUS);
+      } else {
+        style.removeProperty('--oe-fab-radius');
+      }
+
+      const sectionRadius = sectionRadiusToCss(exteralessSettings.OEAppearanceSectionRadius);
       if(sectionRadius === undefined) {
         style.removeProperty('--oe-section-radius');
       } else {
         style.setProperty('--oe-section-radius', sectionRadius);
       }
+
+      classList.toggle('oe-remove-message-tail', exteralessSettings.OEChatsRemoveMessageTail);
     });
 
     return dispose;

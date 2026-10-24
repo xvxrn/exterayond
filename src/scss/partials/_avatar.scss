@@ -143,6 +143,12 @@
     border-radius: var(--avatar-border-radius-forum);
   }
 
+  // * exteraless singleCornerRadius: on, forum avatars take the common
+  // * avatarCorners radius instead of their own squircle
+  .oe-single-corner-radius & {
+    border-radius: var(--oe-avatar-radius, var(--avatar-border-radius-forum));
+  }
+
   &.is-monoforum {
     border-bottom-left-radius: 0;
     mask-image: url('/assets/img/monoforum-avatar-mask.svg');

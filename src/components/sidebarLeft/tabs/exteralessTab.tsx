@@ -37,10 +37,9 @@ const Exteraless = () => {
           <Row.Icon icon="appearance_filled" />
           <Row.Title>{i18n('Exteraless.Appearance')}</Row.Title>
         </Row>
-        <Row>
+        <Row clickable={() => tab.slider.createTab(hotReloadGuard.tabs.AppExteralessChatsTab).open()}>
           <Row.Icon icon="message_filled" />
           <Row.Title>{i18n('Exteraless.Chats')}</Row.Title>
-          <Row.Subtitle>{i18n('Exteraless.NotPorted')}</Row.Subtitle>
         </Row>
         <Row>
           <Row.Icon icon="bots" />

@@ -4209,3 +4209,19 @@
     cursor: pointer;
   }
 }
+
+// * exteraless removeMessageTail: the tail and its corner notch both go away,
+// * so every bubble keeps its full rounding — the `:not(.can-have-tail)` look.
+// * Five classes on purpose: the stock notch (`0 !important`, e.g.
+// * `.bubble.is-in.is-group-last.can-have-tail`) has four, and only a higher
+// * specificity beats another !important
+.oe-remove-message-tail {
+  .bubble.is-group-last.can-have-tail,
+  .bubble.is-forced-rounded.can-have-tail {
+    --border-end-start-radius: #{$bubble-border-radius-big} !important;
+  }
+
+  .bubble .bubble-tail {
+    display: none !important;
+  }
+}

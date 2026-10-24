@@ -9,6 +9,7 @@ import ButtonMenuToggle from '@components/buttonMenuToggle';
 import createChatPinnedMessage, {ChatPinnedMessageController} from '@components/chat/pinnedMessage';
 import getPinnedMessagesKey from '@appManagers/utils/messages/getPinnedMessagesKey';
 import ListenerSetter from '@helpers/listenerSetter';
+import {exteralessSettings} from '@stores/exteralessSettings';
 import showDeleteDialogPopup from '@components/popups/deleteDialog';
 import {showPeerReport} from '@components/popups/reportAd';
 import appNavigationController from '@components/appNavigationController';
@@ -401,6 +402,8 @@ export default class ChatTopbar {
   };
 
   private verifyCallButton = async(type?: CallType) => {
+    // * exteraless hideCallButton: off both the topbar and the profile menu
+    if(exteralessSettings.OEChatsHideCallButton) return false;
     if(!IS_CALL_SUPPORTED || !this.peerId.isUser() || this.chat.type !== ChatType.Chat) return false;
     const userId = this.peerId.toUserId();
     const userFull = await this.managers.appProfileManager.getCachedFullUser(userId);
@@ -1366,7 +1369,10 @@ export default class ChatTopbar {
 
     return () => {
       const canHaveSomeButtons = !(this.chat.type === ChatType.Pinned || this.chat.type === ChatType.Scheduled || this.chat.type === ChatType.Welcome || this.chat.type === ChatType.Static || this.chat.type === ChatType.Logs);
-      const canHaveSearch = canHaveSomeButtons || this.chat.type === ChatType.Logs;
+      // * exteraless hideChannelSearchButton: the search button leaves a
+      // * broadcast's topbar (Android's channel bottom-overlay search)
+      const canHaveSearch = (canHaveSomeButtons || this.chat.type === ChatType.Logs) &&
+        !(exteralessSettings.OEChatsHideChannelSearchButton && this.chat.isBroadcast);
 
       if(this.btnSearch) {
         this.btnSearch.classList.toggle('hide', !canHaveSearch);

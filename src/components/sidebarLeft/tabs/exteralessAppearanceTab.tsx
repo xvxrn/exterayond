@@ -1,5 +1,7 @@
+import Row from '@components/rowTsx';
 import Section from '@components/section';
 import RangeSettingSelector from '@components/rangeSettingSelector';
+import CheckboxFieldTsx from '@components/checkboxFieldTsx';
 import {i18n} from '@lib/langPack';
 import {
   OE_AVATAR_CORNERS_MAX,
@@ -7,10 +9,10 @@ import {
 } from '@stores/exteralessSettings';
 
 /**
- * The Appearance category of the exteraless Preferences hub. Each slider is a
- * ported Android setting with its behavior wired into Web K (the CSS choke
- * points named in src/stores/exteralessSettings.ts); the sliders' ranges,
- * defaults and end labels follow `OpenExteraAppearanceActivity`.
+ * The Appearance category of the exteraless Preferences hub. Every control is
+ * a ported Android setting with its behavior wired into Web K (the CSS choke
+ * points named in src/stores/exteralessSettings.ts); ranges, defaults and
+ * labels follow `OpenExteraAppearanceActivity`.
  */
 const ExteralessAppearance = () => {
   const [exteralessSettings, setExteralessSetting] = useExteralessSettings();
@@ -42,6 +44,17 @@ const ExteralessAppearance = () => {
           maxValue={OE_AVATAR_CORNERS_MAX}
           onChange={(value) => setExteralessSetting('OEAppearanceAvatarCorners', value)}
         />
+        <Row>
+          <Row.CheckboxFieldToggle>
+            <CheckboxFieldTsx
+              toggle
+              checked={exteralessSettings.OEAppearanceSingleCornerRadius}
+              onChange={(value) => setExteralessSetting('OEAppearanceSingleCornerRadius', value)}
+            />
+          </Row.CheckboxFieldToggle>
+          <Row.Title>{i18n('Exteraless.SingleCornerRadius')}</Row.Title>
+          <Row.Subtitle>{i18n('Exteraless.SingleCornerRadius.Info')}</Row.Subtitle>
+        </Row>
       </Section>
       <Section caption="Exteraless.SectionRadius.StockHint">
         <RangeSettingSelector
@@ -53,6 +66,19 @@ const ExteralessAppearance = () => {
           maxValue={OE_AVATAR_CORNERS_MAX}
           onChange={(value) => setExteralessSetting('OEAppearanceSectionRadius', value)}
         />
+      </Section>
+      <Section>
+        <Row>
+          <Row.CheckboxFieldToggle>
+            <CheckboxFieldTsx
+              toggle
+              checked={exteralessSettings.OEAppearanceSquareFab}
+              onChange={(value) => setExteralessSetting('OEAppearanceSquareFab', value)}
+            />
+          </Row.CheckboxFieldToggle>
+          <Row.Title>{i18n('Exteraless.SquareFab')}</Row.Title>
+          <Row.Subtitle>{i18n('Exteraless.SquareFab.Info')}</Row.Subtitle>
+        </Row>
       </Section>
     </>
   );

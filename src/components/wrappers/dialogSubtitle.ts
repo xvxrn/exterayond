@@ -7,7 +7,6 @@ import type {
 import type {WrapRichTextOptions} from '@lib/richTextProcessor/wrapRichText';
 import rootScope from '@lib/rootScope';
 import {i18n} from '@lib/langPack';
-import {avatarNew} from '@components/avatarNew';
 import type {Middleware} from '@helpers/middleware';
 import {exteralessSettings} from '@stores/exteralessSettings';
 
@@ -119,15 +118,19 @@ export default async function renderDialogSubtitleParts(options: {
         // * exteraless senderMiniAvatars: the sender's mini avatar in front of
         // * the name (DialogCell.addSenderAvatar) — own messages say "You"
         if(exteralessSettings.OEAppearanceSenderMiniAvatars) {
-          const mini = avatarNew({
-            peerId: lastMessage.fromId,
-            size: 20,
+          void import('@components/avatarNew').then(({avatarNew}) => {
             // * the option holds a full middleware at runtime (setLastMessage
             // * passes setPromiseMiddleware's), only the type is the wrapper
-            middleware: middleware as unknown as Middleware
+            const alive = middleware as unknown as Middleware;
+            if(!alive || !alive()) return;
+            const mini = avatarNew({
+              peerId: lastMessage.fromId,
+              size: 20,
+              middleware: alive
+            });
+            mini.node.classList.add('dialog-sender-mini-avatar');
+            span.prepend(mini.node);
           });
-          mini.node.classList.add('dialog-sender-mini-avatar');
-          span.prepend(mini.node);
         }
         return span;
       });

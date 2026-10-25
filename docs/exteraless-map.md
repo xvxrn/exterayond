@@ -18,11 +18,21 @@ replyColors, replyEmoji, replyBackground, showResultsBeforeVoting,
 hideReactionsChannels/Groups/Private, bottomButton, alwaysSendInHD,
 stripTrackingOnOpen/OnPaste, pauseOnMinimizeVoice/Round, relativeLastSeen,
 addCommaAfterMention, glassMessageMenu, newChatHeaderStyle (the flat-header
-half). General, Appearance, Chats and Other tabs are live; the Other tab
+half). General, Appearance, Chats, Plugins and Other tabs are all live — the hub is
+complete (About header, categories, links, design credits). The Other tab
 carries the `.extera` backup import/export (EtgBackup byte-port: sections,
 InvisibleEncryptor, the exteraGram mapping table with Android range rules,
-unsupported-key reporting). The hub renders the Android About header,
-categories, links and design credits; Plugins is the remaining category.
+unsupported-key reporting, the plugin flags with web targets). The Plugins
+tab is the plugin contract's management surface: static metadata parsing
+(`metadata_parser.py` port, literal-only), records and payloads in
+namespaced storage under the Android pref names, the nine-permission model
+with the consent record and ISOLATED/GATED/TRUSTED clamping, the elyx JS
+facade (base_plugin, onAppEvent, message-menu items, ui/alert, ui/bulletin,
+per-plugin settings, gated send_request), the settings-models screen, safe
+mode with the watchdog's strike counter, and the message context menu
+extension point. Python payloads are stored and inspectable but surface as
+unsupported — the browser has no Python runtime; JS plugins are the web
+engine of the same contract.
 
 More verdicts since the first pass:
 - `hideCameraTile` — web N/A: K's attach UI has no camera tile to hide.
@@ -34,8 +44,18 @@ More verdicts since the first pass:
 - `wideChannelPosts` / `wideFeedPosts` — deferred: ~15 bubble layout sites,
   a dedicated slice.
 - drawer trio (`navigationDrawer`, `mainMenuLayout`,
-  `immersiveDrawerAnimation`) — deferred: K's left sidebar is the analog;
-  the menu reorder needs its own slice.
+  `immersiveDrawerAnimation`) — `navigationDrawer` is web N/A (the left
+  sidebar is permanent, there is no toggle to make); the menu reorder and
+  the drawer animation are deferred slices.
+- `m3ListItems` / `newLoadingStyle` — deferred design work (M3 row metrics,
+  M3 spinners); restyles this broad need a verifiable screenshot pass.
+- `gooeyAvatarAnimation` — deferred: K's profile has no pull-stretch to
+  gate; the effect would be new animation logic, not a port.
+- `dividerStyle` — stays as mapped: Web K has no inner row hairlines, only
+  the section-card look corresponds.
+- `PillStack` — a system, not a setting: the strip needs a K search-field
+  host plus the fetchers (cache/proxy/rates/weather); ram/cpu/netspeed stay
+  class 3.
 
 Corrections since the first pass:
 - `keepAttachButton` — web N/A: Web K's composer never morphs the attach

@@ -55,6 +55,7 @@
       "@components/*": ["./src/components/*"],
       "@helpers/*": ["./src/helpers/*"],
       "@hooks/*": ["./src/hooks/*"],
+      "@plugins/*": ["./src/plugins/*"],
       "@stores/*": ["./src/stores/*"],
       "@lib/*": ["./src/lib/*"],
       "@appManagers/*": ["./src/lib/appManagers/*"],

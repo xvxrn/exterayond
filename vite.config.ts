@@ -166,6 +166,7 @@ const ADDITIONAL_ALIASES = {
   '@helpers': resolve(rootDir, 'src/helpers'),
   '@hooks': resolve(rootDir, 'src/hooks'),
   '@stores': resolve(rootDir, 'src/stores'),
+  '@plugins': resolve(rootDir, 'src/plugins'),
   '@lib': resolve(rootDir, 'src/lib'),
   '@appManagers': resolve(rootDir, 'src/lib/appManagers'),
   '@richTextProcessor': resolve(rootDir, 'src/lib/richTextProcessor'),

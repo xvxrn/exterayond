@@ -30,6 +30,7 @@ import {AppManagers} from '@lib/managers';
 import positionMenu, {MenuPositionPadding, positionFloatingMenu} from '@helpers/positionMenu';
 import {getAppWindow, getOverlayRoot} from '@helpers/appWindow';
 import contextMenuController from '@helpers/contextMenuController';
+import {pluginsRuntime} from '@plugins/runtime';
 import {attachContextMenuListener} from '@helpers/dom/attachContextMenuListener';
 import {getLinkFirstChild, holdLinkPlate} from '@helpers/dom/linkPress';
 import filterAsync from '@helpers/array/filterAsync';
@@ -1734,7 +1735,11 @@ export default class ChatContextMenu {
     this.setButtons();
 
     const filteredButtons = await this.filterButtons(this.buttons);
-    if(!filteredButtons.length) {
+    // * the plugins' extension point: items registered through the elyx facade
+    // * ride after the stock ones (MenuInjector's analog)
+    const pluginMenuItems = pluginsRuntime.menuItemsFor();
+
+    if(!filteredButtons.length && !pluginMenuItems.length) {
       return;
     }
 
@@ -1744,6 +1749,30 @@ export default class ChatContextMenu {
     });
     element.id = 'bubble-contextmenu';
     element.classList.add('contextmenu');
+
+    if(pluginMenuItems.length) {
+      if(filteredButtons.length) {
+        element.append(document.createElement('hr'));
+      }
+
+      for(const item of pluginMenuItems) {
+        const button = document.createElement('button');
+        button.className = 'btn-menu-item rp-overflow' + (item.red ? ' danger' : '');
+        if(item.icon) {
+          button.append(Icon(item.icon as Icon, 'btn-menu-item-icon'));
+        }
+
+        const textElement = document.createElement('div');
+        textElement.classList.add('btn-menu-item-text');
+        textElement.textContent = item.text;
+        button.append(textElement);
+        attachClickEvent(button, () => {
+          contextMenuController.close();
+          item.onClick();
+        }, {listenerSetter: this.listenerSetter});
+        element.append(button);
+      }
+    }
 
     const viewsButton = filteredButtons.find((button) => button.localName === 'views');
     if(viewsButton && this.peerId.isUser()) {

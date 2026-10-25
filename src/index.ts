@@ -27,6 +27,7 @@ import '@lib/polyfill';
 // * Dynamic: a static import would put the store into the page's
 // * reload-on-edit set (scripts/import-graph.mjs) for nothing
 void import('@stores/exteralessSettings');
+void import('@plugins/runtime').then(({pluginsRuntime}) => pluginsRuntime.loadAll());
 import '@lib/debug/mountLogExport'; // main-thread-only: wires window.downloadLogs / collectLogs
 import '@lib/debug/memoryReport'; // main-thread-only: wires window.memoryReport
 import '@lib/debug/memoryWatch'; // main-thread-only: wires window.memoryWatch (crash-proof memory series)

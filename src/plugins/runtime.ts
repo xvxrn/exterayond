@@ -249,3 +249,7 @@ export const pluginsRuntime = {
   /** The permission keys, re-exported for the install dialog. */
   ALL_PERMISSIONS
 };
+
+// * a self-accepting module, like the other singletons: an edit hot-updates it
+// * (the boot loads it for the plugins' start), instead of reloading the page
+if(import.meta.hot) import.meta.hot.accept();

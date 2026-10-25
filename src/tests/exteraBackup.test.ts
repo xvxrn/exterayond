@@ -94,6 +94,17 @@ describe('exteraless .extera backup (EtgBackup contract)', () => {
     expect(result.unsupported).toContain('stickerTimeMode');
   });
 
+  it('carries the plugin flags with web targets', () => {
+    const backup = etgBackup.buildBackup(false, exteralessSettings as typeof OE_DEFAULTS & Record<string, boolean | number>);
+    const parsed = JSON.parse(backup);
+    expect(typeof parsed.exteraconfig.pluginsSafeMode).toBe('boolean');
+    expect(typeof parsed.exteraconfig.pluginsDevMode).toBe('boolean');
+
+    const result = applyExteraBackup({exteraconfig: {pluginsSafeMode: true, pluginsDevMode: true}});
+    expect(result.applied).toBe(2);
+    expect(localStorage.getItem('pluginsSafeMode')).toBe('true');
+  });
+
   it('names files like the Android client does', () => {
     expect(etgBackup.generateBackupName()).toMatch(/^exteraless-[A-Za-z0-9]{4}\.extera$/);
     expect(EXTENSION).toBe('.extera');

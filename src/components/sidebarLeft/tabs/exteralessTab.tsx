@@ -40,10 +40,9 @@ const Exteraless = () => {
           <Row.Icon icon="message_filled" />
           <Row.Title>{i18n('Exteraless.Chats')}</Row.Title>
         </Row>
-        <Row>
+        <Row clickable={() => tab.slider.createTab(hotReloadGuard.tabs.AppExteralessPluginsTab).open()}>
           <Row.Icon icon="bots" />
           <Row.Title>{i18n('Exteraless.Plugins')}</Row.Title>
-          <Row.Subtitle>{i18n('Exteraless.NotPorted')}</Row.Subtitle>
         </Row>
         <Row clickable={() => tab.slider.createTab(hotReloadGuard.tabs.AppExteralessOtherTab).open()}>
           <Row.Icon icon="more" />

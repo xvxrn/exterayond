@@ -128,11 +128,12 @@ describe('the exteraless Preferences hub tab', () => {
     ]);
 
     const subtitles = [...document.querySelectorAll<HTMLElement>('.row-subtitle')].map((el) => el.textContent);
-    expect(subtitles.filter((text) => text === 'Exteraless.NotPorted')).toHaveLength(1);
-    // * the working categories carry no not-ported mark
+    expect(subtitles.filter((text) => text === 'Exteraless.NotPorted')).toHaveLength(0);
+    // * every category is live
     expect(rowByIcon('general_filled').querySelector('.row-subtitle')).toBeNull();
     expect(rowByIcon('appearance_filled').querySelector('.row-subtitle')).toBeNull();
     expect(rowByIcon('message_filled').querySelector('.row-subtitle')).toBeNull();
+    expect(rowByIcon('bots').querySelector('.row-subtitle')).toBeNull();
     expect(rowByIcon('more').querySelector('.row-subtitle')).toBeNull();
   });
 
@@ -141,7 +142,7 @@ describe('the exteraless Preferences hub tab', () => {
     expect(rowByIcon('appearance_filled').dataset.clickable).toBe('true');
     expect(rowByIcon('message_filled').dataset.clickable).toBe('true');
     expect(rowByIcon('more').dataset.clickable).toBe('true');
-    expect(rowByIcon('bots').dataset.clickable).toBe('false');
+    expect(rowByIcon('bots').dataset.clickable).toBe('true');
   });
 
   it('opens the Appearance and Chats tabs from their rows', () => {

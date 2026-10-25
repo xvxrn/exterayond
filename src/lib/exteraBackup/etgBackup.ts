@@ -12,6 +12,7 @@
  */
 import {OE_DEFAULTS, clampExteralessSetting, exteralessSettings, setExteralessSetting} from '@stores/exteralessSettings';
 import type {ExteralessSettingsKey} from '@stores/exteralessSettings';
+import {PLUGINS_DEVELOPER_MODE_KEY, pluginsManager} from '@plugins/manager';
 import {invisibleEncryptor} from './invisibleEncryptor';
 
 export const EXTENSION = '.extera';
@@ -62,8 +63,9 @@ export const KNOWN_UNSUPPORTED_KEYS: string[] = [
   'newSliderStyle', 'newSwitchStyle', 'dividerStyle', 'bottomNavigationBarMode',
   'unlimitedRecentStickers', 'quickAdminShortcuts', 'mainMenuLayout', 'mainMenuHiddenItems',
   'tabCounter', 'targetLang',
-  // plugins travel separately but the .extera may carry their flags
-  'pluginsSafeMode', 'pluginsDevMode', 'pluginsCompactView', 'pluginsDisableArtOpts',
+  // * the plugin flags with a web target moved to SUPPORTED; the two without
+  // * one (compact view, art options) stay recognized-but-unsupported
+  'pluginsCompactView', 'pluginsDisableArtOpts',
   // mainconfig (NagramX)
   'ChatSwipeAction', 'mediaColumnsCount', 'bubbleRadius', 'fons_size'
 ];
@@ -102,6 +104,34 @@ const SUPPORTED: SupportedEntry[] = [
   {section: SECTION_EXTERA, key: 'avatarCorners', kind: 'float', min: 0, max: 28, storeKey: 'OEAppearanceAvatarCorners'},
   {section: SECTION_EXTERA, key: 'sectionRadius', kind: 'float', min: 0, max: 28, storeKey: 'OEAppearanceSectionRadius'}
 ];
+
+/**
+ * The plugin flags with a web target travel inside the backup but live in the
+ * plugin manager's own storage, not the settings store (PluginsConstants).
+ */
+const PLUGIN_FLAG_KEYS = ['pluginsSafeMode', 'pluginsDevMode'] as const;
+
+const readPluginFlag = (key: typeof PLUGIN_FLAG_KEYS[number]): boolean =>
+  key === 'pluginsSafeMode' ?
+    pluginsManager.isSafeMode() :
+    (() => {
+      try {
+        return globalThis.localStorage?.getItem(PLUGINS_DEVELOPER_MODE_KEY) === 'true';
+      } catch(e) {
+        return false;
+      }
+    })();
+
+const applyPluginFlag = (key: typeof PLUGIN_FLAG_KEYS[number], value: boolean): void => {
+  if(key === 'pluginsSafeMode') {
+    pluginsManager.setSafeMode(value);
+    return;
+  }
+
+  try {
+    globalThis.localStorage?.setItem(PLUGINS_DEVELOPER_MODE_KEY, value ? 'true' : 'false');
+  } catch(e) {}
+};
 
 export type ReadBackupResult = {
   root: Record<string, Record<string, unknown>>,
@@ -151,6 +181,9 @@ export const etgBackup = {
 
       (root[entry.section] ??= {})[entry.key] = value;
     }
+
+    (root[SECTION_EXTERA] ??= {})['pluginsSafeMode'] = readPluginFlag('pluginsSafeMode');
+    (root[SECTION_EXTERA] ??= {})['pluginsDevMode'] = readPluginFlag('pluginsDevMode');
 
     const json = JSON.stringify(root, null, 2);
     return encrypt ? invisibleEncryptor.encode(json) : json;
@@ -241,6 +274,17 @@ export const etgBackup = {
       applied++;
     }
 
+    // * the plugin flags: applied to the manager, counted like the rest
+    const extera = sectionOf(root, SECTION_EXTERA);
+    if(extera) {
+      for(const key of PLUGIN_FLAG_KEYS) {
+        const value = extera[key];
+        if(typeof value === 'boolean') {
+          applyPluginFlag(key, value);
+          applied++;
+        }
+      }
+    }
     for(const key of KNOWN_UNSUPPORTED_KEYS) {
       if(
         sectionOf(root, SECTION_EXTERA)?.[key] !== undefined ||

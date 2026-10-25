@@ -14,7 +14,14 @@ export default function appendPermissionsPeerDialog(options: {
 }) {
   const container = document.createElement('div');
   container.classList.add('chatlist-container');
-  options.content.insertBefore(container, options.title);
+  // * exteraless separateHeaders: the section's name can float outside the
+  // * card, so a title that is not a child of the content any more means the
+  // * row goes first inside the content — the same visual place
+  if(options.title.parentElement === options.content) {
+    options.content.insertBefore(container, options.title);
+  } else {
+    options.content.prepend(container);
+  }
 
   const list = hotReloadGuard.appDialogsManager.createChatList({new: true});
   container.append(list);

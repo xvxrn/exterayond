@@ -97,16 +97,19 @@ describe('chat list contacts placeholder', () => {
     const container = placeholder.element;
     expect(container.className).toBe('sidebar-left-section-container sidebar-left-contacts-section');
 
-    const inner = container.firstElementChild;
+    // * exteraless separateHeaders: the header floats free above the card
+    const name = container.children[0];
+    expect(name.className).toBe('sidebar-left-h2 sidebar-left-section-name is-separated');
+    expect(name.textContent).toBe('Contacts');
+
+    const inner = container.children[1];
     expect(inner.className).toBe('sidebar-left-section no-delimiter');
     // the gradient band separates the section from the chat list above it
     expect(inner.firstElementChild.className).toBe('gradient-delimiter');
 
     const content = inner.children[1];
     expect(content.className).toBe('sidebar-left-section-content');
-    expect(content.firstElementChild.className).toBe('sidebar-left-h2 sidebar-left-section-name');
-    expect(content.firstElementChild.textContent).toBe('Contacts');
-    expect(content.children[1]).toBe(entry.list);
+    expect(content.firstElementChild).toBe(entry.list);
   });
 
   it('stays hidden until a contact passes the filter', async() => {

@@ -1929,7 +1929,14 @@ class TiptapChatInputEditor implements ChatInputEditor {
           // * plain-text paste (LinkCleaner's paste wrapper). Rich pastes pass
           // * through untouched — there are no URL spans to clean there.
           const plainText = event.clipboardData?.getData('text/plain');
-          if(exteralessSettings.OEChatsStripTrackingOnPaste && plainText && !event.clipboardData?.getData('text/html')) {
+          // * only a text that actually carries a link is taken over — a plain
+          // * TSV table or a word must keep the normal paste path
+          if(
+            exteralessSettings.OEChatsStripTrackingOnPaste &&
+            plainText &&
+            !event.clipboardData?.getData('text/html') &&
+            /(?:https?:\/\/|www\.)/.test(plainText)
+          ) {
             void import('@lib/linkCleaner').then(async({cleanLinksInText}) => {
               const cleaned = await cleanLinksInText(plainText, 'paste');
               if(cleaned === plainText) return;

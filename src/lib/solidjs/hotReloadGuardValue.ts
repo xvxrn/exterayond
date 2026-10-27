@@ -36,6 +36,7 @@ import showStarGiftInfoPopup from '@components/popups/starGiftInfo';
 import showStarsRatingPopup from '@components/popups/starsRating';
 import showStarsPopup from '@components/popups/stars';
 import showToggleReadDatePopup from '@components/popups/toggleReadDate';
+import showMd3Player from '@components/popups/md3Player';
 import {setQuizHint} from '@components/quizHint';
 import Row from '@components/rowTsx';
 import appSidebarLeft from '@components/sidebarLeft';
@@ -111,6 +112,7 @@ registerHotReloadGuard({
   i18n,
   join,
   showToggleReadDatePopup,
+  showMd3Player,
   wrapSticker,
   wrapTopicNameButton,
   wrapRichText,

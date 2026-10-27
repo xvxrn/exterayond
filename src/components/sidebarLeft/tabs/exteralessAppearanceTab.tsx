@@ -5,6 +5,8 @@ import CheckboxFieldTsx from '@components/checkboxFieldTsx';
 import {i18n} from '@lib/langPack';
 import {
   OE_AVATAR_CORNERS_MAX,
+  getMd3StyleCount,
+  setAllMd3Styles,
   useExteralessSettings
 } from '@stores/exteralessSettings';
 
@@ -16,6 +18,17 @@ import {
  */
 const ExteralessAppearance = () => {
   const [exteralessSettings, setExteralessSetting] = useExteralessSettings();
+
+  const md3Styles = [
+    ['OEAppearanceNewLoadingStyle', 'Exteraless.Md3.ProgressIndicators'],
+    ['SliderStyle', 'Exteraless.Md3.Sliders'],
+    ['SwitchStyle', 'Exteraless.Md3.Switches'],
+    ['OEAppearanceNewChatHeaderStyle', 'Exteraless.NewChatHeaderStyle'],
+    ['OEAppearanceNewNavigationBarStyle', 'Exteraless.Md3.Navigation'],
+    ['OEAppearanceM3ListItems', 'Exteraless.Md3.ListItems'],
+    ['OEAppearanceMd3Player', 'Exteraless.Md3.Player'],
+    ['OEAppearanceMd3MiniPlayer', 'Exteraless.Md3.MiniPlayer']
+  ] as const;
 
   const avatarCornersLabel = (value: number) => {
     if(value === OE_AVATAR_CORNERS_MAX) {
@@ -29,6 +42,33 @@ const ExteralessAppearance = () => {
 
   return (
     <>
+      <Section name="Exteraless.Md3" caption="Exteraless.Md3.Info">
+        <Row>
+          <Row.CheckboxFieldToggle>
+            <CheckboxFieldTsx toggle checked={getMd3StyleCount() > 0} onChange={setAllMd3Styles} />
+          </Row.CheckboxFieldToggle>
+          <Row.Title>{i18n('Exteraless.Md3')}</Row.Title>
+          <Row.Subtitle>{getMd3StyleCount()}/8</Row.Subtitle>
+        </Row>
+        <details class="exterayond-md3-options">
+          <summary>{i18n('Exteraless.Md3.Customize')}</summary>
+          {md3Styles.map(([key, label]) => (
+            <Row>
+              <Row.CheckboxFieldToggle>
+                <CheckboxFieldTsx
+                  toggle
+                  checked={key === 'SliderStyle' ? exteralessSettings[key] === 2 : key === 'SwitchStyle' ? exteralessSettings[key] >= 2 : exteralessSettings[key]}
+                  onChange={(enabled) => {
+                    if(key === 'SliderStyle' || key === 'SwitchStyle') setExteralessSetting(key, enabled ? key === 'SwitchStyle' ? 3 : 2 : 0);
+                    else setExteralessSetting(key, enabled);
+                  }}
+                />
+              </Row.CheckboxFieldToggle>
+              <Row.Title>{i18n(label)}</Row.Title>
+            </Row>
+          ))}
+        </details>
+      </Section>
       <Section name="Exteraless.AvatarCorners">
         <div class="exteraless-avatar-preview">
           <div class="avatar avatar-gradient" data-color="red" />
@@ -54,6 +94,16 @@ const ExteralessAppearance = () => {
           </Row.CheckboxFieldToggle>
           <Row.Title>{i18n('Exteraless.SingleCornerRadius')}</Row.Title>
           <Row.Subtitle>{i18n('Exteraless.SingleCornerRadius.Info')}</Row.Subtitle>
+        </Row>
+        <Row>
+          <Row.CheckboxFieldToggle>
+            <CheckboxFieldTsx
+              toggle
+              checked={exteralessSettings.OEAppearanceSenderMiniAvatars}
+              onChange={(value) => setExteralessSetting('OEAppearanceSenderMiniAvatars', value)}
+            />
+          </Row.CheckboxFieldToggle>
+          <Row.Title>{i18n('Exteraless.SenderMiniAvatars')}</Row.Title>
         </Row>
       </Section>
       <Section caption="Exteraless.SectionRadius.StockHint">
@@ -108,16 +158,7 @@ const ExteralessAppearance = () => {
             />
           </Row.CheckboxFieldToggle>
           <Row.Title>{i18n('Exteraless.HideActionBarStatus')}</Row.Title>
-        </Row>
-        <Row>
-          <Row.CheckboxFieldToggle>
-            <CheckboxFieldTsx
-              toggle
-              checked={exteralessSettings.OEAppearanceNewChatHeaderStyle}
-              onChange={(value) => setExteralessSetting('OEAppearanceNewChatHeaderStyle', value)}
-            />
-          </Row.CheckboxFieldToggle>
-          <Row.Title>{i18n('Exteraless.NewChatHeaderStyle')}</Row.Title>
+          <Row.Subtitle>{i18n('Exteraless.HideActionBarStatus.Info')}</Row.Subtitle>
         </Row>
         <Row>
           <Row.CheckboxFieldToggle>

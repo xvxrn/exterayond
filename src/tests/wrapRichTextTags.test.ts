@@ -2,6 +2,8 @@ import {describe, expect, test, vi} from 'vitest';
 import {MessageEntity} from '@layer';
 import {getMiddleware} from '@helpers/middleware';
 import wrapRichText from '@lib/richTextProcessor/wrapRichText';
+import wrapEmojiText from '@lib/richTextProcessor/wrapEmojiText';
+import {setExteralessSetting} from '@stores/exteralessSettings';
 
 vi.mock('@lib/apiManagerProxy', () => ({default: {addEventListener: () => {}, getState: () => Promise.resolve({})}}));
 
@@ -113,5 +115,67 @@ describe('wrapRichText blockquote line boundaries', () => {
       {_: 'messageEntityLinebreak', offset: 13, length: 1}
     ]});
     expect([...fragment.childNodes].filter(node => node.nodeType === Node.TEXT_NODE).map(node => node.textContent).join('')).toBe('first\n\nlast');
+  });
+});
+
+describe('Zalgo display filter', () => {
+  const marks = '\u0301\u0302\u0303\u0304';
+  beforeEach(() => setExteralessSetting('ZalgoFilter', true));
+  afterEach(() => setExteralessSetting('ZalgoFilter', false));
+
+  test('keeps stock text when off and follows Android trigger/length limits when on', () => {
+    const text = 'A' + marks + ' e\u0301';
+    setExteralessSetting('ZalgoFilter', false);
+    expect(wrapRichText(text, {entities: []}).textContent).toBe(text);
+    setExteralessSetting('ZalgoFilter', true);
+    expect(wrapRichText(text, {entities: []}).textContent).toBe('A e');
+    for(const untouched of ['e\u0301', 'A\u0301\u0302\u0303', 'x'.repeat(2045) + marks]) {
+      expect(wrapRichText(untouched, {entities: []}).textContent).toBe(untouched);
+    }
+    expect(wrapRichText('x'.repeat(2044) + marks, {entities: []}).textContent).toBe('x'.repeat(2044));
+  });
+
+  test('handles a mark run split by entities without moving later link offsets or targets', () => {
+    const text = 'A' + marks + ' link tail';
+    const target = 'https://example.invalid/' + marks;
+    const entities: MessageEntity[] = [
+      {_: 'messageEntityBold', offset: 0, length: 3},
+      {_: 'messageEntityItalic', offset: 3, length: 2},
+      {_: 'messageEntityTextUrl', offset: 6, length: 4, url: target}
+    ];
+    const original = JSON.stringify(entities);
+    const fragment = wrapRichText(text, {entities});
+    expect(fragment.textContent).toBe('A link tail');
+    expect(fragment.querySelector('strong').textContent).toBe('A');
+    expect(fragment.querySelector('a').textContent).toBe('link');
+    expect(fragment.querySelector('a').href).toBe(new URL(target).href);
+    expect(JSON.stringify(entities)).toBe(original);
+  });
+
+  test('filters names through the existing emoji wrapper but leaves drafts unchanged', () => {
+    const text = 'Name' + marks;
+    expect(wrapEmojiText(text).textContent).toBe('Name');
+    expect(wrapRichText(text, {wrappingDraft: true, entities: []}).textContent).toBe(text);
+    expect(wrapEmojiText(text, true).textContent).toBe(text);
+  });
+
+  test('filters nested formatting, spoilers and displayed code before async highlighting', async() => {
+    const text = 'A' + marks + ' tail';
+    const nested = wrapRichText(text, {entities: [
+      {_: 'messageEntityBold', offset: 0, length: text.length},
+      {_: 'messageEntityItalic', offset: 0, length: 5}
+    ]});
+    expect(nested.textContent).toBe('A tail');
+    expect(nested.querySelector('strong em').textContent).toBe('A');
+    const spoiler = wrapRichText(text, {entities: [{_: 'messageEntitySpoiler', offset: 0, length: text.length}]});
+    expect(spoiler.querySelector('.spoiler-text').textContent).toBe('A tail');
+
+    codeMocks.highlightCode.mockResolvedValueOnce('<b>A tail</b>');
+    const code = wrapRichText(text, {entities: [{_: 'messageEntityPre', offset: 0, length: text.length, language: 'ts'}]}).querySelector('code');
+    expect(code.textContent).toBe('A tail');
+    expect(codeMocks.highlightCode).toHaveBeenLastCalledWith('A tail', 'TypeScript');
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(code.innerHTML).toBe('<b>A tail</b>');
   });
 });

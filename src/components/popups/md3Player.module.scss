@@ -1,0 +1,100 @@
+@use "../../scss/shared" as *;
+
+.popup :global(.popup-container) {
+  width: min(420px, calc(100vw - 48px));
+  max-width: 420px;
+  border-radius: 28px;
+  background: color-mix(in srgb, var(--primary-color) 5%, var(--surface-color));
+}
+
+.content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+  padding: 8px 24px 24px;
+}
+
+.cover {
+  position: relative;
+  width: min(280px, 100%);
+  aspect-ratio: 1;
+  border-radius: 28px;
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+  color: var(--primary-color);
+  background: color-mix(in srgb, var(--primary-color) 16%, var(--surface-color));
+  font-size: 72px;
+}
+
+.artwork {
+  position: absolute;
+  inset: 0;
+
+  :global(img) {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+}
+
+.metadata {
+  text-align: center;
+  width: 100%;
+  overflow-wrap: anywhere;
+
+  h2 {
+    font-size: 22px;
+    line-height: 1.25;
+    margin: 0 0 8px;
+  }
+
+  p {
+    color: var(--secondary-text-color);
+    margin: 0;
+  }
+}
+
+.timeline {
+  width: 100%;
+
+  :global(.progress-line) {
+    --height: 8px;
+    --thumb-size: 3px;
+
+    :global(.progress-line__filled:after) {
+      height: 24px;
+      top: -8px;
+      border-radius: 2px;
+    }
+  }
+}
+
+.times {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 12px;
+  color: var(--secondary-text-color);
+  font-size: var(--font-size-12);
+  font-variant-numeric: tabular-nums;
+}
+
+.transport {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+
+.play {
+  width: 64px;
+  height: 64px;
+  border-radius: 20px;
+  background: var(--primary-color);
+  color: var(--white);
+}
+
+.active {
+  color: var(--primary-color);
+  background: color-mix(in srgb, var(--primary-color) 16%, var(--surface-color));
+}

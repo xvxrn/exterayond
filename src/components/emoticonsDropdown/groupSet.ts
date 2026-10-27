@@ -4,6 +4,7 @@ import rootScope from '@lib/rootScope';
 import getGroupStickerSet from '@appManagers/utils/chats/getGroupStickerSet';
 import hasRights from '@appManagers/utils/chats/hasRights';
 import type {ReadingManagers} from '@lib/managers';
+import {exteralessSettings} from '@stores/exteralessSettings';
 
 /**
  * The category the group's own set is filed under. It is deliberately not the set's id:
@@ -66,13 +67,19 @@ export default class GroupSetController {
   }
 
   public async update() {
+    if(!this.options.isEmoji && exteralessSettings.hideGroupSticker) {
+      this.clear();
+      return;
+    }
     const chatId = this.getChatId();
     const requestId = ++this.requestId;
 
-    const state = chatId ? await this.resolve(chatId) : undefined;
+    let state = chatId ? await this.resolve(chatId) : undefined;
     if(requestId !== this.requestId) {
       return;
     }
+
+    if(!this.options.isEmoji && exteralessSettings.hideGroupSticker) state = undefined;
 
     this.chatId = chatId;
     this.setState(state);

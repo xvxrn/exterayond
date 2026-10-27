@@ -16,7 +16,7 @@ import formatDuration from '@helpers/formatDuration';
 import {wrapFormattedDuration} from '@components/wrappers/wrapDuration';
 import {Transition} from 'solid-transition-group';
 import {IconTsx} from '@components/iconTsx';
-import formatNumber from '@helpers/number/formatNumber';
+import formatCount from '@helpers/number/formatCount';
 import A11yButton from '@components/a11yButton';
 
 function Badge(props: {
@@ -76,11 +76,11 @@ export default function showStarsRatingPopup(props: {
             reverse={isNegativeLevel()}
             hint={isNegativeLevel() && !isPersonal ? undefined : (
               <div class={styles.hint}>
-                {formatNumber(Number(rating().stars))}
+                {formatCount(Number(rating().stars))}
                 {rating().next_level_stars && !isNegativeLevel() && (
                   <span class={styles.nextLevelStars}>
                     {' '}
-                    / {formatNumber(Number(rating().next_level_stars))}
+                    / {formatCount(Number(rating().next_level_stars))}
                   </span>
                 )}
               </div>

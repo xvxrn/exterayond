@@ -35,6 +35,11 @@ import filterDisabledEntities, {markMessageLinkEntity} from '@lib/richTextProces
 import {RICH_TEXT_BUTTON_SELECTOR, setRichTextButton} from '@lib/richTextProcessor/richTextButtons';
 import {TEXT_LINK_ATTRIBUTE} from '@helpers/dom/linkPress';
 import type {Middleware} from '@helpers/middleware';
+import {exteralessSettings} from '@stores/exteralessSettings';
+
+// Android MessageHelper.zalgoFilter: trigger on four marks, then remove all marks.
+const ZALGO_TRIGGER = /\p{M}{4}/u;
+const ZALGO_MARKS = /\p{M}+/gu;
 
 export type WrapRichTextOptions = Partial<{
   entities: MessageEntity[],
@@ -70,6 +75,7 @@ export type WrapRichTextOptions = Partial<{
     i: number,
     usedLength: number,
     text: string,
+    filterZalgo?: boolean,
     lastEntity?: MessageEntity
   },
   voodoo?: boolean,
@@ -173,8 +179,13 @@ export default function wrapRichText(text: string, options: WrapRichTextOptions 
   const nasty = options.nasty ??= {
     i: 0,
     usedLength: 0,
-    text
+    text,
+    filterZalgo: !options.wrappingDraft && exteralessSettings.ZalgoFilter &&
+      text.length >= 4 && text.length <= 2048 && ZALGO_TRIGGER.test(text)
   };
+
+  // Slice using original UTF-16 offsets; only the emitted text changes. Targets stay intact.
+  const displayText = (value: string) => nasty.filterZalgo ? value.replace(ZALGO_MARKS, '') : value;
 
   const wrapSomething = (wrapElement: HTMLElement, noFiller?: boolean) => {
     const element = document.createElement('span');
@@ -256,7 +267,7 @@ export default function wrapRichText(text: string, options: WrapRichTextOptions 
     let partText = sliced;
 
     if(nasty.usedLength < startOffset) {
-      (lastElement || fragment).append(nasty.text.slice(nasty.usedLength, startOffset));
+      (lastElement || fragment).append(displayText(nasty.text.slice(nasty.usedLength, startOffset)));
     }
 
     if(lastElement) {
@@ -366,8 +377,8 @@ export default function wrapRichText(text: string, options: WrapRichTextOptions 
           container.append(header, content);
 
           const result = !options.noCodeHighlight && (languageName ?
-            highlightCode(fullEntityText, languageName) :
-            !entityLanguage ? highlightCodeAuto(fullEntityText).then((highlight) => highlight?.html) : undefined);
+            highlightCode(displayText(fullEntityText), languageName) :
+            !entityLanguage ? highlightCodeAuto(displayText(fullEntityText)).then((highlight) => highlight?.html) : undefined);
           result && callbackify(result, (html) => {
             if(html && (!options.middleware || options.middleware())) {
               element.innerHTML = html;
@@ -376,7 +387,7 @@ export default function wrapRichText(text: string, options: WrapRichTextOptions 
 
           usedText = true;
           if(!result || result instanceof Promise) {
-            element.textContent = fullEntityText;
+            element.textContent = displayText(fullEntityText);
           }
 
           let lastInnerEntityIndex = findIndexFrom(entities, (n) => n.offset >= endOffset, nasty.i + 1);
@@ -445,7 +456,7 @@ export default function wrapRichText(text: string, options: WrapRichTextOptions 
         element = document.createElement('span');
         const text = document.createElement('span');
         text.className = 'sr-only';
-        text.textContent = fullEntityText;
+        text.textContent = displayText(fullEntityText);
         element.append(Icon(entity.icon, 'inline-icon'), text);
         usedText = true;
         break;
@@ -759,7 +770,7 @@ export default function wrapRichText(text: string, options: WrapRichTextOptions 
           if(!IS_FIREFOX) { // Firefox has very poor performance when drawing on canvas
             element = document.createElement('span');
             element.className = 'bluff-spoiler';
-            element.append(...partText.split('').map((encodedLetter) => {
+            element.append(...displayText(partText).split('').map((encodedLetter) => {
               const letter = document.createElement('span');
               letter.className = 'bluff-spoiler-letter';
               letter.textContent = encodedLetter;
@@ -785,7 +796,7 @@ export default function wrapRichText(text: string, options: WrapRichTextOptions 
           container.className = 'spoiler';
           element = document.createElement('span');
           element.className = 'spoiler-text';
-          element.textContent = partText;
+          element.textContent = displayText(partText);
           usedText = true;
           container.append(element);
           fragment.append(container);
@@ -931,7 +942,7 @@ export default function wrapRichText(text: string, options: WrapRichTextOptions 
 
         const deleted = document.createElement('span');
         deleted.classList.add('markup-diff-delete');
-        deleted.textContent = entity.old_text;
+        deleted.textContent = displayText(entity.old_text);
 
         const inserted = document.createElement('span');
         inserted.classList.add('markup-diff-insert');
@@ -1016,12 +1027,12 @@ export default function wrapRichText(text: string, options: WrapRichTextOptions 
       if(element) {
         if(property) {
           // @ts-ignore
-          element[property] = partText;
+          element[property] = displayText(partText);
         } else {
-          element.append(partText);
+          element.append(displayText(partText));
         }
       } else {
-        (element || fragment).append(partText);
+        (element || fragment).append(displayText(partText));
       }
     }
 
@@ -1046,7 +1057,7 @@ export default function wrapRichText(text: string, options: WrapRichTextOptions 
 
     if(nasty.usedLength <= endOffset) {
       if(nasty.usedLength < endOffset) {
-        (element || fragment).append(nasty.text.slice(nasty.usedLength, endOffset));
+        (element || fragment).append(displayText(nasty.text.slice(nasty.usedLength, endOffset)));
         nasty.usedLength = endOffset;
       }
 
@@ -1068,7 +1079,7 @@ export default function wrapRichText(text: string, options: WrapRichTextOptions 
   }
 
   if(nasty.usedLength < textLength) {
-    (lastElement || fragment).append(nasty.text.slice(nasty.usedLength));
+    (lastElement || fragment).append(displayText(nasty.text.slice(nasty.usedLength)));
   }
 
   if(options.richButtonCustomEmojiRenderer && !options.wrappingDraft && customEmojis.size) {

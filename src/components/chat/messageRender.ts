@@ -4,7 +4,7 @@ import {formatDate, formatFullSentTimeRaw, formatTime} from '@helpers/date';
 import {getFullDate} from '@helpers/date/getFullDate';
 import setInnerHTML from '@helpers/dom/setInnerHTML';
 import {Middleware} from '@helpers/middleware';
-import formatNumber from '@helpers/number/formatNumber';
+import formatCount from '@helpers/number/formatCount';
 import {AvailableEffect, Message, MessageReplyHeader} from '@layer';
 import getPeerId from '@appManagers/utils/peers/getPeerId';
 import I18n, {i18n, _i18n, LangPackKey} from '@lib/langPack';
@@ -32,6 +32,9 @@ import {makeTime} from '@components/chat/utils';
 import {useAppConfig} from '@stores/appState';
 import {formatNanoton} from '@helpers/paymentsWrapCurrencyAmount';
 import {bindManagersToSession} from '@lib/accounts/bindManagersToAccount';
+import {exteralessSettings} from '@stores/exteralessSettings';
+import ensureButtonSemantics from '@helpers/dom/ensureButtonSemantics';
+import {canShowMessageTimeHint} from '@components/chat/messageTimeHint';
 
 const NBSP = '&nbsp;';
 
@@ -57,7 +60,10 @@ const makeScheduleRepeatPeriod = (period: number) => {
 const makeEdited = () => {
   const edited = document.createElement('i');
   edited.classList.add('time-edited', 'time-part');
-  _i18n(edited, 'EditedMessage');
+  const label = document.createElement('span');
+  label.classList.add('time-edited-label');
+  _i18n(label, 'EditedMessage');
+  edited.append(label, Icon('edit', 'time-edit-icon'));
   return edited;
 };
 
@@ -216,6 +222,16 @@ export const fireMessageEffectByBubble = ({timeEffect, bubble, e, scrollable}: {
 // const makeSponsored = () => i18n('SponsoredMessage');
 
 export namespace MessageRender {
+  /** Android MessageHelper.showForwardDate; keep the original forward date, not saved_date. */
+  export const appendForwardedDate = (header: HTMLElement, message: Message.message) => {
+    const timestamp = message.fwd_from?.date;
+    if(!exteralessSettings.DateOfForwardedMsg || !timestamp) return;
+    const span = document.createElement('span');
+    span.className = 'bubble-forward-date';
+    span.append('\u00A0· ', formatFullSentTimeRaw(timestamp, {combined: true}).dateEl);
+    header.append(span);
+  };
+
   /* export const setText = () => {
 
   }; */
@@ -271,7 +287,7 @@ export namespace MessageRender {
     let title = /* isSponsored ? undefined :  */getFullDate(new Date(message.date * 1000));
     if(isMessage) {
       title += (message.edit_date && !message.pFlags.edit_hide ? `\nEdited: ${getFullDate(new Date(message.edit_date * 1000))}` : '') +
-        (fwdFrom ? `\nOriginal: ${getFullDate(new Date(fwdFrom.saved_date || fwdFrom.date * 1000))}` : '');
+        (fwdFrom ? `\nOriginal: ${getFullDate(new Date((fwdFrom.saved_date || fwdFrom.date) * 1000))}` : '');
 
       const messageMedia = message.media;
       if(messageMedia?._ === 'messageMediaDice' && messageMedia.game_outcome) {
@@ -287,7 +303,7 @@ export namespace MessageRender {
       if(message.views) {
         const postViewsSpan = document.createElement('span');
         postViewsSpan.classList.add('post-views');
-        postViewsSpan.textContent = formatNumber(message.views, 1);
+        postViewsSpan.textContent = formatCount(message.views, 1);
 
         const channelViews = Icon('channelviews_filled', 'time-icon', 'time-part', 'time-icon-views');
 
@@ -375,6 +391,10 @@ export namespace MessageRender {
 
     const inner = document.createElement('div');
     inner.classList.add('time-inner');
+    if(canShowMessageTimeHint(message, chatType)) {
+      ensureButtonSemantics(inner);
+      inner.setAttribute('aria-label', I18n.format('Exteraless.MessageTimeDetails', true));
+    }
     if(title) inner.title = title;
 
     let clonedArgs = args;
@@ -405,7 +425,8 @@ export namespace MessageRender {
       return a instanceof HTMLElement &&
         !a.classList.contains('i18n') &&
         !a.classList.contains('reactions') &&
-        !a.classList.contains('time-effect') ?
+        !a.classList.contains('time-effect') &&
+        !a.classList.contains('time-edited') ?
           a.cloneNode(true) as HTMLElement :
           a;
     });

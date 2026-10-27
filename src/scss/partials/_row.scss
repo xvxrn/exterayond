@@ -518,3 +518,28 @@ $row-border-radius: $border-radius-medium;
     }
   }
 }
+
+:root.oe-md3-list-items .sidebar-left-section-content {
+  .row {
+    min-height: 72px;
+    padding-block: .75rem;
+    border-radius: min(var(--oe-section-radius, 20px), 4px);
+    background-color: color-mix(in srgb, var(--primary-color) 5%, var(--surface-color));
+
+    &:first-child {
+      border-start-start-radius: var(--oe-section-radius, 20px);
+      border-start-end-radius: var(--oe-section-radius, 20px);
+    }
+
+    &:last-child {
+      border-end-start-radius: var(--oe-section-radius, 20px);
+      border-end-end-radius: var(--oe-section-radius, 20px);
+    }
+  }
+
+  .row.no-subtitle,
+  .row.row-small {
+    min-height: 56px;
+    padding-block: .5rem;
+  }
+}

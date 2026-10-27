@@ -334,7 +334,7 @@ Read these files:
 The implementation is complete. Your job is to build the project and fix any build errors.
 
 Steps:
-1. Run (from repository root): node build
+1. Run (from repository root): pnpm exec vite build
 2. If the build succeeds, update plan.md: change `- [ ] Build verification` to `- [x] Build verification`
 3. If the build fails:
    a. Read the error messages carefully
@@ -473,7 +473,7 @@ For each issue in the review:
 3. Verify the change makes sense in context.
 
 After all changes are made:
-1. Build (from repository root): node build
+1. Build (from repository root): pnpm exec vite build
 2. If the build fails, fix build errors and rebuild until it passes.
 
 Rules:

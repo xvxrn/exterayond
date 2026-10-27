@@ -1,6 +1,6 @@
 {
-    "name": "Telegram Web",
-    "short_name": "Telegram Web",
+    "name": "exterayond",
+    "short_name": "exterayond",
     "id": "/k/",
     "start_url": "./",
     "scope": "./",
@@ -14,7 +14,7 @@
             "origin": "https://telegram.me"
         }
     ],
-    "description": "Telegram is a cloud-based mobile and desktop messaging app with a focus on security and speed.",
+    "description": "An unofficial Telegram web client inspired by exteraless.",
     "icons": [
         {
             "src": "assets/img/android-chrome-36x36.png?v=jw3mK7G9Ry",

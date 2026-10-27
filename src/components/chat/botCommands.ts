@@ -4,6 +4,7 @@ import AutocompletePeerHelper from '@components/chat/autocompletePeerHelper';
 import processPeerFullForCommands from '@components/chat/processPeerFullForCommands';
 import {AppManagers} from '@lib/managers';
 import {Middleware} from '@helpers/middleware';
+import confirmBotCommand from '@components/chat/confirmBotCommand';
 
 const CLASS_NAME = 'bot-commands';
 export default class ChatBotCommands extends AutocompletePeerHelper {
@@ -16,10 +17,16 @@ export default class ChatBotCommands extends AutocompletePeerHelper {
   ) {
     super(appendTo, undefined, CLASS_NAME, (target) => {
       const text = target.querySelector(`.${AutocompletePeerHelper.BASE_CLASS_LIST_ELEMENT}-name`).textContent;
-      return chatInput.getReadyToSend(() => {
-        chatInput.messageInputField.setValueSilently(text);
-        chatInput.sendMessage(true);
-        this.toggle(true);
+      const middleware = chatInput.getMiddleware();
+      return callbackify(confirmBotCommand(text), (confirmed) => {
+        if(!middleware()) return false;
+        if(!confirmed) return true;
+        return chatInput.getReadyToSend(() => {
+          if(!middleware()) return;
+          chatInput.messageInputField.setValueSilently(text);
+          chatInput.sendMessage(true);
+          this.toggle(true);
+        });
       });
     }, 'Chat.BotCommands');
   }

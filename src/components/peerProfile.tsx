@@ -25,6 +25,7 @@ import getServerMessageId from '@appManagers/utils/messageId/getServerMessageId'
 import getPeerActiveUsernames from '@appManagers/utils/peers/getPeerActiveUsernames';
 import isCollectibleUsername from '@appManagers/utils/peers/isCollectibleUsername';
 import {appState, useAppConfig} from '@stores/appState';
+import {exteralessSettings} from '@stores/exteralessSettings';
 import {useCommunity, useCommunityFull} from '@stores/communities';
 import detectLanguageForTranslation from '@helpers/detectLanguageForTranslation';
 import usePeerTranslation from '@hooks/usePeerTranslation';
@@ -721,11 +722,15 @@ PeerProfile.PinnedMusic = () => {
 
 PeerProfile.Phone = () => {
   const context = useContext(PeerProfileContext);
-  const {i18n} = useHotReloadGuard();
+  const {i18n, rootScope} = useHotReloadGuard();
   const appConfig = useAppConfig();
 
   const phoneDetails = createMemo(() => {
     if(!context.peerId.isUser() || !context.canBeDetailed()) {
+      return;
+    }
+
+    if(context.peerId === rootScope.myId && exteralessSettings.HidePhone) {
       return;
     }
 
@@ -782,6 +787,48 @@ PeerProfile.Phone = () => {
       </Row>
     </Show>
   );
+};
+
+PeerProfile.IdAndDc = () => {
+  const context = useContext(PeerProfileContext);
+  const {i18n, rootScope, toastNew} = useHotReloadGuard();
+  const managers = bindManagersToSession(rootScope.managers);
+  const [selfDc] = createResource(
+    () => context.peerId === rootScope.myId && exteralessSettings.IdDcType !== 0,
+    async() => {
+      try {
+        return await managers.apiManager.getBaseDcId();
+      } catch{
+        return undefined;
+      }
+    }
+  );
+  const id = createMemo(() => {
+    const peer = context.peer as User.user | Chat;
+    if(!exteralessSettings.IdDcType || peer?.id === undefined) return;
+    if(exteralessSettings.IdDcType === 2 && context.peerId.isAnyChat()) {
+      const offset = BigInt(peer._ === 'channel' || peer._ === 'channelForbidden' ? '1000000000000' : 0);
+      return (-offset - BigInt(peer.id)).toString();
+    }
+    return String(peer.id);
+  });
+  const dc = createMemo(() => {
+    if(context.peerId === rootScope.myId) return selfDc();
+    const statsDc = context.peerId.isAnyChat() && (context.fullPeer as ChatFull.channelFull)?.stats_dc;
+    const photo = (context.peer as User.user | Chat.chat | Chat.channel)?.photo;
+    return statsDc || (photo && 'dc_id' in photo ? photo.dc_id : undefined);
+  });
+  const copy = () => {
+    copyTextToClipboard(id());
+    toastNew({langPackKey: 'TextCopied'});
+  };
+  return <Show when={id()}>
+    <Row clickable={copy} contextMenu={{buttons: [{icon: 'copy', text: 'Copy', onClick: copy}]}}>
+      <Row.Icon icon="info" />
+      <Row.Title><span dir="ltr">{id()}</span></Row.Title>
+      <Row.Subtitle>{dc() ? i18n('Exteraless.ProfileId.Dc', [dc()]) : i18n('Exteraless.ProfileId.DcUnknown')}</Row.Subtitle>
+    </Row>
+  </Show>;
 };
 
 PeerProfile.Username = () => {
@@ -2015,6 +2062,7 @@ PeerProfile.MainSection = () => {
   const rows = children(() => (
     <Show when={!(context.isBotforum && context.threadId)}>
       <PeerProfile.Phone />
+      <PeerProfile.IdAndDc />
       <PeerProfile.Username />
       <PeerProfile.Location />
       <PeerProfile.Bio />

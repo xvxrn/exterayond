@@ -130,11 +130,6 @@ export function formatDateAccordingToTodayNew(time: Date) {
   }).element;
 }
 
-const formatTimeOptions: Intl.DateTimeFormatOptions = {
-  hour: '2-digit',
-  minute: '2-digit'
-};
-
 export function formatFullSentTimeRaw(timestamp: number, options: {
   capitalize?: boolean
   noToday?: boolean,
@@ -167,8 +162,9 @@ export function formatFullSentTimeRaw(timestamp: number, options: {
         month: 'short',
         day: 'numeric',
         year: 'numeric',
-        ...(options.combined ? formatTimeOptions : {})
-      }
+        ...(options.combined ? I18n.getMessageTimeOptions() : {})
+      },
+      messageTime: options.combined
     }).element;
     // dateStr = months[time.getMonth()].slice(0, 3) + ' ' + time.getDate() + ', ' + time.getFullYear();
   } else {
@@ -177,8 +173,9 @@ export function formatFullSentTimeRaw(timestamp: number, options: {
       options: {
         month: 'short',
         day: 'numeric',
-        ...(options.combined ? formatTimeOptions : {})
-      }
+        ...(options.combined ? I18n.getMessageTimeOptions() : {})
+      },
+      messageTime: options.combined
     }).element;
     // dateStr = months[time.getMonth()].slice(0, 3) + ' ' + time.getDate();
   }
@@ -200,7 +197,8 @@ export function formatFullSentTime(timestamp: number, capitalize = true, noToday
 export function formatTime(date: Date) {
   return new I18n.IntlDateElement({
     date,
-    options: formatTimeOptions
+    options: I18n.getMessageTimeOptions(),
+    messageTime: true
   }).element;
 }
 

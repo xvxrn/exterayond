@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <base href="/">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Test fixture — General preferences</title>
+  <style>
+    body { margin: 0; overflow: auto !important; }
+    main { padding: 16px; }
+    .fixture-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 24px; }
+    .fixture-grid > section { min-width: 0; }
+    .fixture-samples h3 { margin-block: 24px 8px; }
+    .fixture-count { display: flex; align-items: center; gap: 12px; margin-block: 16px; }
+    .fixture-samples button { margin-block: 12px; margin-inline-end: 12px; }
+    @media (max-width: 700px) { .fixture-grid { grid-template-columns: minmax(0, 1fr); } }
+  </style>
+</head>
+<body class="animation-level-0">
+  <svg width="0" height="0" aria-hidden="true"><defs><symbol id="message-tail-filled" viewBox="0 0 11 20"><g transform="translate(9 -14)" fill="inherit" fill-rule="evenodd"><path d="M-6 16h6v17c-.193-2.84-.876-5.767-2.05-8.782-.904-2.325-2.446-4.485-4.625-6.48A1 1 0 01-6 16z" transform="matrix(1 0 0 -1 0 49)" fill="inherit"/></g></symbol></defs></svg>
+  <main>
+    <h1>General preferences — isolated fixture</h1>
+    <p id="fixture-result" role="status">Loading…</p>
+    <div id="fixture-root"></div>
+  </main>
+    <!-- Skeleton the app singletons read at import time. It is not product UI. -->
+    <div id="page-chats" style="display: none">
+      <div id="main-columns" class="tabs-container" hidden aria-hidden="true">
+        <div id="column-left" class="tabs-tab chatlist-container sidebar sidebar-left main-column sidebar-left-common"><div class="sidebar-slider tabs-container"><div class="tabs-tab sidebar-slider-item item-main active"><div class="sidebar-content transition zoom-fade can-have-forum"><div class="transition-item active" id="chatlist-container"><div class="tabs-container" id="folders-container"></div></div></div></div></div></div>
+        <div id="column-center" class="tabs-tab main-column" role="main"></div>
+        <div id="column-right" class="tabs-tab sidebar sidebar-right main-column" role="complementary"><div class="sidebar-content sidebar-slider tabs-container"></div></div>
+      </div>
+      <div class="sidebar-left-overlay"></div>
+    </div>
+  <script type="module">
+    try {
+      if(!new URLSearchParams(location.search).has('popups')) throw new Error('Open with ?popups=1.');
+      await import('/src/helpers/peerIdPolyfill.ts');
+      await import('/src/lib/polyfill.ts');
+      await import('/src/helpers/setWorkerProxy.ts');
+      await import('/src/components/popupSandbox/bootstrapState.ts');
+      await import('/e2e/fixtures/exterayondGeneral.tsx');
+    } catch(err) {
+      document.getElementById('fixture-result').textContent = String(err);
+    }
+  </script>
+</body>
+</html>

@@ -63,8 +63,8 @@ if(isDEV) {
 
 const handlebarsPlugin = handlebars({
   context: {
-    title: 'Telegram Web',
-    description: 'Telegram is a cloud-based mobile and desktop messaging app with a focus on security and speed.',
+    title: 'exterayond',
+    description: 'An unofficial Telegram web client inspired by exteraless.',
     url: 'https://web.telegram.org/k/',
     origin: 'https://web.telegram.org/'
   }
@@ -332,6 +332,10 @@ export default defineConfig({
     minify: NO_MINIFY ? false : undefined,
     rolldownOptions: {
       output: {
+        // The IM graph has classes and module-level state shared by lazy chunks.
+        // Preserve their source evaluation order so a chunk cannot use a base
+        // class or CSS module before the chunk containing it has initialized.
+        strictExecutionOrder: true,
         sourcemapIgnoreList: serverOptions.sourcemapIgnoreList
       }
       // input: {

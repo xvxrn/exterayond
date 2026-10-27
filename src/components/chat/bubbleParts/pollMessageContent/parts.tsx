@@ -4,7 +4,7 @@ import PhotoTsx from '@components/wrappers/photoTsx';
 import VideoTsx from '@components/wrappers/videoTsx';
 import {keepMe} from '@helpers/keepMe';
 import mediaSizes from '@helpers/mediaSizes';
-import formatNumber from '@helpers/number/formatNumber';
+import formatCount from '@helpers/number/formatCount';
 import createMiddleware from '@helpers/solid/createMiddleware';
 import {I18nTsx} from '@helpers/solid/i18n';
 import classNames from '@helpers/string/classNames';
@@ -171,7 +171,7 @@ export const PollVotes = (props: CommonProps & {votersCount: number}) => {
   });
 
   return (
-    <I18nTsx key={key()} args={[formatNumber(props.votersCount, 1)]} />
+    <I18nTsx key={key()} args={[formatCount(props.votersCount, 1)]} />
   );
 };
 

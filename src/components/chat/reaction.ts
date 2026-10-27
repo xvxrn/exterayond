@@ -1,5 +1,5 @@
 import callbackify from '@helpers/callbackify';
-import formatNumber from '@helpers/number/formatNumber';
+import formatCount from '@helpers/number/formatCount';
 import getImageFromStrippedThumb from '@helpers/getImageFromStrippedThumb';
 import {AvailableReaction, Document, MessagePeerReaction, PhotoSize, Reaction, ReactionCount} from '@layer';
 import {ReadingManagers} from '@lib/managers';
@@ -725,6 +725,7 @@ export default class ReactionElement extends HTMLElement {
 
   private type: ReactionLayoutType;
   private counter: HTMLElement;
+  private counterValue: Text;
   public stickerContainer: HTMLElement;
   private stackedAvatars: StackedAvatars;
   private canRenderAvatars: boolean;
@@ -1022,12 +1023,13 @@ export default class ReactionElement extends HTMLElement {
     const reactionCount = this.reactionCount;
 
     // Empty paid (star) reaction button — show just the star, never a "0" count.
-    if(reactionCount.reaction._ === 'reactionPaid' && !reactionCount.count) {
+    if(reactionCount.reaction?._ === 'reactionPaid' && !reactionCount.count) {
       if(this.counter?.parentElement) {
         this.counter.remove();
         this.counter = undefined;
       }
       this.hasTitle = false;
+      this.counterValue = undefined;
       return;
     }
 
@@ -1038,7 +1040,8 @@ export default class ReactionElement extends HTMLElement {
         this.counter.classList.add(CLASS_NAME + '-counter');
       }
 
-      const formatted = formatNumber(reactionCount.count);
+      const formatted = formatCount(reactionCount.count);
+      this.counterValue = undefined;
       if(title) {
         const span = document.createElement('span');
         span.classList.add(CLASS_NAME + '-counter-title');
@@ -1046,10 +1049,14 @@ export default class ReactionElement extends HTMLElement {
         this.counter.replaceChildren(span);
         setTitle = true;
         if(force) {
-          this.counter.append(' ', formatted);
+          this.counterValue = document.createTextNode(formatted);
+          this.counter.append(' ', this.counterValue);
         }
-      } else if(this.counter.textContent !== formatted) {
-        this.counter.textContent = formatted;
+      } else {
+        if(this.counter.textContent !== formatted) {
+          this.counter.textContent = formatted;
+        }
+        this.counterValue = this.counter.firstChild as Text;
       }
 
       if(!this.counter.parentElement) {
@@ -1058,9 +1065,17 @@ export default class ReactionElement extends HTMLElement {
     } else if(this.counter?.parentElement) {
       this.counter.remove();
       this.counter = undefined;
+      this.counterValue = undefined;
     }
 
     this.hasTitle = setTitle;
+  }
+
+  public refreshCounter() {
+    // Keep the rendered force/title decision, including popup-only fake reactions.
+    if(this.middleware?.() && this.counterValue) {
+      this.counterValue.data = formatCount(this.reactionCount.count);
+    }
   }
 
   public renderAvatars(recentReactions: MessagePeerReaction[]) {

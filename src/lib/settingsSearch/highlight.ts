@@ -90,6 +90,12 @@ export function highlightControl(key: LangPackKey, options: HighlightOptions) {
   onLabel(key, options, (label) => {
     if(!middleware()) return;
 
+    let details = label.closest('details');
+    while(details && options.root.contains(details)) {
+      details.open = true;
+      details = details.parentElement?.closest('details');
+    }
+
     const row = label.closest(ANCHOR_SELECTOR) as HTMLElement;
     const target = row || label;
 

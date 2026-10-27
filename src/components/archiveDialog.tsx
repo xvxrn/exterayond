@@ -2,7 +2,7 @@ import lastItem from '@helpers/array/lastItem';
 import Modes from '@config/modes';
 import {linkKeyDown} from '@helpers/solid/buttonKeyDown';
 import ListenerSetter from '@helpers/listenerSetter';
-import formatNumber from '@helpers/number/formatNumber';
+import formatCount from '@helpers/number/formatCount';
 import {I18nTsx} from '@helpers/solid/i18n';
 import {Dialog} from '@layer';
 import {StoriesSegments} from '@lib/appManagers/appStoriesManager';
@@ -108,7 +108,7 @@ const ArchiveDialog = defineSolidElement({
               size={22}
               color="gray"
               count={totalUnreadCount()}
-              format={(count) => formatNumber(count, 1)}
+              format={(count) => formatCount(count, 1)}
             />
           </Show>
         </div>

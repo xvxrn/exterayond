@@ -42,7 +42,7 @@ import {hideToast, toastNew} from '@components/toast';
 import wrapPeerTitle from '@components/wrappers/peerTitle';
 import anchorCallback from '@helpers/dom/anchorCallback';
 import SelectorSearch from '@components/selectorSearch';
-import formatNumber from '@helpers/number/formatNumber';
+import formatCount from '@helpers/number/formatCount';
 import namedPromises from '@helpers/namedPromises';
 import createContextMenu from '@helpers/dom/createContextMenu';
 import {ButtonMenuItemOptionsVerifiable} from '@components/buttonMenu';
@@ -237,6 +237,19 @@ export default class AppSelectPeers {
     if(this.exceptSelf) this.excludePeerIds.add(rootScope.myId);
     this.children = [];
 
+    this.listenerSetter.add(rootScope)('exteraless_settings_updated', ({key}) => {
+      if(key !== 'DisableNumberRounding') {
+        return;
+      }
+
+      this.starsAmountByPeer.forEach((stars, peerId) => {
+        const count = this.getElementByKey(peerId)?.querySelector<HTMLElement>('.dialog-stars-badge-count');
+        if(count) {
+          count.textContent = formatCount(stars, 1);
+        }
+      });
+    });
+
     this.middlewareHelper = options.middleware.create();
     this.middlewareHelperLoader = this.middlewareHelper.get().create();
     this.listMiddlewareHelper = this.middlewareHelper.get().create();
@@ -353,12 +366,13 @@ export default class AppSelectPeers {
               element.append(lock);
               element.classList.add('is-premium-locked');
             } else if(+requiredStars && !canManageDirectMessages) {
-              const starsAmount = formatNumber(+requiredStars, 1);
+              const starsAmount = formatCount(+requiredStars, 1);
 
               const starsBadge = document.createElement('span');
               starsBadge.classList.add('stars-badge-base', 'dialog-stars-badge');
 
               const starsBadgeStars = document.createElement('span');
+              starsBadgeStars.classList.add('dialog-stars-badge-count');
               starsBadgeStars.append(starsAmount + '');
 
               starsBadge.append(

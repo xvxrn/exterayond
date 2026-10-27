@@ -4,7 +4,7 @@ import ripple from '@components/ripple';
 import I18n from '@lib/langPack';
 import replaceContent from '@helpers/dom/replaceContent';
 import StackedAvatars from '@components/stackedAvatars';
-import formatNumber from '@helpers/number/formatNumber';
+import formatCount from '@helpers/number/formatCount';
 import {ReadingManagers} from '@lib/managers';
 import getPeerId from '@appManagers/utils/peers/getPeerId';
 import type LazyLoadQueue from '@components/lazyLoadQueue';
@@ -21,6 +21,14 @@ hotListen(import.meta.hot, rootScope, 'replies_updated', (message) => {
     element.message = message;
     element.render();
   });
+});
+
+hotListen(import.meta.hot, rootScope, 'exteraless_settings_updated', ({key}) => {
+  if(key !== 'DisableNumberRounding') {
+    return;
+  }
+
+  (Array.from(document.querySelectorAll(TAG_NAME)) as RepliesElement[]).forEach((element) => element.refreshCount());
 });
 
 export default class RepliesElement extends HTMLElement {
@@ -50,6 +58,18 @@ export default class RepliesElement extends HTMLElement {
     this.render();
     this.dataset.postKey = this.message.peerId + '_' + this.message.mid;
     this.classList.add('replies', 'replies-' + this.type);
+  }
+
+  public refreshCount() {
+    if(this.type !== 'beside' || !this.classList.contains('replies-beside')) {
+      return;
+    }
+
+    const counter = this.querySelector('.replies-beside-text');
+    if(counter) {
+      const replies = this.message?.replies;
+      counter.textContent = replies?.replies ? formatCount(replies.replies, 0) : '';
+    }
   }
 
   public render() {
@@ -142,7 +162,7 @@ export default class RepliesElement extends HTMLElement {
       replaceContent(textSpan, text.element);
     } else {
       this.classList.add('bubble-beside-button');
-      this.innerHTML = `<span class="replies-beside-text">${replies?.replies ? formatNumber(replies.replies, 0) : ''}</span>`;
+      this.innerHTML = `<span class="replies-beside-text">${replies?.replies ? formatCount(replies.replies, 0) : ''}</span>`;
       this.prepend(Icon('commentssticker_filled'));
     }
 

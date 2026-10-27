@@ -7,6 +7,8 @@ import hideCommandAutocomplete from '@components/chat/hideCommandAutocomplete';
 import apiManagerProxy from '@lib/apiManagerProxy';
 import getPeerActiveUsernames from '@appManagers/utils/peers/getPeerActiveUsernames';
 import {bindManagersToSession} from '@lib/accounts/bindManagersToAccount';
+import callbackify from '@helpers/callbackify';
+import confirmBotCommand from '@components/chat/confirmBotCommand';
 
 export default class CommandsHelper extends AutocompletePeerHelper {
   constructor(
@@ -33,10 +35,16 @@ export default class CommandsHelper extends AutocompletePeerHelper {
           targetElement.dataset.ephemeral === '1' ?
           botPeerId.toUserId() :
           undefined;
-        hideCommandAutocomplete(controller);
-        return chatInput.getReadyToSend(() => {
-          chatInput.messageInputField.setValueSilently(text);
-          chatInput.sendMessage(true, ephemeralReceiverId);
+        const middleware = chatInput.getMiddleware();
+        return callbackify(confirmBotCommand(text), (confirmed) => {
+          if(!middleware()) return false;
+          if(!confirmed) return true;
+          hideCommandAutocomplete(controller);
+          return chatInput.getReadyToSend(() => {
+            if(!middleware()) return;
+            chatInput.messageInputField.setValueSilently(text);
+            chatInput.sendMessage(true, ephemeralReceiverId);
+          });
         });
       },
       'Chat.BotCommands'

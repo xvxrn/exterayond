@@ -287,3 +287,44 @@
     }
   }
 }
+
+:root.oe-md3-navigation .folders-sidebar {
+  --folders-sidebar-item-color: var(--secondary-text-color);
+  --folders-sidebar-item-selected-color: var(--primary-color);
+  --folders-sidebar-background: color-mix(in srgb, var(--primary-color) 5%, var(--surface-color));
+  border-radius: 0;
+
+  &__background-gradient {
+    display: none;
+  }
+
+  &__background-tint {
+    backdrop-filter: none;
+  }
+
+  &__folder-item {
+    min-height: 64px;
+    padding-block: 8px;
+    gap: 4px;
+  }
+
+  &__folder-item-icon,
+  &__folder-item-animated-icon {
+    border-radius: 16px;
+    padding-inline: 13px;
+    box-sizing: content-box;
+    min-width: 30px;
+    min-height: 32px;
+    line-height: 32px;
+  }
+
+  &__folder-item--selected .folders-sidebar__folder-item-icon,
+  &__folder-item--selected .folders-sidebar__folder-item-animated-icon {
+    background: color-mix(in srgb, var(--primary-color) 16%, var(--surface-color));
+  }
+}
+
+:root.oe-md3-navigation #folders-tabs .menu-horizontal-div-item.active {
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--primary-color) 16%, var(--surface-color));
+}

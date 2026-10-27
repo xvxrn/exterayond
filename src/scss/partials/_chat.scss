@@ -3,6 +3,16 @@
 @use "../shared" as *;
 @use "chatVariables" as *;
 
+.oe-hide-send-as {
+  .message-send-as {
+    display: none !important;
+  }
+
+  .new-message-wrapper.has-offset[data-offset="as"] {
+    --send-as-total-size: 0px;
+  }
+}
+
 .chat-input {
 	display: flex;
 	width: 100%;

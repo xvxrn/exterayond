@@ -33,7 +33,7 @@ import groupCallsController from '@lib/calls/groupCallsController';
 import apiManagerProxy from '@lib/apiManagerProxy';
 import {makeMediaSize} from '@helpers/mediaSize';
 import {FOLDER_ID_ALL} from '@appManagers/constants';
-import formatNumber from '@helpers/number/formatNumber';
+import formatCount from '@helpers/number/formatCount';
 import {modifyAckedPromise} from '@helpers/modifyAckedResult';
 import callbackify from '@helpers/callbackify';
 import confirmationPopup from '@components/confirmationPopup';
@@ -82,6 +82,7 @@ export default class ChatTopbar {
   public floatingPlatesWrapper: HTMLDivElement;
   private btnBack: HTMLButtonElement;
   private btnBackBadge: HTMLElement;
+  private backBadgeSize = 0;
   private chatInfo: HTMLDivElement;
   private avatar: ReturnType<typeof avatarNew>;
   private avatarMiddlewareHelper: MiddlewareHelper;
@@ -222,7 +223,7 @@ export default class ChatTopbar {
       this.btnMore
     ].filter(Boolean));
 
-    this.pushButtonToVerify(this.btnCall, this.verifyCallButton.bind(this, 'voice'));
+    this.pushButtonToVerify(this.btnCall, this.verifyCallButton.bind(this, 'voice', true));
     this.pushButtonToVerify(this.btnGroupCall, this.verifyVideoChatButton.bind(this, 'nonadmin'));
     this.pushButtonToVerify(this.btnGroupCallMenu, this.verifyRtmpButton.bind(this));
 
@@ -401,9 +402,9 @@ export default class ChatTopbar {
     return !groupCall.pFlags.rtmp_stream;
   };
 
-  private verifyCallButton = async(type?: CallType) => {
+  private verifyCallButton = async(type?: CallType, ignorePreference = false) => {
     // * exteraless hideCallButton: off both the topbar and the profile menu
-    if(exteralessSettings.OEChatsHideCallButton) return false;
+    if(!ignorePreference && exteralessSettings.OEChatsHideCallButton) return false;
     if(!IS_CALL_SUPPORTED || !this.peerId.isUser() || this.chat.type !== ChatType.Chat) return false;
     const userId = this.peerId.toUserId();
     const userFull = await this.managers.appProfileManager.getCachedFullUser(userId);
@@ -952,6 +953,7 @@ export default class ChatTopbar {
     // first peer change) whose `isStatic` was decided before the chat had a type.
 
     this.btnCall = ButtonIcon('phone', {ariaLabel: 'Call'});
+    this.btnCall.classList.add('chat-call-button');
     this.btnGroupCall = ButtonIcon('videochat', {ariaLabel: 'PeerInfo.Action.VoiceChat'});
     this.btnGroupCallMenu = ButtonMenuToggle({
       buttonOptions: {ariaLabel: 'PeerInfo.Action.VoiceChat'},
@@ -987,11 +989,17 @@ export default class ChatTopbar {
         return;
       }
 
-      const size = folder.unreadUnmutedPeerIds.size;
+      const size = this.backBadgeSize = folder.unreadUnmutedPeerIds.size;
       // * it is shown on handhelds only (`.back-unread-badge`): elsewhere a roll is for nobody
-      setBadgeCount(this.btnBackBadge, size, formatNumber(size, 1), mediaSizes.isMobile);
+      setBadgeCount(this.btnBackBadge, size, formatCount(size, 1), mediaSizes.isMobile);
       // this.btnBack.classList.remove('tgico-left', 'tgico-previous');
       // this.btnBack.classList.add(size ? 'tgico-previous' : 'tgico-left');
+    });
+
+    this.listenerSetter.add(rootScope)('exteraless_settings_updated', ({key}) => {
+      if(key === 'DisableNumberRounding' && this.btnBackBadge) {
+        setBadgeCount(this.btnBackBadge, this.backBadgeSize, formatCount(this.backBadgeSize, 1), mediaSizes.isMobile);
+      }
     });
 
     this.listenerSetter.add(rootScope)('chat_update', (chatId) => {
@@ -1369,13 +1377,11 @@ export default class ChatTopbar {
 
     return () => {
       const canHaveSomeButtons = !(this.chat.type === ChatType.Pinned || this.chat.type === ChatType.Scheduled || this.chat.type === ChatType.Welcome || this.chat.type === ChatType.Static || this.chat.type === ChatType.Logs);
-      // * exteraless hideChannelSearchButton: the search button leaves a
-      // * broadcast's topbar (Android's channel bottom-overlay search)
-      const canHaveSearch = (canHaveSomeButtons || this.chat.type === ChatType.Logs) &&
-        !(exteralessSettings.OEChatsHideChannelSearchButton && this.chat.isBroadcast);
+      const canHaveSearch = canHaveSomeButtons || this.chat.type === ChatType.Logs;
 
       if(this.btnSearch) {
         this.btnSearch.classList.toggle('hide', !canHaveSearch);
+        this.btnSearch.classList.toggle('channel-search-button', this.chat.isBroadcast);
       }
 
       if(this.btnLogFilters) {

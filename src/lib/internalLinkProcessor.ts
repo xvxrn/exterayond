@@ -61,6 +61,14 @@ import parseChatSpecificTag from '@lib/richTextProcessor/parseChatSpecificTag';
 import searchByTag from '@lib/richTextProcessor/searchByTag';
 import {APP_TABS} from '@lib/appColumns';
 import {bindManagersToSession} from '@lib/accounts/bindManagersToAccount';
+import confirmBotCommand from '@components/chat/confirmBotCommand';
+import callbackify from '@helpers/callbackify';
+import {exteralessSettings} from '@stores/exteralessSettings';
+import {getAccountSession, isSessionLeaving} from '@lib/accounts/getCurrentAccount';
+import {isMaskedUrlTrusted} from '@lib/richTextProcessor/isWhitelistedUrl';
+import isSuspiciousUrl from '@helpers/string/isSuspiciousUrl';
+import wrapUrl from '@lib/richTextProcessor/wrapUrl';
+import deferredPromise from '@helpers/cancellablePromise';
 
 /**
  * A link whose section we know but whose path we do not — the one thing worse
@@ -93,25 +101,47 @@ export class InternalLinkProcessor {
 
     addAnchorListener<{}>({
       name: 'showMaskedAlert',
-      callback: ({element}) => {
+      callback: ({element, masked, onConfirmed}) => {
         const href = element.href;
-
+        const session = getAccountSession();
+        if(isSessionLeaving(session)) return;
         const a = element.cloneNode(true) as HTMLAnchorElement;
         a.className = 'anchor-url';
-        a.innerText = href;
         a.removeAttribute('onclick');
+        delete a.dataset.callback;
+        a.href = wrapUrl(href).url;
+        const proceed = () => {
+          if(isSessionLeaving(session)) return;
+          return onConfirmed ? onConfirmed(a) : a.click();
+        };
+        const isNavigation = !element.hasAttribute('download') && !/^(blob:|data:)/i.test(href);
+        const shouldAsk = isNavigation && (exteralessSettings.ConfirmAllLinks ||
+          (!exteralessSettings.SkipOpenLinkConfirm && (masked || isSuspiciousUrl(href)) && !isMaskedUrlTrusted(href)));
+        if(!shouldAsk) return proceed();
+        const destination = document.createElement('span');
+        destination.dir = 'ltr';
+        destination.textContent = href;
+        const pending = deferredPromise<any>();
+        let continued = false;
 
         showPeerPopup('popup-masked-url', {
+          accountNumber: session.accountNumber,
           titleLangKey: 'OpenUrlTitle',
           descriptionLangKey: 'OpenUrlAlert2',
-          descriptionLangArgs: [a],
+          descriptionLangArgs: [destination],
+          onCloseAfterTimeout: () => {
+            if(!continued) pending.resolve(undefined);
+          },
           buttons: [{
             langKey: 'Open',
             callback: () => {
-              a.click();
+              if(continued) return;
+              continued = true;
+              try {pending.resolve(proceed());} catch(error) {pending.reject(error);}
             }
           }]
         });
+        return pending;
       }
     });
 
@@ -120,6 +150,8 @@ export class InternalLinkProcessor {
       callback: ({element, uriParams}) => {
         const {command, bot} = uriParams;
         const chat = appImManager.chat;
+        const managers = bindManagersToSession(this.managers);
+        const middleware = chat.bubbles.getMiddleware();
         let sendingParams = chat.input?.getEphemeralSendingSnapshot() || {
           peerId: chat.peerId,
           threadId: chat.threadId
@@ -145,9 +177,11 @@ export class InternalLinkProcessor {
           this.managers.appMessagesManager.sendText(peerId, '/' + command);
         }); */
 
-        return this.managers.appMessagesManager.sendText({
-          ...sendingParams,
-          text: '/' + command + (bot ? '@' + bot : '')
+        if(!sendingParams.peerId) return;
+        const text = '/' + command + (bot ? '@' + bot : '');
+        return callbackify(confirmBotCommand(text), (confirmed) => {
+          if(!confirmed || !middleware()) return;
+          return managers.appMessagesManager.sendText({...sendingParams, text});
         });
       }
     });
@@ -767,13 +801,13 @@ export class InternalLinkProcessor {
       name: 'iv',
       protocol: 'tg',
       noCancelEvent: true,
-      callback: ({element, event}) => {
+      callback: ({event, href}) => {
         if((event as MouseEvent).ctrlKey || (event as MouseEvent).metaKey) {
           return;
         }
 
         cancelEvent(event);
-        const link = this.makeLink(INTERNAL_LINK_TYPE.INSTANT_VIEW, {url: element.href});
+        const link = this.makeLink(INTERNAL_LINK_TYPE.INSTANT_VIEW, {url: href});
         return this.processInternalLink(link);
       }
     });

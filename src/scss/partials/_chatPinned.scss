@@ -1,5 +1,50 @@
 @use "../shared" as *;
 
+.pinned-audio-cover {
+  display: none;
+}
+
+:root.oe-md3-mini-player .pinned-audio.is-music {
+  border-radius: 20px;
+  background-color: color-mix(in srgb, var(--primary-color) 12%, var(--surface-color));
+  box-shadow: none;
+
+  .pinned-audio-cover {
+    position: relative;
+    display: grid;
+    place-items: center;
+    flex: 0 0 36px;
+    height: 36px;
+    overflow: hidden;
+    border-radius: 10px;
+    color: var(--primary-color);
+    background: color-mix(in srgb, var(--primary-color) 16%, var(--surface-color));
+  }
+
+  .pinned-audio-artwork {
+    position: absolute;
+    inset: 0;
+
+    img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+  }
+
+  .pinned-audio-ico {
+    border-radius: 16px;
+    background-color: var(--primary-color);
+    color: var(--white);
+  }
+
+  .pinned-audio-progress {
+    --height: 4px;
+    margin-inline: 24px;
+    border-radius: 4px;
+  }
+}
+
 .pinned-message {
   --custom-emoji-size: calc(var(--font-size) + 2px) !important;
 

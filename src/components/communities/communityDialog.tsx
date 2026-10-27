@@ -8,7 +8,7 @@ import apiManagerProxy from '@lib/apiManagerProxy';
 import {i18n} from '@lib/langPack';
 import type {AppDialogsManager} from '@lib/appDialogsManager';
 import type {DialogElement} from '@components/dialogElement';
-import formatNumber from '@helpers/number/formatNumber';
+import formatCount from '@helpers/number/formatCount';
 import getDialogMentionBadgeState from '@helpers/dialogMentionBadgeState';
 import {
   useCommunity,
@@ -88,7 +88,7 @@ export function createCommunityDialogListElement(
       });
       const unreadText = !unread ? undefined :
         unreadCount === 1 && unreadMarked ? '' :
-        unreadMention ? '@' : formatNumber(unreadCount, 1);
+        unreadMention ? '@' : formatCount(unreadCount, 1);
       // the muted icon follows the Community's own notify settings, exactly like a
       // forum row follows the forum's; an unmuted Community whose unread chats are
       // all muted only grays the badge out, the way `no-unmuted-topic` does there

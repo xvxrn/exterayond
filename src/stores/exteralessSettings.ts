@@ -1,6 +1,7 @@
-import {createEffect, createRoot} from 'solid-js';
+import {batch, createEffect, createRoot} from 'solid-js';
 import {createStore, unwrap} from 'solid-js/store';
 import {hotEffect} from '@helpers/hotModule';
+import rootScope from '@lib/rootScope';
 
 /**
  * exteraless Preferences — the `OE*` settings store.
@@ -44,14 +45,50 @@ export const OE_DEFAULTS = {
   OEAppearanceCustomThemes: true,
   OEAppearanceGlassMessageMenu: true,
   OEAppearanceNewChatHeaderStyle: false,
+  OEAppearanceNewLoadingStyle: true,
+  SliderStyle: 2,
+  SwitchStyle: 2,
+  OEAppearanceNewNavigationBarStyle: false,
+  OEAppearanceM3ListItems: false,
+  OEAppearanceMd3Player: true,
+  OEAppearanceMd3MiniPlayer: true,
   OEChatsRemoveMessageTail: true,
   OEChatsHideCallButton: false,
   OEChatsHideChannelSearchButton: false,
+  /** Android `NaConfig.disableDialogsFloatingButton`; the persisted name is the contract. */
+  DisableDialogsFloatingButton: false,
+  /** Android `NekoConfig.disableNumberRounding`: exact counts instead of `1.2K`/`1.2M`. */
+  DisableNumberRounding: false,
+  /** Android NaConfig.ZalgoFilter. */
+  ZalgoFilter: false,
+  /** Android NaConfig keys and defaults. */
+  UseEditedIcon: true,
+  HideShareButtonInChannel: false,
+  /** Android NaConfig: 0 hidden, 1 Telegram API, 2 Bot API. */
+  IdDcType: 1,
+  DontSendGreetingSticker: true,
+  DontAutoPlayNextVoice: false,
+  HidePremiumSection: false,
+  HideHelpSection: true,
+  DisableTrending: true,
+  hideGroupSticker: false,
+  hideSendAsChannel: false,
+  /** Android NaConfig; only preselects an available revoke checkbox. */
+  DeleteChatForBothSides: true,
+  AskBeforeCalling: true,
+  DisableClickCommandToSend: false,
+  DateOfForwardedMsg: false,
+  ShowTimeHint: false,
+  ConfirmAllLinks: false,
+  SkipOpenLinkConfirm: false,
+  /** Neko float, 4..20; 14 preserves Web K's default sticker dimensions. */
+  stickerSize: 14,
   OEChatsStickerShape: 1,
   OEChatsBottomButton: 1,
   OEChatsAlwaysSendInHD: true,
   OEChatsKeepAttachButton: false,
   OEChatsStickerTimeSide: false,
+  HideTimeForSticker: false,
   OEChatsShowResultsBeforeVoting: false,
   OEChatsStripTrackingOnOpen: true,
   OEChatsStripTrackingOnPaste: true,
@@ -64,7 +101,11 @@ export const OE_DEFAULTS = {
   OEChatsPauseVoice: false,
   OEChatsPauseRound: false,
   OERelativeLastSeen: false,
-  OEAddCommaAfterMention: true
+  OEAddCommaAfterMention: true,
+  /** Android `NekoConfig.showSeconds`: the persisted name is the contract, so no OE* alias. */
+  showSeconds: false,
+  /** Android `NekoConfig.hidePhone`: local display only. */
+  HidePhone: true
 } as const;
 
 export type ExteralessSettingsKey = keyof typeof OE_DEFAULTS;
@@ -79,8 +120,12 @@ type NumericKey = {
 const NUMERIC_RANGES: {[K in NumericKey]: readonly [min: number, max: number]} = {
   OEAppearanceAvatarCorners: [0, OE_AVATAR_CORNERS_MAX],
   OEAppearanceSectionRadius: [0, OE_AVATAR_CORNERS_MAX],
+  SliderStyle: [0, 2],
+  SwitchStyle: [0, 3],
   OEChatsStickerShape: [0, 2],
-  OEChatsBottomButton: [0, 2]
+  OEChatsBottomButton: [0, 2],
+  IdDcType: [0, 2],
+  stickerSize: [4, 20]
 };
 
 /** A value of the wrong type or out of range falls back like an untrusted import. */
@@ -92,7 +137,7 @@ const clampAnySetting = (key: ExteralessSettingsKey, value: unknown): boolean | 
       return fallback;
     }
 
-    return Math.max(min, Math.min(max, Math.round(value)));
+    return Math.max(min, Math.min(max, key === 'stickerSize' ? value : Math.round(value)));
   }
 
   return typeof value === 'boolean' ? value : fallback;
@@ -148,11 +193,77 @@ const [exteralessSettings, setExteralessSettings] = createStore<ExteralessSettin
 
 /** Sets one setting (validated) and writes the whole record back. */
 const setExteralessSetting = <K extends ExteralessSettingsKey>(key: K, value: ExteralessSettingValue<K>) => {
-  setExteralessSettings({[key]: clampExteralessSetting(key, value)} as Partial<ExteralessSettings>);
+  const clamped = clampExteralessSetting(key, value);
+  const previous = exteralessSettings[key];
+  setExteralessSettings({[key]: clamped} as Partial<ExteralessSettings>);
   persist(unwrap(exteralessSettings));
+  // * the visible, imperative counters (`formatCount` owners) re-read the store from
+  // * here; no new bus, no effect per row or message
+  if(key === 'DisableNumberRounding' && previous !== clamped) {
+    rootScope.dispatchEventSingle('exteraless_settings_updated', {key, value: clamped});
+  }
+};
+
+/** Reset this client's OE preferences; Telegram settings and account data have other records. */
+const resetExteralessSettings = () => {
+  const previousNumberRounding = exteralessSettings.DisableNumberRounding;
+  setExteralessSettings({...OE_DEFAULTS});
+  try {
+    globalThis.localStorage?.removeItem(STORAGE_KEY);
+  } catch(e) {
+    // Some storage implementations refuse removal but still allow replacement.
+    persist(unwrap(exteralessSettings));
+  }
+
+  if(previousNumberRounding !== OE_DEFAULTS.DisableNumberRounding) {
+    rootScope.dispatchEventSingle('exteraless_settings_updated', {
+      key: 'DisableNumberRounding',
+      value: OE_DEFAULTS.DisableNumberRounding
+    });
+  }
 };
 
 const useExteralessSettings = () => [exteralessSettings, setExteralessSetting] as const;
+
+/** Android ChatsConfig composes its side flag with NekoConfig.HideTimeForSticker. */
+export const getStickerTimeMode = (settings: Pick<ExteralessSettings, 'HideTimeForSticker' | 'OEChatsStickerTimeSide'> = exteralessSettings) =>
+  settings.HideTimeForSticker ? 2 : settings.OEChatsStickerTimeSide ? 1 : 0;
+
+export const getOpenLinkConfirmation = () => exteralessSettings.ConfirmAllLinks ? 1 : exteralessSettings.SkipOpenLinkConfirm ? 2 : 0;
+
+const MD3_BOOLEAN_KEYS = [
+  'OEAppearanceNewLoadingStyle', 'OEAppearanceNewChatHeaderStyle',
+  'OEAppearanceNewNavigationBarStyle', 'OEAppearanceM3ListItems',
+  'OEAppearanceMd3Player', 'OEAppearanceMd3MiniPlayer'
+] as const;
+
+export const getMd3StyleCount = () => MD3_BOOLEAN_KEYS.filter((key) => exteralessSettings[key]).length +
+  Number(exteralessSettings.SliderStyle === 2) + Number(exteralessSettings.SwitchStyle >= 2);
+
+export const setAllMd3Styles = (enabled: boolean) => batch(() => {
+  for(const key of MD3_BOOLEAN_KEYS) setExteralessSetting(key, enabled);
+  setExteralessSetting('SliderStyle', enabled ? 2 : 0);
+  setExteralessSetting('SwitchStyle', enabled ? 3 : 0);
+});
+
+export const setOpenLinkConfirmation = (mode: number) => {
+  if(!Number.isInteger(mode) || mode < 0 || mode > 2) return;
+  batch(() => {
+    setExteralessSetting('ConfirmAllLinks', mode === 1);
+    setExteralessSetting('SkipOpenLinkConfirm', mode === 2);
+  });
+};
+
+export const setStickerTimeMode = (mode: number, apply: typeof setExteralessSetting = setExteralessSetting) => {
+  if(!Number.isInteger(mode) || mode < 0 || mode > 2) return;
+  batch(() => {
+    apply('HideTimeForSticker', mode === 2);
+    apply('OEChatsStickerTimeSide', mode === 1);
+  });
+};
+
+/** Android tablet sizing, normalized to Web K's stock size at the default 14. */
+export const getStickerScale = (value = exteralessSettings.stickerSize) => 1 + (value - 14) / 16;
 
 /**
  * avatarCorners 0..28 → the avatar border-radius percentage: 28 = the stock
@@ -200,6 +311,7 @@ if(typeof document !== 'undefined') {
       // * every property read here is what the effect tracks
       style.setProperty('--oe-avatar-radius', avatarCornersToRadiusPercent(exteralessSettings.OEAppearanceAvatarCorners));
       classList.toggle('oe-single-corner-radius', exteralessSettings.OEAppearanceSingleCornerRadius);
+      classList.toggle('oe-hide-title-status', exteralessSettings.OEAppearanceHideActionBarStatus);
 
       if(exteralessSettings.OEAppearanceSquareFab) {
         style.setProperty('--oe-fab-radius', OE_FAB_SQUIRCLE_RADIUS);
@@ -219,11 +331,27 @@ if(typeof document !== 'undefined') {
       classList.toggle('oe-remove-message-tail', exteralessSettings.OEChatsRemoveMessageTail);
 
       classList.toggle('oe-sticker-time-side', exteralessSettings.OEChatsStickerTimeSide);
+      classList.toggle('oe-hide-sticker-time', exteralessSettings.HideTimeForSticker);
+      classList.toggle('oe-hide-new-chat-button', exteralessSettings.DisableDialogsFloatingButton);
+      classList.toggle('oe-edited-icon', exteralessSettings.UseEditedIcon);
+      classList.toggle('oe-hide-channel-share-button', exteralessSettings.HideShareButtonInChannel);
+      classList.toggle('oe-hide-call-button', exteralessSettings.OEChatsHideCallButton);
+      classList.toggle('oe-hide-send-as', exteralessSettings.hideSendAsChannel);
+      classList.toggle('oe-hide-channel-search-button', exteralessSettings.OEChatsHideChannelSearchButton);
+      classList.toggle('oe-hide-reactions-private', exteralessSettings.OEChatsHideReactionsPrivate);
+      classList.toggle('oe-hide-reactions-channels', exteralessSettings.OEChatsHideReactionsChannels);
+      classList.toggle('oe-hide-reactions-groups', exteralessSettings.OEChatsHideReactionsGroups);
 
       // * the replyColors / replyEmoji / replyBackground trio defaults to true;
       // * the classes mark only the off states, so the default adds nothing
       classList.toggle('oe-no-glass-menus', !exteralessSettings.OEAppearanceGlassMessageMenu);
       classList.toggle('oe-new-chat-header', exteralessSettings.OEAppearanceNewChatHeaderStyle);
+      classList.toggle('oe-md3-loading', exteralessSettings.OEAppearanceNewLoadingStyle);
+      classList.toggle('oe-md3-sliders', exteralessSettings.SliderStyle === 2);
+      classList.toggle('oe-md3-switches', exteralessSettings.SwitchStyle >= 2);
+      classList.toggle('oe-md3-navigation', exteralessSettings.OEAppearanceNewNavigationBarStyle);
+      classList.toggle('oe-md3-list-items', exteralessSettings.OEAppearanceM3ListItems);
+      classList.toggle('oe-md3-mini-player', exteralessSettings.OEAppearanceMd3MiniPlayer);
       classList.toggle('oe-no-reply-colors', !exteralessSettings.OEChatsReplyColors);
       classList.toggle('oe-no-reply-emoji', !exteralessSettings.OEChatsReplyEmoji);
       classList.toggle('oe-no-reply-background', !exteralessSettings.OEChatsReplyBackground);
@@ -239,6 +367,7 @@ export {
   exteralessSettings,
   setExteralessSettings,
   setExteralessSetting,
+  resetExteralessSettings,
   useExteralessSettings
 };
 

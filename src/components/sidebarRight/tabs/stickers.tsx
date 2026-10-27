@@ -1,4 +1,4 @@
-import {Component, onCleanup, onMount} from 'solid-js';
+import {Component, createEffect, on, onCleanup, onMount} from 'solid-js';
 import InputSearch from '@components/inputSearch';
 import LazyLoadQueue from '@components/lazyLoadQueue';
 import showStickersPopup from '@components/popups/stickers';
@@ -16,6 +16,7 @@ import {getStickerSetInputById, getStickerSetInputByStickerSet} from '@lib/appMa
 import isStickerSetAdded from '@lib/appManagers/utils/stickers/isStickerSetAdded';
 import {useSuperTab} from '@components/solidJsTabs/superTabProvider';
 import {useHotReloadGuard} from '@lib/solidjs/hotReloadGuard';
+import {exteralessSettings} from '@stores/exteralessSettings';
 
 const Stickers: Component = () => {
   const [tab] = useSuperTab();
@@ -117,8 +118,12 @@ const Stickers: Component = () => {
   };
 
   const renderFeatured = () => {
+    if(exteralessSettings.DisableTrending) {
+      filterRendered('', []);
+      return Promise.resolve();
+    }
     return tab.managers.appStickersManager.getFeaturedStickers().then((coveredSets) => {
-      if(inputSearch.value) {
+      if(inputSearch.value || exteralessSettings.DisableTrending) {
         return;
       }
 
@@ -162,6 +167,10 @@ const Stickers: Component = () => {
     setsDiv = document.createElement('div');
     setsDiv.classList.add('sticker-sets');
     tab.scrollable.append(setsDiv);
+
+    createEffect(on(() => exteralessSettings.DisableTrending, () => {
+      if(!inputSearch.value) void renderFeatured();
+    }, {defer: true}));
 
     attachMediaPeekListeners({listenTo: setsDiv, listenerSetter: tab.listenerSetter});
 

@@ -1937,12 +1937,31 @@ class TiptapChatInputEditor implements ChatInputEditor {
             !event.clipboardData?.getData('text/html') &&
             /(?:https?:\/\/|www\.)/.test(plainText)
           ) {
-            void import('@lib/linkCleaner').then(async({cleanLinksInText}) => {
-              const cleaned = await cleanLinksInText(plainText, 'paste');
-              if(cleaned === plainText) return;
-              const {selection} = view.state;
-              if(!(selection instanceof TextSelection)) return;
-              view.dispatch(view.state.tr.insertText(cleaned, selection.from, selection.to).scrollIntoView());
+            // * a node or the whole document needs the editor's own insertion;
+            // * taking it over would replace it with bare text
+            const {selection} = view.state;
+            if(!(selection instanceof TextSelection)) return false;
+            const {from, to} = selection;
+            // * the paste lands once, synchronously: the text is never waiting
+            // * on the cleaner, so a failure or a late answer cannot lose it
+            view.dispatch(view.state.tr.insertText(plainText, from, to).scrollIntoView());
+            const pastedFrom = from;
+            const pastedTo = from + plainText.length;
+            const docAfterPaste = view.state.doc;
+            // * a late clean may rewrite only this own range, and only while the
+            // * document is still exactly what the paste left — a user's edit
+            // * wins. Undo/redo stays one step: the cleanup is out of history.
+            void import('@lib/linkCleaner')
+            .then(({cleanLinksInText}) => cleanLinksInText(plainText, 'paste'))
+            .catch(() => plainText)
+            .then((cleaned) => {
+              if(view.isDestroyed || cleaned === plainText) return;
+              if(view.state.doc !== docAfterPaste) return;
+              view.dispatch(
+                view.state.tr
+                .insertText(cleaned, pastedFrom, pastedTo)
+                .setMeta('addToHistory', false)
+              );
             });
             return true;
           }

@@ -2,6 +2,9 @@ import wrapUrl from '@lib/richTextProcessor/wrapUrl';
 import matchTelegramUrlHost from '@lib/richTextProcessor/matchTelegramUrlHost';
 import cancelEvent from '@helpers/dom/cancelEvent';
 import parseUriParams from '@helpers/string/parseUriParams';
+import {exteralessSettings} from '@stores/exteralessSettings';
+
+const LOCAL_ACTIONS = new Set(['showMaskedAlert', 'execBotCommand', 'searchByHashtag', 'setMediaTimestamp']);
 
 // * https://core.telegram.org/api/links
 
@@ -51,12 +54,12 @@ export default function addAnchorListener<
 >(options: {
   name: InternalLinkAnchorType,
   protocol?: 'tg',
-  callback: (params: Params & {element?: HTMLAnchorElement, masked?: boolean, event?: Event}) => any,
+  callback: (params: Params & {element?: HTMLAnchorElement, href: string, masked?: boolean, event?: Event, onConfirmed?: (anchor: HTMLAnchorElement) => any}) => any,
   noPathnameParams?: boolean,
   noUriParams?: boolean,
   noCancelEvent?: boolean
 }) {
-  (window as any)[(options.protocol ? options.protocol + '_' : '') + options.name] = (element?: HTMLAnchorElement, e?: Event) => {
+  (window as any)[(options.protocol ? options.protocol + '_' : '') + options.name] = (element?: HTMLAnchorElement, e?: Event, onConfirmed?: (anchor: HTMLAnchorElement) => any) => {
     !options.noCancelEvent && cancelEvent(null);
 
     let href = element.href;
@@ -77,13 +80,24 @@ export default function addAnchorListener<
     if(!options.noPathnameParams) pathnameParams = new URL(href).pathname.split('/').slice(1);
     if(!options.noUriParams) uriParams = parseUriParams(href);
 
-    const masked = element.href !== wrapUrl(element.textContent).url && element.getAttribute('safe') === null;
-    const result = options.callback({
+    let displayedUrl: string;
+    try {displayedUrl = new URL(wrapUrl(element.textContent).url).href;} catch{}
+    const masked = element.href !== displayedUrl && element.getAttribute('safe') === null;
+    const event = e || window.event;
+    const execute = () => options.callback({
       ...{pathnameParams, uriParams} as Params,
       element,
+      href,
       masked,
-      event: e || window.event
+      event,
+      onConfirmed
     });
+
+    if(exteralessSettings.ConfirmAllLinks && !LOCAL_ACTIONS.has(options.name) && (window as any).showMaskedAlert) {
+      return (window as any).showMaskedAlert(element, e, execute);
+    }
+
+    const result = execute();
 
     if(!e?.isTrusted) {
       return result;
@@ -120,9 +134,15 @@ function onMaskedAnchorAuxClick(e: MouseEvent) {
   // the innermost anchor, not the innermost MASKED one: a plain link nested in a masked web-page
   // box carries its own destination, and the box's alert would name a url nobody clicked
   const anchor = (e.target as Element)?.closest?.('a');
-  if(!anchor?.href || getAnchorCallbackName(anchor) !== 'showMaskedAlert') {
+  if(!anchor?.href) {
     return false;
   }
+
+  const callback = getAnchorCallbackName(anchor);
+  const masked = callback === 'showMaskedAlert';
+  if(!masked && (!exteralessSettings.ConfirmAllLinks || LOCAL_ACTIONS.has(callback))) return false;
+  if(anchor.hasAttribute('download') || /^(blob:|data:)/i.test(anchor.href)) return false;
+  if(anchor.getAttribute('href')?.startsWith('#') || anchor.closest('[contenteditable="true"]')) return false;
 
   const showMaskedAlert = (window as any).showMaskedAlert;
   if(!showMaskedAlert) {
@@ -130,7 +150,24 @@ function onMaskedAnchorAuxClick(e: MouseEvent) {
   }
 
   cancelEvent(e);
-  showMaskedAlert(anchor, e);
+  showMaskedAlert(anchor, e, masked ? undefined : (approved: HTMLAnchorElement) => {
+    approved.target = '_blank';
+    approved.rel = 'noopener noreferrer';
+    approved.click();
+  });
+  return true;
+}
+
+/** The app's existing document click owner supplies its auth/sponsored processing after consent. */
+export function confirmExternalAnchorClick(event: Event, anchor: HTMLAnchorElement, onConfirmed: (anchor: HTMLAnchorElement) => void) {
+  if(!exteralessSettings.ConfirmAllLinks || event.defaultPrevented || !anchor?.href ||
+    anchor.onclick || getAnchorCallbackName(anchor) || anchor.hasAttribute('download') ||
+    anchor.getAttribute('href')?.startsWith('#') || anchor.closest('[contenteditable="true"]') ||
+    !/^(https?:|mailto:|tel:)/i.test(anchor.href)) return false;
+  const showMaskedAlert = (window as any).showMaskedAlert;
+  if(!showMaskedAlert) return false;
+  cancelEvent(event);
+  showMaskedAlert(anchor, event, onConfirmed);
   return true;
 }
 

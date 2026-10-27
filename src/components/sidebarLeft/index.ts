@@ -39,7 +39,7 @@ import ripple from '@components/ripple';
 import indexOfAndSplice from '@helpers/array/indexOfAndSplice';
 import lastItem from '@helpers/array/lastItem';
 import ListenerSetter from '@helpers/listenerSetter';
-import formatNumber from '@helpers/number/formatNumber';
+import formatCount from '@helpers/number/formatCount';
 import {TabManagers} from '@lib/managers';
 import themeController from '@helpers/themeController';
 import contextMenuController from '@helpers/contextMenuController';
@@ -97,6 +97,7 @@ import {toastNew} from '@components/toast';
 import DeferredIsUsingPasscode from '@lib/passcode/deferredIsUsingPasscode';
 import createLockButton from '@components/sidebarLeft/lockButton';
 import createSubmenuTrigger, {CreateSubmenuArgs} from '@components/createSubmenuTrigger';
+import {exteralessSettings} from '@stores/exteralessSettings';
 import ChatTypeMenu from '@components/chatTypeMenu';
 import {RequestHistoryOptions} from '@appManagers/appMessagesManager';
 import EmptySearchPlaceholder from '@components/emptySearchPlaceholder';
@@ -259,10 +260,15 @@ export class AppSidebarLeft extends SidebarSlider {
         return;
       }
 
-      setBadgeCount(this.archivedCount, unreadCount, formatNumber(unreadCount, 1));
+      setBadgeCount(this.archivedCount, unreadCount, formatCount(unreadCount, 1));
     };
     rootScope.addEventListener('folder_unread', (folder) => {
       if(folder.id === FOLDER_ID_ARCHIVE) {
+        void updateArchivedCount().catch(noop);
+      }
+    });
+    rootScope.addEventListener('exteraless_settings_updated', ({key}) => {
+      if(key === 'DisableNumberRounding') {
         void updateArchivedCount().catch(noop);
       }
     });
@@ -742,7 +748,7 @@ export class AppSidebarLeft extends SidebarSlider {
       options: {
         text: 'CreateANew',
         icon: 'edit',
-        verify: () => this.isCollapsed(),
+        verify: () => this.isCollapsed() || exteralessSettings.DisableDialogsFloatingButton,
         separator: true
       },
       createSubmenu: () => this.createNewChatsSubmenu()
@@ -1924,7 +1930,7 @@ function getVersionLink() {
   });
   const t = document.createElement('span');
   t.classList.add('btn-menu-footer-text');
-  t.textContent = `Telegram Web${App.suffix} ${App.version} (${App.build})`;
+  t.textContent = `exterayond ${App.version} (${App.build})`;
   btnMenuFooter.append(t);
 
   return btnMenuFooter;

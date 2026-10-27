@@ -4,7 +4,9 @@
 // * the off states fall back to the message's own colors, the way
 // * ReplyMessageLine.check() gates them on Android
 :root.oe-no-reply-colors .reply.quote-like {
-  --peer-color-rgb: var(--message-primary-color-rgb, var(--peer-color-rgb));
+  // Peer colors are inline styles; both the accent and striped border must reset.
+  --peer-color-rgb: var(--message-primary-color-rgb) !important;
+  --peer-border-background: rgb(var(--message-primary-color-rgb)) !important;
 }
 
 :root.oe-no-reply-background .reply.quote-like,
@@ -12,8 +14,13 @@
   background-color: transparent;
 }
 
-:root.oe-no-reply-emoji .reply.quote-like .quote-like-pattern {
+:root.oe-no-reply-emoji .reply.quote-like .quote-like-pattern,
+:root.oe-no-reply-emoji .reply.quote-like .reply-collectible {
   display: none;
+}
+
+:root.oe-no-reply-emoji .reply.has-collectible {
+  padding-inline-end: 0;
 }
 
 .quote-like {

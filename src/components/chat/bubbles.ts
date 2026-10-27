@@ -77,7 +77,8 @@ import placeEphemeralBadge, {
 import {getAppWindow, onAppWindowChange, onBeforeAppWindowChange} from '@helpers/appWindow';
 import getObjectKeysAndSort from '@helpers/object/getObjectKeysAndSort';
 import forEachReverse from '@helpers/array/forEachReverse';
-import formatNumber from '@helpers/number/formatNumber';
+import formatCount from '@helpers/number/formatCount';
+import {exteralessSettings, getStickerScale} from '@stores/exteralessSettings';
 import getViewportSlice from '@helpers/dom/getViewportSlice';
 import SuperIntersectionObserver, {IntersectionCallback} from '@helpers/dom/superIntersectionObserver';
 import generateFakeIcon from '@components/generateFakeIcon';
@@ -189,6 +190,7 @@ import {copyPhoneNumber} from '@helpers/copyContact';
 import showCreateContactPopup from '@components/popups/createContact';
 import wrapPeerColorPattern from '@components/wrappers/peerColorPattern';
 import showTooltip from '@components/tooltip';
+import {showMessageTimeHint} from '@components/chat/messageTimeHint';
 import wrapTextWithEntities from '@lib/richTextProcessor/wrapTextWithEntities';
 import clearfix from '@helpers/dom/clearfix';
 import {usePeer} from '@stores/peers';
@@ -2576,7 +2578,7 @@ export default class ChatBubbles {
           const postViewsElements = Array.from(bubble.querySelectorAll('.post-views')) as HTMLElement[];
           if(!postViewsElements.length) continue;
 
-          const str = formatNumber(views, 1);
+          const str = formatCount(views, 1);
           let different = false;
           postViewsElements.forEach((postViews) => {
             if(different || postViews.textContent !== str) {
@@ -2593,6 +2595,12 @@ export default class ChatBubbles {
 
         scrollSaver?.restore();
       });
+    });
+
+    this.listenerSetter.add(rootScope)('exteraless_settings_updated', ({key}) => {
+      if(key === 'DisableNumberRounding') {
+        this.refreshPostViews();
+      }
     });
 
     this.observer = new SuperIntersectionObserver({root: this.scrollable.container});
@@ -2836,6 +2844,45 @@ export default class ChatBubbles {
     if(metrics && metrics !== known) {
       messageTextMetrics.set(kind, {...metrics, layout});
     }
+  }
+
+  /**
+   * Rewrites the views counters of the rendered bubbles in place after the rounding
+   * preference changed. Every label is re-read from the message its bubble shows, so
+   * nothing is re-rendered and no layout is rebuilt.
+   */
+  private refreshPostViews() {
+    if(this.chat.type === ChatType.Scheduled || this.chat.type === ChatType.Welcome) {
+      return;
+    }
+
+    // * the same bubbles, re-read from their messages: no re-render, no effect per message
+    const bubbles = new Set<HTMLElement>(Object.values(this.bubbles));
+    let scrollSaver: ScrollSaver;
+    for(const bubble of bubbles) {
+      const postViewsElements = bubble.querySelectorAll<HTMLElement>('.post-views');
+      if(!postViewsElements.length) {
+        continue;
+      }
+
+      const fullMid = getBubbleFullMid(bubble);
+      if(!fullMid) continue;
+      const message = this.chat.getMessage(fullMid) as Message.message;
+      if(!message?.views) {
+        continue;
+      }
+
+      const str = formatCount(message.views, 1);
+      postViewsElements.forEach((postViews) => {
+        if(postViews.textContent === str) return;
+        if(!scrollSaver) {
+          scrollSaver = this.createScrollSaver(true);
+          scrollSaver.save();
+        }
+        postViews.textContent = str;
+      });
+    }
+    scrollSaver?.restore();
   }
 
   public createScrollSaver(reverse = true) {
@@ -3722,7 +3769,13 @@ export default class ChatBubbles {
       return;
     }
 
-    if(!IS_TOUCH_SUPPORTED && findUpClassName(target, 'time')) {
+    const messageTime = findUpClassName(target, 'time');
+    if(messageTime && !this.chat.selection.isSelecting && exteralessSettings.ShowTimeHint) {
+      const message = this.chat.getMessage(bubbleFullMid);
+      if(message && showMessageTimeHint(message, this.chat.type, messageTime, this.container)) return;
+    }
+
+    if(!IS_TOUCH_SUPPORTED && messageTime) {
       this.chat.selection.toggleByElement(bubble);
       return;
     }
@@ -7453,7 +7506,11 @@ export default class ChatBubbles {
 
     const sizes = mediaSizes.active;
     const isEmoji = context.bubble.classList.contains('emoji-big');
-    boxSize ||= isEmoji ? sizes.emojiSticker : (isAnimated ? sizes.animatedSticker : sizes.staticSticker);
+    if(!boxSize) {
+      boxSize = isEmoji ? sizes.emojiSticker : (isAnimated ? sizes.animatedSticker : sizes.staticSticker);
+      const scale = isEmoji ? 1 : getStickerScale();
+      if(scale !== 1) boxSize = makeMediaSize(boxSize.width * scale, boxSize.height * scale);
+    }
     setAttachmentSize({
       photo: size ? undefined : doc as MyDocument,
       size,
@@ -7498,8 +7555,8 @@ export default class ChatBubbles {
         },
         initFrame,
         needFadeIn: noFadeIn ? false : undefined,
-        width,
-        height
+        width: width ?? parseFloat(container.style.width),
+        height: height ?? parseFloat(container.style.height)
       });
 
       const effectThumb = getStickerEffectThumb(doc);
@@ -9615,6 +9672,7 @@ export default class ChatBubbles {
       if(!message.fwd_from?.saved_from_msg_id && this.chat.type !== ChatType.Pinned) {
         const forward = document.createElement('div');
         forward.classList.add('bubble-beside-button', 'with-hover', 'forward');
+        if(this.chat.peerId !== rootScope.myId) forward.classList.add('channel-share-button');
         forward.setAttribute('role', 'button');
         forward.setAttribute('aria-label', I18n.format('Forward', true));
         if(Modes.a11y) forward.tabIndex = 0;
@@ -11417,6 +11475,7 @@ export default class ChatBubbles {
             nameDiv.prepend(line);
           }
         }
+        if(!storyFromPeerId) MessageRender.appendForwardedDate(nameDiv, message as Message.message);
       } else if(!message.viaBotId) {
         if(shouldRenderSenderNameWithEphemeralBadge(
           !!needName,
@@ -12819,6 +12878,7 @@ export default class ChatBubbles {
         i18n('ChatYourSelfDescription4')
       ];
     } else if(type === 'greeting') {
+      const showSticker = !exteralessSettings.DontSendGreetingSticker;
       let subtitle = i18n('NoMessagesGreetingsDescription');
 
       // findAndSplice(this.messagesQueue, q => q.bubble === bubble);
@@ -12829,7 +12889,7 @@ export default class ChatBubbles {
       const middleware = this.getMiddleware();
 
       const promises = Promise.all([
-        this.managers.appStickersManager.getGreetingSticker(),
+        showSticker ? this.managers.appStickersManager.getGreetingSticker() : undefined,
         this.managers.appProfileManager.getProfile(message.peerId.toUserId())
       ]);
       await promises.then(async([doc, userFull]) => {
@@ -12873,6 +12933,8 @@ export default class ChatBubbles {
           bubble.classList.add('wider');
         }
 
+        if(!showSticker) return;
+
         const loadPromises: Promise<any>[] = [];
         await wrapSticker({
           doc,
@@ -12906,7 +12968,8 @@ export default class ChatBubbles {
 
       subtitle.classList.add('center', BASE_CLASS + '-subtitle');
 
-      elements.push(subtitle, stickerDiv);
+      elements.push(subtitle);
+      if(showSticker) elements.push(stickerDiv);
     } else if(type === 'premiumRequired') {
       const stickerDiv = document.createElement('div');
       stickerDiv.classList.add(BASE_CLASS + '-sticker');

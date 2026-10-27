@@ -1,4 +1,6 @@
-import {listenForMaskedAnchorAuxClicks} from '@helpers/addAnchorListener';
+import {listenForMaskedAnchorAuxClicks, confirmExternalAnchorClick} from '@helpers/addAnchorListener';
+import addAnchorListener from '@helpers/addAnchorListener';
+import {setExteralessSetting, setOpenLinkConfirmation} from '@stores/exteralessSettings';
 
 describe('masked anchor aux click', () => {
   let showMaskedAlert: ReturnType<typeof vi.fn>;
@@ -24,11 +26,13 @@ describe('masked anchor aux click', () => {
   });
 
   beforeEach(() => {
+    setOpenLinkConfirmation(0);
     showMaskedAlert = vi.fn();
     (window as any).showMaskedAlert = showMaskedAlert;
   });
 
   afterEach(() => {
+    setOpenLinkConfirmation(0);
     delete (window as any).showMaskedAlert;
     document.body.replaceChildren();
   });
@@ -86,6 +90,90 @@ describe('masked anchor aux click', () => {
 
     auxClick(anchor);
 
+    expect(showMaskedAlert).not.toHaveBeenCalled();
+  });
+
+  test('All also guards ordinary middle clicks while Never leaves them alone', () => {
+    setOpenLinkConfirmation(1);
+    const anchor = makeAnchor({});
+    expect(auxClick(anchor).defaultPrevented).toBe(true);
+    expect(showMaskedAlert.mock.lastCall[2]).toBeTypeOf('function');
+    showMaskedAlert.mockClear();
+    setOpenLinkConfirmation(2);
+    expect(auxClick(anchor).defaultPrevented).toBe(false);
+    expect(showMaskedAlert).not.toHaveBeenCalled();
+  });
+
+  test('All preserves the original Telegram handler arguments until consent', () => {
+    const execute = vi.fn();
+    addAnchorListener({name: 'im', callback: execute});
+    const anchor = makeAnchor({});
+    anchor.href = 'https://t.me/example/42?thread=7';
+    setOpenLinkConfirmation(1);
+    const event = new MouseEvent('click', {ctrlKey: true});
+    (window as any).im(anchor, event);
+    expect(execute).not.toHaveBeenCalled();
+    anchor.href = 'https://changed.example/';
+    showMaskedAlert.mock.lastCall[2]();
+    expect(execute).toHaveBeenCalledOnce();
+    expect(execute.mock.lastCall[0].pathnameParams).toEqual(['example', '42']);
+    expect(execute.mock.lastCall[0].uriParams.thread).toBe('7');
+    expect(execute.mock.lastCall[0].href).toBe('https://t.me/example/42?thread=7');
+    expect(execute.mock.lastCall[0].event).toBe(event);
+    delete (window as any).im;
+  });
+
+  test('All does not add a second gate to bot commands or media timestamps', () => {
+    setExteralessSetting('ConfirmAllLinks', true);
+    for(const name of ['execBotCommand', 'setMediaTimestamp'] as const) {
+      const execute = vi.fn();
+      addAnchorListener({name, callback: execute});
+      (window as any)[name](makeAnchor({}));
+      expect(execute).toHaveBeenCalledOnce();
+      delete (window as any)[name];
+    }
+    expect(showMaskedAlert).not.toHaveBeenCalled();
+  });
+
+  test('All leaves downloadable and already cancelled middle clicks to their owner', () => {
+    setOpenLinkConfirmation(1);
+    const anchor = makeAnchor({download: 'test.txt'});
+    expect(auxClick(anchor).defaultPrevented).toBe(false);
+    anchor.removeAttribute('download');
+    anchor.addEventListener('auxclick', (event) => event.preventDefault());
+    auxClick(anchor);
+    expect(showMaskedAlert).not.toHaveBeenCalled();
+  });
+
+  test('All guards existing external anchors at click time and retains the owner continuation', () => {
+    const anchor = makeAnchor({});
+    anchor.href = 'https://example.com/path';
+    const execute = vi.fn();
+    setOpenLinkConfirmation(1);
+    const event = new MouseEvent('click', {bubbles: true, cancelable: true});
+    expect(confirmExternalAnchorClick(event, anchor, execute)).toBe(true);
+    expect(event.defaultPrevented).toBe(true);
+    expect(showMaskedAlert.mock.lastCall[2]).toBe(execute);
+    setOpenLinkConfirmation(0);
+    expect(confirmExternalAnchorClick(new MouseEvent('click'), anchor, execute)).toBe(false);
+  });
+
+  test('the document guard respects editors, local navigation, downloads and existing actions', () => {
+    setOpenLinkConfirmation(1);
+    const execute = vi.fn();
+    const check = (anchor: HTMLAnchorElement) => expect(confirmExternalAnchorClick(new MouseEvent('click'), anchor, execute)).toBe(false);
+    check(makeAnchor({download: 'test.txt'}));
+    check(makeAnchor({href: '#local-peer'}));
+    check(makeAnchor({onclick: 'im(this)'}));
+    const editor = document.createElement('div');
+    editor.contentEditable = 'true';
+    editor.setAttribute('contenteditable', 'true');
+    const draft = makeAnchor({});
+    editor.append(draft);
+    check(draft);
+    const canceled = new MouseEvent('click', {cancelable: true});
+    canceled.preventDefault();
+    expect(confirmExternalAnchorClick(canceled, makeAnchor({}), execute)).toBe(false);
     expect(showMaskedAlert).not.toHaveBeenCalled();
   });
 });

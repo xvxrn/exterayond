@@ -17,7 +17,7 @@ import pause from '@helpers/schedulers/pause';
 import {Accessor, Setter} from 'solid-js';
 import {hotReloadGuard} from '@lib/solidjs/hotReloadGuardProvider';
 import {hotListen} from '@helpers/hotModule';
-import {exteralessSettings} from '@stores/exteralessSettings';
+import apiManagerProxy from '@lib/apiManagerProxy';
 
 
 const CLASS_NAME = 'reactions';
@@ -87,6 +87,16 @@ hotListen(import.meta.hot, rootScope, 'saved_tags', ({savedPeerId, tags}) => {
         reactionsElement.render();
       }
     });
+  });
+});
+
+hotListen(import.meta.hot, rootScope, 'exteraless_settings_updated', ({key}) => {
+  if(key !== 'DisableNumberRounding') {
+    return;
+  }
+
+  REACTIONS_ELEMENTS.forEach((set) => {
+    set.forEach((reactionsElement) => reactionsElement.refreshCounters());
   });
 });
 
@@ -173,6 +183,12 @@ export default class ReactionsElement extends HTMLElement {
 
   public getSorted() {
     return this.sorted;
+  }
+
+  public refreshCounters() {
+    if(this.middleware?.()) {
+      this.sorted.forEach((reactionElement) => reactionElement.refreshCounter());
+    }
   }
 
   public shouldUseTagsForContext(context: ReactionsElement['context']) {
@@ -285,60 +301,23 @@ export default class ReactionsElement extends HTMLElement {
     return available;
   }
 
-  /**
-   * exteraless hideReactions*: reactions hidden per chat kind, exactly
-   * `MessageObject.oeReactionsHiddenForDialog()` — private (a user peer),
-   * channel (broadcast, not a megagroup) or group. The kind is cached like the
-   * Android one: the kind of chat a message belongs to does not change.
-   */
-  private oeChatKind?: 1 | 2 | 3;
+  private oeChatKind?: 'private' | 'channels' | 'groups';
 
-  private oeReactionsHiddenForDialog(): boolean {
-    const {OEChatsHideReactionsChannels, OEChatsHideReactionsGroups, OEChatsHideReactionsPrivate} = exteralessSettings;
-    if(!OEChatsHideReactionsChannels && !OEChatsHideReactionsGroups && !OEChatsHideReactionsPrivate) {
-      this.oeChatKind = undefined;
-      return false;
-    }
-
-    if(!this.oeChatKind) {
-      const peerId = this.context.peerId;
-      if(peerId.isUser()) {
-        this.oeChatKind = 1;
-      } else {
-        // * the chat cache keeps promises: assume group until it settles, then
-        // * correct the kind and re-render if this element is still mounted
-        this.oeChatKind = 3;
-        this.managers.appChatsManager.getChat(peerId.toChatId()).then((chat) => {
-          // * forbidden/community variants carry no flags at all
-          const flags = (chat as {pFlags?: {broadcast?: boolean, megagroup?: boolean}} | undefined)?.pFlags;
-          const kind: 1 | 2 | 3 = flags?.broadcast && !flags.megagroup ? 2 : 3;
-          if(this.oeChatKind !== kind) {
-            this.oeChatKind = kind;
-            if(this.middleware?.()) {
-              this.render();
-            }
-          }
-        }).catch(() => {});
-      }
-    }
-
-    switch(this.oeChatKind) {
-      case 1:
-        return OEChatsHideReactionsPrivate;
-      case 2:
-        return OEChatsHideReactionsChannels;
-      default:
-        return OEChatsHideReactionsGroups;
+  private syncChatKindClass() {
+    const peerId = this.context.peerId;
+    // The rendered peer is already in the UI mirror, as in Android's chat cache.
+    const chat = peerId.isUser() ? undefined : apiManagerProxy.getChat(peerId.toChatId());
+    const flags = (chat as {pFlags?: {broadcast?: boolean, megagroup?: boolean}})?.pFlags;
+    const kind = peerId.isUser() ? 'private' : flags?.broadcast && !flags.megagroup ? 'channels' : 'groups';
+    if(kind !== this.oeChatKind) {
+      if(this.oeChatKind) this.classList.remove('oe-reactions-' + this.oeChatKind);
+      this.oeChatKind = kind;
+      this.classList.add('oe-reactions-' + kind);
     }
   }
 
   public render(changedResults?: ReactionCount[], waitPromise?: Promise<any>) {
-    if(this.oeReactionsHiddenForDialog()) {
-      this.style.display = 'none';
-      return;
-    }
-
-    this.style.removeProperty('display');
+    this.syncChatKindClass();
 
     const reactions = this.context.reactions;
     const hasReactions = !!(reactions && reactions.results.length);

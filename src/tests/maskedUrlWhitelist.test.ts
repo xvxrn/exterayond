@@ -7,6 +7,7 @@ import {stubBrowserGlobals} from '@/tests/helpers/browserGlobals';
 import {MessageEntity} from '@layer';
 import {setAppStateSilent} from '@stores/appState';
 import isWhitelistedUrl from '@lib/richTextProcessor/isWhitelistedUrl';
+import {setOpenLinkConfirmation} from '@stores/exteralessSettings';
 
 // wrapRichText reaches the worker proxy through langPack; none of that is needed to build a link
 vi.mock('@lib/apiManagerProxy', () => ({default: new Proxy({}, {get: () => vi.fn()})}));
@@ -21,7 +22,24 @@ beforeAll(async() => {
 });
 
 beforeEach(() => {
+  setOpenLinkConfirmation(0);
   setAppStateSilent('appConfig', {whitelisted_domains: WHITELISTED_DOMAINS});
+});
+
+afterEach(() => setOpenLinkConfirmation(0));
+
+test('All leaves plain and trusted anchors to the call-time guard; drafts stay editable', () => {
+  (window as any).showMaskedAlert = vi.fn();
+  setOpenLinkConfirmation(1);
+  const text = 'https://example.com/path';
+  const entities: MessageEntity[] = [{_: 'messageEntityUrl', offset: 0, length: text.length}];
+  const normal = wrapRichText(text, {entities}).querySelector('a');
+  expect(normal.getAttribute('onclick')).toBeNull();
+  const trusted = wrapRichText('Telegram', {entities: [{_: 'messageEntityTextUrl', offset: 0, length: 8, url: 'https://telegram.org/'}]}).querySelector('a');
+  expect(trusted.getAttribute('onclick')).toBeNull();
+  const draft = wrapRichText(text, {entities, wrappingDraft: true}).querySelector('a');
+  expect(draft.getAttribute('onclick')).toBeNull();
+  delete (window as any).showMaskedAlert;
 });
 
 function wrapHiddenLink(url: string, text = 'such') {

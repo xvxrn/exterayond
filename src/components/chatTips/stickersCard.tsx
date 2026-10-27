@@ -1,4 +1,4 @@
-import {createEffect, createMemo, createResource, For, on, Show} from 'solid-js';
+import {createEffect, createMemo, createResource, For, Show} from 'solid-js';
 
 import anchorCallback from '@helpers/dom/anchorCallback';
 import {getStickerSetInputByStickerSet} from '@appManagers/utils/stickers/getStickerSetInput';
@@ -16,6 +16,7 @@ import TipCard, {openSettingsTab, TipCardButton, useTipReady} from '@components/
 import styles from '@components/chatTips/chatTips.module.scss';
 import A11yButton from '@components/a11yButton';
 import {hotReloadGuard} from '@lib/solidjs/hotReloadGuardProvider';
+import {exteralessSettings} from '@stores/exteralessSettings';
 
 /** macOS shows three featured packs side by side in the content slot. */
 const SETS_LIMIT = 3;
@@ -39,13 +40,15 @@ export default function StickersTipCard() {
   const {appSidebarLeft, rootScope} = useHotReloadGuard();
   const [appSettings, setAppSettings] = useAppSettings();
 
-  const [featured] = createResource(async() => {
+  const [featured] = createResource(() => !exteralessSettings.DisableTrending, async() => {
     const sets = await rootScope.managers.appStickersManager.getFeaturedStickers();
     return sets.slice(0, SETS_LIMIT).map(({set}) => set);
   });
 
   const markReady = useTipReady();
-  createEffect(on(featured, (sets) => sets && markReady()));
+  createEffect(() => {
+    if(exteralessSettings.DisableTrending || featured()) markReady();
+  });
 
   const buttons = (): TipCardButton[] => MODES.map(([value, icon, langKey]) => ({
     icon,
@@ -58,14 +61,16 @@ export default function StickersTipCard() {
     <TipCard
       title={i18n('Stickers.SuggestStickers')}
       buttons={buttons()}
-      contentTitle={i18n('Stickers.Trending')}
-      description={i18n('ChatTips.Stickers.Description', [
+      contentTitle={!exteralessSettings.DisableTrending && i18n('Stickers.Trending')}
+      description={exteralessSettings.DisableTrending ? i18n('Exteraless.DisableTrending.Info') : i18n('ChatTips.Stickers.Description', [
         anchorCallback(() => openSettingsTab(appSidebarLeft, hotReloadGuard.tabs.AppStickersTab))
       ])}
     >
-      <div class={styles.stickerSets}>
-        <For each={featured()}>{(set) => <TrendingStickerSet set={set} />}</For>
-      </div>
+      <Show when={!exteralessSettings.DisableTrending}>
+        <div class={styles.stickerSets}>
+          <For each={featured()}>{(set) => <TrendingStickerSet set={set} />}</For>
+        </div>
+      </Show>
     </TipCard>
   );
 }

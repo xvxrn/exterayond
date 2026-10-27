@@ -1,14 +1,17 @@
 import safeWindowOpen from '@helpers/dom/safeWindowOpen';
+import {setOpenLinkConfirmation} from '@stores/exteralessSettings';
 
 describe('safeWindowOpen', () => {
   let open: ReturnType<typeof vi.spyOn>;
 
   beforeEach(() => {
+    setOpenLinkConfirmation(0);
     open = vi.spyOn(window, 'open').mockImplementation(() => null);
     delete (window as any).showMaskedAlert;
   });
 
   afterEach(() => {
+    setOpenLinkConfirmation(0);
     open.mockRestore();
     delete (window as any).showMaskedAlert;
   });
@@ -42,5 +45,15 @@ describe('safeWindowOpen', () => {
 
     expect(open).not.toHaveBeenCalled();
     expect(showMaskedAlert).toHaveBeenCalledTimes(1);
+  });
+
+  test('All routes ordinary programmatic links through the existing question', () => {
+    const showMaskedAlert = vi.fn();
+    (window as any).showMaskedAlert = showMaskedAlert;
+    setOpenLinkConfirmation(1);
+    safeWindowOpen('https://example.com/path');
+    expect(open).not.toHaveBeenCalled();
+    expect(showMaskedAlert).toHaveBeenCalledOnce();
+    expect(showMaskedAlert.mock.lastCall[0].href).toBe('https://example.com/path');
   });
 });

@@ -88,15 +88,22 @@ $select-lane-shift: var(--select-lane-shift, #{1.5rem + .625rem});
   overflow: hidden;
 }
 
-ul// * exteraless senderMiniAvatars: the sender's mini avatar rides in the
+// * exteraless senderMiniAvatars: the sender's mini avatar rides in the
 // * preview line, in front of their name
+.dialog-sender-with-avatar {
+  display: inline-flex;
+  align-items: center;
+  vertical-align: middle;
+}
+
 .dialog-sender-mini-avatar {
   display: inline-block;
+  flex-shrink: 0;
   vertical-align: middle;
   margin-inline-end: .25rem;
 }
 
-.chatlist {
+ul.chatlist {
   padding: 0 .5rem/*  .5rem */;
 
   @include respond-to(handhelds) {

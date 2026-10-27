@@ -26,6 +26,7 @@ import {ChatType} from '@components/chat/chatType';
 import {BADGE_TRANSITION_TIME} from '@components/autonomousDialogList/constants';
 import {setRollingText} from '@components/animatedCounter';
 import {createUniqueId} from 'solid-js';
+import formatCount from '@helpers/number/formatCount';
 
 import {hotReloadGuard} from '@lib/solidjs/hotReloadGuardProvider';
 
@@ -76,6 +77,12 @@ export type DialogDom = {
    * rendered subtitle is still the one in the DOM.
    */
   lastMessageRenderParts?: HTMLElement[],
+  /**
+   * Owns the live parts of the subtitle currently in the DOM (the sender's mini
+   * avatar), so replacing or dropping the subtitle releases them without
+   * touching the row's own middleware.
+   */
+  lastMessageOwner?: MiddlewareHelper,
   /** search-result rows: the query lit up inside the rendered message text */
   textHighlight?: TextHighlight,
   /**
@@ -113,10 +120,13 @@ export function disposeTextHighlight(dom: DialogDom) {
 
 /**
  * Puts the subtitle of a row in - crossfading from the activity it takes the place of, which
- * came in the same way (`setDialogTyping`)
+ * came in the same way (`setDialogTyping`). The owner of the parts it replaces is released
+ * with them: passing none clears it.
  */
-export function setDialogSubtitle(dom: DialogDom, nodes: Node[]) {
+export function setDialogSubtitle(dom: DialogDom, nodes: Node[], owner?: MiddlewareHelper) {
   const {lastMessageSpan} = dom;
+  dom.lastMessageOwner?.destroy();
+  dom.lastMessageOwner = owner;
   const wasTyping = lastMessageSpan.classList.contains('user-typing');
   lastMessageSpan.classList.remove('user-typing');
   dom.showsActivity = false;
@@ -222,6 +232,7 @@ export class DialogElement {
   public folderTags?: DialogFolderTags;
   private peerTitle: PeerTitle;
   private lastBadgeState: DialogElementAppliedBadgeState;
+  private lastBadgeOptions: DialogElementBadgeState;
 
   constructor({
     peerId,
@@ -433,6 +444,8 @@ export class DialogElement {
 
   public destroy() {
     this.dispose();
+    this.dom.lastMessageOwner?.destroy();
+    this.dom.lastMessageOwner = undefined;
     this.middlewareHelper?.destroy();
     disposeTextHighlight(this.dom);
   }
@@ -545,7 +558,24 @@ export class DialogElement {
     this.dom.subtitleEl.append(button);
   }
 
+  /** Re-reads the count with the current `formatCount` (see `exteraless_settings_updated`). */
+  public refreshUnreadText() {
+    const options = this.lastBadgeOptions;
+    if(!options?.unread) {
+      return;
+    }
+
+    const text = options.unreadMention ? '@' : '' + (options.unreadCount ? formatCount(options.unreadCount, 1) : ' ');
+    this.setBadgeState({
+      ...options,
+      unreadText: text,
+      unreadAvatarText: text,
+      transitionDuration: 0
+    });
+  }
+
   public setBadgeState(options: DialogElementBadgeState) {
+    this.lastBadgeOptions = options;
     const transitionDuration = options.transitionDuration || 0;
     this.setMuted(options.muted, transitionDuration);
 

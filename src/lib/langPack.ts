@@ -15,8 +15,10 @@ import matchUrlProtocol from '@lib/richTextProcessor/matchUrlProtocol';
 import wrapUrl from '@lib/richTextProcessor/wrapUrl';
 import {setDirection} from '@helpers/dom/setInnerHTML';
 import setBlankToAnchor from '@lib/richTextProcessor/setBlankToAnchor';
-import {createSignal} from 'solid-js';
+import {createEffect, createRoot, createSignal} from 'solid-js';
 import commonStateStorage from '@lib/commonStateStorage';
+import {exteralessSettings} from '@stores/exteralessSettings';
+import {hotEffect} from '@helpers/hotModule';
 import Icon from '@components/icon';
 import currencyStarIcon from '@components/currencyStarIcon';
 
@@ -119,7 +121,11 @@ namespace I18n {
   export function getLocalVersion() { return localVersion; }
 
   function importLocalStrings() {
-    return Promise.all([localStrings.lang ?? import('../lang'), localStrings.langSign ?? import('../langSign')]);
+    return Promise.all([localStrings.lang ?? import('../lang'), localStrings.langSign ?? import('../langSign')]).then(([lang, langSign]) => {
+      localStrings.lang = lang;
+      localStrings.langSign = langSign;
+      return [lang, langSign] as const;
+    });
   }
 
   let forcedRTL: boolean = Modes.rtl || undefined;
@@ -168,7 +174,7 @@ namespace I18n {
   }
 
   export function getCacheLangPackAndApply() {
-    return cacheLangPackPromise ||= getCacheLangPack(true).then(async(langPack) => {
+    return cacheLangPackPromise ||= Promise.all([getCacheLangPack(true), importLocalStrings()]).then(async([langPack]) => {
       if(!langPack) {
         langPack = await loadLocalLangPack();
         langPack = await saveLangPack(langPack, false);
@@ -344,6 +350,18 @@ namespace I18n {
 
     for(const string of langPack.strings) {
       strings.set(string.key as LangPackKey, string);
+    }
+
+    // Cached/server packs cannot supply this fork's strings; refresh local fallbacks on every apply.
+    for(const module of [localStrings.lang, localStrings.langSign]) {
+      if(!module) continue;
+      for(const string of formatLocalStrings(module.default)) {
+        const key = string.key as LangPackKey;
+        if(!strings.has(key) || key === 'Exteraless' || key.startsWith('Exteraless.')) {
+          (string as LocalLangPackString).local = true;
+          strings.set(key, string);
+        }
+      }
     }
 
     const rtl = langPack.rtl ?? isRTLLangCode(langPack.lang_code);
@@ -795,13 +813,24 @@ namespace I18n {
     return text;
   }
 
+  // * message timestamps keep their base options (hour+minute, or a date's own
+  // * month/day/year); the `messageTime` marker adds seconds at update time, so
+  // * the setting and the hour cycle can flip under an element that is already on
+  const messageTimeOptions: Intl.DateTimeFormatOptions = {hour: '2-digit', minute: '2-digit'};
+  export function getMessageTimeOptions(): Intl.DateTimeFormatOptions {
+    return messageTimeOptions;
+  }
+
   export type IntlDateElementOptions = IntlElementBaseOptions & {
     date?: Date,
-    options: Intl.DateTimeFormatOptions
+    options: Intl.DateTimeFormatOptions,
+    /** A timestamp that takes seconds from the exteraless `showSeconds` setting when it renders. */
+    messageTime?: boolean
   };
   export class IntlDateElement extends IntlElementBase<IntlDateElementOptions> {
     public date: IntlDateElementOptions['date'];
     public options: IntlDateElementOptions['options'];
+    public messageTime: IntlDateElementOptions['messageTime'];
 
     constructor(options: IntlDateElementOptions) {
       super({...options, property: options.property ?? 'textContent'});
@@ -815,18 +844,51 @@ namespace I18n {
     public update(options?: IntlDateElementOptions) {
       safeAssign(this, options);
 
+      // * the date's own options are never mutated: a marked timestamp only adds
+      // * the seconds on top, so switching off gives the stock string back
+      const optionsToFormat: Intl.DateTimeFormatOptions = this.messageTime && exteralessSettings.showSeconds ?
+        {...this.options, hour: '2-digit', minute: '2-digit', second: '2-digit'} :
+        this.options;
+
       let text: string;
-      if(this.options.hour && this.options.minute && Object.keys(this.options).length === 2/*  && false */) {
+      if(optionsToFormat.hour && optionsToFormat.minute && Object.keys(optionsToFormat).length === 2/*  && false */) {
         // * no capitalizeFirstLetter here — hu renders 'de. 12:05' and must not become 'De. 12:05'
         text = formatTimeString(this.date);
       } else {
         // * https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Intl/Locale/hourCycle#adding_an_hour_cycle_via_the_locale_string
-        const dateTimeFormat = getDateTimeFormat(this.options);
+        const dateTimeFormat = getDateTimeFormat(optionsToFormat);
         text = capitalizeFirstLetter(dateTimeFormat.format(this.date));
       }
 
       (this.element as any)[this.property] = text;
     }
+  }
+
+  /**
+   * Re-renders the marked message timestamps already on screen, the way
+   * `setTimeFormat` does for a changed hour cycle. Date-only elements,
+   * separators and durations carry no marker and keep their text.
+   */
+  function updateMountedMessageTimes() {
+    const elements = Array.from(document.querySelectorAll(`.i18n`)) as HTMLElement[];
+    for(const element of elements) {
+      const instance = weakMap.get(element);
+      if(instance instanceof IntlDateElement && instance.messageTime) {
+        instance.update();
+      }
+    }
+  }
+
+  if(typeof document !== 'undefined') {
+    hotEffect(import.meta.hot, () => createRoot((dispose) => {
+      createEffect(() => {
+        // * every time element is mounted before this switch is flipped
+        void exteralessSettings.showSeconds;
+        updateMountedMessageTimes();
+      });
+
+      return dispose;
+    }));
   }
 
   export function i18n(key: LangPackKey, args?: FormatterArguments) {

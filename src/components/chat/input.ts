@@ -552,6 +552,12 @@ export default class ChatInput {
   private welcomeLimitReached: number;
   private joinBtn: HTMLButtonElement;
   private channelMuteBtn: HTMLButtonElement;
+  /** The channel's linked discussion chat, captured with the peer it belongs to. */
+  private discussTarget: {peerId: PeerId, peerIdToOpen: PeerId};
+  /** Whether this chat's plate may show the centre button at all (channel eligibility). */
+  private channelMuteBtnCanShow = false;
+  /** The chat `channelMuteBtnCanShow` was resolved for. */
+  private channelMuteBtnPeerId: PeerId;
   private directControlBtn: HTMLButtonElement;
   private giftControlBtn: HTMLButtonElement;
   private rowsWrapperWrapper: HTMLDivElement;
@@ -1804,22 +1810,8 @@ export default class ChatInput {
       showFrozenPopup();
     }, {listenerSetter: this.listenerSetter});
     this.joinBtn && attachClickEvent(this.joinBtn, this.chat.topbar.onJoinClick.bind(this.chat.topbar, this.joinBtn), {listenerSetter: this.listenerSetter});
-    attachClickEvent(this.channelMuteBtn, () => {
-      // * exteraless bottomButton DISCUSS: the plate button opens the linked
-      // * discussion chat, as the topbar's ViewDiscussion item does
-      if(exteralessSettings.OEChatsBottomButton === 2) {
-        Promise.resolve(this.managers.appProfileManager.getChannelFull(this.chat.peerId.toChatId())).then((channelFull) => {
-          if(channelFull?.linked_chat_id) {
-            this.chat.appImManager.setInnerPeer({
-              peerId: channelFull.linked_chat_id.toPeerId(true)
-            });
-          }
-        });
-        return;
-      }
-
-      this.managers.appMessagesManager.togglePeerMute({peerId: this.chat.peerId});
-    }, {listenerSetter: this.listenerSetter});
+    this.attachChannelMuteButton();
+    this.listenChannelMuteButtonPreference();
 
     // * pinned part start
     this.pinnedControlBtn = Button('btn-primary btn-transparent text-bold chat-input-control-button chat-input-plate-button', {icon: 'unpin'});
@@ -2357,20 +2349,105 @@ export default class ChatInput {
     return peerId === REPLIES_PEER_ID && this.chat.type === ChatType.Chat;
   }
 
-  // Keeps the channel "can't write" plate's centre button labelled Mute/Unmute.
-  private updateChannelMuteButton() {
+  // The plate's centre button: Discuss opens the linked discussion chat, the
+  // stock Mute/Unmute toggles the mute. Both read the label's own target and
+  // the current preference, so a click always does what the label says and
+  // never opens another chat.
+  private onChannelMuteClick() {
+    const discussTarget = this.discussTarget;
+    if(exteralessSettings.OEChatsBottomButton === 2 && discussTarget?.peerId === this.chat.peerId) {
+      this.chat.appImManager.setInnerPeer({peerId: discussTarget.peerIdToOpen});
+      return;
+    }
+
+    this.managers.appMessagesManager.togglePeerMute({peerId: this.chat.peerId});
+  }
+
+  // `onChannelMuteClick` is a prototype method, so the listener needs the
+  // ChatInput receiver — bind it once, here, like the join button above.
+  private attachChannelMuteButton() {
+    attachClickEvent(this.channelMuteBtn, this.onChannelMuteClick.bind(this), {listenerSetter: this.listenerSetter});
+  }
+
+  // The preference is live while a channel is open: 0 hides an eligible plate,
+  // 1 keeps the stock Mute/Unmute, 2 opens the linked discussion (or is stock
+  // when there is none). Eligibility comes from finishPeerChange; this only
+  // re-reads the cached full chat, never the network.
+  private listenChannelMuteButtonPreference() {
+    createRoot((dispose) => {
+      this.chat.destroyMiddlewareHelper.onDestroy(dispose);
+      createEffect(() => {
+        void exteralessSettings.OEChatsBottomButton;
+        this.updateChannelMuteButton();
+      });
+    });
+  }
+
+  // Keeps the channel "can't write" plate's centre button labelled and shown
+  // for what clicking it does: Discuss for a channel with a linked discussion
+  // chat, Mute/Unmute otherwise. The target is captured with its channel, so a
+  // late answer never relabels or navigates another chat.
+  private updateChannelMuteButton(peerMuted?: boolean) {
     if(!this.channelMuteBtn) {
       return;
     }
 
     const peerId = this.chat.peerId;
-    this.managers.appNotificationsManager.isPeerLocalMuted({peerId, respectType: false}).then((muted) => {
-      if(this.chat.peerId !== peerId) {
+    const canShow = this.channelMuteBtnPeerId === peerId && this.channelMuteBtnCanShow;
+    const mode = exteralessSettings.OEChatsBottomButton;
+    this.channelMuteBtn.classList.toggle('hide', !canShow || mode === 0);
+
+    if(!canShow) {
+      this.discussTarget = undefined;
+      return;
+    }
+
+    if(mode !== 2 || peerId.isUser()) {
+      this.discussTarget = undefined;
+      this.setChannelMuteLabel(peerId, peerMuted);
+      return;
+    }
+
+    if(this.discussTarget?.peerId !== peerId) {
+      // * the stock label is what the button does until the cached full chat
+      // * says this channel has a discussion to open
+      this.discussTarget = undefined;
+      this.setChannelMuteLabel(peerId, peerMuted);
+    }
+
+    const middleware = this.getMiddleware();
+    Promise.resolve(this.managers.appProfileManager.getCachedFullChat(peerId.toChatId())).then((chatFull) => {
+      if(!middleware() || this.chat.peerId !== peerId || exteralessSettings.OEChatsBottomButton !== 2) {
+        return;
+      }
+
+      const linkedChatId = (chatFull as ChatFull.channelFull)?.linked_chat_id;
+      if(linkedChatId) {
+        this.discussTarget = {peerId, peerIdToOpen: linkedChatId.toPeerId(true)};
+        this.channelMuteBtn.replaceChildren(i18n('ViewDiscussion'));
+        return;
+      }
+
+      this.discussTarget = undefined;
+      this.setChannelMuteLabel(peerId, peerMuted);
+    });
+  }
+
+  private setChannelMuteLabel(peerId: PeerId, peerMuted?: boolean) {
+    const setLabel = (muted: boolean) => {
+      if(this.chat.peerId !== peerId || this.discussTarget?.peerId === peerId) {
         return;
       }
 
       this.channelMuteBtn.replaceChildren(i18n(muted ? 'ChatList.Context.Unmute' : 'ChatList.Context.Mute'));
-    });
+    };
+
+    if(peerMuted !== undefined) {
+      setLabel(peerMuted);
+      return;
+    }
+
+    this.managers.appNotificationsManager.isPeerLocalMuted({peerId, respectType: false}).then(setLabel);
   }
 
   public async getNeededFakeContainer(startParam = this.startParam) {
@@ -2660,7 +2737,10 @@ export default class ChatInput {
   }
 
   public mentionUser(peerId: PeerId, isHelper?: boolean) {
+    const middleware = this.getMiddleware();
+    const chatPeerId = this.chat.peerId;
     Promise.resolve(this.managers.appPeersManager.getPeer(peerId)).then((peer) => {
+      if(!middleware() || this.chat.peerId !== chatPeerId || !peer) return;
       let str = '', entity: MessageEntity;
       const usernames = getPeerActiveUsernames(peer);
       if(usernames[0]) {
@@ -2685,8 +2765,8 @@ export default class ChatInput {
         };
       }
 
-      // * exteraless addCommaAfterMention: «@user, » instead of «@user »
-      str += exteralessSettings.OEAddCommaAfterMention ? ', ' : ' ';
+      // Android appends a comma to public mentions, except bots. Named mentions keep a space.
+      str += usernames[0] && !(peer as User.user).pFlags?.bot && exteralessSettings.OEAddCommaAfterMention ? ', ' : ' ';
       this.insertAtCaret(str, entity, isHelper);
     });
   }
@@ -3046,22 +3126,12 @@ export default class ChatInput {
           this.joinBtn.replaceChildren(i18n(joinKey));
         }
 
-        // * exteraless bottomButton: hide the plate button / make it open the
-        // * discussion (ChatActivity.shouldShowDiscussButton)
-        this.channelMuteBtn.classList.toggle('hide', !(good && showMute) || exteralessSettings.OEChatsBottomButton === 0);
-        if(good && showMute && exteralessSettings.OEChatsBottomButton === 2) {
-          this.channelMuteBtn.replaceChildren(i18n('ViewDiscussion'));
-          // * no linked discussion to open: fall back to the mute label
-          Promise.resolve(this.managers.appProfileManager.getCachedFullChat(peerId.toChatId())).then((chatFull) => {
-            if(middleware() && !(chatFull as ChatFull.channelFull)?.linked_chat_id) {
-              this.updateChannelMuteButton();
-            }
-          });
-        } else if(good && showMute) {
-          // Synchronous initial label (no flash); live toggles are handled by
-          // the dialog_notify_settings listener -> updateChannelMuteButton().
-          this.channelMuteBtn.replaceChildren(i18n(peerMuted ? 'ChatList.Context.Unmute' : 'ChatList.Context.Mute'));
-        }
+        // * exteraless bottomButton: whether this chat is eligible for the
+        // * plate at all (ChatActivity.shouldShowDiscussButton); the live
+        // * preference decides whether it shows and what it does
+        this.channelMuteBtnPeerId = peerId;
+        this.channelMuteBtnCanShow = !!(good && showMute);
+        this.updateChannelMuteButton(peerMuted);
 
         // Channel "can't write" plate: write-in-direct (only when the channel
         // has a linked direct-messages chat) on the left, gift on the right.

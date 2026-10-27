@@ -10,8 +10,9 @@
  * store; the rest of the Android key set is recognized by name and reported as
  * unsupported — never applied, never faked.
  */
-import {OE_DEFAULTS, clampExteralessSetting, exteralessSettings, setExteralessSetting} from '@stores/exteralessSettings';
-import type {ExteralessSettingsKey} from '@stores/exteralessSettings';
+import {OE_DEFAULTS, clampExteralessSetting, exteralessSettings, setExteralessSetting, getStickerTimeMode, setStickerTimeMode} from '@stores/exteralessSettings';
+import type {ExteralessSettings, ExteralessSettingsKey} from '@stores/exteralessSettings';
+import {isArchiveHidden, setArchiveHidden} from '@stores/exteralessPreferences';
 import {PLUGINS_DEVELOPER_MODE_KEY, pluginsManager} from '@plugins/manager';
 import {invisibleEncryptor} from './invisibleEncryptor';
 
@@ -32,24 +33,24 @@ type SupportedEntry = {
   kind: Kind,
   min?: number,
   max?: number,
-  /** the store setting this key carries */
-  storeKey: ExteralessSettingsKey,
+  /** HideArchive uses Web K's native setting; StickerTimeMode composes two Android flags. */
+  storeKey: ExteralessSettingsKey | 'HideArchive' | 'StickerTimeMode',
   /** int keys with different numbering: our value ↔ exteraGram's */
-  toEtg?: (ours: number) => number | null,
+  toEtg?: (ours: number) => number | boolean | null,
   toOurs?: (etg: number) => number | null
 };
 
 /** The Android key set the format carries beyond the web's reach: recognized, reported, never applied. */
 export const KNOWN_UNSUPPORTED_KEYS: string[] = [
   // exteraconfig (Neko/Na/Android-bound targets)
-  'disableNumberRounding', 'formatTimeWithSeconds', 'filterZalgo', 'uploadSpeedBoost',
-  'hidePhoneNumber', 'hideArchiveFolder', 'archiveOnPull', 'disableUnarchiveSwipe',
-  'doNotUseProxy', 'centerTitle', 'hideStories', 'hideFloatingButton',
-  'hideDialogsSearchBar', 'hideAllChats', 'newLoadingStyle', 'newNavigationBarStyle',
+  'uploadSpeedBoost',
+  'archiveOnPull', 'disableUnarchiveSwipe',
+  'doNotUseProxy', 'centerTitle', 'hideStories',
+  'hideDialogsSearchBar', 'hideAllChats',
   'iosNavigationBarStyle', 'iosChatHeader', 'profileMusicCard', 'useSystemFonts',
   'gooeyAvatarAnimation', 'navigationDrawer', 'immersiveDrawerAnimation', 'showFeedTab',
-  'hideStickerTime', 'disableGreetingSticker', 'hideKeyboardOnScroll', 'inlineMathResult',
-  'hideSendAsPeer', 'replaceEditedWithIcon', 'showOnlineStatus', 'hideShareButton',
+  'hideKeyboardOnScroll', 'inlineMathResult',
+  'showOnlineStatus',
   'wideChannelPosts', 'wideFeedPosts', 'showCopyPhotoButton', 'showSaveMessageButton',
   'showRepeatMessageButton', 'showClearButton', 'showHistoryButton', 'showReportButton',
   'showDetailsButton', 'groupMessageMenu', 'extendedFramesPerSecond', 'cameraStabilization',
@@ -57,10 +58,10 @@ export const KNOWN_UNSUPPORTED_KEYS: string[] = [
   'hideCameraTile', 'preferOriginalQuality', 'swipeToPip', 'unmuteWithVolumeButtons',
   'pauseOnMinimizeVideo', 'useSystemIconShape', 'infiniteScrolling', 'useGoogleCrashlytics',
   'inAppVibration', 'titleText', 'downloadSpeedBoost', 'tabletMode', 'glassOutlineStyle',
-  'stickerShape', 'doubleTapSeekDuration', 'cameraType', 'videoMessagesCamera',
+  'doubleTapSeekDuration', 'cameraType', 'videoMessagesCamera',
   'translationProvider', 'tabIcons', 'doubleTapAction', 'doubleTapActionOutOwner',
-  'predictiveBackIntensity', 'flashWarmth', 'flashIntensity', 'stickerSize',
-  'newSliderStyle', 'newSwitchStyle', 'dividerStyle', 'bottomNavigationBarMode',
+  'predictiveBackIntensity', 'flashWarmth', 'flashIntensity',
+  'dividerStyle', 'bottomNavigationBarMode',
   'unlimitedRecentStickers', 'quickAdminShortcuts', 'mainMenuLayout', 'mainMenuHiddenItems',
   'tabCounter', 'targetLang',
   // * the plugin flags with a web target moved to SUPPORTED; the two without
@@ -71,17 +72,32 @@ export const KNOWN_UNSUPPORTED_KEYS: string[] = [
 ];
 
 const SUPPORTED: SupportedEntry[] = [
+  {section: SECTION_EXTERA, key: 'disableGreetingSticker', kind: 'bool', storeKey: 'DontSendGreetingSticker'},
+  {section: SECTION_EXTERA, key: 'showIdAndDc', kind: 'int', min: 0, max: 2, storeKey: 'IdDcType'},
+  {section: SECTION_EXTERA, key: 'replaceEditedWithIcon', kind: 'bool', storeKey: 'UseEditedIcon'},
+  {section: SECTION_EXTERA, key: 'hideShareButton', kind: 'bool', storeKey: 'HideShareButtonInChannel'},
+  {section: SECTION_EXTERA, key: 'filterZalgo', kind: 'bool', storeKey: 'ZalgoFilter'},
+  {section: SECTION_EXTERA, key: 'hideArchiveFolder', kind: 'bool', storeKey: 'HideArchive'},
+  {section: SECTION_EXTERA, key: 'hidePhoneNumber', kind: 'bool', storeKey: 'HidePhone'},
+  {section: SECTION_EXTERA, key: 'disableNumberRounding', kind: 'bool', storeKey: 'DisableNumberRounding'},
+  {section: SECTION_EXTERA, key: 'formatTimeWithSeconds', kind: 'bool', storeKey: 'showSeconds'},
   {section: SECTION_EXTERA, key: 'relativeLastSeen', kind: 'bool', storeKey: 'OERelativeLastSeen'},
   {section: SECTION_EXTERA, key: 'singleCornerRadius', kind: 'bool', storeKey: 'OEAppearanceSingleCornerRadius'},
   {section: SECTION_EXTERA, key: 'hideActionBarStatus', kind: 'bool', storeKey: 'OEAppearanceHideActionBarStatus'},
+  {section: SECTION_EXTERA, key: 'hideFloatingButton', kind: 'bool', storeKey: 'DisableDialogsFloatingButton'},
   {section: SECTION_EXTERA, key: 'senderMiniAvatars', kind: 'bool', storeKey: 'OEAppearanceSenderMiniAvatars'},
   {section: SECTION_EXTERA, key: 'squareFab', kind: 'bool', storeKey: 'OEAppearanceSquareFab'},
   {section: SECTION_EXTERA, key: 'sectionsSeparatedHeaders', kind: 'bool', storeKey: 'OEAppearanceSeparateHeaders'},
   {section: SECTION_EXTERA, key: 'newChatHeaderStyle', kind: 'bool', storeKey: 'OEAppearanceNewChatHeaderStyle'},
+  {section: SECTION_EXTERA, key: 'newLoadingStyle', kind: 'bool', storeKey: 'OEAppearanceNewLoadingStyle'},
+  {section: SECTION_EXTERA, key: 'newNavigationBarStyle', kind: 'bool', storeKey: 'OEAppearanceNewNavigationBarStyle'},
+  {section: SECTION_EXTERA, key: 'newSliderStyle', kind: 'bool', storeKey: 'SliderStyle', toEtg: (value) => value === 2, toOurs: (value) => value ? 2 : 0},
+  {section: SECTION_EXTERA, key: 'newSwitchStyle', kind: 'bool', storeKey: 'SwitchStyle', toEtg: (value) => value >= 2, toOurs: (value) => value ? 3 : 0},
   {section: SECTION_EXTERA, key: 'customThemes', kind: 'bool', storeKey: 'OEAppearanceCustomThemes'},
   {section: SECTION_EXTERA, key: 'glassMessageMenu', kind: 'bool', storeKey: 'OEAppearanceGlassMessageMenu'},
   {section: SECTION_EXTERA, key: 'addCommaAfterMention', kind: 'bool', storeKey: 'OEAddCommaAfterMention'},
   {section: SECTION_EXTERA, key: 'removeMessageTail', kind: 'bool', storeKey: 'OEChatsRemoveMessageTail'},
+  {section: SECTION_EXTERA, key: 'hideSendAsPeer', kind: 'bool', storeKey: 'hideSendAsChannel'},
   {section: SECTION_EXTERA, key: 'replyColors', kind: 'bool', storeKey: 'OEChatsReplyColors'},
   {section: SECTION_EXTERA, key: 'replyEmoji', kind: 'bool', storeKey: 'OEChatsReplyEmoji'},
   {section: SECTION_EXTERA, key: 'replyBackground', kind: 'bool', storeKey: 'OEChatsReplyBackground'},
@@ -92,15 +108,11 @@ const SUPPORTED: SupportedEntry[] = [
   {section: SECTION_EXTERA, key: 'alwaysSendInHD', kind: 'bool', storeKey: 'OEChatsAlwaysSendInHD'},
   {section: SECTION_EXTERA, key: 'pauseOnMinimizeVoice', kind: 'bool', storeKey: 'OEChatsPauseVoice'},
   {section: SECTION_EXTERA, key: 'pauseOnMinimizeRound', kind: 'bool', storeKey: 'OEChatsPauseRound'},
-  {
-    section: SECTION_EXTERA, key: 'stickerTimeMode', kind: 'int', min: 0, max: 2,
-    storeKey: 'OEChatsStickerTimeSide',
-    // * web holds the bool half of the Android three modes: 0 overlay, 1 side,
-    // * 2 hidden (NagramX's half — no web target)
-    toOurs: (etg) => etg === 2 ? null : (etg === 1 ? 1 : 0),
-    toEtg: (ours) => ours ? 1 : 0
-  },
+  {section: SECTION_EXTERA, key: 'hideStickerTime', kind: 'bool', storeKey: 'HideTimeForSticker'},
+  {section: SECTION_EXTERA, key: 'stickerSize', kind: 'float', min: 4, max: 20, storeKey: 'stickerSize'},
+  {section: SECTION_EXTERA, key: 'stickerTimeMode', kind: 'int', min: 0, max: 2, storeKey: 'StickerTimeMode'},
   {section: SECTION_EXTERA, key: 'bottomButton', kind: 'int', min: 0, max: 2, storeKey: 'OEChatsBottomButton'},
+  {section: SECTION_EXTERA, key: 'stickerShape', kind: 'int', min: 0, max: 2, storeKey: 'OEChatsStickerShape'},
   {section: SECTION_EXTERA, key: 'avatarCorners', kind: 'float', min: 0, max: 28, storeKey: 'OEAppearanceAvatarCorners'},
   {section: SECTION_EXTERA, key: 'sectionRadius', kind: 'float', min: 0, max: 28, storeKey: 'OEAppearanceSectionRadius'}
 ];
@@ -165,10 +177,11 @@ const sectionOf = (root: Record<string, Record<string, unknown>>, section: strin
 
 export const etgBackup = {
   /** Builds a backup in the exteraGram format; `encrypt` wraps it in invisible characters. */
-  buildBackup(encrypt: boolean, settings: typeof OE_DEFAULTS & Record<string, boolean | number>): string {
+  buildBackup(encrypt: boolean, settings: ExteralessSettings): string {
     const root: Record<string, Record<string, unknown>> = {};
     for(const entry of SUPPORTED) {
-      const ours = settings[entry.storeKey];
+      const ours = entry.storeKey === 'HideArchive' ? isArchiveHidden() :
+        entry.storeKey === 'StickerTimeMode' ? getStickerTimeMode(settings) : settings[entry.storeKey];
       if(ours === undefined) continue;
 
       let value: unknown = ours;
@@ -196,7 +209,7 @@ export const etgBackup = {
       suffix += alphabet[Math.floor(Math.random() * alphabet.length)];
     }
 
-    return `exteraless-${suffix}${EXTENSION}`;
+    return `exterayond-${suffix}${EXTENSION}`;
   },
 
   /** Reads and decrypts a `.extera` body; plain JSON is accepted too. */
@@ -246,8 +259,20 @@ export const etgBackup = {
       const value = section[entry.key];
       if(!isExpected(entry, value)) continue;
 
+      if(entry.storeKey === 'HideArchive') {
+        void setArchiveHidden(value as boolean);
+        applied++;
+        continue;
+      }
+
+      if(entry.storeKey === 'StickerTimeMode') {
+        setStickerTimeMode(value as number, apply);
+        applied++;
+        continue;
+      }
+
       if(entry.kind === 'bool') {
-        apply(entry.storeKey, value as boolean);
+        apply(entry.storeKey, entry.toOurs ? entry.toOurs(Number(value)) : value as boolean);
         applied++;
         continue;
       }
@@ -263,12 +288,11 @@ export const etgBackup = {
         numeric = mapped;
       }
 
-      // * a remapped key can land on a boolean setting (stickerTimeMode →
-      // * stickerTimeSide): the store kind decides the shape
+      // * The store kind decides the shape of a remapped numeric value.
       if(typeof OE_DEFAULTS[entry.storeKey] === 'boolean') {
         apply(entry.storeKey, numeric !== 0);
       } else {
-        apply(entry.storeKey, clampExteralessSetting(entry.storeKey, entry.kind === 'float' ? Math.round(numeric) : numeric));
+        apply(entry.storeKey, clampExteralessSetting(entry.storeKey, numeric));
       }
 
       applied++;

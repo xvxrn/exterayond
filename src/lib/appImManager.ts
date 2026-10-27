@@ -90,6 +90,8 @@ import conferenceInvitesController from '@lib/calls/conferenceInvitesController'
 import GROUP_CALL_STATE from '@lib/calls/groupCallState';
 import callsController from '@lib/calls/callsController';
 import {preloadNoiseSuppression} from '@lib/calls/noiseSuppression/noiseSuppression';
+import {exteralessSettings} from '@stores/exteralessSettings';
+import {confirmExternalAnchorClick} from '@helpers/addAnchorListener';
 import getConferenceInviteErrorLangKey from '@lib/calls/conferenceInviteError';
 import {groupCallToInput} from '@lib/calls/helpers/groupCallUpdates';
 import sameInputGroupCall from '@lib/calls/helpers/sameInputGroupCall';
@@ -1623,6 +1625,11 @@ export class AppImManager extends EventListenerBase<{
     // are still clickable when the client is popped into a Document PiP window.
     bindActiveWindowListener((w) => w.document, 'click', async(e) => {
       const anchor = findUpTag(e.target as HTMLElement, 'A') as HTMLAnchorElement;
+      if(anchor && confirmExternalAnchorClick(e, anchor, (approved) => {
+        onAuthAnchorClick(approved);
+        onSponsoredAnchorClick(anchor);
+        approved.click();
+      })) return;
       if(anchor?.href) {
         onAuthAnchorClick(anchor);
       }
@@ -2345,6 +2352,23 @@ export class AppImManager extends EventListenerBase<{
         })();
 
         return;
+      }
+
+      if(exteralessSettings.AskBeforeCalling) {
+        const peerId = userId.toPeerId();
+        const title = await getPeerTitle({peerId, managers: account.managers, useManagers: true});
+        try {
+          await confirmationPopup({
+            peerId,
+            accountNumber: account.accountNumber,
+            titleLangKey: 'Exteraless.ConfirmCall.Title',
+            descriptionLangKey: type === 'video' ? 'Exteraless.ConfirmCall.Video' : 'Exteraless.ConfirmCall.Voice',
+            descriptionLangArgs: [title],
+            button: {langKey: type === 'video' ? 'VideoCall' : 'Call'}
+          });
+        } catch{
+          return;
+        }
       }
 
       await this.discardCurrentCall(userId.toPeerId(), 'Call');

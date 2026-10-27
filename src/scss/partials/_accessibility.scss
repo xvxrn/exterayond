@@ -54,7 +54,8 @@
 
 // Screen-reader-only content: exposed to the accessibility tree, visually
 // hidden. Used for skip links, live regions and supplementary labels.
-.sr-only {
+.sr-only,
+html.oe-edited-icon .time-edited-label {
   position: absolute !important;
   width: 1px;
   height: 1px;

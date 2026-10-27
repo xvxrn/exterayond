@@ -2,8 +2,10 @@ import Row from '@components/rowTsx';
 import Section from '@components/section';
 import RangeSettingSelector from '@components/rangeSettingSelector';
 import CheckboxFieldTsx from '@components/checkboxFieldTsx';
+import LottieAnimation from '@components/lottieAnimation';
+import {hotReloadGuard} from '@lib/solidjs/hotReloadGuardProvider';
 import {i18n, LangPackKey} from '@lib/langPack';
-import {useExteralessSettings} from '@stores/exteralessSettings';
+import {useExteralessSettings, getStickerTimeMode, setStickerTimeMode, getStickerScale, getOpenLinkConfirmation, setOpenLinkConfirmation} from '@stores/exteralessSettings';
 import type {ExteralessSettingsKey} from '@stores/exteralessSettings';
 
 /**
@@ -15,7 +17,21 @@ const TOGGLES: Array<[key: ExteralessSettingsKey, langKey: LangPackKey, infoKey?
   ['OEChatsRemoveMessageTail', 'Exteraless.RemoveMessageTail'],
   ['OEChatsHideCallButton', 'Exteraless.HideCallButton'],
   ['OEChatsHideChannelSearchButton', 'Exteraless.HideSearchButton'],
-  ['OEChatsStickerTimeSide', 'Exteraless.StickerTimeSide'],
+  ['UseEditedIcon', 'Exteraless.UseEditedIcon'],
+  ['DateOfForwardedMsg', 'Exteraless.DateOfForwardedMsg', 'Exteraless.DateOfForwardedMsg.Info'],
+  ['ShowTimeHint', 'Exteraless.MessageTimeDetails', 'Exteraless.MessageTimeDetails.Info'],
+  ['HideShareButtonInChannel', 'Exteraless.HideShareButton'],
+  ['hideSendAsChannel', 'Exteraless.HideSendAsPeer', 'Exteraless.HideSendAsPeer.Info'],
+  ['DontSendGreetingSticker', 'Exteraless.DisableGreetingSticker', 'Exteraless.DisableGreetingSticker.Info'],
+  ['DisableTrending', 'Exteraless.DisableTrending', 'Exteraless.DisableTrending.Info'],
+  ['hideGroupSticker', 'Exteraless.HideGroupSticker', 'Exteraless.HideGroupSticker.Info'],
+  ['DeleteChatForBothSides', 'Exteraless.DeleteChatForBothSides', 'Exteraless.DeleteChatForBothSides.Info'],
+  ['AskBeforeCalling', 'Exteraless.AskBeforeCalling'],
+  ['DisableClickCommandToSend', 'Exteraless.AskBeforeBotCommand'],
+  ['DontAutoPlayNextVoice', 'Exteraless.DontAutoPlayNextVoice'],
+  ['HidePremiumSection', 'Exteraless.HidePremiumSection'],
+  ['HideHelpSection', 'Exteraless.HideHelpSection'],
+  ['DisableDialogsFloatingButton', 'Exteraless.HideFloatingButton'],
   ['OEChatsReplyColors', 'Exteraless.ReplyColors'],
   ['OEChatsReplyEmoji', 'Exteraless.ReplyEmoji'],
   ['OEChatsReplyBackground', 'Exteraless.ReplyBackground'],
@@ -80,6 +96,17 @@ const ExteralessChats = () => {
           onChange={(value) => setExteralessSetting('OEChatsBottomButton', value)}
         />
       </Section>
+      <Section name="Exteraless.OpenLinkPolicy" caption="Exteraless.OpenLinkPolicy.Info">
+        <RangeSettingSelector
+          textLeft={i18n('Exteraless.OpenLinkPolicy')}
+          textRight={(value) => i18n(value === 0 ? 'Exteraless.OpenLinkPolicy.Hidden' : value === 1 ? 'Exteraless.OpenLinkPolicy.All' : 'Exteraless.OpenLinkPolicy.Never')}
+          value={getOpenLinkConfirmation()}
+          minValue={0}
+          maxValue={2}
+          step={1}
+          onChange={setOpenLinkConfirmation}
+        />
+      </Section>
       <Section name="Exteraless.StripTracking">
         {STRIP_TRACKING_TOGGLES.map(([key, langKey]) => (
           <Row>
@@ -94,6 +121,22 @@ const ExteralessChats = () => {
           </Row>
         ))}
       </Section>
+      <Section name="Exteraless.StickerSize" caption="Exteraless.StickerSize.Info">
+        <RangeSettingSelector
+          textLeft={i18n('Exteraless.StickerSize')}
+          textRight={(value) => '' + Math.round(value * 10) / 10}
+          value={exteralessSettings.stickerSize}
+          minValue={4}
+          maxValue={20}
+          step={0.1}
+          onChange={(value) => setExteralessSetting('stickerSize', value)}
+        />
+        <div aria-hidden="true" style="height:280px;display:grid;place-items:center;">
+          <div style={{width: '200px', height: '200px', transform: `scale(${getStickerScale()})`}}>
+            <LottieAnimation lottieLoader={hotReloadGuard.lottieLoader} name="UtyanDiscussion" size={200} lottieOptions={{autoplay: false}} />
+          </div>
+        </div>
+      </Section>
       <Section name="Exteraless.StickerShape">
         <RangeSettingSelector
           textLeft={i18n('Exteraless.StickerShape')}
@@ -103,6 +146,17 @@ const ExteralessChats = () => {
           minValue={0}
           maxValue={2}
           onChange={(value) => setExteralessSetting('OEChatsStickerShape', value)}
+        />
+      </Section>
+      <Section name="Exteraless.StickerTime">
+        <RangeSettingSelector
+          textLeft={i18n('Exteraless.StickerTime')}
+          textRight={(value) => i18n(value === 0 ? 'Exteraless.StickerTime.Default' : value === 1 ? 'Exteraless.StickerTime.Side' : 'Exteraless.StickerTime.Hidden')}
+          value={getStickerTimeMode()}
+          minValue={0}
+          maxValue={2}
+          step={1}
+          onChange={setStickerTimeMode}
         />
       </Section>
       <Section name="Exteraless.PauseOnMinimize">

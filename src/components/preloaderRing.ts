@@ -40,6 +40,8 @@ import clamp from '@helpers/number/clamp';
 import htmlToDocumentFragment from '@helpers/dom/htmlToDocumentFragment';
 import createAppWindowIntersectionObserver from '@helpers/dom/createAppWindowIntersectionObserver';
 import {createEffect, createRoot, on} from 'solid-js';
+import {exteralessSettings} from '@stores/exteralessSettings';
+import md3ProgressPath from '@helpers/svg/md3ProgressPath';
 
 const N = 12;
 const R = 19;
@@ -96,6 +98,8 @@ const dotMarkup = (d: string) => `<path class="preloader-dot" d="${d}" opacity="
 const WAVE_DOTS = DOTS.slice(1).map(dotMarkup).join('');
 
 const RING_MARKUP = '<div class="preloader-dots-spin"><svg class="preloader-dots-ring" viewBox="0 0 54 54">' +
+  `<circle class="preloader-md3-track" cx="27" cy="27" r="${R}" transform="rotate(-90 27 27)"/>` +
+  `<path class="preloader-md3-wave" d="${md3ProgressPath(27, 27, R)}" pathLength="${round(CIRCUMFERENCE)}"/>` +
   dotMarkup(DOTS[0]) + `<path class="preloader-dots-rest" d="${DOTS.slice(1).join('')}" opacity=".35"/>` +
   `<circle class="preloader-line" cx="27" cy="27" r="${R}" transform="rotate(-90 27 27)" stroke-dasharray="0 ${round(CIRCUMFERENCE)}" opacity="0"/></svg></div>`;
 // What sits in the middle goes under the turning ring, all in one colour, so the order does not show: on
@@ -183,6 +187,8 @@ export default class PreloaderRing {
   private rest: SVGPathElement;
   private waveDots: SVGPathElement[];
   private line: SVGCircleElement;
+  private track: SVGCircleElement;
+  private md3Wave: SVGPathElement;
   private arrow: SVGSVGElement;
   private base: SVGPathElement;
   private shaft: SVGPathElement;
@@ -224,6 +230,8 @@ export default class PreloaderRing {
     this.dot = container.querySelector('.preloader-dot');
     this.rest = container.querySelector('.preloader-dots-rest');
     this.line = container.querySelector('.preloader-line');
+    this.track = container.querySelector('.preloader-md3-track');
+    this.md3Wave = container.querySelector('.preloader-md3-wave');
     if(options.percent) {
       this.percent = container.querySelector('.preloader-percent');
       this.setPercent(0);
@@ -246,6 +254,7 @@ export default class PreloaderRing {
     }
 
     this.updateWave();
+    PreloaderRing.watchLevel();
   }
 
   public setInSight(inSight: boolean) {
@@ -608,6 +617,14 @@ export default class PreloaderRing {
 
   // `lit`: a brightness dot 0, or the line starting on it, has at least
   private render(lit: number) {
+    if(exteralessSettings.OEAppearanceNewLoadingStyle) {
+      const gap = 2;
+      const arc = this.shown * CIRCUMFERENCE;
+      this.put(this.track, 'stroke-dasharray', `${round(Math.max(0, CIRCUMFERENCE - arc - gap * 2))} ${round(CIRCUMFERENCE)}`);
+      this.put(this.track, 'stroke-dashoffset', '' + round(-arc - gap));
+      this.put(this.md3Wave, 'stroke-dasharray', `${round(arc)} ${round(CIRCUMFERENCE)}`);
+      this.put(this.md3Wave, 'opacity', this.shown > .0005 ? '1' : '0');
+    }
     const started = this.shown > .0005;
     this.put(this.line, 'stroke-dasharray', `${round(this.shown * CIRCUMFERENCE)} ${round(CIRCUMFERENCE)}`);
     this.put(this.line, 'opacity', started ? Math.max(.35 + .65 * clamp01(this.shown * N * 2), lit).toFixed(3) : '0');
@@ -618,7 +635,8 @@ export default class PreloaderRing {
 
   private updateWave() {
     const waiting = !this.manual && !this.target && this.phase !== 'go' && this.inSight && this.container.isConnected;
-    if(waiting && liteMode.getAnimationLevel() === 2 && typeof(this.dot.animate) === 'function') {
+    this.container.classList.toggle('is-md3-waiting', waiting);
+    if(waiting && !exteralessSettings.OEAppearanceNewLoadingStyle && liteMode.getAnimationLevel() === 2 && typeof(this.dot.animate) === 'function') {
       if(!this.wave) {
         ++this.waveId;
         this.wave = this.splitDots().map((dot, i) => dot.animate(WAVE_KEYFRAMES, {duration: WAVE, delay: i * WAVE_STEP, iterations: Infinity}));
@@ -626,7 +644,7 @@ export default class PreloaderRing {
         PreloaderRing.watchLevel();
       }
     } else {
-      this.stopWave(this.manual || !this.inSight || !this.container.isConnected || !liteMode.isAvailable('animations'));
+      this.stopWave(exteralessSettings.OEAppearanceNewLoadingStyle || this.manual || !this.inSight || !this.container.isConnected || !liteMode.isAvailable('animations'));
     }
   }
 
@@ -640,8 +658,12 @@ export default class PreloaderRing {
     }
 
     PreloaderRing.levelWatched = true;
-    createRoot(() => createEffect(on(() => liteMode.getAnimationLevel(), () => {
-      PreloaderRing.waving.forEach((ring) => ring.updateWave());
+    createRoot(() => createEffect(on(() => [liteMode.getAnimationLevel(), exteralessSettings.OEAppearanceNewLoadingStyle], () => {
+      const rings = new Set([...observed.values(), ...PreloaderRing.waving]);
+      rings.forEach((ring) => {
+        ring.updateWave();
+        ring.render(0);
+      });
     }, {defer: true})));
   }
 

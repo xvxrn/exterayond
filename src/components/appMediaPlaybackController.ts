@@ -950,6 +950,10 @@ export class AppMediaPlaybackController extends EventListenerBase<{
   };
 
   private onEnded = (e?: Event) => {
+    this.handleEnded(e);
+  };
+
+  private handleEnded(e?: Event) {
     if(e && !e.isTrusted) {
       return;
     }
@@ -961,6 +965,7 @@ export class AppMediaPlaybackController extends EventListenerBase<{
     const listLoader = this.listLoader;
     if(
       this.lockedSwitchers ||
+      (this.playingDocType === 'voice' && exteralessSettings.DontAutoPlayNextVoice) ||
       (!this.round && listLoader.current && !listLoader.getNext(false).length) ||
       !listLoader.getNext(true).length ||
       !this.next()
@@ -968,7 +973,7 @@ export class AppMediaPlaybackController extends EventListenerBase<{
       this.stop();
       this.dispatchEvent('stop');
     }
-  };
+  }
 
   public pauseMediaInOtherTabs() {
     this.skipMediaPlayEvent = true;
@@ -1003,6 +1008,14 @@ export class AppMediaPlaybackController extends EventListenerBase<{
 
   public getPlayingMedia() {
     return this.playingMedia;
+  }
+
+  public cycleRepeatMode() {
+    if(!this.round) this.round = true;
+    else if(this.loop) {
+      this.round = false;
+      this.loop = false;
+    } else this.loop = true;
   }
 
   /**

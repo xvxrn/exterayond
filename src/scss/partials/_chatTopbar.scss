@@ -1,5 +1,15 @@
 @use "../shared" as *;
 
+.oe-hide-title-status {
+  .chat-info,
+  .profile-name {
+    .premium-icon,
+    .emoji-status {
+      display: none !important;
+    }
+  }
+}
+
 body.is-calling.forwards:not(.animating) {
   --topbar-floating-call-height: calc(var(--topbar-call-height) + var(--plates-gap));
 }
@@ -77,6 +87,13 @@ body.is-pinned-audio-shown, body.is-calling.forwards {
   :root.oe-new-chat-header & {
     border-radius: 0;
     box-shadow: none;
+    max-width: 100%;
+    background-color: color-mix(in srgb, var(--primary-color) 5%, var(--surface-color)) !important;
+
+    &.has-avatar {
+      --topbar-avatar-active-size: 46px;
+      --topbar-avatar-close-gap: 6px;
+    }
   }
 
 	@include respond-to(not-handhelds) {
@@ -255,6 +272,11 @@ body.is-pinned-audio-shown, body.is-calling.forwards {
 			padding-inline-start: 16px;
 		}
 	}
+
+  html.oe-hide-call-button & .chat-call-button,
+  html.oe-hide-channel-search-button & .channel-search-button {
+    display: none !important;
+  }
 
   .back-unread-badge {
     position: absolute;

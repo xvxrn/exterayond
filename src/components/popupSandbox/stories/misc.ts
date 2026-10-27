@@ -9,6 +9,7 @@ import browserStyles from '@components/browser.module.scss';
 import {defineStories, PopupStory} from '../registry';
 
 import {
+  audioDocument,
   EMBEDDED_PAGE_URL,
   channelChat,
   checkedGiftCode,
@@ -41,6 +42,16 @@ defineStories('Live streams', [false, true].map((active) => ({
 })));
 
 defineStories('Composer & bots', [
+  {
+    id: 'md3Player',
+    fixtureOnly: true,
+    title: 'MD3 music player',
+    open: async(ctx) => {
+      const {default: showMd3Player} = await import('@components/popups/md3Player');
+      const {default: createMusicPlayerFixture} = await import('@components/popupSandbox/musicPlayerFixture');
+      showMd3Player(createMusicPlayerFixture(ctx.message(), audioDocument));
+    }
+  },
   {
     id: 'checklist',
     title: 'New checklist',

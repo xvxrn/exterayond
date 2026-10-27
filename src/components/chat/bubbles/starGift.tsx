@@ -16,7 +16,7 @@ import {StarGiftBadge} from '@components/stargifts/stargiftBadge';
 import {StarGiftBackdrop} from '@components/stargifts/stargiftBackdrop';
 import {MyDocument} from '@appManagers/appDocsManager';
 import {simulateClickEvent} from '@helpers/dom/clickEvent';
-import formatNumber from '@helpers/number/formatNumber';
+import formatCount from '@helpers/number/formatCount';
 import {getCollectibleName} from '@appManagers/utils/gifts/getCollectibleName';
 import buttonKeyDown from '@helpers/solid/buttonKeyDown';
 import Modes from '@config/modes';
@@ -116,7 +116,7 @@ export function StarGiftBubble(props: {
         >
           <I18nTsx
             key="StarGiftLimitedBadgeNum"
-            args={[formatNumber(props.gift.raw.availability_total, 1)]}
+            args={[formatCount(props.gift.raw.availability_total, 1)]}
           />
         </StarGiftBadge>
       )}

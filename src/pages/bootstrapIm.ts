@@ -65,6 +65,11 @@ export async function bootstrapIm(): Promise<void> {
   setTimeout(() => {
     disposeActiveAuthFlow();
   }, 1000);
+
+  // * the plugins load once the shell is up: a second parallel entry into the
+  // * app's import cycle at boot time races its class evaluation order
+  // * (see importAppTopLevel's note) — this is the first safe moment
+  void import('@plugins/runtime').then(({pluginsRuntime}) => pluginsRuntime.loadAll());
 }
 
 let topLevel: Promise<typeof import('@lib/appDialogsManager')['default']>;

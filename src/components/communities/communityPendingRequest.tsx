@@ -19,7 +19,7 @@ import {
 } from '@components/communities/communityRequestNavigation';
 import styles from '@components/communities/communityManagement.module.scss';
 import sharedStyles from '@components/communities/communityShared.module.scss';
-import formatNumber from '@helpers/number/formatNumber';
+import formatCount from '@helpers/number/formatCount';
 
 export {
   getCommunityRequestOpenPeerId,
@@ -137,7 +137,7 @@ export function CommunityPendingRequestRow(props: {
                   icon="group_filled"
                   aria-hidden="true"
                 />
-                <span>{formatNumber(membersCount!, 1)}</span>
+                <span>{formatCount(membersCount!, 1)}</span>
               </span>
             </Show>
             <Show when={!props.request.pFlags.visible}>

@@ -6,6 +6,10 @@ import {attachClickEvent} from '@helpers/dom/clickEvent';
 import isInDOM from '@helpers/dom/isInDOM';
 import safeAssign from '@helpers/object/safeAssign';
 import PreloaderRing from '@components/preloaderRing';
+import md3ProgressPath from '@helpers/svg/md3ProgressPath';
+
+const MD3_PATH = md3ProgressPath(54, 54, 24);
+const MD3_STREAM_PATH = md3ProgressPath(50, 50, 19);
 
 const TRANSITION_TIME = 200;
 
@@ -14,6 +18,8 @@ export default class ProgressivePreloader {
   // the old spinner's circle; a cancelable progress is a ring of dots instead
   public circle: SVGCircleElement;
   public ring: PreloaderRing;
+  private track: SVGCircleElement;
+  private md3Wave: SVGPathElement;
 
   private tempId = 0;
   public detached = true;
@@ -99,6 +105,8 @@ export default class ProgressivePreloader {
       this.preloader.innerHTML = `
       <div class="you-spin-me-round">
       <svg xmlns="http://www.w3.org/2000/svg" class="preloader-circular" viewBox="${this.streamable ? '25 25 50 50' : '27 27 54 54'}">
+      <circle class="preloader-md3-track" cx="${this.streamable ? '50' : '54'}" cy="${this.streamable ? '50' : '54'}" r="${this.streamable ? 19 : 24}" fill="none"/>
+      <path class="preloader-md3-wave" d="${this.streamable ? MD3_STREAM_PATH : MD3_PATH}" pathLength="${this.streamable ? 118.61 : 149.82}"/>
       <circle class="preloader-path-new" cx="${this.streamable ? '50' : '54'}" cy="${this.streamable ? '50' : '54'}" r="${this.streamable ? 19 : 24}" fill="none" stroke-miterlimit="10"/>
       </svg>
       </div>`;
@@ -128,7 +136,9 @@ export default class ProgressivePreloader {
       this.preloader.classList.add('preloader-swing');
     }
 
-    this.circle = this.preloader.firstElementChild.firstElementChild.firstElementChild as SVGCircleElement;
+    this.circle = this.preloader.querySelector('.preloader-path-new');
+    this.track = this.preloader.querySelector('.preloader-md3-track');
+    this.md3Wave = this.preloader.querySelector('.preloader-md3-wave');
 
     if(this.cancelable) {
       attachClickEvent(this.preloader, this.onClick);
@@ -339,6 +349,11 @@ export default class ProgressivePreloader {
 
     if(percents === 0) {
       this.circle.style.strokeDasharray = '';
+      if(this.md3Wave) this.md3Wave.style.strokeDasharray = '';
+      if(this.track) {
+        this.track.style.strokeDasharray = '';
+        this.track.style.strokeDashoffset = '';
+      }
       return;
     }
 
@@ -347,6 +362,12 @@ export default class ProgressivePreloader {
 
       // console.log('setProgress', (percents / 100 * totalLength));
       this.circle.style.strokeDasharray = '' + Math.max(5, percents / 100 * this.totalLength) + ', ' + this.totalLength;
+      if(this.md3Wave) this.md3Wave.style.strokeDasharray = this.circle.style.strokeDasharray;
+      if(this.track) {
+        const arc = Math.max(5, percents / 100 * this.totalLength);
+        this.track.style.strokeDasharray = `${Math.max(0, this.totalLength - arc - 4)}, ${this.totalLength}`;
+        this.track.style.strokeDashoffset = '' + (-arc - 2);
+      }
     } catch(err) {}
   }
 }

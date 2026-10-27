@@ -51,7 +51,7 @@ describe('plugin manager and permissions', () => {
     expect(first.ok).toBe(true);
     expect(first.record?.name).toBe('Example Plugin');
 
-    const again = pluginsManager.install('renamed.py', PY_PLUGIN.replace("'Example Plugin'", "'Example Plugin v2'"));
+    const again = pluginsManager.install('renamed.py', PY_PLUGIN.replace('\'Example Plugin\'', '\'Example Plugin v2\''));
     if(!again.ok) throw new Error(again.error);
     expect(pluginsManager.getRecords()).toHaveLength(1);
     expect(pluginsManager.getRecord('example_plugin')?.name).toBe('Example Plugin v2');

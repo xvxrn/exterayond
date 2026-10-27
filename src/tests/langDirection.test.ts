@@ -155,4 +155,24 @@ describe('language direction', () => {
     expect(Icon('send2').classList.contains('icon-mirror')).toBe(true);
     expect(Icon('check').classList.contains('icon-mirror')).toBe(false);
   });
+
+  test('an old cached pack gets current fork labels offline and keeps Telegram translations', async() => {
+    const pack = storedPack('ar');
+    pack.localVersion = 0;
+    pack.strings.push({_: 'langPackString', key: 'Exteraless', value: 'exteraless'});
+    vi.spyOn(rootScope, 'dispatchEvent').mockImplementation(() => {});
+    vi.spyOn(commonStateStorage, 'get').mockResolvedValueOnce(pack as any);
+    await I18n.getCacheLangPackAndApply();
+
+    expect(I18n.format('Exteraless', true)).toBe('exterayond');
+    expect(I18n.format('Exteraless.IdDcType', true)).toBe('Show ID and data center');
+    expect(I18n.format('Exteraless.HideArchive', true)).toBe('Hide archive folder');
+    expect(I18n.format('Cancel', true)).toBe('إلغاء');
+    const fallback = I18n.i18n('Exteraless.General');
+    expect(fallback.querySelector('span[dir="ltr"]').textContent).toBe('General');
+
+    I18n.applyLangPack(pack);
+    expect(I18n.format('Exteraless', true)).toBe('exterayond');
+    expect(I18n.format('Exteraless.HidePhone', true)).toBe('Hide my phone number');
+  });
 });

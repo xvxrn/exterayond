@@ -80,7 +80,7 @@ import {setQuizHint} from '@components/quizHint';
 import {doubleRaf} from '@helpers/schedulers';
 import {resolveFirst} from '@solid-primitives/refs';
 import {IS_MOBILE} from '@environment/userAgent';
-import formatNumber from '@helpers/number/formatNumber';
+import formatCount from '@helpers/number/formatCount';
 import callbackify from '@helpers/callbackify';
 import {dispatchHeavyAnimationEvent} from '@hooks/useHeavyAnimationCheck';
 import deferredPromise, {CancellablePromise} from '@helpers/cancellablePromise';
@@ -827,7 +827,7 @@ const StoryMediaArea = (props: {
             // style={{'font-size': size * .275 + 'px'}}
             style={{'font-size': `calc(var(--stories-width) * ${w / 100 * 0.72 * .275})`}}
           >
-            {count() ? formatNumber(count(), 1) : ''}
+            {count() ? formatCount(count(), 1) : ''}
           </div>
         </>
       ));
@@ -2569,7 +2569,7 @@ const Stories = (props: {
           <div class={styles.ViewerStoryFooterLeft}>
             <span class={styles.ViewerStoryFooterIcon}>
               {Icon('eye1_filled', styles.ViewerStoryFooterIconIcon)}
-              {formatNumber((currentStory() as StoryItem.storyItem).views?.views_count || 1, 1)}
+              {formatCount((currentStory() as StoryItem.storyItem).views?.views_count || 1, 1)}
             </span>
           </div>
           <div class={styles.ViewerStoryFooterRight}>

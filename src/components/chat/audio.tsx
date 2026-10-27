@@ -1,4 +1,4 @@
-import {createSignal, JSX} from 'solid-js';
+import {createEffect, createSignal, JSX, onCleanup} from 'solid-js';
 import appMediaPlaybackController, {AppMediaPlaybackController} from '@components/appMediaPlaybackController';
 import cancelEvent from '@helpers/dom/cancelEvent';
 import {attachClickEvent} from '@helpers/dom/clickEvent';
@@ -29,6 +29,12 @@ import documentFragmentToNodes from '@helpers/dom/documentFragmentToNodes';
 import classNames from '@helpers/string/classNames';
 import {setDirection} from '@helpers/dom/setInnerHTML';
 import {hotReloadGuard} from '@lib/solidjs/hotReloadGuardProvider';
+import {exteralessSettings} from '@stores/exteralessSettings';
+import wrapPhoto from '@components/wrappers/photo';
+import {IconTsx} from '@components/iconTsx';
+import {getMiddleware} from '@helpers/middleware';
+import {bindManagersToSession} from '@lib/accounts/bindManagersToAccount';
+import type {MyDocument} from '@appManagers/appDocsManager';
 
 export type ChatAudioController = {
   container: HTMLElement,
@@ -59,6 +65,27 @@ export default function createChatAudio(
   const mediaListenerSetter = new ListenerSetter();
   let playingMedia: HTMLMediaElement;
   const [playing, setPlaying] = createSignal(false);
+  const [isMusic, setIsMusic] = createSignal(false);
+  const [musicDoc, setMusicDoc] = createSignal<MyDocument>();
+
+  const MusicCover = () => {
+    let cover: HTMLDivElement;
+    createEffect(() => {
+      const doc = musicDoc();
+      if(!exteralessSettings.OEAppearanceMd3MiniPlayer || !doc?.thumbs?.length) return;
+      const middleware = getMiddleware();
+      const boundManagers = bindManagersToSession(managers);
+      void wrapPhoto({
+        photo: doc, message: null, container: cover, boxWidth: 36, boxHeight: 36,
+        withoutPreloader: true, middleware: middleware.get(), managers: boundManagers
+      }).catch(() => {});
+      onCleanup(() => {
+        middleware.destroy();
+        cover.replaceChildren();
+      });
+    });
+    return <div class="pinned-audio-cover"><IconTsx icon="music_filled" /><div ref={cover} class="pinned-audio-artwork" /></div>;
+  };
   const syncPlayIcon = () => {
     const isPlaying = !!playingMedia && !playingMedia.paused;
     setPlaying(isPlaying);
@@ -81,7 +108,8 @@ export default function createChatAudio(
 
   // A track picked in the music search popup plays off a message that only ever existed inside that
   // popup — there is nothing to open, so the plate's content stops being a button altogether.
-  const [inert, setInert] = createSignal(false);
+  const [sourceInert, setInert] = createSignal(false);
+  const inert = () => sourceInert() && !(isMusic() && exteralessSettings.OEAppearanceMd3Player);
 
   // Refs to JSX-rendered buttons that need imperative classList toggles or
   // disability state changes after the initial render.
@@ -121,6 +149,7 @@ export default function createChatAudio(
     modifier: 'audio',
     height: 48,
     initiallyHidden: false,
+    class: () => isMusic() ? 'is-music' : '',
     render: () => (
       <>
         <TopbarPlate.Body noRipple>
@@ -153,6 +182,7 @@ export default function createChatAudio(
               {forwardIcon.element}
             </Button>
           </div>
+          <MusicCover />
           <TopbarPlate.Content class={classNames('hover-effect', inert() && 'pinned-audio-content-inert')} ripple clickable disabled={inert()}>
             <TopbarPlate.Title dir="auto">{title()}</TopbarPlate.Title>
             <TopbarPlate.Subtitle>
@@ -171,15 +201,7 @@ export default function createChatAudio(
               aria-label={I18n.format('Schedule.Repeat', true)}
               onClick={(e) => {
                 cancelEvent(e);
-                const params = appMediaPlaybackController.getPlaybackParams();
-                if(!params.round) {
-                  appMediaPlaybackController.round = true;
-                } else if(params.loop) {
-                  appMediaPlaybackController.round = false;
-                  appMediaPlaybackController.loop = false;
-                } else {
-                  appMediaPlaybackController.loop = !appMediaPlaybackController.loop;
-                }
+                appMediaPlaybackController.cycleRepeatMode();
               }}
             />
             <TopbarPlate.CloseButton
@@ -198,6 +220,11 @@ export default function createChatAudio(
   // saved music tab. Clicks anywhere else on the plate do nothing.
   attachClickEvent(plate.container, (e) => {
     if(inert() || !findUpClassName(e.target, 'pinned-container-content')) {
+      return;
+    }
+
+    if(isMusic() && exteralessSettings.OEAppearanceMd3Player) {
+      hotReloadGuard.showMd3Player(appMediaPlaybackController);
       return;
     }
 
@@ -248,6 +275,8 @@ export default function createChatAudio(
   const onMediaPlay = ({doc, message, media, playbackParams, isSavedMusic, isLocal, isSlotted}: ReturnType<AppMediaPlaybackController['getPlayingDetails']>) => {
     let titleVal: JSX.Element, subtitleVal: JSX.Element;
     const isMusic = doc.type !== 'voice' && doc.type !== 'round';
+    setIsMusic(isMusic);
+    setMusicDoc(isMusic ? doc : undefined);
     if(!isMusic) {
       titleVal = new PeerTitle({peerId: message.fromId, fromName: getFwdFromName(message.fwd_from)}).element;
       subtitleVal = formatFullSentTime(message.date);
@@ -300,7 +329,10 @@ export default function createChatAudio(
   };
 
   const onPause = () => syncPlayIcon();
-  const onStop = () => toggle(true);
+  const onStop = () => {
+    setMusicDoc(undefined);
+    toggle(true);
+  };
 
   const toggleActivity = (active: boolean) => {
     apiManagerProxy.invokeVoid('toggleUninteruptableActivity', {

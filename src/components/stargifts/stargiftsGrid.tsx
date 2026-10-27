@@ -15,7 +15,7 @@ import {StarGiftBadge} from '@components/stargifts/stargiftBadge';
 import {StarGiftBackdrop} from '@components/stargifts/stargiftBackdrop';
 import {MyDocument} from '@appManagers/appDocsManager';
 import {IconTsx} from '@components/iconTsx';
-import formatNumber from '@helpers/number/formatNumber';
+import formatCount from '@helpers/number/formatCount';
 import {changeBrightness, getRgbColorFromTelegramColor, rgbaToHexa, rgbIntToHex} from '@helpers/color';
 import createContextMenu from '@helpers/dom/createContextMenu';
 import {showSharingPicker2Popup} from '@components/popups/pickUser';
@@ -320,7 +320,7 @@ function StarGiftGridItem(props: {
               class={/* @once */ styles.badgeUnique}
               backdropAttr={props.item.collectibleAttributes.backdrop}
             >
-              {isPinned() || props.view === 'resale' ? `#${gift.num}` : i18n('StarGiftLimitedBadgeNum', [formatNumber(gift.availability_total, 1)])}
+              {isPinned() || props.view === 'resale' ? `#${gift.num}` : i18n('StarGiftLimitedBadgeNum', [formatCount(gift.availability_total, 1)])}
             </StarGiftBadge>
           );
         };
@@ -352,7 +352,7 @@ function StarGiftGridItem(props: {
         if(props.item.raw.availability_total) {
           return (
             <StarGiftBadge>
-              {props.view === 'list' ? i18n('StarGiftLimitedBadge') : i18n('StarGiftLimitedBadgeNum', [formatNumber(gift.availability_total, 1)])}
+              {props.view === 'list' ? i18n('StarGiftLimitedBadge') : i18n('StarGiftLimitedBadgeNum', [formatCount(gift.availability_total, 1)])}
             </StarGiftBadge>
           )
         }

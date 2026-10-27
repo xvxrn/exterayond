@@ -8,6 +8,7 @@ import AutocompleteHelper from '@components/chat/autocompleteHelper';
 import AutocompleteHelperController from '@components/chat/autocompleteHelperController';
 import Icon from '@components/icon';
 import I18n, {LangPackKey} from '@lib/langPack';
+import type {ListNavigationOptions} from '@helpers/dom/attachListNavigation';
 
 export default class AutocompletePeerHelper extends AutocompleteHelper {
   protected static BASE_CLASS = 'autocomplete-peer-helper';
@@ -18,7 +19,7 @@ export default class AutocompletePeerHelper extends AutocompleteHelper {
     appendTo: HTMLElement,
     controller: AutocompleteHelperController,
     protected className: string,
-    onSelect: (target: Element) => boolean | void,
+    onSelect: ListNavigationOptions['onSelect'],
     ariaLabel: LangPackKey
   ) {
     super({

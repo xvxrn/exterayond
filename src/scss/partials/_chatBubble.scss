@@ -1899,6 +1899,10 @@
     inset-inline-end: auto !important;
   }
 
+  :root.oe-hide-sticker-time &.sticker .time {
+    display: none !important;
+  }
+
   :root.oe-sticker-time-side &.sticker.is-in .time {
     inset-inline-start: calc(100% + 4px) !important;
   }
@@ -4230,6 +4234,21 @@
     height: 200px;
     cursor: pointer;
   }
+}
+
+.time-edit-icon {
+  display: none;
+  font-size: inherit;
+}
+
+html.oe-edited-icon {
+  .time-edit-icon {
+    display: inline;
+  }
+}
+
+html.oe-hide-channel-share-button .channel-share-button {
+  display: none !important;
 }
 
 // * exteraless removeMessageTail: the tail and its corner notch both go away,

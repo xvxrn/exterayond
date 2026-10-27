@@ -4,7 +4,7 @@ import rootScope from '@lib/rootScope';
 import {AvatarNew} from '@components/avatarNew';
 import PeerTitle from '@components/peerTitle';
 import Scrollable from '@components/scrollable2';
-import formatNumber from '@helpers/number/formatNumber';
+import formatCount from '@helpers/number/formatCount';
 import {Chat, MessagesChats, User} from '@layer';
 import computeLockColor from '@helpers/computeLockColor';
 import classNames from '@helpers/string/classNames';
@@ -108,7 +108,7 @@ export function SimilarPeer(props: {
       ) : (
         <>
           {icon}
-          {formatNumber((peer as User.user).bot_active_users || (peer as Chat.channel).participants_count || 1, 1)}
+          {formatCount((peer as User.user).bot_active_users || (peer as Chat.channel).participants_count || 1, 1)}
         </>
       )}
     </span>

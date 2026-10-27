@@ -2,6 +2,10 @@ import Row from '@components/rowTsx';
 import Section from '@components/section';
 import {i18n} from '@lib/langPack';
 import {toastNew} from '@components/toast';
+import confirmationPopup from '@components/confirmationPopup';
+import {useSuperTab} from '@components/solidJsTabs/superTabProvider';
+import noop from '@helpers/noop';
+import {resetExteralessPreferences} from '@stores/exteralessPreferences';
 import {
   EXTENSION,
   applyExteraBackup,
@@ -14,6 +18,17 @@ import {
  * settings backup, byte-compatible with exteraGram (`EtgBackup`).
  */
 const ExteralessOther = () => {
+  const [tab] = useSuperTab();
+  const resetSettings = () => confirmationPopup({
+    managers: tab.managers,
+    titleLangKey: 'Exteraless.Reset.Title',
+    descriptionLangKey: 'Exteraless.Reset.Description',
+    button: {langKey: 'Reset', isDanger: true}
+  }).then(() => {
+    resetExteralessPreferences();
+    toastNew({langPackKey: 'Exteraless.Reset.Done'});
+  }).catch(noop);
+
   const importBackup = () => {
     const input = document.createElement('input');
     input.type = 'file';
@@ -55,16 +70,24 @@ const ExteralessOther = () => {
   };
 
   return (
-    <Section caption="Exteraless.Backup.Info">
-      <Row clickable={importBackup}>
-        <Row.Icon icon="download" />
-        <Row.Title>{i18n('Exteraless.Backup.Import')}</Row.Title>
-      </Row>
-      <Row clickable={exportBackup}>
-        <Row.Icon icon="download" />
-        <Row.Title>{i18n('Exteraless.Backup.Export')}</Row.Title>
-      </Row>
-    </Section>
+    <>
+      <Section caption="Exteraless.Backup.Info">
+        <Row clickable={importBackup}>
+          <Row.Icon icon="download" />
+          <Row.Title>{i18n('Exteraless.Backup.Import')}</Row.Title>
+        </Row>
+        <Row clickable={exportBackup}>
+          <Row.Icon icon="download" />
+          <Row.Title>{i18n('Exteraless.Backup.Export')}</Row.Title>
+        </Row>
+      </Section>
+      <Section caption="Exteraless.Reset.Info">
+        <Row clickable={resetSettings}>
+          <Row.Icon icon="delete" />
+          <Row.Title>{i18n('Exteraless.Reset')}</Row.Title>
+        </Row>
+      </Section>
+    </>
   );
 };
 

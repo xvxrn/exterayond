@@ -91,7 +91,7 @@ class TopLevelAssignments {
         // * top-level statement; skip it whole
         let end = i;
         while(end < source.length && source[end] !== '\n') {
-          if(source[end] === '"' || source[end] === "'") {
+          if(source[end] === '"' || source[end] === '\'') {
             end = skipString(source, end);
             continue;
           }
@@ -125,7 +125,7 @@ const skipToLineEnd = (source: string, i: number): number => {
     // * a string on the skipped line may hold a newline escape but not a real
     // * newline; a real newline inside a triple-quoted string on the same
     // * line continues past it
-    if(source[i] === '"' || source[i] === "'") {
+    if(source[i] === '"' || source[i] === '\'') {
       i = skipString(source, i);
       continue;
     }
@@ -160,7 +160,7 @@ const readBalanced = (source: string, start: number): {end: number} => {
   let depth = 0;
   while(i < source.length) {
     const c = source[i];
-    if(c === '"' || c === "'") {
+    if(c === '"' || c === '\'') {
       i = skipString(source, i);
       continue;
     }
@@ -227,7 +227,7 @@ class LiteralParser {
     this.skipWs();
     const c = this.text[this.i];
     if(c === undefined) throw new Error('empty literal');
-    if(c === '"' || c === "'") return this.parseString();
+    if(c === '"' || c === '\'') return this.parseString();
     if(c === '[') return this.parseCollection(']', (items) => items);
     if(c === '(') {
       return this.parseCollection(')', (items) => {
@@ -345,7 +345,7 @@ class LiteralParser {
 }
 
 const ESCAPES: Record<string, string> = {
-  n: '\n', t: '\t', r: '\r', '\\': '\\', "'": "'", '"': '"', a: '\x07', b: '\b', f: '\f', v: '\v', '0': '\0'
+  n: '\n', t: '\t', r: '\r', '\\': '\\', '\'': '\'', '"': '"', a: '\x07', b: '\b', f: '\f', v: '\v', '0': '\0'
 };
 
 const unescapePython = (raw: string): string => {

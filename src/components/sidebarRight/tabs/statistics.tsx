@@ -6,7 +6,7 @@ import Section from '@components/section';
 import {SliderSuperTabEventable} from '@components/sliderTab';
 import {For, render} from 'solid-js/web';
 import {Accessor, JSX, Show, createEffect, createRoot, createSignal, onMount} from 'solid-js';
-import formatNumber from '@helpers/number/formatNumber';
+import formatCount from '@helpers/number/formatCount';
 import {FontFamily} from '@config/font';
 import {DcId, PickByType} from '@types';
 import rootScope from '@lib/rootScope';
@@ -178,57 +178,62 @@ const StatisticsOverviewItem = ({
   describePercentage?: boolean
 }) => {
   const isPercentage = value._ === 'statsPercentValue';
-  let v: JSX.Element;
-  if(isPercentage) {
-    const n = (value.part / value.total * 100).toFixed(2);
-    v = `${n}%`;
-
-    // * an approximate or signed number reads left to right in any language
-    if(describePercentage) {
-      v = (
-        <>
-          <span dir="ltr">{`≈${value.part}`}</span>{' '}
-          <span class="statistics-overview-item-value-description">
-            {v}
-          </span>
-        </>
-      );
-    }
-  } else {
-    v = formatNumber(value.current, 1);
-
-    if(value.approximate) {
-      v = (<span dir="ltr">{'≈' + v}</span>);
-    }
-
-    if(!value.current && !value.previous && !includeZeroValue) {
-      return;
-    }
-
-    if(value.current !== value.previous && value.previous) {
-      const diff = value.current - value.previous;
-      const absDiff = Math.abs(diff);
-      const vv = `${diff > 0 ? '+' : '-'}${formatNumber(absDiff, 1)}`;
-      const p = +(Math.abs(1 - value.current / value.previous) * 100).toFixed(2);
-      const str = `${vv} (${p}%)`;
-      v = (
-        <>
-          {v}{' '}
-          <span
-            class={classNames('statistics-overview-item-value-description', diff > 0 ? 'green' : 'red')}
-            dir="ltr"
-          >
-            {str}
-          </span>
-        </>
-      );
-    }
+  if(!isPercentage && !value.current && !value.previous && !includeZeroValue) {
+    return;
   }
+  // * a function, not a value: the exact-count setting is read on every render,
+  // * so a toggle updates the mounted overview instead of waiting for a reopen
+  const v = (): JSX.Element => {
+    let result: JSX.Element;
+    if(isPercentage) {
+      const n = (value.part / value.total * 100).toFixed(2);
+      result = `${n}%`;
+
+      // * an approximate or signed number reads left to right in any language
+      if(describePercentage) {
+        result = (
+          <>
+            <span dir="ltr">{`≈${value.part}`}</span>{' '}
+            <span class="statistics-overview-item-value-description">
+              {result}
+            </span>
+          </>
+        );
+      }
+    } else {
+      result = formatCount(value.current, 1);
+
+      if(value.approximate) {
+        result = (<span dir="ltr">{'≈' + result}</span>);
+      }
+
+      if(value.current !== value.previous && value.previous) {
+        const diff = value.current - value.previous;
+        const absDiff = Math.abs(diff);
+        const vv = `${diff > 0 ? '+' : '-'}${formatCount(absDiff, 1)}`;
+        const p = +(Math.abs(1 - value.current / value.previous) * 100).toFixed(2);
+        const str = `${vv} (${p}%)`;
+        result = (
+          <>
+            {result}{' '}
+            <span
+              class={classNames('statistics-overview-item-value-description', diff > 0 ? 'green' : 'red')}
+              dir="ltr"
+            >
+              {str}
+            </span>
+          </>
+        );
+      }
+    }
+
+    return result;
+  };
 
   return (
     <div class="statistics-overview-item">
       <div class="statistics-overview-item-value">
-        {v}
+        {v()}
       </div>
       <div class="statistics-overview-item-name">
         {i18n(title)}
@@ -276,6 +281,17 @@ export default class AppStatisticsTab extends SliderSuperTabEventable {
     publicForwards: Accessor<LoadableList>,
     currentPost: (typeof recentPosts)[0]
   ) {
+    // Rows can finish loading before this tab is installed. Reconcile once at
+    // installation so a preference changed during loading cannot leave stale text.
+    [...recentPosts, ...topPosters, ...topAdmins, ...topInviters, currentPost].filter(Boolean).forEach(({container}) => {
+      this.refreshCountLabels(container);
+    });
+    publicForwards().rendered.forEach((element) => {
+      if(element instanceof HTMLElement) {
+        this.refreshCountLabels(element);
+      }
+    });
+
     const dateElement = new I18n.IntlDateElement({options: {}});
     const getLabelDate: TChartData['getLabelDate'] = (value, options = {}) => {
       options.displayYear ??= true;
@@ -662,7 +678,10 @@ export default class AppStatisticsTab extends SliderSuperTabEventable {
 
       const e = document.createElement('span');
       e.classList.add('statistics-post-counter');
-      e.append(i, formatNumber(count, 1));
+      const countSpan = document.createElement('span');
+      countSpan.dataset.oeCount = '' + count;
+      countSpan.textContent = formatCount(count, 1);
+      e.append(i, countSpan);
       subtitleRightFragment.append(e);
     });
 
@@ -783,9 +802,13 @@ export default class AppStatisticsTab extends SliderSuperTabEventable {
 
     let toJoin: Node[];
     if(peer._ === 'message') {
+      const viewsSpan = document.createElement('span');
+      viewsSpan.dataset.oeCount = '' + peer.views;
+      viewsSpan.dataset.oeCountKey = 'Views';
+      new I18n.IntlElement({element: viewsSpan, key: 'Views', args: [formatCount(peer.views, 1)]});
       toJoin = [
         await getChatMembersString(peerId.toChatId()),
-        i18n('Views', [formatNumber(peer.views, 1)])
+        viewsSpan
       ];
       dom.listEl.dataset.mid = '' + peer.mid;
     } else if(peer._ === 'statsGroupTopPoster') {
@@ -979,6 +1002,7 @@ export default class AppStatisticsTab extends SliderSuperTabEventable {
 
           const promises = statsPublicForwards.forwards.map(this.renderPublicForward);
           const rendered = await Promise.all(promises);
+          rendered.forEach(({container}) => this.refreshCountLabels(container));
           setF((value) => {
             value.rendered.push(...rendered.map(({container}) => container));
             value.loadMore = offset ? () => {
@@ -1010,6 +1034,7 @@ export default class AppStatisticsTab extends SliderSuperTabEventable {
 
           const promises = statsPublicForwards.forwards.map(this.renderPublicForward);
           const rendered = await Promise.all(promises);
+          rendered.forEach(({container}) => this.refreshCountLabels(container));
           setF((value) => {
             value.rendered.push(...rendered.map(({container}) => container));
             value.loadMore = offset ? () => {
@@ -1064,9 +1089,30 @@ export default class AppStatisticsTab extends SliderSuperTabEventable {
     });
   }
 
+  private refreshCountLabels(container: ParentNode) {
+    container.querySelectorAll<HTMLElement>('[data-oe-count]').forEach((element) => {
+      const count = formatCount(+element.dataset.oeCount, 1);
+      const key = element.dataset.oeCountKey as LangPackKey;
+      if(key) {
+        (I18n.weakMap.get(element) as I18n.IntlElement).compareAndUpdate({key, args: [count]});
+      } else if(element.textContent !== count) {
+        element.textContent = count;
+      }
+    });
+  }
+
   public async init(chatIdOrPeerId: ChatId | PeerId, mid?: number, storyId?: number, mode?: 'poll') {
     const managers = bindManagersToSession(this.managers);
     this.container.classList.add('statistics-container');
+    this.listenerSetter.add(rootScope)('exteraless_settings_updated', ({key}) => {
+      if(key !== 'DisableNumberRounding') {
+        return;
+      }
+
+      // * the imperative counters of this tab carry their raw count; the overview
+      // * is Solid and re-reads the store by itself
+      this.refreshCountLabels(this.scrollable.container);
+    });
 
     this.isPoll = mode === 'poll';
     this.chatId = this.isPoll ? chatIdOrPeerId.toChatId() : chatIdOrPeerId as ChatId;

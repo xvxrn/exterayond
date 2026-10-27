@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Test fixture — task003 message seconds</title>
+    <style>
+      body { margin: 0; }
+      .fixture { padding: 12px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; max-width: 100%; }
+      .fixture__controls { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+      .fixture__controls input[type="checkbox"] { appearance: auto; opacity: 1; position: static; z-index: auto; inline-size: 1rem; block-size: 1rem; }
+      .fixture__sample { display: grid; gap: 4px; max-width: 420px; padding: 10px; border-radius: 12px; background: var(--surface-color, #fff); }
+      .fixture__sample dt { opacity: .7; }
+      .fixture__sample dd { margin: 0 0 6px; font-size: 20px; }
+      .fixture__status { max-width: 100%; overflow-wrap: anywhere; }
+      #fixture-result[data-state="pass"] { font-weight: bold; }
+      #fixture-result[data-state="fail"] { font-weight: bold; text-decoration: underline; }
+    </style>
+  </head>
+  <body class="animation-level-0">
+    <main class="fixture">
+      <h1>Test fixture — task003 message seconds</h1>
+      <p>Unauthenticated fixture. Open with <code>?popups=1</code>. Real <code>formatTime</code>/I18n rendering; Telegram data comes from the popup sandbox mocks only.</p>
+      <div class="fixture__controls">
+        <label><input id="fixture-toggle" type="checkbox"> Show seconds</label>
+        <button id="fixture-cycle" type="button">Hour cycle: 24h</button>
+        <button id="fixture-dir" type="button" aria-pressed="false">Direction: LTR</button>
+      </div>
+      <section class="fixture__sample" aria-label="Rendered samples">
+        <dl>
+          <dt>Message time</dt>
+          <dd id="fixture-time"></dd>
+          <dt>Combined date and sent time</dt>
+          <dd id="fixture-combined"></dd>
+          <dt>Date separator (sentinel)</dt>
+          <dd id="fixture-separator"></dd>
+          <dt>Duration (sentinel)</dt>
+          <dd id="fixture-duration"></dd>
+        </dl>
+      </section>
+      <section class="fixture__status" aria-labelledby="fixture-status-title">
+        <h2 id="fixture-status-title">Test result</h2>
+        <p id="fixture-result" role="status" aria-live="polite">BOOT</p>
+        <p id="fixture-detail"></p>
+      </section>
+    </main>
+    <!-- Skeleton the app singletons read at import time. It is not product UI. -->
+    <div id="page-chats" style="display: none">
+    <div id="main-columns" class="tabs-container" hidden aria-hidden="true">
+      <div id="column-left" class="tabs-tab chatlist-container sidebar sidebar-left main-column sidebar-left-common">
+        <div class="sidebar-slider tabs-container">
+          <div class="tabs-tab sidebar-slider-item item-main active">
+            <div class="sidebar-content transition zoom-fade can-have-forum">
+              <div class="transition-item active" id="chatlist-container">
+                <div class="tabs-container" id="folders-container"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div id="column-center" class="tabs-tab main-column" role="main"></div>
+      <div id="column-right" class="tabs-tab sidebar sidebar-right main-column" role="complementary">
+        <div class="sidebar-content sidebar-slider tabs-container"></div>
+      </div>
+    </div>
+    <div class="sidebar-left-overlay"></div>
+    </div>
+    <script type="module" src="./exterayondSeconds.ts"></script>
+  </body>
+</html>

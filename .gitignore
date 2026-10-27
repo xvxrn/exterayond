@@ -19,6 +19,22 @@ archive.zip
 src/langPackLocalVersion.ts
 /.ai
 tmp
+/.research/
+/snapshot-server/
+/demo.html
+/src/scripts/demo.ts
+
+# Generated production bundles; keep the static assets and codec workers.
+/public/*-*.js
+/public/*-*.js.map
+/public/*-*.css
+/public/*-*.css.map
+/public/*-*.wasm
+/public/*-*.svg
+/public/*-*.woff2
+/public/*-*.bin
+/public/index.html
+/public/snapshot.html
 
 # Throw files you don't need in this folder
 ignore

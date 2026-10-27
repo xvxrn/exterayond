@@ -1,5 +1,5 @@
 {
-  "name": "tweb",
+  "name": "exterayond",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
@@ -11,6 +11,8 @@
     "build": "pnpm test --run && pnpm run typecheck && pnpm run generate-changelog && vite build && pnpm run check-bundle",
     "check-bundle": "node scripts/check-bundle-mangling.mjs dist",
     "test": "vitest",
+    "test:startup": "node scripts/check-bundle-startup.mjs",
+    "publish:local": "node scripts/publish-local.mjs",
     "test:a11y": "playwright test --config playwright.a11y.config.ts",
     "test:a11y:full": "A11Y_ALL_THEMES=1 playwright test --config playwright.a11y.config.ts",
     "test:ephemeral-bot": "node ./src/tests/fixtures/ephemeralBot/bot.mjs",

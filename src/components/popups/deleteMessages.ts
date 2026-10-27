@@ -13,6 +13,7 @@ import getParticipantPeerId from '@appManagers/utils/chats/getParticipantPeerId'
 import namedPromises from '@helpers/namedPromises';
 import isEphemeralMessage from '@appManagers/utils/messages/isEphemeralMessage';
 import {bindManagersToSession} from '@lib/accounts/bindManagersToAccount';
+import {exteralessSettings} from '@stores/exteralessSettings';
 
 export default async function showDeleteMessagesPopup(
   peerId: PeerId,
@@ -183,6 +184,8 @@ export default async function showDeleteMessagesPopup(
     }
   }
 
+  // Only the revoke choices the existing eligibility checks have supplied.
+  for(const checkbox of checkboxes) checkbox.checked = exteralessSettings.DeleteChatForBothSides;
   addCancelButton(buttons);
 
   showPeerPopup('popup-delete-chat', {

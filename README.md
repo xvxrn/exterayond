@@ -1,76 +1,50 @@
-## Telegram Web K
-Based on Webogram, patched and improved. Available for everyone here: https://web.telegram.org/k/
+# exterayond
 
+exterayond brings the preferences and desktop-friendly parts of
+[exteraless](https://github.com/exteraless/exteraless) to the web. It uses
+[Telegram Web K](https://github.com/morethanwords/tweb) as its Telegram client
+and UI foundation. The project targets desktop browsers on Linux, BSD, macOS
+and Windows.
 
-### Developing
-Install dependencies with:
-```lang=bash
-pnpm install
+The port is in progress. See the [feature checklist](docs/exterayond-feature-checklist.md),
+the [source inventory](docs/exteraless-feature-inventory.md), and the
+[task and integration log](docs/tasks/README.md). Plugin execution and parts of
+the Material 3 player are still unfinished.
+
+Updates: [@exterayond](https://t.me/exterayond).
+
+## Development
+
+Use Node.js 22.18+ or 24.11+ and pnpm 11.16.0:
+
+```sh
+corepack pnpm install --frozen-lockfile
+corepack pnpm start
 ```
-This will install all the needed dependencies.
 
+The development server uses `http://localhost:8080/` by default. Run focused
+tests with `corepack pnpm exec vitest run <test-file> --maxWorkers=1`.
 
-#### Running web-server
-Just run `pnpm start` to start the web server and the livereload task.
-Open http://localhost:8080/ in your browser.
+## Production build
 
+```sh
+corepack pnpm exec vite build
+node scripts/publish-local.mjs
+```
 
-#### Running in production
+The second command combines `dist/` and the static assets in `public/` into
+`tmp/startup-verified-dist/`. To serve the build directly, use
+`node server.js 0 8080 --dist`; that server reads both `dist/` and `public/`.
+The repository does not contain generated JavaScript bundles or source maps.
 
-Run `node build` to build the minimized production version of the app. Copy `public` folder contents to your web server.
+For a container image, run
+`docker build -f .docker/Dockerfile_production -t exterayond .`.
 
-### Running in docker
+## License and attribution
 
-#### Developing: 
-* Install dependencies `docker-compose up tweb.dependencies`.
-* Run develop container `docker-compose up tweb.develop `.
-* Open http://localhost:8080/ in your browser. 
-
-#### Production:
-* Run `docker-compose up tweb.production -d` nginx image and container to serve the build
-* Open http://localhost:80/ in your browser.
-
-You can use `docker build -f ./.docker/Dockerfile_production -t {dockerhub-username}/{imageName}:{latest} .` to build your production ready image.
-
-### Dependencies
-* [BigInteger.js](https://github.com/peterolson/BigInteger.js) ([Unlicense](https://github.com/peterolson/BigInteger.js/blob/master/LICENSE))
-* [fflate](https://github.com/101arrowz/fflate) ([MIT License](https://github.com/101arrowz/fflate/blob/master/LICENSE))
-* [cryptography](https://github.com/spalt08/cryptography) ([Apache License 2.0](https://github.com/spalt08/cryptography/blob/master/LICENSE))
-* [emoji-data](https://github.com/iamcal/emoji-data) ([MIT License](https://github.com/iamcal/emoji-data/blob/master/LICENSE))
-* [emoji-test-regex-pattern](https://github.com/mathiasbynens/emoji-test-regex-pattern) ([MIT License](https://github.com/mathiasbynens/emoji-test-regex-pattern/blob/main/LICENSE))
-* [tlottie](https://github.com/dkaraush/tlottie) (MIT License)
-* [fast-png](https://github.com/image-js/fast-png) ([MIT License](https://github.com/image-js/fast-png/blob/master/LICENSE))
-* [opus-recorder](https://github.com/chris-rudmin/opus-recorder) ([BSD License](https://github.com/chris-rudmin/opus-recorder/blob/master/LICENSE.md))
-* [Prism](https://github.com/PrismJS/prism) ([MIT License](https://github.com/PrismJS/prism/blob/master/LICENSE))
-* [Solid](https://github.com/solidjs/solid) ([MIT License](https://github.com/solidjs/solid/blob/main/LICENSE))
-* [TinyLD](https://github.com/komodojp/tinyld) ([MIT License](https://github.com/komodojp/tinyld/blob/develop/license))
-* [libwebp.js](https://libwebpjs.appspot.com/)
-* fastBlur
-* [Mediabunny](https://github.com/Vanilagy/mediabunny) ([Mozilla Public License 2.0](https://github.com/Vanilagy/mediabunny/blob/main/LICENSE))
-* [Temml](https://github.com/ronkok/Temml) ([MIT License](https://github.com/ronkok/Temml/blob/main/LICENSE))
-
-### Debugging
-You are welcome in helping to minimize the impact of bugs. There are classes, binded to global context. Look through the code for certain one and just get it by its name in developer tools.
-Source maps are included in production build for your convenience.
-
-#### Additional query parameters
-* **test=1**: to use test DCs
-* **debug=1**: to enable additional logging
-* **noSharedWorker=1**: to disable Shared Worker, can be useful for debugging
-* **http=1**: to force the use of HTTPS transport when connecting to Telegram servers
-
-Should be applied like that: http://localhost:8080/?test=1
-
-#### Taking local storage snapshots
-You can also take and load snapshots of the local storage and indexed DB using the `./snapshot-server` [mini-app](/snapshot-server/README.md). Check the `README.md` under this folder for more details.
-
-#### Preview all icons
-You can see all the available svg icons by calling the `showIconLibrary()` global function in the browser's console.
-
-### Troubleshooting & Suggesting
-
-If you find an issue with this app or wish something to be added, let Telegram know using the [Suggestions Platform](https://bugs.telegram.org/c/4002).
-
-### Licensing
-
-The source code is licensed under GPL v3. License is available [here](/LICENSE).
+exterayond is an unofficial project and is not affiliated with Telegram.
+It is based on Telegram Web K by Eduard Kuzmenko and contributors, itself based
+on Webogram. Android behavior is referenced from exteraless and its upstream
+projects. The project is distributed under [GPL-3.0](LICENSE); third-party
+notices and licenses are retained in the source tree and in
+[third-party attribution](docs/attribution.md).

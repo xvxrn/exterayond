@@ -484,6 +484,21 @@ const analyzeFile = (file, knownTabs) => {
     entries.push({kind, langKey, ...extra});
   };
 
+  const isExcludedContext = (path) => {
+    for(let cur = path.parentPath; cur; cur = cur.parentPath) {
+      const n = cur.node;
+      if(n.type === 'CallExpression') {
+        const c = n.callee;
+        const name = c.type === 'Identifier' ? c.name :
+          c.type === 'MemberExpression' && c.property.type === 'Identifier' ? c.property.name : '';
+        if(DENY_CALLEES.test(name)) return true;
+      } else if(n.type === 'JSXAttribute' && n.name.type === 'JSXIdentifier' && DENY_PROPS.has(n.name.name)) {
+        return true;
+      }
+    }
+    return false;
+  };
+
   babel.traverse(ast, {
     // in the order the file uses them: an import lists names in whatever order it was written
     ImportDeclaration(p) {
@@ -528,22 +543,13 @@ const analyzeFile = (file, knownTabs) => {
       if(!arg || !isLangKey(arg.value) || captured.has(arg.value)) return;
       if(DENY_KEY_SHAPE.test(arg.value)) return;
 
-      for(let cur = p.parentPath; cur; cur = cur.parentPath) {
-        const n = cur.node;
-        if(n.type === 'CallExpression') {
-          const c = n.callee;
-          const name = c.type === 'Identifier' ? c.name :
-            c.type === 'MemberExpression' && c.property.type === 'Identifier' ? c.property.name : '';
-          if(DENY_CALLEES.test(name)) return;
-        } else if(n.type === 'JSXAttribute' && n.name.type === 'JSXIdentifier' && DENY_PROPS.has(n.name.name)) {
-          return;
-        }
-      }
+      if(isExcludedContext(p)) return;
 
       push('row', arg.value);
     },
 
     ObjectProperty(p) {
+      if(isExcludedContext(p)) return;
       const key = p.node.key.type === 'Identifier' ? p.node.key.name : p.node.key.value;
 
       // a row's context menu is never on the screen — see menuKindOf

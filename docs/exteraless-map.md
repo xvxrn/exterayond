@@ -1,5 +1,11 @@
 # exteraless source map — what it changes and how
 
+> Historical, partial port map. Its old “hub is complete” verdict and some portability
+> exclusions are not a complete product inventory or proof of working behavior.
+> The source-backed, plugin-free catalog is now
+> [exteraless-feature-inventory.md](exteraless-feature-inventory.md) (26 October 2026).
+> In particular, a missing Web K subsystem is distinct from phone-only hardware.
+
 Reference for porting exteraless behaviors into exterayond (Web K base `654ffd8`).
 Source of truth: `.research/android` snapshot of `exteraless/exteraless` @ `8b7ec40`,
 read via `git -C .research/android show HEAD:<path>` / `git grep <pat> HEAD -- <pathspec>`.

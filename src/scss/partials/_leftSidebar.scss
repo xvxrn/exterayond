@@ -1102,6 +1102,44 @@
   }
 }
 
+:root.oe-md3-sliders .range-setting-selector {
+  padding-block: 1.25rem;
+
+  .progress-line {
+    --height: 8px;
+    --thumb-size: 3px;
+    --border-radius: 4px;
+    background-color: color-mix(in srgb, var(--primary-color) 20%, var(--surface-color));
+
+    &__filled {
+      border-radius: inherit;
+      box-shadow: calc(6px * var(--reflect)) 0 0 var(--surface-color);
+
+      &:after {
+        height: 24px;
+        top: -8px;
+        border-radius: 2px;
+        outline: 6px solid var(--surface-color);
+        transform: translateX(calc(1.5px * var(--reflect)));
+      }
+    }
+  }
+
+  .range-setting-selector-value {
+    color: var(--primary-color);
+    background: color-mix(in srgb, var(--primary-color) 12%, var(--surface-color));
+    padding-inline: .375rem;
+    border-radius: .5rem;
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+.exterayond-md3-options summary {
+  padding: 1rem;
+  cursor: pointer;
+  color: var(--primary-color);
+}
+
 .background-container {
   .background {
     &-item {
@@ -1572,4 +1610,10 @@
     width: 32px;
     height: 32px;
   }
+}
+
+// * exteraless Chats preference: only the floating new-chat button goes away,
+// * and `display: none` also takes it out of the tab order and the a11y tree
+html.oe-hide-new-chat-button #new-menu {
+  display: none !important;
 }

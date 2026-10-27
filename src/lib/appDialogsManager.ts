@@ -76,7 +76,7 @@ import indexOfAndSplice from '@helpers/array/indexOfAndSplice';
 import {getMiddleware, MiddlewareHelper} from '@helpers/middleware';
 import getDialogMentionBadgeState from '@helpers/dialogMentionBadgeState';
 import getMessageThreadId from '@appManagers/utils/messages/getMessageThreadId';
-import formatNumber from '@helpers/number/formatNumber';
+import formatCount from '@helpers/number/formatCount';
 import AppSharedMediaTab from '@components/sidebarRight/tabs/sharedMediaTab';
 import {dispatchHeavyAnimationEvent} from '@hooks/useHeavyAnimationCheck';
 import shake from '@helpers/dom/shake';
@@ -2414,6 +2414,9 @@ export class AppDialogsManager {
         }
       }
 
+      const subtitleOwner = dialogElement.middlewareHelper ?
+        dialogElement.middlewareHelper.get().create() :
+        getMiddleware();
       const withoutMediaType = !!mediaContainer && !!(lastMessage as Message.message)?.message;
       const parts = await renderDialogSubtitleParts({
         peerId,
@@ -2426,15 +2429,20 @@ export class AppDialogsManager {
         withoutMessageIcon: !!mediaContainer,
         prependPeerId: subtitlePeerId,
         middleware,
+        middlewareOwner: subtitleOwner.get(),
         messageRenderer: wrapMessageForReply,
         peerTitleRenderer: wrapPeerTitle,
         textColor: this.getTextColor(
           dom.listEl.classList.contains('active')
         )
+      }).catch((err) => {
+        // * this render never reached the DOM, so its parts go with it
+        subtitleOwner.destroy();
+        throw err;
       });
       dom.lastMessageSpan.classList.add('dialog-subtitle-parts');
       disposeTextHighlight(dom);
-      setDialogSubtitle(dom, parts);
+      setDialogSubtitle(dom, parts, subtitleOwner);
       renderedParts = parts;
 
       // * the last part is the message text itself (the ones before are the sender, the
@@ -2586,8 +2594,8 @@ export class AppDialogsManager {
       !hasPollVotesBadge;
     let unreadBadgeText: string;
     if(hasUnreadBadge) {
-      // dom.unreadMessagesSpan.innerText = '' + (unreadCount ? formatNumber(unreadCount, 1) : ' ');
-      unreadBadgeText = isMention ? '@' : '' + (unreadCount ? formatNumber(unreadCount, 1) : ' ');
+      // dom.unreadMessagesSpan.innerText = '' + (unreadCount ? formatCount(unreadCount, 1) : ' ');
+      unreadBadgeText = isMention ? '@' : '' + (unreadCount ? formatCount(unreadCount, 1) : ' ');
     }
 
     dialogElement.setBadgeState({

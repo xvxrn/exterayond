@@ -99,6 +99,8 @@ export default async function showReactedListPopup(message$: Message.message, in
   const middlewareHelper = getMiddleware();
   const middleware = middlewareHelper.get();
   const listenerSetter = new ListenerSetter();
+  const standaloneCounters: ReactionElement[] = [];
+  middleware.onDestroy(() => listenerSetter.removeAll());
   const [show, setShow] = createSignal(false);
 
   function openDeleteReactionMenu({
@@ -158,6 +160,7 @@ export default async function showReactedListPopup(message$: Message.message, in
   };
   reaction.setCanRenderAvatars(false);
   reaction.renderCounter();
+  standaloneCounters.push(reaction);
 
   const allReactionsSticker = document.createElement('div');
   allReactionsSticker.classList.add('reaction-counter', 'reaction-sticker-icon');
@@ -216,6 +219,12 @@ export default async function showReactedListPopup(message$: Message.message, in
   tabsContainer.dataset.animation = 'tabs';
 
   const loaders: Map<HTMLElement, ScrollableLoader> = new Map();
+
+  listenerSetter.add(rootScope)('exteraless_settings_updated', ({key}) => {
+    if(key === 'DisableNumberRounding' && middleware()) {
+      standaloneCounters.forEach((reaction) => reaction.refreshCounter());
+    }
+  });
 
   let hasAllReactions = false;
   if(newMessage.reactions.results.length) {

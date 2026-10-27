@@ -2,6 +2,78 @@
 
 $transition: .2s ease-in-out;
 
+.preloader-md3-track,
+.preloader-md3-wave {
+  display: none;
+}
+
+:root.oe-md3-loading {
+  .preloader-md3-wave {
+    display: initial;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 3;
+    stroke-linecap: round;
+    stroke-dasharray: 93.63, 125.66;
+  }
+
+  .preloader-path,
+  .preloader-path-new {
+    visibility: hidden;
+  }
+  .preloader-md3-track {
+    display: initial;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 3;
+    stroke-linecap: round;
+    opacity: .2;
+  }
+
+  .preloader-circular .preloader-md3-track {
+    stroke-dasharray: 23, 126;
+    stroke-dashoffset: -98;
+  }
+
+  .preloader-path {
+    stroke: currentColor;
+    stroke-width: 3;
+  }
+
+  .preloader-container .preloader-md3-track,
+  .preloader-container .preloader-md3-wave {
+    stroke: var(--color);
+  }
+
+  .preloader-dots {
+    .preloader-dot,
+    .preloader-dots-rest,
+    .preloader-line {
+      display: none;
+    }
+
+    .preloader-md3-track {
+      stroke: var(--color);
+    }
+
+    &.is-md3-waiting .preloader-md3-wave {
+      opacity: 1;
+      stroke-dasharray: 28, 119.38;
+    }
+
+    &.is-md3-waiting .preloader-md3-track {
+      stroke-dasharray: 87.38, 119.38;
+      stroke-dashoffset: -30;
+    }
+  }
+
+  .loading {
+    background: currentColor;
+    border-radius: 4px;
+    opacity: .8;
+  }
+}
+
 .preloader {
   &-circular {
     //animation: rotate 2s linear infinite;

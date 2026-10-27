@@ -126,6 +126,13 @@ export class AutonomousDialogListBase<T extends PossibleDialog = PossibleDialog>
     this.listenerSetter = new ListenerSetter();
     this.middlewareHelper = getMiddleware();
     this.appDialogsManager = appDialogsManager;
+    this.listenerSetter.add(rootScope)('exteraless_settings_updated', ({key}) => {
+      if(key !== 'DisableNumberRounding') {
+        return;
+      }
+
+      this.sortedList?.getAllDialogElementsMap().forEach((element) => element.refreshUnreadText());
+    });
   }
 
   public setIndexKey(indexKey: AutonomousDialogListBase['indexKey']) {

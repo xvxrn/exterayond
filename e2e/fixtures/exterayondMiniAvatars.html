@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Test fixture — task002 sender mini avatars</title>
+    <style>
+      body { margin: 0; }
+      .fixture { padding: 12px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; max-width: 100%; }
+      .fixture__row { width: min(420px, 100%); }
+      .fixture__controls { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; max-width: 100%; }
+      .fixture__controls input[type="checkbox"] { appearance: auto; opacity: 1; position: static; z-index: auto; inline-size: 1rem; block-size: 1rem; }
+      .fixture__status { max-width: 100%; overflow-wrap: anywhere; }
+      #fixture-result[data-state="pass"] { font-weight: bold; }
+      #fixture-result[data-state="fail"] { font-weight: bold; text-decoration: underline; }
+      @media (max-width: 600px) { .fixture__row { width: 100%; } }
+    </style>
+  </head>
+  <body class="animation-level-0">
+    <main class="fixture">
+      <h1>Test fixture — task002 sender mini avatars</h1>
+      <p>Unauthenticated fixture. Open with <code>?popups=1</code>. Real <code>avatarNew</code> and <code>AppDialogsManager.setLastMessageN</code>; Telegram data comes from the popup sandbox mocks only.</p>
+      <div class="fixture__controls">
+        <label><input id="fixture-toggle" type="checkbox" checked disabled> Sender mini avatars</label>
+        <button id="fixture-same" type="button" disabled>Update same message ×3</button>
+        <button id="fixture-sender" type="button" disabled>Replace sender</button>
+        <button id="fixture-delete" type="button" disabled>Delete row</button>
+        <button id="fixture-create" type="button" disabled>Create row</button>
+        <button id="fixture-dir" type="button" aria-pressed="false" disabled>Direction: LTR</button>
+      </div>
+      <section class="fixture__status" aria-labelledby="fixture-status-title">
+        <h2 id="fixture-status-title">Test result</h2>
+        <div role="status" aria-live="polite">
+          <p id="fixture-result">BOOT</p>
+          <p id="fixture-detail"></p>
+        </div>
+      </section>
+      <div class="fixture__row">
+        <div class="chatlist" id="fixture-list"></div>
+      </div>
+    </main>
+    <!-- Skeleton the app singletons read at import time. It is not product UI. -->
+    <div id="page-chats" style="display: none">
+      <div id="main-columns" class="tabs-container" hidden aria-hidden="true">
+        <div id="column-left" class="tabs-tab chatlist-container sidebar sidebar-left main-column sidebar-left-common"><div class="sidebar-slider tabs-container"><div class="tabs-tab sidebar-slider-item item-main active"><div class="sidebar-content transition zoom-fade can-have-forum"><div class="transition-item active" id="chatlist-container"><div class="tabs-container" id="folders-container"></div></div></div></div></div></div>
+        <div id="column-center" class="tabs-tab main-column" role="main"></div>
+        <div id="column-right" class="tabs-tab sidebar sidebar-right main-column" role="complementary"><div class="sidebar-content sidebar-slider tabs-container"></div></div>
+      </div>
+      <div class="sidebar-left-overlay"></div>
+    </div>
+    <script type="module">
+      const result = document.getElementById('fixture-result');
+      const detail = document.getElementById('fixture-detail');
+      const failLoad = (err) => {
+        result.textContent = 'FAIL';
+        result.dataset.state = 'fail';
+        detail.textContent = `Fixture load failed: ${err instanceof Error ? err.message : String(err)}`;
+      };
+
+      try {
+        if(!new URLSearchParams(location.search).has('popups')) throw new Error('Open this fixture with ?popups=1.');
+        await import('/src/helpers/peerIdPolyfill.ts');
+        await import('/src/lib/polyfill.ts');
+        await import('/src/components/popupSandbox/bootstrapState.ts');
+        await import('./exterayondMiniAvatars.ts');
+      } catch(err) {
+        failLoad(err);
+      }
+    </script>
+  </body>
+</html>

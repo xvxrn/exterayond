@@ -454,3 +454,31 @@
     }
   }
 }
+
+:root.oe-md3-switches .checkbox-field-toggle {
+  --size: 26px;
+
+  .checkbox-toggle {
+    --toggle-width: 42.25px;
+    height: var(--size);
+    border-radius: 999px;
+    border-width: 1.625px;
+    background-color: color-mix(in srgb, var(--secondary-color) 12%, var(--surface-color));
+  }
+
+  .checkbox-toggle-circle {
+    width: 19.5px;
+    height: 19.5px;
+    inset-inline-start: 1.625px;
+    transform: scale(.667);
+  }
+
+  [type="checkbox"]:checked:not(.is-fake-disabled) + .checkbox-toggle .checkbox-toggle-circle {
+    transform: translateX(calc(16.25px * var(--reflect))) scale(1);
+  }
+
+  &.checkbox-field-toggle-restriction .checkbox-toggle {
+    background-color: var(--danger-color);
+    border-color: transparent;
+  }
+}

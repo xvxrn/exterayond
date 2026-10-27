@@ -86,7 +86,7 @@ const Section: ParentComponent<SectionProps> = (props) => {
   // * Android's RecyclerListView excludes the HeaderCell from the section
   // * background (`sectionsSeparatedHeaders()`)
   const [exteralessSettings] = useExteralessSettings();
-  const separateName = () => !!props.name && exteralessSettings.OEAppearanceSeparateHeaders;
+  const separateName = () => !!props.name && (exteralessSettings.OEAppearanceSeparateHeaders || exteralessSettings.OEAppearanceM3ListItems);
   return (
     <div
       class={classNames(className + '-container', props.noMarginBottom && 'no-margin-bottom', props.class)}

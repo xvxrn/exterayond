@@ -11,6 +11,27 @@ const require = createRequire(import.meta.url);
 describe('settings search index', () => {
   const sectionIds = new Set(generated.sections.map((section) => section.id));
 
+  it('indexes preference rows without confirmation-dialog labels', () => {
+    const keys = generated.entries.filter((entry) => entry.sectionId === 'AppExteralessOtherTab')
+    .map((entry) => entry.titleLangKey);
+    expect(keys).toContain('Exteraless.Reset');
+    expect(keys).not.toContain('Exteraless.Reset.Title');
+    const chatKeys = generated.entries.filter((entry) => entry.sectionId === 'AppExteralessChatsTab')
+    .map((entry) => entry.titleLangKey);
+    expect(chatKeys).toContain('Exteraless.AskBeforeCalling');
+    expect(chatKeys).toContain('Exteraless.AskBeforeBotCommand');
+    expect(chatKeys).toContain('Exteraless.DateOfForwardedMsg');
+    expect(chatKeys).toContain('Exteraless.MessageTimeDetails');
+    expect(chatKeys).toContain('Exteraless.HideSendAsPeer');
+    expect(chatKeys).toContain('Exteraless.OpenLinkPolicy');
+    const appearanceKeys = generated.entries.filter((entry) => entry.sectionId === 'AppExteralessAppearanceTab')
+    .map((entry) => entry.titleLangKey);
+    for(const key of ['Exteraless.Md3', 'Exteraless.Md3.ProgressIndicators', 'Exteraless.Md3.Sliders', 'Exteraless.Md3.Switches', 'Exteraless.Md3.Navigation', 'Exteraless.Md3.ListItems', 'Exteraless.Md3.Player', 'Exteraless.Md3.MiniPlayer']) {
+      expect(appearanceKeys).toContain(key);
+    }
+    expect(keys).not.toContain('Reset');
+  });
+
   it('is up to date with the settings tabs', () => {
     // The index is derived, not authored — a stale checked-in copy would ship a
     // search that points at rows the tabs no longer have.

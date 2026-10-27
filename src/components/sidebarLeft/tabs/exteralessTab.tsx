@@ -3,7 +3,6 @@ import Section from '@components/section';
 import {i18n} from '@lib/langPack';
 import {useSuperTab} from '@components/solidJsTabs/superTabProvider';
 import {hotReloadGuard} from '@lib/solidjs/hotReloadGuardProvider';
-import appImManager from '@lib/appImManager';
 
 /**
  * The exteraless Preferences hub root, ported from Android's
@@ -16,7 +15,7 @@ const Exteraless = () => {
   const [tab] = useSuperTab();
 
   const openLink = (url: string) => () => {
-    appImManager.openUrl(url);
+    hotReloadGuard.appImManager.openUrl(url, true);
   };
 
   return (
@@ -50,9 +49,9 @@ const Exteraless = () => {
         </Row>
       </Section>
       <Section name="Exteraless.Links">
-        <Row clickable={openLink('https://t.me/exteraless')}>
+        <Row clickable={openLink('https://t.me/exterayond')}>
           <Row.Icon icon="channel_filled" />
-          <Row.Title titleRight="@exteraless" titleRightSecondary>{i18n('Exteraless.Channel')}</Row.Title>
+          <Row.Title titleRight="@exterayond" titleRightSecondary>{i18n('Exteraless.Channel')}</Row.Title>
         </Row>
         <Row clickable={openLink('https://github.com/exteraless/exteraless')}>
           <Row.Icon icon="link" />

@@ -1,10 +1,15 @@
 import {MOUNT_CLASS_TO} from '@config/debug';
 import classNames from '@helpers/string/classNames';
 import {_tgico} from '@helpers/tgico';
+import md3ProgressPath from '@helpers/svg/md3ProgressPath';
+
+const MD3_PATH = md3ProgressPath(50, 50, 20);
 
 export function putPreloader(elem: Element, returnDiv = false): HTMLElement {
   const html = `
   <svg xmlns="http://www.w3.org/2000/svg" class="preloader-circular" viewBox="25 25 50 50">
+  <circle class="preloader-md3-track" cx="50" cy="50" r="20" fill="none"/>
+  <path class="preloader-md3-wave" d="${MD3_PATH}" pathLength="125.66"/>
   <circle class="preloader-path" cx="50" cy="50" r="20" fill="none" stroke-miterlimit="10"/>
   </svg>`;
 

@@ -7,8 +7,10 @@ import type {
 import type {WrapRichTextOptions} from '@lib/richTextProcessor/wrapRichText';
 import rootScope from '@lib/rootScope';
 import {i18n} from '@lib/langPack';
-import type {Middleware} from '@helpers/middleware';
+import {getMiddleware} from '@helpers/middleware';
+import type {Middleware, MiddlewareHelper} from '@helpers/middleware';
 import {exteralessSettings} from '@stores/exteralessSettings';
+import {createRenderEffect, createRoot} from 'solid-js';
 
 type MiddlewarePromise = <T>(value: T) => T;
 type MessageRenderer = typeof import(
@@ -17,6 +19,73 @@ type MessageRenderer = typeof import(
 type PeerTitleRenderer = typeof import(
   '@components/wrappers/peerTitle'
 )['default'];
+
+const MINI_AVATAR_CLASS = 'dialog-sender-mini-avatar';
+
+/**
+ * Keeps the sender's mini avatar in step with the setting for as long as the
+ * subtitle that owns it lives: one node of its own (never a second root over a
+ * re-render), matched to the setting live, and released by the owner.
+ */
+function mountSenderMiniAvatar(
+  span: HTMLElement,
+  peerId: PeerId,
+  owner: Middleware
+) {
+  let helper: MiddlewareHelper;
+  let avatar: {node: HTMLElement};
+  let loading = false;
+
+  const removeAvatar = () => {
+    avatar?.node.remove();
+    avatar = undefined;
+    span.classList.remove('dialog-sender-with-avatar');
+  };
+
+  createRoot((dispose) => {
+    owner.onClean(() => {
+      removeAvatar();
+      helper?.destroy();
+      helper = undefined;
+      dispose();
+    });
+
+    if(!owner()) return;
+
+    createRenderEffect(() => {
+      // * reading the setting keeps this effect on it; off costs no avatar at all
+      if(!exteralessSettings.OEAppearanceSenderMiniAvatars) {
+        removeAvatar();
+        if(!loading) {
+          helper?.destroy();
+          helper = undefined;
+        }
+        return;
+      }
+
+      if(avatar || loading) return;
+      loading = true;
+      const current = helper = getMiddleware();
+
+      void import('@components/avatarNew').then(({avatarNew}) => {
+        loading = false;
+        // * a released subtitle never gets the avatar it asked for before it went
+        if(helper !== current) return;
+        if(!exteralessSettings.OEAppearanceSenderMiniAvatars) {
+          current.destroy();
+          helper = undefined;
+          return;
+        }
+
+        const mini = avatarNew({peerId, size: 20, middleware: current.get()});
+        mini.node.classList.add(MINI_AVATAR_CLASS);
+        avatar = mini;
+        span.classList.add('dialog-sender-with-avatar');
+        span.prepend(mini.node);
+      });
+    });
+  });
+}
 
 export default async function renderDialogSubtitleParts(options: {
   peerId: PeerId,
@@ -30,6 +99,8 @@ export default async function renderDialogSubtitleParts(options: {
   withoutMessageIcon?: boolean,
   prependPeerId?: PeerId,
   middleware: MiddlewarePromise,
+  /** the subtitle's own owner; absent only for calls that have no row behind them */
+  middlewareOwner?: Middleware,
   textColor: string,
   messageRenderer?: MessageRenderer,
   peerTitleRenderer?: PeerTitleRenderer
@@ -117,20 +188,8 @@ export default async function renderDialogSubtitleParts(options: {
         span.prepend(element);
         // * exteraless senderMiniAvatars: the sender's mini avatar in front of
         // * the name (DialogCell.addSenderAvatar) — own messages say "You"
-        if(exteralessSettings.OEAppearanceSenderMiniAvatars) {
-          void import('@components/avatarNew').then(({avatarNew}) => {
-            // * the option holds a full middleware at runtime (setLastMessage
-            // * passes setPromiseMiddleware's), only the type is the wrapper
-            const alive = middleware as unknown as Middleware;
-            if(!alive || !alive()) return;
-            const mini = avatarNew({
-              peerId: lastMessage.fromId,
-              size: 20,
-              middleware: alive
-            });
-            mini.node.classList.add('dialog-sender-mini-avatar');
-            span.prepend(mini.node);
-          });
+        if(options.middlewareOwner) {
+          mountSenderMiniAvatar(span, lastMessage.fromId, options.middlewareOwner);
         }
         return span;
       });

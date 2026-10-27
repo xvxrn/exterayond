@@ -32,6 +32,7 @@ import {openSettingsSearchItem} from '@lib/settingsSearch/navigate';
 import {ROOT_SECTION_ID} from '@lib/settingsSearch/registry';
 import {bumpRecentSettingsSearch} from '@lib/settingsSearch/recent';
 import {bindManagersToSession} from '@lib/accounts/bindManagersToAccount';
+import {exteralessSettings} from '@stores/exteralessSettings';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Helper — wraps a sub-tab declaration. If the tab has a static `getInitArgs`,
@@ -407,7 +408,7 @@ const Settings = () => {
           </Row>
         </div>
       </Section>
-      <Show when={!premiumBlocked()}>
+      <Show when={!premiumBlocked() && !exteralessSettings.HidePremiumSection}>
         <Section>
           <Row clickable={() => hotReloadGuard.showPremiumPopup()}>
             <Row.Icon icon="premium_badge" />
@@ -439,8 +440,32 @@ const Settings = () => {
           </Row>
         </Section>
       </Show>
+      <SettingsHelpSection />
     </>
   );
 };
+
+export const SettingsHelpSection = () => (
+  <Show when={!exteralessSettings.HideHelpSection}>
+    <Section name="SettingsHelp">
+      <Row clickable={() => hotReloadGuard.appImManager.openUrl('https://telegram.org/support')}>
+        <Row.Icon icon="help" />
+        <Row.Title>{i18n('AskAQuestion')}</Row.Title>
+      </Row>
+      <Row clickable={() => hotReloadGuard.appImManager.openUrl('https://telegram.org/faq')}>
+        <Row.Icon icon="info" />
+        <Row.Title>{i18n('TelegramFAQ')}</Row.Title>
+      </Row>
+      <Row clickable={() => hotReloadGuard.appImManager.openUrl('https://t.me/TelegramTips')}>
+        <Row.Icon icon="channel_filled" />
+        <Row.Title>{i18n('TelegramFeatures')}</Row.Title>
+      </Row>
+      <Row clickable={() => hotReloadGuard.appImManager.openUrl('https://telegram.org/privacy')}>
+        <Row.Icon icon="key_filled" />
+        <Row.Title>{i18n('PrivacyPolicy')}</Row.Title>
+      </Row>
+    </Section>
+  </Show>
+);
 
 export default Settings;

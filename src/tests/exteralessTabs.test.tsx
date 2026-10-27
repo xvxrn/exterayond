@@ -4,22 +4,35 @@ import {JSX} from 'solid-js';
 import Exteraless from '@components/sidebarLeft/tabs/exteralessTab';
 import ExteralessAppearance from '@components/sidebarLeft/tabs/exteralessAppearanceTab';
 import ExteralessChats from '@components/sidebarLeft/tabs/exteralessChatsTab';
+import ExteralessOther from '@components/sidebarLeft/tabs/exteralessOtherTab';
+import {appSettings, setAppSettingsSilent} from '@stores/appSettings';
+import rootScope from '@lib/rootScope';
 import {
   OE_DEFAULTS,
+  getMd3StyleCount,
+  resetExteralessSettings,
+  setAllMd3Styles,
   setExteralessSetting,
   useExteralessSettings
 } from '@stores/exteralessSettings';
 
 const mocks = vi.hoisted(() => ({
   tab: {
+    managers: {},
     slider: {
       createTab: vi.fn()
     }
   } as any,
   openUrl: vi.fn(),
+  confirmation: vi.fn(),
+  toast: vi.fn(),
   appearanceTabCtor: class AppExteralessAppearanceTab {},
   chatsTabCtor: class AppExteralessChatsTab {}
 }));
+
+vi.mock('@components/confirmationPopup', () => ({default: mocks.confirmation}));
+vi.mock('@components/lottieAnimation', () => ({default: (): null => null}));
+vi.mock('@components/toast', () => ({toastNew: mocks.toast}));
 
 vi.mock('@components/solidJsTabs/superTabProvider', () => ({
   useSuperTab: () => [mocks.tab]
@@ -27,15 +40,12 @@ vi.mock('@components/solidJsTabs/superTabProvider', () => ({
 
 vi.mock('@lib/solidjs/hotReloadGuardProvider', () => ({
   hotReloadGuard: {
+    appImManager: {openUrl: mocks.openUrl},
     tabs: {
       AppExteralessAppearanceTab: mocks.appearanceTabCtor,
       AppExteralessChatsTab: mocks.chatsTabCtor
     }
   }
-}));
-
-vi.mock('@lib/appImManager', () => ({
-  default: {openUrl: mocks.openUrl}
 }));
 
 vi.mock('@lib/langPack', () => ({
@@ -160,18 +170,18 @@ describe('the exteraless Preferences hub tab', () => {
     expect(createdChats.open).toHaveBeenCalled();
   });
 
-  it('opens the exteraless links and design credits', () => {
+  it('opens the exterayond channel, upstream source and design credits', () => {
     rowByIcon('channel_filled').click();
-    expect(mocks.openUrl).toHaveBeenCalledWith('https://t.me/exteraless');
+    expect(mocks.openUrl).toHaveBeenCalledWith('https://t.me/exterayond', true);
 
     rowByIcon('link').click();
-    expect(mocks.openUrl).toHaveBeenCalledWith('https://github.com/exteraless/exteraless');
+    expect(mocks.openUrl).toHaveBeenCalledWith('https://github.com/exteraless/exteraless', true);
 
     rowByIcon('brush').click();
-    expect(mocks.openUrl).toHaveBeenCalledWith('https://t.me/the8055u');
+    expect(mocks.openUrl).toHaveBeenCalledWith('https://t.me/the8055u', true);
 
     rowByIcon('group_filled').click();
-    expect(mocks.openUrl).toHaveBeenCalledWith('https://t.me/BlueprintDsgn');
+    expect(mocks.openUrl).toHaveBeenCalledWith('https://t.me/BlueprintDsgn', true);
   });
 });
 
@@ -217,12 +227,24 @@ describe('the exteraless Appearance tab', () => {
     expect(document.querySelectorAll('.exteraless-avatar-preview .avatar')).toHaveLength(3);
   });
 
+  it('the MD3 master switch updates all components and its visible count', () => {
+    setAllMd3Styles(false);
+    const master = [...document.querySelectorAll<HTMLElement>('.row')].find((row) => row.textContent.includes('Exteraless.Md3'));
+    expect(master.textContent).toContain('0/8');
+    master.querySelector<HTMLInputElement>('input').click();
+    expect(getMd3StyleCount()).toBe(8);
+    expect(master.textContent).toContain('8/8');
+    master.querySelector<HTMLInputElement>('input').click();
+    expect(getMd3StyleCount()).toBe(0);
+    expect(master.textContent).toContain('0/8');
+    resetExteralessSettings();
+  });
+
   it('moves a toggle into the store', () => {
     expect(useExteralessSettings()[0].OEAppearanceSingleCornerRadius).toBe(OE_DEFAULTS.OEAppearanceSingleCornerRadius);
 
-    const checkboxes = [...document.querySelectorAll<HTMLElement>('.row-checkbox-toggle input')] as HTMLInputElement[];
-    // * the first toggle in the Appearance tab is singleCornerRadius
-    checkboxes[0].click();
+    const row = [...document.querySelectorAll<HTMLElement>('.row')].find((row) => row.textContent.includes('Exteraless.SingleCornerRadius'));
+    row.querySelector<HTMLInputElement>('input').click();
     expect(useExteralessSettings()[0].OEAppearanceSingleCornerRadius).toBe(!OE_DEFAULTS.OEAppearanceSingleCornerRadius);
 
     setExteralessSetting('OEAppearanceSingleCornerRadius', OE_DEFAULTS.OEAppearanceSingleCornerRadius);
@@ -247,7 +269,21 @@ describe('the exteraless Chats tab', () => {
       'Exteraless.RemoveMessageTail',
       'Exteraless.HideCallButton',
       'Exteraless.HideSearchButton',
-      'Exteraless.StickerTimeSide',
+      'Exteraless.UseEditedIcon',
+      'Exteraless.DateOfForwardedMsg',
+      'Exteraless.MessageTimeDetails',
+      'Exteraless.HideShareButton',
+      'Exteraless.HideSendAsPeer',
+      'Exteraless.DisableGreetingSticker',
+      'Exteraless.DisableTrending',
+      'Exteraless.HideGroupSticker',
+      'Exteraless.DeleteChatForBothSides',
+      'Exteraless.AskBeforeCalling',
+      'Exteraless.AskBeforeBotCommand',
+      'Exteraless.DontAutoPlayNextVoice',
+      'Exteraless.HidePremiumSection',
+      'Exteraless.HideHelpSection',
+      'Exteraless.HideFloatingButton',
       'Exteraless.ReplyColors',
       'Exteraless.ReplyEmoji',
       'Exteraless.ReplyBackground',
@@ -271,5 +307,58 @@ describe('the exteraless Chats tab', () => {
     expect(useExteralessSettings()[0].OEChatsHideCallButton).toBe(!OE_DEFAULTS.OEChatsHideCallButton);
 
     setExteralessSetting('OEChatsHideCallButton', OE_DEFAULTS.OEChatsHideCallButton);
+  });
+});
+
+describe('the exterayond reset action', () => {
+  let dispose: () => void;
+  const originalManagers = rootScope.managers;
+
+  beforeEach(() => {
+    mocks.confirmation.mockReset();
+    mocks.toast.mockClear();
+    rootScope.managers = {appStateManager: {setByKey: vi.fn(() => Promise.resolve())}} as any;
+    setAppSettingsSilent('showArchiveInChatList', false);
+    setExteralessSetting('OEAppearanceAvatarCorners', 4);
+    dispose = mount(() => <ExteralessOther />);
+  });
+
+  afterEach(() => {
+    dispose();
+    rootScope.managers = originalManagers;
+    setAppSettingsSilent('showArchiveInChatList', true);
+    document.body.replaceChildren();
+  });
+
+  it('waits for confirmation before resetting preferences', async() => {
+    let confirm: () => void;
+    mocks.confirmation.mockReturnValueOnce(new Promise<void>((resolve) => confirm = resolve));
+    rowByIcon('delete').click();
+
+    const [settings] = useExteralessSettings();
+    expect(settings.OEAppearanceAvatarCorners).toBe(4);
+    expect(appSettings.showArchiveInChatList).toBe(false);
+    expect(mocks.confirmation).toHaveBeenCalledWith(expect.objectContaining({
+      managers: mocks.tab.managers,
+      button: {langKey: 'Reset', isDanger: true}
+    }));
+
+    confirm();
+    await Promise.resolve();
+    expect({...settings}).toEqual(OE_DEFAULTS);
+    expect(appSettings.showArchiveInChatList).toBe(true);
+    expect(mocks.toast).toHaveBeenCalledWith({langPackKey: 'Exteraless.Reset.Done'});
+  });
+
+  it('leaves preferences untouched when the confirmation is canceled', async() => {
+    mocks.confirmation.mockRejectedValueOnce(undefined);
+    rowByIcon('delete').click();
+    await Promise.resolve();
+    await Promise.resolve();
+
+    const [settings] = useExteralessSettings();
+    expect(settings.OEAppearanceAvatarCorners).toBe(4);
+    expect(appSettings.showArchiveInChatList).toBe(false);
+    expect(mocks.toast).not.toHaveBeenCalled();
   });
 });

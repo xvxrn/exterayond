@@ -7,7 +7,7 @@ import VideoTsx from '@components/wrappers/videoTsx';
 import {animateValue} from '@helpers/animateValue';
 import {keepMe} from '@helpers/keepMe';
 import clamp from '@helpers/number/clamp';
-import formatNumber from '@helpers/number/formatNumber';
+import formatCount from '@helpers/number/formatCount';
 import {createDelayed} from '@helpers/solid/createDelayed';
 import createMiddleware from '@helpers/solid/createMiddleware';
 import {requestRAF} from '@helpers/solid/requestRAF';
@@ -166,7 +166,7 @@ export const PollOption = (props: {
         <Show when={isShowingResult() && props.result.voters}>
           <div class={styles.labelStats}>
             <div class={styles.labelNumber}>
-              {formatNumber(props.result.voters, 1)}
+              {formatCount(props.result.voters, 1)}
             </div>
             <Show when={props.result.peerIds?.length > 0}>
               <AvatarGroup peerIds={props.result.peerIds} />

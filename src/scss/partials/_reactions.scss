@@ -1,3 +1,9 @@
+:root.oe-hide-reactions-private .oe-reactions-private,
+:root.oe-hide-reactions-channels .oe-reactions-channels,
+:root.oe-hide-reactions-groups .oe-reactions-groups {
+  display: none !important;
+}
+
 .reactions {
   user-select: none;
 

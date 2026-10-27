@@ -10,6 +10,11 @@ codebase; it is subordinate to this file.
 
 ## Product model — locked decisions
 
+- **Project language (user instruction, 2026-10-27).** Write all new or revised
+  project text in English: UI copy, documentation, comments and task notes.
+  Keep the conversation with the user in Russian. Preserve upstream reference
+  material and language-pack compatibility.
+
 - exterayond is a **total web client with the exteraless character**: Telegram Web K is
   the engine (MTProto, sessions, workers, media, screens) and the UI foundation.
   The foundation choice (Web K / Solid) is decided; do not propose Web A/React or a
@@ -78,12 +83,45 @@ features underneath it.
 
 ## Work and verification
 
+- **Feature scope (user instruction).** The complete working list is
+  `docs/exterayond-feature-checklist.md`, with all 296 original catalog IDs.
+  Choose work from that list, from small integrations to larger ones; do not
+  invent additional feature work. Keep partial/native-but-unverified entries
+  unchecked. After integrating a feature, check and strike through its entry
+  and record material limits in `docs/tasks/progress.md`. Keep source links and
+  pending entries intact; do not mark exclusions as completed work.
+
+- **Model budget.** Delegate routine implementation to free OpenCode DeepSeek
+  (`opencode/deepseek-v4.1-flash-free`); if unavailable, use free GLM
+  (`opencode/glm-5.3-flash-free`). Do not choose MiMo. Do not switch to a paid
+  provider without the user's explicit authorization. Review delegated changes
+  against the owning Web K behavior, not only the agent's test summary.
+  If free providers are rate-limited or a bounded task needs repeated repair,
+  continue locally instead of waiting or repeatedly retrying agents.
+
+- **Desktop scope and speed (user instruction, 2026-10-26).** This client targets
+  desktop only. Do not run mobile viewport checks or a desktop/mobile matrix.
+  This overrides mobile-review requirements in skills, upstream instructions and
+  older task briefs. Use a short desktop check of the changed behavior; check RTL
+  when direction/layout changes. Do not build a separate fixture or a large test
+  matrix for each small toggle. Reuse existing fixtures and tests. Add focused
+  regression tests for nontrivial logic or a reproduced bug. Run typecheck when
+  types change and production build/startup once per meaningful group of features,
+  not after each small edit. Do not repeat passing checks without a relevant
+  change or failure. Prefer delivering features over expanding QA infrastructure.
+
+- **Memory and servers (user instruction, 2026-10-27).** Do not start a server
+  for every task. Reuse an explicitly needed existing server; otherwise work
+  without a background server. Run memory-heavy checks sequentially with bounded
+  workers. The user has reported out-of-memory failures. Do not launch another
+  browser/server pair merely to satisfy a routine verification checklist.
+
 - Small tasks: one visible behavior per commit, touching the existing Web K component
   that owns it. No speculative bundles, no research reports before code — read the two
   relevant source paths (Web K + Android) directly.
-- `corepack pnpm typecheck`, targeted `corepack pnpm test --run <target>`, and a real
-  browser screenshot at matching before/after viewports in both config states (stock
-  unchanged, enabled = ported behavior). Build after a meaningful slice.
+- Verify the changed behavior on desktop, in both config states where relevant.
+  Use targeted tests and typecheck as needed under the speed policy above.
+  Build after a meaningful group of changes.
 - Authenticated verification is performed by the user. Never inspect or copy their
   session. No "pixel perfect" claims without side-by-side screenshots.
 

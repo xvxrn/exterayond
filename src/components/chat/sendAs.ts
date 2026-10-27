@@ -22,6 +22,7 @@ import SetTransition from '@components/singleTransition';
 import getChatMembersString from '@components/wrappers/getChatMembersString';
 import {hotReloadGuard} from '@lib/solidjs/hotReloadGuardProvider';
 import {bindManagersToSession} from '@lib/accounts/bindManagersToAccount';
+import {exteralessSettings} from '@stores/exteralessSettings';
 
 const SEND_AS_ANIMATION_DURATION = 300;
 
@@ -65,6 +66,7 @@ export default class ChatSendAs {
   private construct() {
     this.container = document.createElement('div');
     this.container.classList.add('new-message-send-as-container');
+    if(!this.forPaidReaction) this.container.classList.add('message-send-as');
     this.container.setAttribute('role', 'button');
     (this.menuContainer ?? this.container).setAttribute('aria-label', I18n.format(this.forPaidReaction ? 'SendReactionAsTitle' : 'SendMessageAsTitle', true));
 
@@ -116,6 +118,7 @@ export default class ChatSendAs {
       container: this.menuContainer ?? this.container,
       direction: this.forPaidReaction ? 'bottom-center' : 'top-right',
       buttons: sendAsButtons,
+      canOpen: () => this.forPaidReaction || !exteralessSettings.hideSendAsChannel,
       onOpenBefore: () => {
         onSendAsMenuToggle(true);
       },

@@ -36,8 +36,8 @@
 #   * A run starts when it is the lowest-numbered waiting ticket and its workers
 #     fit in what the running ones leave. Strictly in order: quick runs never
 #     overtake a big one, so a full sweep is not starved.
-#   * A run started with TWEB_TEST_QUEUE_PRIORITY=1 — the full vitest run of a
-#     release build (build.js) — goes ahead of every waiting run, never ahead of
+#   * A run started with TWEB_TEST_QUEUE_PRIORITY=1 goes ahead of every waiting
+#     run, never ahead of
 #     a running one: it is next as soon as they leave its workers free. It takes
 #     a number below every ticket in the queue, so the script of every checkout,
 #     whatever its version, puts it first.

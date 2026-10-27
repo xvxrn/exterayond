@@ -35,6 +35,7 @@ import showStarGiftInfoPopup from '@components/popups/starGiftInfo';
 import showStarsRatingPopup from '@components/popups/starsRating';
 import showStarsPopup from '@components/popups/stars';
 import showToggleReadDatePopup from '@components/popups/toggleReadDate';
+import showMd3Player from '@components/popups/md3Player';
 import {setQuizHint} from '@components/quizHint';
 import Row from '@components/rowTsx';
 import {AppSidebarLeft} from '@components/sidebarLeft';
@@ -111,6 +112,7 @@ export type SolidJSHotReloadGuardContextValue = {
   i18n: typeof i18n;
   join: typeof join;
   showToggleReadDatePopup: typeof showToggleReadDatePopup;
+  showMd3Player: typeof showMd3Player;
   wrapSticker: typeof wrapSticker;
   wrapTopicNameButton: typeof wrapTopicNameButton;
   wrapRichText: typeof wrapRichText;

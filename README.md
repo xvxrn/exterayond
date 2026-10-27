@@ -10,6 +10,7 @@ The port is in progress. See the [feature checklist](docs/exterayond-feature-che
 the [source inventory](docs/exteraless-feature-inventory.md), and the
 [task and integration log](docs/tasks/README.md). Plugin execution and parts of
 the Material 3 player are still unfinished.
+For a new work session, start with [current state and next work](docs/tasks/CURRENT.md).
 
 Updates: [@exterayond](https://t.me/exterayond).
 

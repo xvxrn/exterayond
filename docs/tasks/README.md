@@ -1,5 +1,7 @@
 # exterayond tasks
 
+- [Current state and next work](CURRENT.md): start here when resuming without
+  conversation history.
 - [Feature checklist](../exterayond-feature-checklist.md): the complete 296-item
   port list. Checked and struck-through items have been integrated; partial items
   remain unchecked.

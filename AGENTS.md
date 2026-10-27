@@ -40,7 +40,9 @@ ported as-is.
   `exteraconfig` / `pillstackconfig` / `mainconfig`, the exteraGram-key mapping table,
   and range validation of untrusted files. Unknown Android-only keys are ignored and
   shown as unsupported, never treated as working.
-- **Plugins.** Implement the existing plugin contract at explicit, documented Web K
+- **Plugins are deferred.** Do not work on plugin execution until the user
+  explicitly resumes it. When that work resumes, implement the existing plugin
+  contract at explicit, documented Web K
   extension points (avatar render, dialog row, message render, menus, events):
   the `elyx_runtime` facade (`base_plugin`, `hook_utils`, `plugin_settings`,
   `ui/alert`, `ui/bulletin`), the permission model — `ui`, `messages.read`,
@@ -82,6 +84,12 @@ features underneath it.
   `docs/reference/before/` and `docs/reference/after/` at matching viewport/state.
 
 ## Work and verification
+
+- **Resume a session.** Start with `docs/tasks/CURRENT.md`, the canonical feature
+  checklist, and `git status`. Read the latest relevant section of the progress
+  log and inspect the actual code before choosing work. Update the current-state
+  note and the checklist after each integration; leave partial work unchecked.
+  Commit or push only when explicitly requested.
 
 - **Feature scope (user instruction).** The complete working list is
   `docs/exterayond-feature-checklist.md`, with all 296 original catalog IDs.

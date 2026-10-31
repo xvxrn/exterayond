@@ -11,8 +11,20 @@
     flex: 0 0 auto;
     cursor: default;
 
-    @include animation-level(1) {
-      transition: background-color var(--transition-standard-in);
+    // * LOOK-05 "Center title" (Android AppearanceConfig.centerTitle →
+    // * NaConfig.centerActionBarTitle): every sidebar header's title centers,
+    // * the web analog of Android's centered ActionBar title. The text centers
+    // * inside the title's own box (between the leading buttons and the
+    // * trailing ones), the way the centered TextView does.
+    :root.oe-center-title & {
+      .sidebar-header__title,
+      .sidebar-header__subtitle {
+        text-align: center;
+      }
+    }
+
+    .btn-menu {
+      overflow-y: overlay;
     }
 
     .btn-menu {

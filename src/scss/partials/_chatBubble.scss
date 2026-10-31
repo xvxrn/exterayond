@@ -209,6 +209,21 @@
     }
   }
 
+  // * CHAT-40 "Wide posts" (Android ChatsConfig.wideChannelPosts): a broadcast
+  // * channel's post stretches its bubble over the available width
+  // * (ChatMessageCell.applyWideChannelPostWidth) instead of the desktop
+  // * hug-content cap. Albums keep their item grid and backgroundless media
+  // * keeps the media's own layout — Android widens those through a separate
+  // * media layout path the web does not reproduce.
+  :root.oe-wide-posts &.is-post:not(.is-album):not(.just-media) {
+    --max-width: 100%;
+    width: 100%;
+
+    .bubble-content-wrapper {
+      width: 100%;
+    }
+  }
+
   // &.is-deleting:after {
   //   display: none;
   // }

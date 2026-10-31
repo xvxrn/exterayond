@@ -6,6 +6,7 @@ import {FOLDER_ID_ALL, FOLDER_ID_ARCHIVE, REAL_FOLDERS} from '@appManagers/const
 import type {MyDialogFilter} from '@lib/storages/filters';
 import type {ReadingManagers} from '@lib/managers';
 import {bindManagersToSession} from '@lib/accounts/bindManagersToAccount';
+import {clampExteralessSetting, exteralessSettings} from '@stores/exteralessSettings';
 
 export type StoredFolder = {
   id: number,
@@ -24,8 +25,19 @@ async function getNotificationCountForFilter(filterId: number, managers: Reading
     unreadMentionsCount
   } = await managers.dialogsStorage.getFolderUnreadCount(filterId);
 
+  // * exteraless IgnoreUnreadCount (Android NaConfig): the only counter
+  // * readers in the Android source turn the tab counters off at 2
+  // * (`DialogsActivity.getTabCounter`) and otherwise read the filter's own
+  // * count; "All chats" (0) counts muted chats too, "except muted" (1, the
+  // * effective default) is the stock behavior — the All tab keeps Web K's
+  // * unmuted count.
+  const mode = clampExteralessSetting('IgnoreUnreadCount', exteralessSettings.IgnoreUnreadCount);
+  if(mode === 2) {
+    return {count: 0, muted: false};
+  }
+
   return {
-    count: filterId === FOLDER_ID_ALL ? unreadUnmutedCount : unreadCount,
+    count: mode === 0 || filterId !== FOLDER_ID_ALL ? unreadCount : unreadUnmutedCount,
     muted: !unreadUnmutedCount && !!unreadCount && !unreadMentionsCount
   };
 }
@@ -50,6 +62,22 @@ async function getFolderItemsInOrder(folderItems: StoredFolder[], managers: Read
     return filters.get(a.id)?.localId - filters.get(b.id)?.localId;
   });
 }
+
+const isAllTabHidden = () => clampExteralessSetting('HideAllTab', exteralessSettings.HideAllTab) === true;
+
+/**
+ * exteraless HideAllTab (Android NekoConfig.hideAllTab): the tab bar drops the
+ * "All chats" tab while real folders remain, like Android's FilterTabsView not
+ * adding the default tab. The filter lives on the shared folderItems list —
+ * the horizontal tab bar, the folder rail and every index-based click path
+ * (tab clicks, swipes, the back-stack pop) read the same array, so their
+ * indexes stay aligned.
+ */
+const visibleFolderItems = (items: StoredFolder[]) => {
+  if(!isAllTabHidden()) return items;
+  const real = items.filter((item) => item.id !== FOLDER_ID_ALL);
+  return real.length ? real : items;
+};
 
 const useFoldersStore = createRoot(() => {
   const [selectedFolderId, _setSelectedFolderId] = createSignal<number>(FOLDER_ID_ALL);
@@ -116,7 +144,7 @@ const useFoldersStore = createRoot(() => {
     ]);
 
     items.push(payload);
-    setFolderItems(orderedFolderItems);
+    setFolderItems(visibleFolderItems(orderedFolderItems));
   }
 
   function deleteFolder(filterId: number) {
@@ -127,7 +155,7 @@ const useFoldersStore = createRoot(() => {
 
     items.splice(existingItemIndex, 1);
     const length = items.length;
-    setFolderItems(items);
+    setFolderItems(visibleFolderItems(items));
 
     const selectedId = untrack(selectedFolderId);
     if(length >= selectedId || selectedId === filterId) {
@@ -151,7 +179,7 @@ const useFoldersStore = createRoot(() => {
       return aIndex - bIndex;
     });
 
-    setFolderItems(items);
+    setFolderItems(visibleFolderItems(items));
   }
 
   let lastHydrationId = 0;
@@ -167,7 +195,7 @@ const useFoldersStore = createRoot(() => {
       return;
     }
 
-    setFolderItems(orderedItems);
+    setFolderItems(visibleFolderItems(orderedItems));
     if(!listenersInited) {
       listenersInited = true;
       initListeners();
@@ -193,6 +221,46 @@ const useFoldersStore = createRoot(() => {
       updateFolderNotifications(filter.id);
     });
 
+    // * the counter mode is Android's restart-hint setting; the badges here
+    // * recompute live instead. updateAllFolderNotifications skips the All
+    // * folder's falsy id, so this refreshes every real folder itself
+    rootScope.addEventListener('exteraless_settings_updated', ({key}) => {
+      if(key === 'IgnoreUnreadCount') {
+        for(const folderItem of folderItems) {
+          if(folderItem.id === undefined) continue;
+          updateFolderNotifications(folderItem.id);
+        }
+
+        return;
+      }
+
+      // * exteraless HideAllTab: the All tab leaves and joins the bar live.
+      // * Hiding moves the selection through the same click path the tab bar
+      // * uses, so the open chat list follows it; unhiding rebuilds the list
+      // * from the filters like a hydration does
+      if(key !== 'HideAllTab') return;
+
+      const items = [...folderItems];
+      const filtered = visibleFolderItems(items);
+      if(filtered.length !== items.length) {
+        setFolderItems(filtered);
+        const selected = untrack(selectedFolderId);
+        if(!filtered.some((item) => item.id === selected)) {
+          onClick()?.(0);
+        }
+
+        return;
+      }
+
+      if(!isAllTabHidden() && !items.some((item) => item.id === FOLDER_ID_ALL)) {
+        const managers = bindManagersToSession(rootScope.managers);
+        void managers.filtersStorage.getDialogFilters().then((filters) => {
+          // * the toggle may have flipped again while the filters were read
+          if(!isAllTabHidden()) hydrateFilters(filters);
+        });
+      }
+    });
+
     const onFilterUpsert = (filter: MyDialogFilter) => {
       if(REAL_FOLDERS.has(filter.id)) return;
       return updateOrAddFolder(filter);
@@ -213,16 +281,23 @@ const useFoldersStore = createRoot(() => {
       setSelectedFolderId(filter.id);
     });
 
-    rootScope.addEventListener('premium_toggle', async(isPremium) => {
-      if(isPremium) {
-        return;
-      }
+      rootScope.addEventListener('premium_toggle', async(isPremium) => {
+        if(isPremium) {
+          return;
+        }
 
-      const isFolderAvailable = await rootScope.managers.filtersStorage.isFilterIdAvailable(selectedFolderId());
-      if(!isFolderAvailable) {
-        setSelectedFolderId(FOLDER_ID_ALL);
-      }
-    });
+        const isFolderAvailable = await rootScope.managers.filtersStorage.isFilterIdAvailable(selectedFolderId());
+        if(!isFolderAvailable) {
+          // * the All tab is hidden: the closest fallback is the first visible
+          // * folder, through the same click path the tab bar uses
+          if(isAllTabHidden()) {
+            onClick()?.(0);
+            return;
+          }
+
+          setSelectedFolderId(FOLDER_ID_ALL);
+        }
+      });
   }
 
   return {

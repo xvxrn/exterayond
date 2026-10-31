@@ -98,6 +98,7 @@ import wrapSticker from '@components/wrappers/sticker';
 import {unwrap} from 'solid-js/store';
 import {usePeer} from '@stores/peers';
 import {useAppState} from '@stores/appState';
+import {exteralessSettings} from '@stores/exteralessSettings';
 import {AutonomousSavedDialogList} from '@components/autonomousDialogList/savedDialogs';
 import SetTransition from '@components/singleTransition';
 import liteMode from '@helpers/liteMode';
@@ -1792,16 +1793,25 @@ export default class AppSearchSuper {
         .then((contacts) => {
           if(contacts) {
             setResults(contacts.my_results, this.searchGroups.contacts, true);
-            setResults(contacts.results/* .concat(contacts.results, contacts.results, contacts.results) */, this.searchGroups.globalContacts);
 
-            this.searchGroups.globalContacts.container.classList.add('is-short');
+            // * exteraless DisableGlobalSearch (Android NaConfig, read live):
+            // * DialogsSearchAdapter.globalResultsAllowed — the server-wide
+            // * results (users you don't have as contacts) never render, like
+            // * Android's helper dropping `b == 1 && !user.contact`. The user's
+            // * own contacts above, the local dialogs below and the sponsored
+            // * peers keep their owners.
+            if(!exteralessSettings.DisableGlobalSearch) {
+              setResults(contacts.results/* .concat(contacts.results, contacts.results, contacts.results) */, this.searchGroups.globalContacts);
 
-            if(this.searchGroups.globalContacts.nameEl.lastElementChild !== this.searchGroups.globalContacts.nameEl.firstElementChild) {
-              this.searchGroups.globalContacts.nameEl.lastElementChild.remove();
-            }
+              this.searchGroups.globalContacts.container.classList.add('is-short');
 
-            if(this.searchGroups.globalContacts.list.childElementCount > 3) {
-              this.searchGroups.globalContacts.needShowMoreButton('is-short');
+              if(this.searchGroups.globalContacts.nameEl.lastElementChild !== this.searchGroups.globalContacts.nameEl.firstElementChild) {
+                this.searchGroups.globalContacts.nameEl.lastElementChild.remove();
+              }
+
+              if(this.searchGroups.globalContacts.list.childElementCount > 3) {
+                this.searchGroups.globalContacts.needShowMoreButton('is-short');
+              }
             }
           }
         }),

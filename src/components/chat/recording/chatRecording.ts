@@ -39,6 +39,7 @@ import type {MediaSize} from '@helpers/mediaSize';
 import cancelEvent from '@helpers/dom/cancelEvent';
 import wrapPeerTitle from '@components/wrappers/peerTitle';
 import IS_TOUCH_SUPPORTED from '@environment/touchSupport';
+import {exteralessSettings} from '@stores/exteralessSettings';
 
 const RECORD_MIN_TIME = 500;
 // Max duration of a round video note. Matches the cap official clients enforce
@@ -838,6 +839,12 @@ export default class ChatRecording {
   public handleSendButtonClick() {
     if(this.getRecordingElapsedMs() < RECORD_MIN_TIME) {
       this.onCancelRecordClick();
+    } else if(!this.recordPaused && exteralessSettings.ConfirmAVMessage) {
+      // exteraless ConfirmAVMessage: Android's release stops into the recorded
+      // preview (MediaController.stopRecording send=2) and only the explicit
+      // send commits it — the paused preview's own send button is that
+      // confirmation, discard cancels.
+      this.onPauseToggleClick();
     } else {
       this.stopPlayback();
       this.getActiveRecorder()?.stop();

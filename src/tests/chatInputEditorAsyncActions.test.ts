@@ -2,6 +2,7 @@ import '@/tests/mocks/chatInputIntegrationUi';
 import ChatInput from '@components/chat/input';
 import createChatInputEditor from '@components/chat/inputEditor';
 import {mountChatInputEditor} from '@/tests/helpers/chatInputEditor';
+import {setExteralessSetting} from '@stores/exteralessSettings';
 import {openCreateLinkPopupForEditor} from '@components/popups/createLinkForInput';
 import EditorToolbar from '@components/richMessageInput/toolbar';
 import deferredPromise from '@helpers/cancellablePromise';
@@ -66,6 +67,7 @@ function previewHost() {
   const host = {
     messageInputEditor: mounted.editor,
     editMessage: undefined as undefined,
+    editMsgId: undefined as number | undefined,
     noWebPage: false,
     lastUrl: '',
     getWebPagePromise: undefined as Promise<unknown>,
@@ -129,4 +131,72 @@ test('a cancelled preview cannot win against a fresh request for the same URL', 
   fresh.resolve({_: 'webPage', pFlags: {}, title: 'Fresh'});
   await freshRequest;
   expect(host.setTopInfo).toHaveBeenCalledWith(expect.objectContaining({title: 'Fresh'}));
+});
+
+describe('DisableLinkPreviewByDefault', () => {
+  afterEach(() => setExteralessSetting('DisableLinkPreviewByDefault', false));
+
+  test('a fresh composition skips the fetch and keeps the no_webpage flag', () => {
+    setExteralessSetting('DisableLinkPreviewByDefault', true);
+    const {host, getWebPage, process} = previewHost();
+    process();
+    expect(getWebPage).not.toHaveBeenCalled();
+    expect(host.noWebPage).toBe(true);
+    expect(host.willSendWebPage).toBeNull();
+    expect(host.getWebPagePromise).toBeUndefined();
+  });
+
+  test('a preview fetched under the stock flow is dropped once the setting applies', async() => {
+    const {host, getWebPage, process} = previewHost();
+    process();
+    await host.getWebPagePromise;
+    expect(host.willSendWebPage).toBeTruthy();
+    setExteralessSetting('DisableLinkPreviewByDefault', true);
+    process();
+    expect(host.willSendWebPage).toBeNull();
+    expect(host.noWebPage).toBe(true);
+    expect(getWebPage).toHaveBeenCalledTimes(1);
+  });
+
+  test('an in-flight fetch cannot attach a suppressed preview late', async() => {
+    setExteralessSetting('DisableLinkPreviewByDefault', true);
+    const {host, getWebPage, process} = previewHost();
+    const pending = deferredPromise<any>();
+    getWebPage.mockReturnValueOnce(pending);
+    // * the fetch begins under the stock flow and the setting applies after it
+    setExteralessSetting('DisableLinkPreviewByDefault', false);
+    process();
+    setExteralessSetting('DisableLinkPreviewByDefault', true);
+    process();
+    expect(host.noWebPage).toBe(true);
+    expect(host.willSendWebPage).toBeNull();
+    pending.resolve({_: 'webPage', pFlags: {}, id: '1', url: 'https://example.com'});
+    await pending;
+    expect(host.setTopInfo).not.toHaveBeenCalled();
+    expect(host.willSendWebPage).toBeNull();
+  });
+
+  test('an edit keeps its own preview fetch', async() => {
+    setExteralessSetting('DisableLinkPreviewByDefault', true);
+    const {host, getWebPage, process} = previewHost();
+    host.editMsgId = 1;
+    process();
+    await host.getWebPagePromise;
+    expect(getWebPage).toHaveBeenCalledTimes(1);
+    expect(host.noWebPage).toBeUndefined();
+    expect(host.willSendWebPage).toBeTruthy();
+  });
+
+  test('turning the setting off restores the stock fetch for the same URL', async() => {
+    setExteralessSetting('DisableLinkPreviewByDefault', true);
+    const {host, getWebPage, process} = previewHost();
+    process();
+    expect(getWebPage).not.toHaveBeenCalled();
+    setExteralessSetting('DisableLinkPreviewByDefault', false);
+    process();
+    await host.getWebPagePromise;
+    expect(getWebPage).toHaveBeenCalledTimes(1);
+    expect(host.willSendWebPage).toBeTruthy();
+    expect(host.noWebPage).toBeUndefined();
+  });
 });

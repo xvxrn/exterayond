@@ -241,6 +241,14 @@
   --star-golden-color: #fecf16;
 }
 
+// * LOOK-08 "System font instead of built-in" (Android NekoConfig.typeface,
+// * `TypefaceUseDefault`): the platform's fonts replace the bundled Roboto as
+// * the UI font. The web-only serif, mono and rounded families keep their own
+// * stacks — Android's switch covers the main Roboto requests only.
+:root.oe-system-font {
+  --font-regular: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
+}
+
 :root {
   // * Day theme
   --scrollbar-color: rgba(0, 0, 0, .2);

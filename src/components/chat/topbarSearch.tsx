@@ -29,6 +29,7 @@ import wrapPeerTitle from '@components/wrappers/peerTitle';
 import getParticipantPeerId from '@appManagers/utils/chats/getParticipantPeerId';
 import {avatarNew} from '@components/avatarNew';
 import getPeerActiveUsernames from '@appManagers/utils/peers/getPeerActiveUsernames';
+import {getHashtagSearchType} from '@stores/exteralessSettings';
 import cancelEvent from '@helpers/dom/cancelEvent';
 import {attachClickEvent} from '@helpers/dom/clickEvent';
 import attachTabList from '@helpers/dom/tabList';
@@ -434,6 +435,22 @@ export default function TopbarSearch(props: {
     onMount(() => {
       placeCaretAtEnd(inputSearch.input);
     });
+  });
+
+  // * exteraless SearchHashtagDefaultPage*: Android opens a hashtag search on
+  // * a default page chosen per peer (ChatActivity, per open): a public
+  // * broadcast channel reads the channel key, everything else the chat key.
+  // * The seed applies when a search is opened from outside, like Android's
+  // * openSearchWithHashtag — typing and the user's own type pick are untouched.
+  createEffect(() => {
+    const query = props.query();
+    if(!query?.startsWith('#')) {
+      return;
+    }
+
+    const chat = props.chat;
+    const publicChannel = chat.isBroadcast && !!getPeerActiveUsernames(chat.peer)[0];
+    setSearchType(getHashtagSearchType(publicChannel));
   });
 
   // * list navigation

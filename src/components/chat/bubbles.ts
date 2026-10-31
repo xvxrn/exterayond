@@ -11656,6 +11656,17 @@ export default class ChatBubbles {
 
     bubble.classList.add(isOut ? 'is-out' : 'is-in');
 
+    // * CHAT-40 "Wide channel posts" (Android ChatsConfig.wideChannelPosts):
+    // * the wide-layout candidate is a post of a broadcast channel — Android
+    // * checks the message's peer is a channel and not a megagroup
+    // * (MessageObject.hasWideChannelPostHeader), which the open chat's
+    // * isBroadcast is. The CSS side (`.oe-wide-posts`) does the exclusions
+    // * Android's shouldDrawWithoutBackground does by keeping its own media
+    // * layout: albums and backgroundless media stay as they are.
+    if(isMessage && this.chat.isBroadcast) {
+      bubble.classList.add('is-post');
+    }
+
     // * reserve room for the forced guest-bot avatar in 1-on-1 chats (group chats already indent)
     if(guestChatViaFromId) {
       bubble.classList.add('is-guest-chat');

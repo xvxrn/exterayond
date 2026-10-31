@@ -844,6 +844,14 @@
   }
 }
 
+// * exteraless `HideStoriesFromHeader`: the dialogs' stories strip is never
+// * shown (Android `DialogsActivity.updateStoriesVisibility` returns before
+// * making the cell visible). A display:none keeps the strip out of layout
+// * and the accessibility tree in both the main and the archived sidebar.
+.oe-hide-stories .stories-list {
+  display: none;
+}
+
 .chat-folders-container {
   .btn-control {
     margin-bottom: 1rem;

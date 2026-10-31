@@ -788,6 +788,13 @@
   font-weight: var(--font-weight-normal);
 }
 
+// exteraless "Hide Gift Button in Channels": the channel "can't write" plate's
+// trailing gift button (Android ChatActivity's BUTTON_GIFT) is gone. The user
+// chat's send-gift button is a different control and is not touched.
+html.oe-hide-channel-gift-button .chat-input-plate .btn-icon.gift {
+  display: none !important;
+}
+
 .selection-wrapper,
 .fake-selection-wrapper {
 	position: absolute;

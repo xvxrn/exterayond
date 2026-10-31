@@ -74,6 +74,7 @@ import AutocompleteHelperController from '@components/chat/autocompleteHelperCon
 import AutocompleteHelper from '@components/chat/autocompleteHelper';
 import MentionsHelper from '@components/chat/mentionsHelper';
 import {exteralessSettings} from '@stores/exteralessSettings';
+import {applyPagePreviewRules} from '@lib/linkCleaner/pagePreviewRules';
 import fixSafariStickyInput from '@helpers/dom/fixSafariStickyInput';
 import ReplyKeyboard from '@components/chat/replyKeyboard';
 import InlineHelper from '@components/chat/inlineHelper';
@@ -4009,6 +4010,44 @@ export default class ChatInput {
 
       foundUrl = url;
       break;
+    }
+
+    // exteraless `DisableLinkPreviewByDefault`: Android seeds the composer's
+    // per-session preview state from it (`ChatActivity.disableLinkPreview`) and
+    // `searchLinks` returns before fetching, so a fresh composition keeps no
+    // preview and sends with no_webpage (`generateOutgoingWebPage`'s
+    // `{no_webpage}` branch). Edits keep their own media handling, and a draft
+    // restores the flag its composer saved. The gate stands before the
+    // same-URL cache check so a fetch left in flight by a live toggle loses
+    // its guard and cannot attach the suppressed preview late.
+    if(!this.editMsgId && exteralessSettings.DisableLinkPreviewByDefault) {
+      const hadPreview = !!(this.willSendWebPage || this.getWebPagePromise);
+      this.lastUrl = '';
+      this.willSendWebPage = null;
+      this.getWebPagePromise = undefined;
+      this.noWebPage = true;
+      if(hadPreview) {
+        if(this.helperType) {
+          this.helperFunc();
+        } else {
+          this.clearHelper();
+        }
+      }
+
+      return;
+    }
+
+    // exteraless `FixLinkPreview`: Android rewrites the message used for the
+    // preview request (`ChatActivity.messageWebPageSearch` →
+    // `PagePreviewRulesHelper.doRegex`, the built-in rules at the pinned
+    // revision — the remote rules channel is disabled there). The sent text is
+    // never rewritten; the fetched page's own URL is the rewritten one, and
+    // the web attaches the preview it fetched (`inputMediaWebPage`), so the
+    // outgoing message carries the fixed preview where Android lets the
+    // server re-preview the original text. The rewrite stands before the
+    // same-URL cache check so both fetch and cache key use the fixed URL.
+    if(exteralessSettings.FixLinkPreview) {
+      foundUrl = applyPagePreviewRules(foundUrl);
     }
 
     if(this.lastUrl === foundUrl) {

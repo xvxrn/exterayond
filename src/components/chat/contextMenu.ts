@@ -46,6 +46,8 @@ import canSaveMessageMedia from '@appManagers/utils/messages/canSaveMessageMedia
 import {addToProfileMusic, getSavedMusicDocument, removeFromProfileMusic} from '@components/savedMusicActions';
 import getGroupedText from '@appManagers/utils/messages/getGroupedText';
 import confirmationPopup, {PopupConfirmationOptions} from '@components/confirmationPopup';
+import repeatMessages from '@components/chat/repeatMessages';
+import {exteralessSettings} from '@stores/exteralessSettings';
 import Icon from '@components/icon';
 import cloneDOMRect from '@helpers/dom/cloneDOMRect';
 import {ChatInputReplyTo} from '@components/chat/input';
@@ -1368,6 +1370,19 @@ export default class ChatContextMenu {
         (!this.message.pFlags.is_outgoing || this.message.fromId === SERVICE_PEER_ID) &&
         this.message._ !== 'messageService'
     }, {
+      // * CHAT-35 / Android NekoConfig.showRepeat: "Repeat" forwards the
+      // * message back into the same chat (ChatActivity.repeatMessage's
+      // * doRepeatMessage), with NekoConfig.repeatConfirm asking first
+      icon: 'redo',
+      text: 'Exteraless.MenuRepeat',
+      onClick: this.onRepeatClick,
+      verify: async() => exteralessSettings.showRepeat &&
+        !isAnchoredEphemeralMessage(this.message) &&
+        !this.noForwards &&
+        this.message._ === 'message' &&
+        this.chat.type !== ChatType.Scheduled &&
+        await this.chat.canSend()
+    }, {
       icon: 'forward',
       text: 'Message.Context.Selection.Forward',
       onClick: this.onForwardClick,
@@ -2373,6 +2388,16 @@ export default class ChatContextMenu {
         [peerId]: mids
       });
     }
+  };
+
+  // * CHAT-35 — Android NekoConfig.repeatConfirm: the confirmation dialog
+  // * before a repeat (ChatActivity.repeatMessage), then doRepeatMessage's
+  // * plain forward into the same chat
+  private onRepeatClick = async() => {
+    const managers = this.managers;
+    const peerId = this.messagePeerId;
+    const mids = this.isTargetAGroupedItem ? [this.mid] : await this.chat.getMidsByMid(peerId, this.mid);
+    await repeatMessages(managers, peerId, mids);
   };
 
   private onSelectClick = () => {

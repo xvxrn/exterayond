@@ -1,0 +1,1228 @@
+# exterayond — manual acceptance runbook
+
+This document is the manual acceptance checklist for the features ported into
+exterayond. Nothing in the repo so far has been verified on a real account by a
+person: every integration was checked by targeted tests, fixtures and offline
+browser passes only, and the porting agents never touched the user's session.
+This runbook closes that gap: it lists, per feature, where the control lives,
+what toggling it on must visibly do (sourced from the Android reference and the
+porting journal), and what toggling it off must restore.
+
+**Snapshot.** This is a snapshot at **54/296** checklist entries checked
+(2026-10-31, packets 001–036; CHAT-30 from packet 036 was appended to batch 2
+right after the first snapshot, packets 037–040 appended 2.14, 2.15, 5.3a and
+5.3b). Future porting packets append their own
+entries to the checklist in `docs/exterayond-feature-checklist.md` and should
+append their acceptance steps to the matching batch here. The count and the
+batch tally at the bottom go stale by design; the checklist stays the source
+of truth for completion.
+
+**The off = stock guarantee.** Every setting must satisfy the product rule
+from `AGENTS.md`: setting **off** preserves stock Telegram Web K behavior,
+setting **on** produces the exteraless behavior. Several toggles *default* to
+the Android exteraless default rather than to stock (each step below names its
+default) — that is intentional and still obeys the rule per toggle. A setting
+whose off state is *not* stock is a defect; record it in the FAIL line.
+
+**Authenticated checks belong to the user.** Per `AGENTS.md`, verification on
+a signed-in account is performed by the user; no agent may inspect or copy the
+session. Every step below carries a marker:
+
+- **[AUTH]** — requires a signed-in account. You perform these. The whole
+  Preferences hub lives inside the authenticated client (Web K shows only the
+  sign-in screen logged out), so no step is fully account-free; a disposable
+  secondary session is fine wherever no real content is needed.
+- **[AUTH · content: …]** — additionally needs specific account content
+  (a group, a channel, a playing track, stories, a poll…), named in the step.
+- **[no chat data]** — any signed-in session works; nothing chat-specific to
+  prepare.
+- Steps whose only prior verification was an offline fixture with synthetic
+  peers say so explicitly ("fixture-only so far").
+
+## How to verify
+
+For each feature:
+
+1. Open **Settings → exterayond Preferences** (the star row subtitled
+   "Make the client truly yours") and go to the named category tab
+   (**General / Appearance / Chats / Plugins / Other**). Row and section names
+   below are the exact visible labels from `src/lang.ts`.
+2. Set the control to the state under test and observe the expected behavior
+   described for that checklist ID. The behavior notes come from the Android
+   reference (`exteraless` revision `8b7ec40`, read-only in
+   `.research/android`) and the porting journal
+   (`docs/tasks/progress.md`, packets 001–035). Where the journal itself says
+   something was never exercised (live recording, real hidden-tab media,
+   RTL…), the step repeats that caveat — those are exactly the things this
+   runbook exists to check.
+3. Toggle **off** (or set the stock value) and confirm the stock appearance/
+   behavior returns, immediately where the step says "live".
+4. Fill in the PASS/FAIL line. Edge cases named in the step (midnight
+   crossing, RTL, reduced motion, reopening a chat) are part of PASS.
+
+Useful knobs while verifying:
+
+- **RTL**: switch the interface to an RTL language (e.g. Arabic) for steps that
+  mention RTL; several journal entries verified RTL only on fixtures.
+- **Reduced motion**: enable the OS/browser "reduce motion" preference for the
+  player steps that mention it.
+- **Recovery**: **Other → Reset exterayond settings** restores all defaults
+  (Batch 5, OTHER-03) without touching the Telegram account.
+- **Search**: the hub's settings search indexes every ported control; if a
+  control can't be found by eye, find it by name — a control that exists but
+  is not searchable is itself a (minor) FAIL.
+
+## What the automated tests already cover
+
+One line per area, from `docs/tasks/progress.md`. A failure in a step whose
+area is covered here means either a regression since the packet or a
+behavior the tests stubbed out (the fixture gaps are listed per step) — not
+"feature never worked".
+
+- Settings store (defaults, validation/clamping, reset, live root classes):
+  `src/tests/exteralessSettings.test.ts` (21 tests, packet 040).
+- Hub rows, sections and row order: `src/tests/exteralessTabs.test.tsx` (14).
+- Settings search index (regenerated, 479 entries): `settingsSearchIndex` (8).
+- `.extera` backup round-trips, strict types/ranges, alias mappings
+  (`tabCounter` boolean, `hideStories`, `hideAllChats`, `hideCameraTile`,
+  `pauseOnMinimizeVideo`, `newSliderStyle`/`newSwitchStyle`):
+  `src/tests/exteraBackup.test.ts` (27).
+- Pause-on-minimize through the real playback controller's `visibilitychange`
+  handler (video default-on, voice/round off-by-default, music never pauses):
+  `src/tests/pauseOnMinimize.test.ts` (packet 030).
+- Link-preview gate (CHAT-31) over the real composer `processWebPage`:
+  `chatInputEditorAsyncActions` (13: suppressed fresh composition, dropping a
+  fetched preview, in-flight defusal, edits unaffected, stock restore).
+- Voice/round send confirmation (CHAT-33) over the real release handler:
+  `confirmAvMessage` (4: pause on release, preview send commits, stock
+  release, short-recording cancel).
+- Player style wiring, live reshape of every wired setting and the wavy line
+  decay: `outgoingConfirmations` (8) plus the player popup regression (12,
+  including the three-step repeat cycle).
+- Folder tab counter modes over the real store: `foldersStoreRecovery` (5,
+  packet 040 also covers the live HideAllTab hide/unhide cycle and the
+  no-folders case).
+- Link-preview rewrite rules (CHAT-30) over the built-in rule table:
+  `pagePreviewRules` (5, packet 036).
+- Exact counters: `src/tests/formatNumber.test.ts` (off state byte-identical)
+  plus packet 004's 79 tests across 11 files over 25 counter consumers.
+- Per-feature regression suites accumulated per packet (mini avatars, seconds,
+  archive hiding, Zalgo, edited icon, ID/DC, call/command confirmations,
+  forward date/time hint, tails, send-as, replies trio, sticker size/shape/
+  time, reaction hiding, trending/group stickers, greeting, status hiding,
+  relative last seen, link-open policy, bottom button, floating button,
+  Premium/Help hiding): the targeted suites recorded per packet in
+  `progress.md` (169, 59, 55, 49, 47, 36, 41, 28, 17, 47, 73, 44, 42, 51, 64,
+  73, 82 tests respectively).
+- Not covered by automation anywhere: real-account content, the live recording
+  UX, a real hidden tab mid-playback, RTL on most 028/029 surfaces, screen
+  readers, and the full test suite itself (only targeted runs were executed).
+
+---
+
+## Batch 1 — Forced MD3 group and the MD3 player style rows
+
+Highest risk: the most invasive styling in the port. Implemented in packets
+028/029 with regression tests, **desktop visual review is pending for every
+item in this batch** — that review is this batch. Nothing here is confirmed
+against a real desktop screen yet. All playback-dependent checks need a
+playing track: **[AUTH · content: an audio track in any chat]**.
+
+Hub location: **Appearance** tab. The MD3 group is the first section,
+"Forced MD3", with the subtitle "Use Material Design 3 for the selected
+components. Changes apply immediately." and a "Choose components" expander
+holding the eight component rows. The player style rows follow in three
+sections: **Cover**, **Title**, **Layout**.
+
+### 1.1 Forced MD3 master (no separate checklist ID; semantics of the LOOK-18…23 group)
+
+- On → checks all eight components on: the six booleans plus Sliders=2 and
+  Switches=3; the master subtitle shows `n/8`. Off → clears all eight. There
+  is no persisted `ForcedMD3` key — the master is on whenever any style is on.
+- Stock: all eight off. Android defaults ship five on (Loading, Player,
+  Mini-player, Sliders, Switches) — expect that state after a reset.
+- Look at: toggling one component off must drop the count but keep the rest;
+  the expander expands when settings search selects a nested row (packet 028).
+- **[no chat data]**
+- PASS/FAIL:
+
+### 1.2 LOOK-18 — "Loading indicators"
+
+- On → the existing indeterminate/progressive loading owners render the MD3
+  wavy circular variant (web adaptation; Android's separate morphing-shape
+  renderer is not recreated). Track gap 2, circular wave amplitude 1.6,
+  wavelength 15.
+- Off → stock spinner.
+- Look at: any spinner during media load or upload. Byte progress,
+  cancellation and animation-level ownership stay native — only the look
+  changes.
+- **[AUTH · content: any transfer that shows a spinner]**
+- PASS/FAIL:
+
+### 1.3 LOOK-19 — "Sliders"
+
+- On → every settings slider uses the 8px track, 3×24px thumb with a 6px gap
+  (from Android `SeekBarView`).
+- Off → stock slider geometry. `SliderStyle` 0 = off; the master sets 2.
+- Look at: the hub's own sliders (Batch 5 CHAT-01 sticker size, Batch 1 player
+  rows) are the easiest specimens.
+- **[no chat data]**
+- PASS/FAIL:
+
+### 1.4 LOOK-20 — "Switches"
+
+- On → every toggle uses Android's scaled track/thumb geometry: 42.25×26
+  track, 19.5 checked thumb, 16.25 travel (Android's 0.8125 scale).
+  `SwitchStyle` 2 and 3 both count as MD3; 0 = stock.
+- Off → stock Web K switch.
+- Look at: every checkbox row in the hub.
+- **[no chat data]**
+- PASS/FAIL:
+
+### 1.5 LOOK-21 — "Chat header"
+
+- On → the chat header becomes a flat tonal surface spanning the full chat
+  column with a 46px avatar. The desktop pinned-panel geometry is retained by
+  design; Android's status-bar fade is not recreated.
+- Off → stock header.
+- Look at: an open chat's top bar; toggle live; then check RTL (unreviewed).
+- **[AUTH · content: any chat]**
+- PASS/FAIL:
+
+### 1.6 LOOK-22 — "Folder navigation"
+
+- On → the existing folder rail/tabs get a tonal active indicator, 64px rail
+  items and a 56×32 icon plate (from `MainTabsUiHelper`). No new navigation
+  shell is created.
+- Off → stock folder bar.
+- Look at: the folder rail with at least two folders; active and inactive
+  states.
+- **[AUTH · content: at least two folders]**
+- PASS/FAIL:
+
+### 1.7 LOOK-23 — "List items"
+
+- On → settings-style list rows become 56/72px MD3 rows in tonal segments with
+  separate headers; inner corners capped at 4.
+- Off → stock rows.
+- Look at: the Preferences hub lists themselves are the visible surface.
+- **[no chat data]**
+- PASS/FAIL:
+
+### 1.8 "Music player" + "Mini-player" MD3 toggles (part of PLAYER-01, packet 028)
+
+- On → the music popup gets the MD3 base surface and the desktop audio plate
+  (mini-player) gets tonal treatment with a 36px cover, 10px cover corners and
+  a 20px card radius; the native 48px-high plate and its controls remain.
+  The mini-player shows artwork when available.
+- Off → stock popup/plate.
+- Look at: play a track, open the popup and the mini-player; then see 3.5 for
+  the functional playback checks. The full Android player editor, queue,
+  lyrics and gestures are deliberately absent — do not expect them.
+- **[AUTH · content: a playing audio track]**
+- PASS/FAIL:
+
+### 1.9 PLAYER-02 — "Cover style" (Card / Wide / Full screen / Disc)
+
+- Card → framed cover card. Wide → a full-width 6:5 plate. Full screen → the
+  artwork becomes the dialog backdrop behind a light scrim, controls at the
+  bottom. Disc → circular cover.
+- Look at: switch through all four live while a track plays; blocks must stay
+  usable in every style.
+- **[AUTH · content: a playing track]**
+- PASS/FAIL:
+
+### 1.10 PLAYER-03 — "Size" (60–100%)
+
+- Drives the cover as a 0.6–1.0 fraction for the framed covers (Card, Disc)
+  only; the row hides itself for Wide/Full screen (Android
+  `refreshVisibility`).
+- Look at: 60% vs 100% on Card and Disc.
+- **[AUTH · content: a playing track]**
+- PASS/FAIL:
+
+### 1.11 PLAYER-04 — "Corner radius" (0–48)
+
+- Applies to the Card cover only; the row hides itself for the other styles.
+  Default 28.
+- Look at: 0 (square) vs 48 on the Card.
+- **[AUTH · content: a playing track]**
+- PASS/FAIL:
+
+### 1.12 PLAYER-05 — "Spin while playing" (Disc only)
+
+- On → the Disc cover spins one turn per 16 seconds while playing. Off or the
+  OS reduced-motion preference → no spin. The row hides itself except for
+  Disc.
+- Look at: spin while playing, still while paused, no spin under reduced
+  motion.
+- **[AUTH · content: a playing track]**
+- PASS/FAIL:
+
+### 1.13 PLAYER-08 — "Title alignment" (Left / Centered)
+
+- Left is Android's start default; Centered centers title and artist.
+- **[AUTH · content: a playing track]**
+- PASS/FAIL:
+
+### 1.14 PLAYER-09 — "Title size" (Small / Medium / Large)
+
+- Title 22/26/31px, artist 15/16/17px (Android `PlayerSheet.applyStyle`).
+- Look at: all three stops; text must not clip at Large.
+- **[AUTH · content: a playing track]**
+- PASS/FAIL:
+
+### 1.15 PLAYER-10 — "Title position" (Below cover / Above cover)
+
+- For the framed covers (Card, Disc) only; row hides otherwise. Default Below.
+- **[AUTH · content: a playing track]**
+- PASS/FAIL:
+
+### 1.16 PLAYER-12 — "Playing from"
+
+- On → a "Playing from chat" line shows the real peer title (via
+  `PeerTitleTsx`). Off → the line is hidden in place (Android
+  `View.INVISIBLE` semantics — no layout jump).
+- **[AUTH · content: a playing track]**
+- PASS/FAIL:
+
+### 1.17 PLAYER-15 — "Shuffle and repeat"
+
+- Off → the repeat control hides. On → the repeat button returns and cycles
+  off → playlist → track (each mode announced; the popup regression covers
+  all three transitions). **Partial by design:** shuffle has no web
+  counterpart (the controller lacks it) — do not expect a shuffle button.
+- **[AUTH · content: a playing track]**
+- PASS/FAIL:
+
+### 1.18 PLAYER-16 — "Wavy progress bar"
+
+- On → the seek bar renders the `WavySeekBar` wave (amplitude 4, wavelength
+  34, 6 rad/s, 4px stroke) over the existing seek owner; seeking still works.
+  Off (amplitude 0) → flat stock bar; reduced motion → flat; a paused track
+  eases the wave back into the line.
+- Look at: wave only on the music player's progress line, not on voice/round
+  players; drag-seek during the wave.
+- **[AUTH · content: a playing track]**
+- PASS/FAIL:
+
+### 1.19 PLAYER-17 — "Buttons" (Compact / Normal / Large)
+
+- Transport scale 0.84 / 1 / 1.14 (Android `PlayerStyle.controlsScale`).
+- Look at: all three stops; buttons must stay hit-testable at Compact.
+- **[AUTH · content: a playing track]**
+- PASS/FAIL:
+
+### 1.20 Deliberately absent from this batch (do not file as FAIL)
+
+Block order (PLAYER-13), the speed/lyrics/queue actions (PLAYER-14),
+cover-derived colors (PLAYER-18), background modes (PLAYER-19) and the
+mini-player customization rows (PLAYER-20…30) wait on missing web primitives
+and were not faked (packet 029). PLAYER-01's remaining subsystem (queue,
+lyrics, gestures) likewise stays open.
+
+---
+
+## Batch 2 — Composer and the sending path
+
+Second risk tier: features that intercept sending, opening or destructive
+actions. Misclicks here cost real messages and calls — use a test chat and
+never confirm a deletion you do not mean.
+
+### 2.1 CHAT-32 — "Ask before opening links" (Hidden links / All links / Never)
+
+- Chats tab → section "Ask before opening links" (third row of the section,
+  after the two preview rows). Default **Hidden links**.
+- Hidden links → a link whose visible text is not the destination asks first;
+  visible links continue directly (fixture-verified). All links → every link
+  asks. Never → stock, nothing asks. The confirmation shows a non-clickable
+  destination; **Open** continues exactly once with the captured URL and the
+  original modifiers; Escape/Cancel restores focus and drops the action.
+- Keep their own actions regardless: bot commands, hashtags, media timestamps,
+  editor links, downloads, local UI hashes; middle clicks and the document
+  external-link owner are covered; hub external links (Channel/GitHub rows)
+  also ask under All.
+- Look at: cancellation and an account change must stop a pending action;
+  All/Never execution is test-covered but their **visual check is still
+  pending** (packet 027's browser connection dropped) — check all three
+  modes; also check RTL and the hub links.
+- **[AUTH · content: a message with a hidden link, e.g. text that hides a URL]**
+- PASS/FAIL:
+
+### 2.2 CHAT-31 — "Disable link preview by default"
+
+- Chats tab, second row of the links section. Default **off** (= stock).
+- On → a fresh composition with a URL never fetches a preview and sends with
+  the `no_webpage` flag; a live toggle drops an already shown preview plate
+  and defuses a fetch left in flight; turning it off re-fetches from scratch;
+  edits keep their own media handling; a restored draft keeps the
+  `no_webpage` its composer saved; a message without a URL keeps the flag
+  unset; scheduled posts go through the same gate.
+- Off → stock preview fetching.
+- Look at: send a URL to a test chat with the setting on — the message must
+  arrive without a preview; then off — with one. What the server actually
+  produces on a real send is unverified (packet 031 had no browser).
+- **[AUTH · content: a test chat]**
+- PASS/FAIL:
+
+### 2.3 CHAT-33 — "Confirm before sending voice and video messages"
+
+- Chats tab, in the ask-when rows (before "Confirm before calling").
+  Default **off**.
+- On → releasing the record button (past the minimum length) pauses into Web
+  K's recorded preview instead of sending; sending from that preview is the
+  explicit confirmation; discard cancels; resuming records on. A too-short
+  recording still cancels; the send menu's Silent/Schedule/Send-when-online
+  keep their explicit immediate send. Voice and round video share the
+  handler.
+- Off → release sends like stock.
+- Look at: the whole flow needs microphone/camera — the live recording UX was
+  never exercised (browser-owned, packet 033); verify release-pause, preview
+  send, discard and the short-recording cancel by hand.
+- **[AUTH · content: a test chat + microphone (and camera for round)]**
+- PASS/FAIL:
+
+### 2.4 CHAT-34 — "Confirm before calling"
+
+- Chats tab. Default **on** (Android `AskBeforeCalling=true`).
+- On → a manual voice/video call first asks "Start a voice call with …?" /
+  "Start a video call with …?"; the existing privacy check still runs first;
+  consent then starts (or replaces) the call; cancelling before consent never
+  reaches the call path.
+- Off → stock immediate call start.
+- Look at: cancel path, voice and video variants.
+- **[AUTH · content: a peer callable on Telegram]**
+- PASS/FAIL:
+
+### 2.5 CHAT-36 — "Confirm before sending bot commands"
+
+- Chats tab. Default **off**.
+- On → tapping a bot command (command link in a message, the bot's menu, or a
+  "/" hint) shows "Send @bot command?" with the full command text; consent
+  sends; cancel keeps the draft and the menu open. In-off mode the helper
+  returns synchronously (stock).
+- Look at: all three owner surfaces (in-message link, bot menu, "/" hints);
+  cancel leaves the input untouched.
+- **[AUTH · content: a bot with commands]**
+- PASS/FAIL:
+
+### 2.6 CHAT-38 — "When pasting links" (Remove tracking from links)
+
+- Chats tab → section "Remove tracking from links" → second row. Default
+  **on** (Android default).
+- On → pasting a URL strips tracking parameters via the AdGuard URL-tracking
+  filter shipped from the Android source; an ordinary link is preserved; the
+  clean-up does not create a separate undo step (Ctrl+Z undoes the paste in
+  one step); a deferred cleaner never overwrites your edits.
+- Off → paste is stock (URL untouched).
+- Look at: paste `https://example.com/?fbclid=…` — parameter gone; paste a
+  plain URL — unchanged; Undo/Redo behavior.
+- **[AUTH · content: a test chat]**
+- PASS/FAIL:
+
+### 2.7 MENU-01 — "Bottom Button" (Hide / Mute / Discuss)
+
+- Chats tab → section "Bottom Button". Default **Mute**.
+- Mute → the channel's bottom button mutes/unmutes for real; Discuss → shows
+  when the channel has a linked discussion group; Hide → the button is gone.
+- Off-equivalent: the selector's default is Android's (Mute); stock Web K
+  shows its own mute button.
+- Look at: a channel with a linked discussion group (Discuss must appear and
+  open it) and one without (Mute/Unmute must work); switch modes live.
+  Handler receivers, late answers and live switching were fixed in packet 008;
+  the full chat with a real account was not checked — verify clicks by hand.
+- **[AUTH · content: a channel you own or can mute, ideally with a linked
+  discussion group]**
+- PASS/FAIL:
+
+### 2.8 HIDE-06 — "Hide “Send as” button"
+
+- Chats tab. Default **off**.
+- On → the sender-selector button in the message field hides together with
+  its 44px field offset; your current sender stays selected; the bot-command
+  offset (`data-offset=commands`) is untouched; the paid-reactions sender
+  control is not affected.
+- Off → the button returns without new requests or avatar re-creation.
+- Look at: a channel where you can post as multiple identities; field layout
+  shift on toggle; RTL (fixture-verified only: sender offset 44→0→44px,
+  commands offset unchanged at −44px in RTL).
+- **[AUTH · content: a channel with "post as" choices]**
+- PASS/FAIL:
+
+### 2.9 CHAT-16 — "Add comma after mention"
+
+- General tab, last row. Default **on**.
+- On → inserting a mention with a @username appends a comma (Android
+  `appendMention`), except bots; named mentions keep a space; mention
+  entity length/offset stay valid.
+- Off → stock insertion.
+- Look at: user mention vs bot mention vs named mention; a slow peer lookup
+  must not land the comma in another chat after you switch chats (middleware
+  guard, packet 021).
+- **[AUTH · content: a chat where you can type @mentions]**
+- PASS/FAIL:
+
+### 2.10 CHAT-14 — "Delete for both sides by default"
+
+- Chats tab. Default **on** (Android `DeleteChatForBothSides=true`).
+- On → the existing "also delete for…" revoke checkbox comes pre-ticked in
+  the delete-chat and message-delete dialogs where Telegram offers it. The
+  final checkbox state is yours; opening the dialog deletes nothing;
+  unavailable revoke variants stay unavailable; clear-history is unchanged.
+- Off → no preselection.
+- Look at: private chat delete, message delete with revoke available, a
+  context where revoke is not offered, Escape with focus return. Deletion
+  itself is real — confirm nothing in this step.
+- **[AUTH · content: a test chat you may delete from (do not confirm)]**
+- PASS/FAIL:
+
+### 2.11 MEDIA-01 — "Always Send in HD" (wired; **checklist entry unchecked — completeness explicitly unverified**)
+
+- Chats tab, last row of the main toggles. Default **on**.
+- On → photos upload through the HD pipeline (2560px side limit, no forced
+  re-encode quality). Off → Android's SD pipeline: 1280px side limit and the
+  compressed re-encode. The web wiring lives in the photo upload preparation
+  (`photoUploadPreparation.ts`); the checklist records only that "an
+  implementation or part of it exists; completeness still to verify".
+- Look at: send the same photo both ways to a test chat and compare received
+  resolution/size; watch the HD badge if Web K shows one.
+- **[AUTH · content: a test chat + a photo]**
+- PASS/FAIL:
+
+### 2.12 CHAT-37 — "When opening links" (wired; **checklist entry unchecked — completeness explicitly unverified**)
+
+- Chats tab → section "Remove tracking from links" → first row. Default
+  **on**.
+- On → opening a link strips tracking parameters with the same AdGuard filter
+  as 2.6; off → the URL is passed through untouched. The checklist notes the
+  exact semantics still need to be reconciled with the upstream consumer.
+- Look at: open (not paste) a tracked URL from a message; confirm the opened
+  destination lost its tracking parameters; check interaction with 2.1's
+  confirmation dialog if both are active.
+- **[AUTH · content: a message with a tracked link]**
+- PASS/FAIL:
+
+### 2.13 CHAT-30 — "Fix link previews" (packet 036; appended after the snapshot)
+
+- Chats tab, the link group beside 2.2's row. Default **on** (Android
+  NaConfig default `true`).
+- On → the URL the composer fetches the preview for is rewritten by the
+  built-in `PagePreviewRulesHelper` rules before the fetch: x.com →
+  fixupx.com, twitter.com → fxtwitter.com, www.instagram.com →
+  kkinstagram.com, vm/vt/www.tiktok.com → their kktiktok hosts,
+  www.reddit.com → www.rxddit.com, bsky.app → fxbsky.app, www.pixiv.net →
+  www.phixiv.net, coolapk.com → coolapk1s.com. The sent text is never
+  rewritten — only the preview's source URL is.
+- Off → previews are fetched from the original URL (stock behavior).
+- Look at: compose (do not send) a message with an x.com post link — the
+  preview plate should render the fixupx embed; repeat with the setting off
+  and compare. Then send one message with such a link and confirm the text
+  arrived exactly as typed.
+- Caveat carried from packet 036: whether fixupx/fxtwitter actually return
+  an embed for a given post is a property of those third-party services — a
+  missing embed there is not automatically a port defect.
+- **[AUTH · content: a chat to compose in; a post link on x.com or
+  twitter.com]**
+- PASS/FAIL:
+
+### 2.14 HIDE-08 — "Hide Gift Button in Channels" (packet 037; appended after the snapshot)
+
+- Chats tab, after 2.8's "Hide share button" row. Default **off** (Android
+  NaConfig default `false`).
+- On → the channel "can't write" plate (the Mute/Subscribe row with side
+  buttons) loses its trailing **gift** button. The plate's other side buttons
+  (write-in-direct) and its centre button keep their behavior, and the user
+  chat's own send-gift button (a different control, gated by the privacy
+  `display_gifts_button` flags) is not affected.
+- Off → the gift button returns on an eligible channel plate.
+- Look at: open a broadcast channel you can't post in — the plate shows
+  Mute + gift; toggle the row and confirm the gift button disappears/returns
+  immediately (live), then reset and confirm it is back. Open a private chat
+  with a user where the composer's send-gift button appears — it must be
+  untouched in both states.
+- **[AUTH · content: a broadcast channel you are subscribed to but cannot
+  post in; optionally a private chat whose send-gift button is visible]**
+- PASS/FAIL:
+
+### 2.15 HIDE-13 / HIDE-11 — attach menu camera tile and money item (packet 039; documented equivalence — no controls)
+
+These two are audit resolutions, not toggles — there is nothing to switch and
+this entry only tells you what to confirm if you look at the attach menu.
+
+- Android's `hideCameraTile` removes the **camera tile** from the attach
+  panel's grid; Android's `hideMoneyButton` removes the wallet **"Money"**
+  item (only shown while `walletAvailable`). The web attach menu (the
+  paperclip popup) has neither: its fixed actions are Photo or Video, Audio,
+  Document, Music, Location, article/collage/slideshow/edit, Gift Premium,
+  Poll, Checklist plus the account's attach bots, and the instant camera is
+  the composer's mic button — a different control. The settings' outcomes are
+  therefore the web's permanent behavior, exactly like 5.17 (CHAT-20).
+- Look at (optional): open any chat's paperclip popup and confirm there is no
+  camera tile and no money item to hide.
+- Importing an Android `.extera` backup that carries `hideCameraTile` applies
+  it silently (the documented no-op); it must not appear as unsupported.
+- PASS/FAIL:
+
+### 2.16 CHAT-35 — "Repeat" action and its confirmation (packet 043)
+
+Two rows: Chats tab → "Message menu" → **Repeat** (Android
+`showRepeat`, default off — adds the action), and the ask-when group's
+**Repeating messages** (Android `repeatConfirm`, default on — asks first).
+
+- Off state: the message context menu has no Repeat item (stock).
+- On: long-press / right-click a message → "Repeat" appears (redo icon,
+  beside Forward; outgoing messages included). Invoking it either shows a
+  "Repeat / Are you sure you want to Repost?" dialog (default) and, on OK,
+  sends the message again into the same chat — no forward picker, the copy
+  keeps its forward header — or, with "Repeating messages" off, sends at
+  once. Cancel closes without sending.
+- The item never shows in chats you cannot post in, noforwards chats, or
+  scheduled / service messages.
+- Look at: repeat a text message to the same chat and see it arrive with the
+  forward header; toggle "Repeating messages" and see the dialog disappear.
+- **[AUTH · content: a chat you can post in]**
+- PASS/FAIL:
+
+---
+
+## Batch 3 — Live playback
+
+Real media, real tab-hiding. Packet 030's regression drives the real
+`visibilitychange` handler, but "what a real hidden tab does with live media"
+was explicitly left browser-owned — that is this batch.
+
+### 3.1 MEDIA-13 — "Auto-Pause → Video"
+
+- Chats tab → section "Auto-Pause" → row "Video". Default **on** (Android
+  Neko `AutoPauseVideo`; the persisted key is the contract).
+- On → hiding the tab (switch to another tab/window) while a video plays
+  pauses it; music never pauses, like Android. Backup alias
+  `pauseOnMinimizeVideo` round-trips.
+- Off → video keeps playing in a hidden tab.
+- Look at: video mid-playback, hide the tab, come back — paused; music
+  playing during the same hide — still going.
+- **[AUTH · content: a playing video]**
+- PASS/FAIL:
+
+### 3.2 MEDIA-14 — "Auto-Pause → Voice"
+
+- Same section, row "Voice". Default **off** (= stock: voice keeps playing).
+- On → a playing voice message pauses when the tab hides.
+- Look at: as 3.1, with a voice message.
+- **[AUTH · content: a playing voice message]**
+- PASS/FAIL:
+
+### 3.3 MEDIA-15 — "Auto-Pause → Round"
+
+- Same section, row "Round". Default **off**.
+- On → a playing round video message pauses when the tab hides.
+- Look at: as 3.1, with a round video.
+- **[AUTH · content: a playing round video]**
+- PASS/FAIL:
+
+### 3.4 MEDIA-17 — "Do not autoplay the next voice message"
+
+- Chats tab, in the main toggle list. Default **off** (= stock: the next
+  voice message autoplays).
+- On → after a voice message finishes, playback stops instead of starting the
+  next one. Music, round videos and a manual "next" are unchanged.
+- Look at: two consecutive voice messages; toggle; no Android backup alias
+  exists for this key (packet 015) — local persistence/reset only.
+- **[AUTH · content: a chat with several voice messages]**
+- PASS/FAIL:
+
+### 3.5 PLAYER-01 (base music popup — implemented in 028, visual review pending)
+
+- Play an audio track from any chat → the MD3 music popup opens with cover,
+  metadata, timeline and transport driven by the existing playback
+  controller; it follows media events and the account session; voice/round
+  playback keeps its own entry. The repeat button cycles off → playlist →
+  track with each mode announced (see 1.17).
+- Look at: open/close, next/prev, seek, the mini-player artwork (1.8), and
+  the style rows of Batch 1 acting on this popup live. Queue, lyrics and
+  gestures are absent by design.
+- **[AUTH · content: an audio track]**
+- PASS/FAIL:
+
+---
+
+## Batch 4 — Dialogs, headers and message visuals
+
+Chat list, chat header, profile and in-message visuals. Mostly low-risk CSS/
+formatting changes with live toggles; the fixture history is noted where the
+only prior check was synthetic.
+
+### 4.1 LOOK-03 — "Sender Mini Avatars"
+
+- Appearance tab → section "Avatar Corners" → row "Sender Mini Avatars".
+  Default **on**.
+- On → a 20×20 avatar of the row's last sender appears beside each group-chat
+  row in the chat list; updates live; the same sender repeated keeps one
+  avatar; clearing/retiring the sender removes it.
+- Off → stock rows with no avatar nodes left behind.
+- Look at: a busy group's rows while new messages arrive; scroll up/down for
+  duplicates; RTL. Verified only on synthetic peers so far (packet 002) —
+  real photos were never used; check with real avatars.
+- **[AUTH · content: a group chat with recent senders]**
+- PASS/FAIL:
+
+### 4.2 GEN-03 — "Format Time with Seconds"
+
+- General tab. Default **off**.
+- On → message times show `HH:MM:SS` (12/24h respected), updating live in an
+  already open chat; the full timestamp view too. Durations, dates without
+  time and date separators stay untouched.
+- Off → stock `HH:MM`, byte-identical.
+- Look at: an open chat while toggling (no re-entry needed); both clock
+  formats; the edited-time label.
+- **[AUTH · content: any chat with messages]**
+- PASS/FAIL:
+
+### 4.3 GEN-02 — "Disable Number Rounding"
+
+- General tab. Default **off**.
+- On → counters show full digits with locale separators (`1 234`) instead of
+  `1.2K/1.2M` — dialog unread badges, archive, message views, reactions,
+  poll votes, replies, statistics, etc. (25 consumers). Already-rendered
+  counters update in place.
+- Off → stock rounded counters.
+- Look at: a counter above 1000 (chat list badge, views on a channel post);
+  live update when the count changes.
+- **[AUTH · content: a chat or post with a 1000+ counter]**
+- PASS/FAIL:
+
+### 4.4 HIDE-12 — "Hide Reactions" (Channels / Groups / Private Chats)
+
+- Chats tab → section "Hide Reactions" → three toggles. All default **off**.
+- On (per type) → reaction strips hide in matching chats, instantly, from the
+  peer type classified in the UI cache — no re-creation, no extra requests;
+  broadcast channels are distinct from megagroups; a reused row's class
+  updates.
+- Off → reactions return with content intact.
+- Look at: the same toggle against a channel, a megagroup and a private chat;
+  existing selections/media inside strips must survive hide/unhide.
+- **[AUTH · content: a channel, a group and a private chat with reactions]**
+- PASS/FAIL:
+
+### 4.5 CHAT-23 — "Remove Message Tail"
+
+- Chats tab, first row. Default **on** (Android default).
+- On → the bubble tail SVG is hidden and both bottom corners are fully
+  rounded (15px preserved).
+- Off → the tail returns and only the tail-side bottom corner is squared
+  (incoming end-start, outgoing end-end).
+- Look at: incoming and outgoing bubbles, live toggle, RTL flip (all
+  fixture-verified in packet 025; confirm on real bubbles).
+- **[AUTH · content: any chat with bubbles]**
+- PASS/FAIL:
+
+### 4.6 LOOK-02 — "Single Corner Radius" (wired; **checklist entry unchecked — completeness explicitly unverified**)
+
+- Appearance tab → "Avatar Corners" section, second row, subtitle "Forums
+  will have the same avatar shape as chats". Default **off**.
+- On → all avatars get the same corner shape regardless of the circle-vs-
+  squircle the stock code requested (Android `ImageReceiver` computes one
+  uniform radius from the avatar diameter; the web wires a root class
+  `oe-single-corner-radius`). The checklist says completeness is not yet
+  verified.
+- Off → stock per-context avatar shapes.
+- Look at: a forum's topic list and chat rows vs regular chats — avatar shape
+  must match across them when on; combined with the Avatar Corners slider
+  (see the unverified-rows table below).
+- **[AUTH · content: a forum (topic-enabled group)]**
+- PASS/FAIL:
+
+### 4.7 HIDE-01 — "Hide Premium and emoji status in headers"
+
+- Appearance tab, third section, first row. Default **off**.
+- On → Premium star and emoji-status icons hide beside titles in the chat
+  header (`chat-info`) and the profile name only. The chat list stays stock;
+  verified/scam badges are never touched; the emoji stays loaded (pure UI
+  hide).
+- Off → icons return instantly.
+- Look at: a peer with an emoji status or Premium; chat header, profile,
+  then the chat list row of the same peer (must keep its icons); story-viewer
+  status is out of scope for now.
+- **[AUTH · content: a peer with an emoji status / Premium]**
+- PASS/FAIL:
+
+### 4.8 CHAT-24 — "Replace “edited” with an icon"
+
+- Chats tab. Default **on**.
+- On → the "edited" text label becomes the stock Telegram edit icon with an
+  accessible localized label; the primary-edited-date mode and the ephemeral
+  "updated" label are preserved.
+- Off → stock text label.
+- Look at: an edited message's time area; screen-reader label if you use one
+  (never tested with a screen reader).
+- **[AUTH · content: an edited message]**
+- PASS/FAIL:
+
+### 4.9 CHAT-27 — "Original date in forwarded messages"
+
+- Chats tab. Default **off**.
+- On → the forwarded header shows the original date/time beside the forwarded
+  author (from `fwd_from.date`, not `saved_date`), localized, order kept in
+  RTL; messages already on screen update after reopening the chat (the row's
+  caption says so).
+- Off → stock forwarded header.
+- Look at: a forwarded message with a known original date; reopen the chat to
+  refresh; also confirm the native hover-title still shows its own saved
+  date correctly (packet 023 fixed a saved_date-as-milliseconds bug there).
+- **[AUTH · content: a forwarded message]**
+- PASS/FAIL:
+
+### 4.10 CHAT-28 — "Message time hint"
+
+- Chats tab, next row. Default **off**.
+- On → clicking a message timestamp opens a tooltip with localized "Sent: …",
+  "Edited: …" (unless edit-hide) and "Original: …" lines, seconds included.
+  Enter/Space open, Escape closes, auto-close on outside click; the off state
+  keeps Web K's native hover tooltip and message selection.
+- Off → stock hover behavior.
+- Look at: keyboard open/close, focus restoration, RTL (`dir=auto` lines),
+  selection-mode clicks untouched.
+- **[AUTH · content: any message]**
+- PASS/FAIL:
+
+### 4.11 CHAT-04 — "Replies: Background Colors"
+
+- Chats tab, in the reply rows. Default **on**.
+- On → replies use the replied peer's individual accent color. Off → the
+  accent and the reply line return to the theme color (this also resets the
+  gradient line — the defect fixed in packet 019).
+- **[AUTH · content: a reply with a colored peer]**
+- PASS/FAIL:
+
+### 4.12 CHAT-05 — "Replies: Emoji"
+
+- Default **on**. Off → the reply's pattern/emoji and the collectible-gift
+  thumbnail hide and the gift's inline padding is removed.
+- Look at: a reply quoting a collectible gift (verified with a stand-in only).
+- **[AUTH · content: a reply with an emoji pattern / collectible gift]**
+- PASS/FAIL:
+
+### 4.13 CHAT-06 — "Replies: Background"
+
+- Default **on**. Off → the reply's tinted background (`rgba(...,.1)`)
+  becomes transparent. Independent of 4.11/4.12; all three round-trip in
+  backup.
+- **[AUTH · content: any reply]**
+- PASS/FAIL:
+
+### 4.14 GEN-05 — "Relative Last Seen"
+
+- General tab. Default **off**.
+- On → statuses within the past 24 hours read "last seen X minutes/hours
+  ago", including yesterday — across midnight and New Year; from 24h onward
+  the ordinary date/time returns; negative differences clamp to 0.
+- Never revealed: approximate/private statuses, `online`, bots, support and
+  service users keep their stock strings.
+- Look at: a peer last seen yesterday evening (midnight crossing), one seen
+  >24h ago (falls back), an open chat header (refreshes on its own 60s timer
+  or on reopen — the caption says so).
+- **[AUTH · content: peers with different last-seen ages]**
+- PASS/FAIL:
+
+### 4.15 GEN-06 — "Hide my phone number"
+
+- General tab. Default **on** (Android `HidePhone=true`).
+- On → your phone number is removed from your own profile display — locally
+  only; your Telegram privacy settings are unchanged; contacts, copy actions
+  and anonymous numbers behave as before.
+- Off → the number shows again.
+- Look at: your own profile; a contact's profile (must keep the number).
+- **[AUTH]**
+- PASS/FAIL:
+
+### 4.16 GEN-07 — "Show ID and data center" (Hidden / Telegram API / Bot API)
+
+- General tab, first row. Default **Telegram API** (Android `IdDcType=1`).
+- Telegram API → profiles show the raw Telegram ID (users `id`, ordinary
+  groups `-id`, channels `-(1000000000000 + id)`); Bot API → the Bot API
+  form; Hidden → stock, nothing shown. DC comes from the local connection for
+  yourself, `stats_dc`/photo for chats, photo for other users; "data center
+  unknown" when nothing is available — no guessing. Copy works.
+- Off-equivalent: set Hidden.
+- Look at: your profile, a contact, a channel, a group; copy to clipboard;
+  switching modes by keyboard.
+- **[AUTH]**
+- PASS/FAIL:
+
+### 4.17 GEN-04 — "Filter Zalgo text"
+
+- General tab. Default **off**.
+- On → displayed text (messages and names) with four or more consecutive
+  combining marks in the first 4..2048 UTF-16 chars triggers the Android
+  algorithm: all combining marks are stripped from the rendered text.
+  Original entities, links and offsets are untouched; drafts are never
+  filtered; already-rendered messages refresh on chat reopen (caption says
+  so).
+- Off → raw text renders as-is.
+- Look at: send a Zalgo string to Saved Messages, toggle, reopen; confirm a
+  normal link inside the same message still opens and text entities hold.
+- **[AUTH · content: a Zalgo test message (Saved Messages is fine)]**
+- PASS/FAIL:
+
+### 4.18 LOOK-05 — "Center Title"
+
+- Appearance tab, last section. Default **off** (= stock: start-aligned).
+- On → every sidebar header's title (and its subtitle row) centers between
+  the leading and trailing buttons; the chats header, settings tabs, the
+  selection count header. Live toggle, no reload.
+- Look at: the chat list header and a settings tab's header in both states;
+  RTL (`?rtl=1`) — centering is direction-neutral either way.
+- **[AUTH · any signed-in view]**
+- PASS/FAIL:
+
+### 4.19 LOOK-08 — "System Font"
+
+- Appearance tab, last section. Default **on** (Android's
+  `TypefaceUseDefault` = true): the interface renders with the platform
+  fonts instead of the bundled Roboto.
+- Off → the app returns to the built-in Roboto everywhere; on → the system
+  stack applies. The serif, mono and rounded families (headings, code,
+  counters) keep their own fonts — Android's switch covers the main Roboto
+  requests only.
+- Look at: a chat and a settings screen in both states — letterforms change
+  app-wide, code blocks and headings do not.
+- **[AUTH · any signed-in view]**
+- PASS/FAIL:
+
+### 4.20 CHAT-40 — "Wide posts" (Channel posts)
+
+- Chats tab, "Channel posts" section. Default **off** (= stock: posts hug
+  their content, capped at 85% of the column).
+- On → a broadcast channel's posts (text-ish bubbles; albums and
+  backgroundless media keep their own layout) stretch their bubble over the
+  available width. Live toggle.
+- Look at: open a channel you post in (or a channel with text posts), toggle,
+  compare; check an album post stays a grid; check RTL keeps the stretch
+  symmetric (width is direction-neutral).
+- **[AUTH · content: a channel with posts]**
+- PASS/FAIL:
+
+---
+
+## Batch 5 — Folders, search, stickers and everything else
+
+### 5.1 GEN-14 — "Hide archive folder"
+
+- General tab. Default **off** (= stock: the archive row shows).
+- On → the archive row in the chat list disappears, live; the "Archived
+  chats" entry in the main menu remains. This inverts Web K's own
+  `showArchiveInChatList` — one native source, no second state.
+- Off → the row returns.
+- Look at: with an archived chat present; the main-menu entry still opens the
+  archive; reset restores the row.
+- **[AUTH · content: at least one archived chat]**
+- PASS/FAIL:
+
+### 5.2 LOOK-27 — "Notification counter" (All chats / Except muted / Off)
+
+- Appearance tab → section "Notification counter". Default **Except muted**
+  (= Web K stock behavior).
+- All chats → every tab's badge counts muted chats too, including the All
+  tab. Off → folder-bar badges hidden whole. Except muted → stock.
+- Look at: a folder bar with muted unread chats; badges recompute live on
+  change and reset (Android itself only offers a restart hint). The folder
+  bar's visual result and RTL are unverified in a browser (packet 034).
+- **[AUTH · content: folders + muted chats with unread]**
+- PASS/FAIL:
+
+### 5.3 CHAT-22 — "Hashtag search" (Default hashtag page in chats / in channels)
+
+- Chats tab → section "Hashtag search" → two selectors. Defaults **This
+  Chat** (0) both.
+- The page a hashtag search opens on: This Chat (stock), My Messages, Public
+  Posts. Public broadcast channels use the channel key; everything else the
+  chat key. Your own manual pick of the search strip still wins for that
+  search, as in Android.
+- Look at: click a hashtag in a private chat and in a public channel; confirm
+  the preselected type strip; manually change the strip afterwards. The seed
+  runs only inside a mounted chat and its runtime path over the real topbar
+  is unverified in a browser (packet 032).
+- **[AUTH · content: a message with a hashtag + a public channel]**
+- PASS/FAIL:
+
+### 5.3a CHAT-21 — "Disable Global Search" (packet 038; appended after the snapshot)
+
+- Chats tab → section before "Hashtag search" (Android's search group order).
+  Default **off** (Android NaConfig default `false`).
+- On → the chat list search's **Global search** group (server-wide users you
+  don't have as contacts) never renders; your own chats, your contacts, their
+  messages and the sponsored chips keep their owners. Android's
+  `DialogsSearchAdapter.globalResultsAllowed` is the source of the mapping.
+- Off → the Global search group returns with the next search.
+- Look at: type a username of someone who is NOT one of your contacts in the
+  sidebar search — with the setting off they appear under "Global search";
+  with it on, the group stays absent while your own matching chats/contacts
+  still list. Search inside an open chat is unaffected in both states.
+- Caveat carried from packet 038: the live toggle takes effect on the next
+  search (the gate reads the setting when the results arrive); the runtime
+  path over the real sidebar search is unverified in a browser.
+- **[AUTH · content: a contact to search for; a non-contact username to
+  search for]**
+- PASS/FAIL:
+
+### 5.3b HIDE-05 — 'Hide "All chats" Tab' (packet 040; appended after the snapshot)
+
+- Chats tab, after the "Hide Floating Button" row. Default **off** (Android
+  NekoConfig default `false`).
+- On → the folder tab bar and the folder rail drop the **All chats** tab
+  while at least one real folder remains; the open chat list moves to the
+  first visible folder through the tab click path (the selection, the back
+  stack and the folder swipes read the same list). With no real folders the
+  All tab stays (the bar is never left empty). Backup alias `hideAllChats`
+  round-trips.
+- Off → the All tab returns (unselected; the current folder stays open until
+  you click it).
+- Look at: an account with folders — toggle live and confirm the All tab
+  leaves and the first folder becomes the open list; toggle back and confirm
+  it returns. Also confirm the folder tab counters still update and the
+  context menu / unread-only bar still behave on a folder list.
+- Caveat carried from packet 040: the tabs' live reshaping (removal/re-add
+  animation, RTL) and the bootstrap on a fresh session are unverified in a
+  browser.
+- **[AUTH · content: an account with at least one folder]**
+- PASS/FAIL:
+
+### 5.4 HIDE-02 — "Disable Stories"
+
+- Chats tab, hiding group (between the status and floating-button rows).
+  Default **on** (Android `HideStoriesFromHeader=true`) — i.e. the strip is
+  hidden out of the box.
+- On → the stories strip above the chat list is never shown (main sidebar and
+  archived container), out of layout and the accessibility tree. Stories in
+  the chat header and the viewer remain available — this hides only the
+  strip. Backup alias `hideStories` round-trips.
+- Off → the strip returns.
+- Look at: an account with stories; toggle live; the strip's visual result is
+  unverified in a browser (packet 035) — that is this check.
+- **[AUTH · content: an account with stories]**
+- PASS/FAIL:
+
+### 5.5 HIDE-03 — "Hide Floating Button"
+
+- Chats tab. Default **off**.
+- On → only the floating new-chat button hides; chat creation stays available
+  through the existing "Create a new…" menu path; the update button's linked
+  visibility and search focus behavior are unchanged.
+- Off → the button returns.
+- Look at: open/close search, the update button, and create a chat via the
+  menu while hidden. Full sidebar on a real account was not verified
+  (packet 005) — that is this check.
+- **[AUTH]**
+- PASS/FAIL:
+
+### 5.6 HIDE-07 — "Hide share button on channel posts"
+
+- Chats tab. Default **off**.
+- On → the side share button hides on channel posts outside Saved Messages;
+  the ordinary Forward action in the message menu is untouched.
+- **[AUTH · content: a channel post (and Saved Messages to compare)]**
+- PASS/FAIL:
+
+### 5.7 HIDE-09 — "Hide Search Button in Channels"
+
+- Chats tab. Default **off**. On → the search button hides in an open
+  broadcast channel, **applied immediately to the already-open chat**.
+- **[AUTH · content: an open channel]**
+- PASS/FAIL:
+
+### 5.8 HIDE-10 — "Hide Call Button"
+
+- Chats tab. Default **off**. On → the call button hides in the open chat,
+  applied immediately; calling stays possible through the menu (the call
+  menu checks the setting); base availability is computed separately.
+- Look at: toggle while a chat is open; then 2.4 still guards any call.
+- **[AUTH · content: an open peer chat]**
+- PASS/FAIL:
+
+### 5.9 HIDE-14 — "Hide trending sticker packs"
+
+- Chats tab. Default **on** (Android `DisableTrending=true`).
+- On → recommended packs are neither requested nor shown in sticker search
+  and in the empty-window tip card; explicit pack search still works; a late
+  response never restores the hidden recommendations.
+- Off → trending recommendations return.
+- **[AUTH · content: sticker panel open]**
+- PASS/FAIL:
+
+### 5.10 HIDE-15 — "Hide group sticker pack"
+
+- Chats tab. Default **off**.
+- On → the group's sticker section is not requested or shown (including the
+  admin placeholder) until full info arrives; reopening the panel refreshes;
+  group custom emoji and installed sets are untouched.
+- **[AUTH · content: a group with a sticker set]**
+- PASS/FAIL:
+
+### 5.11 HIDE-16 — "Hide greeting sticker"
+
+- Chats tab. Default **on** (Android `DontSendGreetingSticker=true`).
+- On → an empty chat keeps its text; the greeting sticker is not fetched or
+  mounted. Already-open chats refresh on reopen (caption says so).
+- Off → stock greeting sticker.
+- **[AUTH · content: a chat with no history]**
+- PASS/FAIL:
+
+### 5.12 HIDE-21 — "Hide Premium section in Settings"
+
+- Chats tab. Default **off**.
+- On → the real Premium/Business/Stars/Gifts section of Settings hides,
+  including its rows in settings search and recent results; server-side
+  purchase limits are untouched.
+- **[AUTH]**
+- PASS/FAIL:
+
+### 5.13 HIDE-22 — "Hide Help section in Settings"
+
+- Chats tab. Default **on** (hidden by default, as in Android). The
+  adaptation adds four Android help items to the existing Settings screen;
+  support opens the official web form instead of an Android chat.
+- Off → the Help section shows with the four items.
+- Look at: search results respect the hide; the toggles themselves stay
+  searchable. No agent ever sent anything through those forms.
+- **[AUTH]**
+- PASS/FAIL:
+
+### 5.14 CHAT-01 — "Sticker size" (4–20, default 14)
+
+- Chats tab → section "Sticker size", with the built-in static preview
+  (UtyanDiscussion, no Telegram requests). Default 14 = Web K's stock 200px;
+  scale `1+(size−14)/16` → 75..275px on desktop. Fractional values are kept
+  (not rounded); the backup rejects out-of-range values.
+- Look at: slider extremes with the preview; a sticker in a chat **after
+  reopening the chat** (caption: existing stickers apply on reopen);
+  enlarged emoji and explicit-box stickers must not scale.
+- **[AUTH · content: a chat with stickers]**
+- PASS/FAIL:
+
+### 5.15 CHAT-02 — "Sticker Shape" (Default / Rounded / Message)
+
+- Chats tab. Default **Rounded** (Android default, 6px); Default = as-is
+  (0px); Message = the bubble's big corner radius.
+- Look at: a sticker in a chat after changing the mode; live CSS, stickers
+  only.
+- **[AUTH · content: a chat with stickers]**
+- PASS/FAIL:
+
+### 5.16 CHAT-03 — "Time on stickers" (On the sticker / On the side / Hidden)
+
+- Chats tab. Default **On the sticker**. Hidden wins over Side when both
+  Android flags compose (the selector writes both consistently). Ordinary
+  message times are untouched; live root CSS, stickers only.
+- Look at: all three modes on a sticker; RTL arrows invert the selector
+  direction (fixture-verified); regular bubble time unaffected.
+- **[AUTH · content: a chat with stickers]**
+- PASS/FAIL:
+
+### 5.17 CHAT-20 — Keep attach button while typing (no toggle — documented equivalence)
+
+- No row exists in the hub: Web K's composer never morphs the attach button
+  while typing, so the setting's outcome is the base's permanent behavior and
+  a toggle would be empty (packets 034/af8da51). The key
+  `OEChatsKeepAttachButton` stays in the record for backup compatibility.
+- Verify the stock behavior itself: type in a chat and confirm the attach
+  button never changes into anything else.
+- **[AUTH · content: any chat]**
+- PASS/FAIL:
+
+### 5.18 OTHER-03 — "Reset exterayond settings"
+
+- Other tab → row "Reset exterayond settings". Confirmation popup ("Restore
+  exterayond preferences to their defaults? Your Telegram account, chats and
+  plugin settings will be kept.", danger button), then a toast "exterayond
+  settings reset".
+- Resets the OE record and the one native setting the hub owns
+  (`showArchiveInChatList`); Telegram settings and account data are separate
+  records and stay. The full Android `resetAllSettings` app-restart is not
+  reproduced and not claimed.
+- Look at: archive row returns (if 5.1 on); every toggled feature from the
+  earlier batches returns to its default; counters update live.
+- **[no chat data]**
+- PASS/FAIL:
+
+---
+
+## Batch 6 — Settings backup (.extera) round-trip
+
+Hub location: **Other** tab → "Import settings (.extera)" and "Export
+settings". The format is exteraGram's (`EtgBackup`): JSON with sections
+`exteraconfig` / `pillstackconfig` / `mainconfig`, wrapped in invisible
+characters on export; a plain JSON body with the same sections is accepted on
+import. Files are untrusted: wrong types or out-of-range values are rejected
+or fall back like a foreign file. The checklist entry OTHER-01 is
+**unchecked** — the implementation is regression-tested but awaits exactly
+this real-file round trip.
+
+### 6.1 OTHER-01 — Export / import round-trip with a real .extera file
+
+- Export → a file named `exterayond-XXXX.extera` downloads.
+- Set a recognizable spread of settings first, e.g.: Remove Message Tail off,
+  Notification counter Off, Sticker Shape Message, Sticker size 6, Ask before
+  opening links → All links, Disable link preview on, Auto-Pause Voice on,
+  folder counter mode 0, Safe mode (Plugins tab) on.
+- Import the file on a reset profile (or after OTHER-03): the toast "Applied
+  N settings from the backup" appears and every setting above returns,
+  including **plugin flags** — `pluginsSafeMode` and `pluginsDevMode` travel
+  inside `exteraconfig` and are applied to the plugin manager (counted in N).
+  `pluginsCompactView` / `pluginsDisableArtOpts` stay recognized-but-
+  unsupported.
+- Negative checks: a random JSON file → toast "This file is not a compatible
+  .extera backup"; a `.extera` carrying an Android-only key (e.g.
+  `tabletMode`) imports fine but that key is never applied and never counted
+  as working; a boolean alias given a non-boolean (`tabCounter: "yes"`,
+  `hideStories: 1`) is rejected like an untrusted file; out-of-range floats
+  (`stickerSize: 99`, `avatarCorners: 30`) are rejected.
+- Known mapping edges (expected, not FAILs): `tabCounter` is a boolean in the
+  format (true = All chats, false = Off; the middle mode never round-trips);
+  `newSliderStyle`/`newSwitchStyle` map boolean ↔ 2/3; the sticker-time mode
+  composes two flags; HideArchive maps onto Web K's native setting.
+- **[no chat data]**
+- PASS/FAIL:
+
+---
+
+## Hub rows you will see that are NOT verified features
+
+These rows are visible in the hub and wired to real consumers, but their
+checklist entries are open with the annotation "an implementation or part of
+it exists in the code; completeness still to verify". They are not counted in
+the tally. Smoke-check them if you like, but do not treat a pass here as
+verification:
+
+| Row (label) | Tab | Intended behavior (from the store wiring) | Status |
+|---|---|---|---|
+| "Avatar Corners" | Appearance | 0 = square → 28 = circle, applied to every avatar | LOOK-01 unchecked |
+| "Square FAB" | Appearance | floating button takes the squircle shape | LOOK-07 unchecked |
+| "Custom Themes in Chats" | Appearance | per-chat themes | LOOK-10 unchecked |
+| "Section Radius" | Appearance | section-card corner radius; 20 keeps the stock radius | LOOK-11 unchecked |
+| "Separate Headers" | Appearance | separate section headers | LOOK-12 unchecked |
+| "Frosted Message Menu" | Appearance | frosted message/reaction menus | LOOK-14 unchecked |
+| "Show Results Before Voting" | Chats | public-poll results visible before voting, only where the server provides them | CHAT-26 unchecked |
+
+The **Plugins** tab (Plugins category of the hub) is deferred work per
+`AGENTS.md` and is not part of this runbook, except for the two backup flags
+in Batch 6.
+
+## Progress tally
+
+Fill in `Y` / `N` per batch after walking its steps. "Features" counts the
+PASS/FAIL blocks above; IDs in parentheses are the checklist entries pending
+visual review.
+
+| Batch | Features | Checklist IDs covered | Checked by user (Y/N) | Date | Notes |
+|---|---|---|---|---|---|
+| 1 — Forced MD3 + player style | 19 | LOOK-18…23, PLAYER-02…05, 08…10, 12, 15…17 (+ master; the MD3 Music player / Mini-player toggles share one block) | | | desktop visual review pending for all |
+| 2 — Composer / sending path | 14 | CHAT-32, 31, 33, 30, 34, 36, 38, 16, 14, 35; MENU-01; HIDE-06; MEDIA-01*, CHAT-37* | | | * unchecked entries, completeness unverified; CHAT-35 appended from packet 043 |
+| 3 — Live playback | 5 | MEDIA-13, 14, 15, 17; PLAYER-01 (base) | | | needs real media and tab-hiding |
+| 4 — Dialogs / headers / message visuals | 20 | LOOK-03, 02*, 05, 08; GEN-02…07; CHAT-04…06, 23, 24, 27, 28, 40; HIDE-01, 12 | | | * unchecked entry; LOOK-05/08 + CHAT-40 appended from packets 041/042 |
+| 5 — Folders, search, stickers, rest | 18 | GEN-14; LOOK-27; CHAT-01…03, 20, 22; HIDE-02, 03, 07, 09, 10, 14…16, 21, 22; OTHER-03 | | | |
+| 6 — Backup round-trip | 1 | OTHER-01 (unchecked entry) | | | with plugin flags |
+| **Total** | **77** | 49 checked + 20 packet-028/029 items (17 entries + master + player toggles + base popup) + 3 wired-but-unchecked (LOOK-02, MEDIA-01, CHAT-37) + OTHER-01 | | | snapshot at 58/296; CHAT-30 (036), LOOK-05/08 (041), CHAT-40 (042), CHAT-35 (043) appended |
+
+After each session of user verification, record the outcomes: update the
+tally here, and let the maintainer strike through or annotate the matching
+checklist entries and log material findings in `docs/tasks/progress.md`.

@@ -593,3 +593,526 @@ RTL, authenticated playback and the browser-based startup check remain unverifie
 The six LOOK entries
 and the full PLAYER-01 subsystem remain unchecked; the base music popup does not
 include the full Android player editor, queue, lyrics or gestures.
+
+The player repeat button now announces its current off, playlist or track mode
+instead of presenting a three-state control as a binary toggle. Its existing
+popup fixture follows the same three-step cycle as the playback controller, and
+the popup regression test exercises all three transitions. The two focused test
+files pass (12 tests); typecheck and targeted lint pass. Visual and authenticated
+playback review remain pending, and PLAYER-01 remains incomplete.
+
+## 029 / PLAYER-02..05, 08..10, 12, 15..17 — the MD3 player's style settings (2026-10-31)
+
+The style rows of Android's `PlayerStyleEditor` are ported into the Appearance
+hub as three groups (Cover / Title / Layout) whose dependent rows follow
+`PlayerStyleEditor.refreshVisibility`: size for the framed covers (card, disc),
+corner radius for the card only, spin and title position for the framed ones.
+The store gained the exact Android keys and defaults (`OEPlayerCoverStyle` 0,
+`OEPlayerCoverSize` 100, `OEPlayerCoverRadius` 28, `OEPlayerDiscSpin` true,
+`OEPlayerTitleAlign` 0, `OEPlayerTitleSize` 1, `OEPlayerTitleAbove` false,
+`OEPlayerShowModes` true, `OEPlayerShowSource` true, `OEPlayerWavy` true,
+`OEPlayerControlsSize` 1) with their ranges; the mappings port
+`PlayerStyle.controlsScale` (0.84/1/1.14), `PlayerSheet.applyStyle`'s title
+sizes (22/26/31 and 15/16/17) and `PlayerStyle.coverSize`. Android EtgBackup
+exports none of them, so no aliases were invented.
+
+The base popup (`md3Player.tsx`) now applies the cover styles as CSS
+adaptations: card, wide (full-width 6:5 plate), full (artwork as the dialog
+backdrop behind a light scrim, blocks at the bottom) and disc (circle, one
+turn per 16s while playing, off at reduced motion). Title alignment, size and
+position, the controls scale and a "Playing from chat" source line (the real
+peer title via `PeerTitleTsx`, now accepting `meAsNotes`; hidden in place when
+off, like Android's `View.INVISIBLE`) follow the settings live. `OEPlayerShowModes`
+hides the repeat control; shuffle has no web counterpart and stays unsupported.
+`OEPlayerWavy` feeds the amplitude of a new `WavyProgressLine`
+(`src/components/wavyProgressLine.ts`), which ports `WavySeekBar`'s wave
+(amplitude 4, wavelength 34, 6 rad/s, 4px stroke) over the existing
+`MediaProgressLine` seek owner — zero keeps the flat stock bar, reduced motion
+keeps it flat, and a paused track eases the wave back into the line. The block
+order, the speed/lyrics/queue actions, the cover-derived colors and the
+background modes wait on the missing web primitives and were not faked.
+
+Tests: `exteralessSettings` (18), `exteralessTabs` (14, including the slider
+list and the visibility-dependent rows), `outgoingConfirmations` (8, including
+a new live-reshape pass over every wired setting and a pumped-frame decay
+check for the wave), `exteraBackup` (23), `settingsSearchIndex` (8), plus a
+first `pauseOnMinimize` file (see 030). Typecheck, targeted lint and
+standalone sass compiles of the touched stylesheets pass; the settings-search
+index was regenerated (468 entries). The player entries are appearance CSS whose
+desktop result is unreviewed, so they stay unchecked with their annotations;
+the count moves to 41/296 through 030's three checks below. Desktop appearance, RTL and
+authenticated playback remain unverified; no server or browser was launched.
+
+## 030 / MEDIA-13, MEDIA-14, MEDIA-15 — pause on minimize (2026-10-31)
+
+MEDIA-13 lands with the exact Android key: NekoConfig's `AutoPauseVideo`
+(default true, not an `OE*` key — the persisted name is the contract). The
+playback controller's `visibilitychange` handler now pauses video with the
+voice and round toggles; music never pauses, like Android. The Chats hub gains
+the Video row beside Voice and Round, and the `.extera` backup gains the
+Android alias `pauseOnMinimizeVideo` (it leaves the unsupported list, round
+trips as a strict boolean and rejects non-booleans). MEDIA-14 and MEDIA-15 had
+their wiring from an earlier packet; both are now locked by the same
+regression.
+
+The new `src/tests/pauseOnMinimize.test.ts` drives the real controller
+singleton — its `construct(managers)` wires the listeners on sign-in, which
+the harness had never called — and asserts, through the actual
+`visibilitychange` handler, that video pauses by default and with its toggle,
+that voice and round follow their off-by-default toggles, and that music and a
+disabled video toggle keep playing. `exteralessSettings` (18), `exteraBackup`
+(23), `exteralessTabs` (14), `settingsSearchIndex` (8) and typecheck pass; the
+search index was regenerated. The three checklist entries are checked. What a
+real hidden tab does with live media (an actual video element mid-playback) is
+browser-owned and was not exercised; no server or browser was launched.
+
+## 031 / CHAT-31 — Disable link preview by default (2026-10-31)
+
+The Chats hub's link group gains **Disable link preview by default** with the
+exact Android key: NekoConfig's `DisableLinkPreviewByDefault` (bool, default
+false, `NekoConfig.java:160`; row at `OpenExteraChatsActivity.java:511`,
+before the open-link-confirmation selector like Android's group order).
+Android EtgBackup exports no alias for it, so none was invented.
+
+Android seeds the composer's per-session preview state from the setting
+(`ChatActivity.disableLinkPreview` at 15411,
+`ChatActivityEnterView.messageWebPageSearch` at 811) and `searchLinks`
+returns before fetching (ChatActivity.java:15417); sends then carry
+`no_webpage`. The web port reads the flag in `ChatInput.processWebPage`
+(the `searchLinks` owner): with the setting on, a fresh composition never
+fetches a preview, keeps `noWebPage`, and `appMessagesManager`'s
+`generateOutgoingWebPage` sends `{no_webpage: true}`. The gate stands before
+the same-URL cache check so a live toggle also defuses a fetch left in flight
+and drops an already shown preview plate (the stock no-URL branch's
+helper/hover restore path), and turning the setting off re-fetches from
+scratch. Edits (`editMsgId`) keep their own media handling — the task's
+"new messages only" seeding — and a restored draft keeps the `no_webpage`
+its composer saved, which is what Android's draft restore does with the
+flag. Rich messages keep their existing always-suppressed path. Scheduled
+posts go through the same composer gate.
+
+Tests: `chatInputEditorAsyncActions` (13, five new over the real
+`processWebPage` harness: suppressed fresh composition, dropping a fetched
+preview, the in-flight fetch defusal, edits unaffected, stock restored when
+the setting turns off), `exteralessSettings` (18, defaults contract),
+`exteralessTabs` (14, row order), `settingsSearchIndex` (8, regenerated, 469
+entries). Typecheck passes. What a real send produces on the server and the
+composer's visual states are unverified (no browser); a message without a
+URL keeps `no_webpage` unset, matching observable behavior while staying
+minimal.
+
+## 032 / CHAT-22 — Hashtag search default scope (2026-10-31)
+
+The Chats hub gains **Hashtag search** with the two Android rows: default
+hashtag page in chats and in channels, the exact NaConfig keys
+`SearchHashtagDefaultPageChat` / `SearchHashtagDefaultPageChannel`
+(int 0..2, default 0, `NaConfig.kt:478`); the three pages reuse Web K's own
+`Search.Types.*` labels (Android's `SearchThisChat` / `SearchMyMessages` /
+`SearchPublicPosts`). Android EtgBackup exports neither key, so no aliases
+were invented.
+
+Android seeds the search's default page on every hashtag open
+(`ChatActivity.java:37788`): a public channel and not a megagroup reads the
+channel key, everything else the chat key. The web seed lives beside the
+topbar search's full-replacement effect — the exact moment a search opens
+from outside (a hashtag click through `internalLinkProcessor`'s
+`searchByTag` → `chat.initSearch`), not while typing. 0 leaves Web K's stock
+default (the type strip unpicked = this chat), 1 picks my messages, 2 public
+posts; the user's own strip pick still wins for that search, as in Android.
+The public-channel check is `chat.isBroadcast && usernames[0]`, the same
+shape as Android's `isChannelAndNotMegaGroup && isPublic`.
+
+Tests: `exteralessSettings` (19, including the chat/channel key split, the
+0/1/2 mapping to Web K's `undefined`/`'my'`/`'public'`, clamping and reset),
+`exteralessTabs` (14), `settingsSearchIndex` (8, regenerated, 472 entries).
+Typecheck passes. The seed effect itself renders only inside a mounted chat,
+so its runtime path over the real topbar is unverified in a browser; the
+store mapping it reads is the tested contract.
+
+## 033 / CHAT-33 — Confirm before sending voice and video messages (2026-10-31)
+
+The Chats hub's "ask when" rows gain **Confirm before sending voice and video
+messages** with the exact Android key: NekoConfig's `ConfirmAVMessage` (bool,
+default false, `NekoConfig.java:143`; the row sits before AskBeforeCalling
+like Android's group). The label follows the Android hub's own override
+("Sending video/voice messages" under "Ask when...") as the sibling
+AskBefore* rows; the settings-search extractor denies keys containing
+"Confirm", so the lang key is `Exteraless.AskBeforeAVMessage` while the
+persisted name stays the Android contract. Android EtgBackup exports no
+alias, so none was invented.
+
+Android's release stops the recording into the recorded preview
+(`MediaController.stopRecording` send=2) and only the explicit send commits
+it. Web K already owns that preview: the recording's paused state, with its
+send and discard buttons. The port reads the flag in
+`ChatRecording.handleSendButtonClick` (the release owner): with the setting
+on, a release past the minimum length pauses instead of stopping to send —
+the paused preview's send is the confirmation, discard cancels, resume
+records on. Disabled, the release sends like stock; a too-short recording
+still cancels; the send menu's Silent/Schedule/Send-when-online keep their
+explicit immediate send. Voice and round video share the handler.
+
+Tests: `confirmAvMessage` (4 new, driving the real `handleSendButtonClick`
+over a stub instance through the bubbles-graph loader: pause on release,
+preview send commits, stock release, short-recording cancel),
+`exteralessSettings` (19, defaults), `exteralessTabs` (14, row order),
+`settingsSearchIndex` (8, regenerated, 473 entries). Typecheck passes. The
+live recording UX (camera/microphone, the paused panel's buttons) is
+browser-owned and was not exercised; no server or browser was launched.
+
+## 034 / LOOK-27 — Folder tab counter mode, plus two resolved audit entries (2026-10-31)
+
+The Appearance hub gains **Notification counter** with the exact Android key:
+NaConfig's `IgnoreUnreadCount` (int 0..2, `NaConfig.kt:1314`), default 1 —
+the effective default NaConfig computes from its legacy
+`IgnoreMutedCount` preference. The Android strings name the three modes:
+All chats / Except muted / Off. Android's EtgBackup exports the alias
+`tabCounter` as a boolean (`EtgBackup.java:398`: true = counters on, false =
+off; the middle mode never round-trips through the format), so the web
+backup moves `tabCounter` out of the unsupported list with exactly that
+mapping — a non-boolean still rejects like an untrusted file.
+
+In the readable Android source only two readers consume the key
+(`DialogsActivity.getTabCounter`, `FoldersPreviewCell.getTabCounter`) and
+both only distinguish mode 2 (counter 0) from everything else, so the mode
+the middle value reads through lives in the filter-count internals this
+checkout does not carry. The web port gives each mode a real behavior from
+the data the folder-badge owner already fetches
+(`dialogsStorage.getFolderUnreadCount` returns both muted and unmuted
+counts): mode 2 hides the folder-bar badges whole, mode 0 ("All chats")
+reads the full unread count on every tab including All, and mode 1 — the
+default — is Web K's stock behavior (the All tab's unmuted count, folders'
+own counts). The badges recompute live through the existing
+`exteraless_settings_updated` event, which the store now also fires for this
+key on change and reset; Android itself only offers a restart hint here.
+The refresh listens per folder item because the pre-existing
+`updateAllFolderNotifications` skips the All folder's falsy id — that guard
+was left alone.
+
+Resolved from prior audit without new code: **CHAT-20** (keep attach button)
+— Web K's composer never morphs the attach button while typing, the
+setting's outcome is the base's permanent behavior, and a toggle would be
+empty; the equivalence was already recorded in packet af8da51, the checklist
+entry now reflects it. **OTHER-03** (reset settings) — the Other tab's
+confirmed reset of the OE record plus the one native preference it owns is
+implemented and regression-tested, and was fixture-verified in an earlier
+session; the entry now says the full Android `resetAllSettings` app restart
+is not reproduced and not claimed.
+
+Tests: `foldersStoreRecovery` (3, one new: the three modes' badge counts
+over the real store with a mocked dialogsStorage, the live recompute
+included), `exteraBackup` (24, one new: the `tabCounter` boolean round-trip
+and non-boolean rejection), `exteralessSettings` (19, defaults), 
+`exteralessTabs` (14, the Appearance slider list), `settingsSearchIndex`
+(8, regenerated, 474 entries). Typecheck passes. The folder bar's visual
+result and RTL are unverified in a browser; no server or browser was
+launched.
+
+## 035 / HIDE-02 — Hide stories from the chat list header (2026-10-31)
+
+The Chats hub's hiding group gains **Disable Stories** with the exact Android
+key: NaConfig's `HideStoriesFromHeader` (bool, default **true**,
+`NaConfig.kt:1362`; the row sits between hideActionBarStatus and
+hideFloatingButton like Android's hiding group, `OpenExteraChatsActivity.java:727`,
+whose title override is the string `DisableStories`). Android's consumer is
+`DialogsActivity.updateStoriesVisibility` (13233, 13256): with the flag on, the
+dialog stories cell is never made visible. Android EtgBackup exports the alias
+`hideStories` as a boolean (`EtgBackup.java:326`), so the web backup moves it
+out of the unsupported list with a straight boolean mapping; a non-boolean is
+rejected like an untrusted file.
+
+The web owner is the dialogs' stories strip — the `stories-list` container
+`appDialogsManager` mounts above the chat list (`StoriesList`). The port hides
+it with a root class `oe-hide-stories` toggled by the store's single effect and
+one SCSS rule (`display: none`), which covers both the main sidebar and the
+archived-container placement and keeps the strip out of layout and the
+accessibility tree. Like HIDE-01 this is UI hiding: the strip's data path is
+untouched, stories stay available in the chat header and the viewer, and the
+toggle is live with reset returning to the Android default (hidden).
+
+Tests: `exteralessSettings` (20, defaults plus the new live class test over
+the Android default), `exteralessTabs` (14, the Chats row order),
+`exteraBackup` (25, the `hideStories` boolean round-trip and non-boolean
+rejection), `settingsSearchIndex` (8, regenerated, 475 entries). Typecheck and
+a standalone sass compile of the touched stylesheet pass. The strip's visual
+result (and the archived sidebar's) is unverified in a browser; no server or
+browser was launched.
+
+## 036 / CHAT-30 — Fix link previews (2026-10-31)
+
+The Chats hub's link group gains **Fix link previews** with the exact Android
+key: NaConfig's `FixLinkPreview` (bool, default `true`, `NaConfig.kt:1386`;
+row at `OpenExteraChatsActivity.java:288/510`, beside the disable-link-preview
+row, whose value caption Android renders as `x.com → fixupx.com`). EtgBackup
+exports no alias, so none was invented.
+
+The port adds `src/lib/linkCleaner/pagePreviewRules.ts`:
+`PagePreviewRulesHelper.applyBuiltInRules` verbatim — the ten domain→replace
+pairs at the pinned revision, one regex per domain, applied as a global
+replace over the whole URL after an authority lookup. The remote rules
+channel is disabled at this revision (`BaseRemoteHelper.hasMetadataSource()`
+is false), so the built-in list is the complete behavior; nothing remote was
+invented. `ChatInput.processWebPage` applies the rewrite to the URL it is
+about to fetch, before the same-URL cache check — the sent text is never
+rewritten, matching Android's `messageWebPageSearch` → `doRegex` consumer:
+the message carries the preview fetched from the fixed URL. Setting off
+restores the stock unfetched/unrewritten preview path. Case semantics follow
+Android exactly: the authority lookup lowercases, the replace does not.
+
+Tests: `pagePreviewRules` (5: all ten pairs, rewritten hosts left alone,
+pass-through, case semantics, whole-URL replace). Typecheck passes. Whether
+the fixupx/fxtwitter endpoints actually return a preview for a given post is
+a property of those third-party services, not of the port; the composer's
+visual states are unverified (no browser yet at integration time).
+
+## 037 / HIDE-08 — Hide gift button in channels (2026-10-31)
+
+The Chats hub's hiding group gains **Hide Gift Button in Channels** with the
+exact Android key: NaConfig's `HideGiftButtonInChannel` (bool, default false,
+`NaConfig.kt:882`; the row sits after hideShareButton in the "hiding chats"
+group, `OpenExteraChatsActivity.java:736`). Android's consumer is
+`ChatActivity.java:30127`: the channel bottom-buttons layout's BUTTON_GIFT is
+shown only while the flag is off. Android EtgBackup exports no alias for it,
+so none was invented.
+
+The web owner is the channel "can't write" plate's trailing gift button
+(`ChatInput.giftControlBtn`, shown for broadcast channels the user cannot post
+in). The port hides it with a root class `oe-hide-channel-gift-button` toggled
+by the store's single effect and one SCSS rule scoped to
+`.chat-input-plate .btn-icon.gift` — the user chat's own send-gift button
+(`btnSendGift`, a privacy-gated composer accessory) is a different control and
+stays out of the selector. The toggle is live, and reset returns to the
+Android default (shown).
+
+Tests: `exteralessSettings` (22, the defaults list gained the key — and
+retro-gained packet 036's missing `FixLinkPreview` default — plus the new live
+class test), `exteralessTabs` (14, the Chats row list retro-gained packet
+036's FixLinkPreview row plus the new one), `settingsSearchIndex` (8,
+regenerated, 477 entries). Typecheck and a standalone sass compile of
+`_chat.scss` pass. The plate's visual result is unverified in a browser; no
+server or browser was launched.
+
+## 038 / CHAT-21 — Disable global search (2026-10-31)
+
+The Chats hub gains **Disable Global Search** with the exact Android key:
+NaConfig's `DisableGlobalSearch` (bool, default false, `NaConfig.kt:1452`).
+The row opens Android's search group before the hashtag rows
+(`OpenExteraChatsActivity.java:494`), so the web section sits between the link
+policy and the hashtag search. Android EtgBackup exports no alias, so none was
+invented.
+
+Android's consumer is `DialogsSearchAdapter.globalResultsAllowed()`
+(`DialogsSearchAdapter.java:1105`): the flag feeds
+`searchAdapterHelper.setAllowGlobalResults`, and the helper then drops the
+server-wide results — users you don't have as contacts (`b == 1 &&
+!user.contact`) and chats you're not in. The web equivalent lives in the
+sidebar search's chats branch (`appSearchSuper.ts`): with the setting on, the
+`contacts.search` handler keeps `my_results` (the user's own contacts) and
+skips the global `results` that feed the "Global search" group, so the group
+never renders. The user's local dialogs, the messages group and the sponsored
+chips keep their existing owners — Android's gate touches none of them. The
+gate reads the setting when the results arrive, so a toggle applies from the
+next search.
+
+Tests: `exteralessSettings` (21, the defaults list gained `DisableGlobalSearch`),
+`exteralessTabs` (14, the Chats row list gained the section's row),
+`settingsSearchIndex` (8, regenerated, 478 entries). Typecheck passes. The
+gate's runtime path over the real sidebar search (a live query against the
+server) is unverified in a browser; no server or browser was launched.
+
+## 039 / HIDE-13 + HIDE-11 — attach menu camera tile and money item: audit resolution (2026-10-31)
+
+Both entries resolve like packet 034's CHAT-20: the setting's outcome is the
+web base's permanent behavior, so no toggle is added.
+
+**HIDE-13** (`OEChatsHideCameraTile`, `ChatsConfig.kt:155`, default false):
+Android's consumers are `ChatAttachAlert.java:6062` and
+`ChatAttachAlertPhotoLayout.java:159` — the camera tile leaves the attach
+panel's grid. The web attach menu is a `ButtonMenuToggle` over
+`ChatInput.attachMenuButtons` (Photo or Video, Audio, Document, Music,
+Location, article, group collage/slideshow, edit media, Gift Premium, Poll,
+Checklist, attach bots) — there is no camera tile; the instant camera is the
+composer's mic button, a different control. The key stays in the settings
+record for compatibility (no UI row), and the Android EtgBackup alias
+`hideCameraTile` (`EtgBackup.java:383`) leaves the unsupported list: an import
+applies it silently as the documented no-op instead of reporting it. A
+non-boolean is rejected like any untrusted value.
+
+**HIDE-11** (`OEChatsHideMoneyButton`, `ChatsConfig.kt:209`, default false):
+Android's consumer is `ChatAttachAlert.java:7028` — the wallet "Money" item in
+the attach alert, gated on `config.walletAvailable` and the recipient. The web
+attach menu has no money item at all. Android EtgBackup exports no alias, so
+no record key, mapping or UI row exists for it.
+
+Tests: `exteraBackup` (26, one new: the `hideCameraTile` boolean round-trip
+and non-boolean rejection), `exteralessSettings` (21, the record gained
+`OEChatsHideCameraTile: false`). Typecheck passes. Nothing visual changed; no
+server or browser was launched.
+
+## 040 / HIDE-05 — Hide the "All chats" tab (2026-10-31)
+
+The Chats hub's chat-list hiding group gains **Hide "All chats" Tab** with the
+exact Android key: NekoConfig's `HideAllTab` (bool, default false,
+`NekoConfig.java:118`; the row formats `OEAppearanceHideAllChats` = Hide "All
+chats" Tab, `OpenExteraChatsActivity.java:730/2921`). Android's consumers are
+`FilterTabsView` (the default tab is not added to the bar; the folder preview
+cell mirrors it via `tabsView.showAllChatsTab = !hideAllTab`). Android
+EtgBackup exports the alias `hideAllChats` as a boolean
+(`EtgBackup.java:330`), so the web backup moves it out of the unsupported list
+with a straight boolean mapping; a non-boolean is rejected like an untrusted
+file.
+
+The web port filters the shared `folderItems` list in the folders store
+(`visibleFolderItems`): the horizontal tab bar, the folder rail and every
+index-based click path (tab clicks, the folder swipes, the back-stack pop,
+`setUnreadOnly`'s folder opening) read the same array, so indexes stay
+aligned — filtering only at the tab render would have desynced the clicked
+index from the store's list. The All tab is dropped while real folders
+remain; with no real folders the bar is never left empty (the setting's
+hiding keeps the All tab there, unlike Android's empty bar). Toggling live
+dispatches the store's settings event: hiding drops the All item and moves
+the selection to the first visible folder through `onClick(0)` — the same
+`selectFolderByIndex` path the tab bar uses, so the open chat list follows —
+and unhiding rebuilds the list from `filtersStorage.getDialogFilters()` like
+a hydration, re-checking the setting after the async read. The
+`premium_toggle` fallback normalizes to the first visible folder instead of a
+hidden All id. `setExteralessSetting`'s live-event list gained the key (the
+constant renamed from LIVE_COUNTER_KEYS to LIVE_EVENT_KEYS; the dispatch
+semantics unchanged).
+
+Tests: `foldersStoreRecovery` (5, two new: the live hide/unhide cycle over the
+real store with the selection moved through the click path, and the
+no-real-folders case keeping the All tab), `exteraBackup` (27, the
+`hideAllChats` boolean round-trip and non-boolean rejection),
+`exteralessSettings` (21, defaults), `exteralessTabs` (14, the Chats row
+order), `settingsSearchIndex` (8, regenerated, 479 entries). Typecheck
+passes. The tab bar's live reshaping, RTL and the fresh-session bootstrap are
+unverified in a browser; no server or browser was launched.
+
+## 041 / LOOK-05 + LOOK-08 — centered header title and system fonts (2026-10-31)
+
+Two Appearance rows, one packet (both small root-class adaptations).
+
+**LOOK-05 — Center Title** with the exact Android key: AppearanceConfig's
+`OEAppearanceCenterTitle` (bool, default false; on load Android migrates it
+into NaConfig's `centerActionBarTitle`, `AppearanceConfig.kt:121/736`, and
+EtgBackup exports the alias `centerTitle` as a boolean of that NaConfig value,
+`EtgBackup.java:325`). Android's consumer centers the ActionBar title; the web
+analog is a root class `oe-center-title` and one rule centering every
+`.sidebar-header__title` (and its subtitle row) — the text centers inside its
+own box between the leading and trailing buttons, the way the centered
+TextView does. Direction-neutral (`text-align: center`), RTL needs no extra
+rule.
+
+**LOOK-08 — System font instead of built-in** with the exact Android key:
+NekoConfig's `TypefaceUseDefault` (bool, default **true** — the exteraless
+default already uses the platform fonts; the row reads `NekoConfig.typeface`,
+`OpenExteraAppearanceActivity.java:913`). Android's consumer
+(`TypefaceHelper.createTypeface`) maps the app's Roboto requests to system
+families — only the main UI font. The web port toggles a root class
+`oe-system-font` that swaps `--font-regular` (the app-wide font variable,
+base.scss) to a system stack without the bundled Roboto; the web-only serif,
+mono and rounded families keep their own stacks, matching Android's reach.
+The Android default means a fresh web session renders with system fonts — the
+contract's default, like HideStoriesFromHeader before it. EtgBackup exports
+the alias `useSystemFonts` (`EtgBackup.java:339`), so both aliases moved out
+of the backup's unsupported list with straight boolean mappings; a non-boolean
+is rejected like an untrusted file.
+
+Tests: `exteralessSettings` (22, the defaults list gained both keys plus a
+live-class/reset test over the Android defaults),
+`exteraBackup` (28, one new: `centerTitle` and `useSystemFonts` round-trips
+and non-boolean rejection), `exteralessTabs` (15, one new: the two rows render
+and the system-font toggle writes the store), `settingsSearchIndex` (8,
+regenerated, 481 entries). Typecheck passes; standalone sass compiles of
+base.scss and _sidebar.scss pass. The rendered result of both toggles (and
+the sidebar title's centering in every sidebar) is unverified in a browser;
+no server or browser was launched.
+
+## 042 / CHAT-40 (+ CHAT-41 verdict) — wide channel posts (2026-10-31)
+
+The Chats hub gains a **Channel posts** group (the Android group sits after
+the tracking group, `OpenExteraChatsActivity.java:533-537`) with **Wide
+posts**, the exact Android key: ChatsConfig's `OEChatsWideChannelPosts`
+(bool, default false, `ChatsConfig.kt:189`). Android's consumer is
+`MessageObject.hasWideChannelPostHeader` (`MessageObject.java:10157`): the
+message's peer is a channel and not a megagroup (or `messageOwner.post`),
+never a service message, sponsored post or preview, and
+`ChatMessageCell.applyWideChannelPostWidth` replaces the bubble's
+content-hugging background width with the full row width
+(`WideChannelPostLayout.backgroundWidth`). The in-feed twin reads
+`OEChatsWideFeedPosts` instead (`searchType == 4`).
+
+The web port marks bubbles rendered in a broadcast channel with an `is-post`
+class at the single bubble choke point (`ChatBubbles.renderMessage`, where
+`is-out`/`is-in` are set; the open chat's `isBroadcast` is Android's
+`isChannelAndNotMegaGroup` check, and service messages are excluded by the
+`message._` gate). A root class `oe-wide-posts` then stretches those bubbles
+over the available width — `--max-width: 100%` plus `width: 100%` on the
+bubble and its content wrapper, the layout the sponsored bubble already uses.
+Albums (`.is-album`) and backgroundless media (`.just-media`) keep their own
+layouts: Android widens those through `getWideChannelPostMediaWidth`, a
+separate media path the web does not reproduce. Toggling is live; the "and
+forwards" of Android's footer is covered by the chat-level check (a forward
+posted in the channel has the channel as its peer).
+
+**CHAT-41 — Wide posts in Feed** resolves to *waiting on the web primitive*:
+Web K has no feed (FEED-01 is an open subsystem), so the setting has nothing
+to act on and gets no UI row. Its exact key `OEChatsWideFeedPosts` still
+enters the record and its EtgBackup alias `wideFeedPosts`
+(`EtgBackup.java:366`) moves out of the unsupported list as a documented
+no-op that round-trips, like `hideCameraTile` before it. `wideChannelPosts`
+also moved out of the unsupported list with a straight boolean mapping.
+
+Tests: `exteralessSettings` (22, the defaults list gained both keys plus the
+live `oe-wide-posts` class assertion), `exteraBackup` (29, one new: both
+aliases' round-trips and non-boolean rejection), `exteralessTabs` (15, the
+Chats row list gained the Channel posts row), `settingsSearchIndex` (8,
+regenerated, 482 entries). Typecheck passes; a standalone sass compile of
+`_chatBubble.scss` passes. The stretched bubble's visual result, its albums
+and RTL are unverified in a browser (a channel with posts is live-session
+content); no server or browser was launched.
+
+## 043 / CHAT-35 — the Repeat action and its confirmation (2026-10-31)
+
+The web repeat action CHAT-35 needs did not exist in Web K, so the packet
+ports it together with its confirmation. Two exact Android keys, both
+NekoConfig: `showRepeat` (bool, default false, `NekoConfig.java:106` — the
+message menu gains the "Repeat" item) and `repeatConfirm` (bool, default
+**true**, `NekoConfig.java:81` — the confirmation before it). Android's
+consumer is `ChatActivity.repeatMessage` (`ChatActivity.java:48419`): with
+the confirm on, a dialog ("Repeat" / `repeatConfirmText`) gates
+`doRepeatMessage`, which forwards the messages **straight back into the same
+chat** — no forward picker; the menu item itself requires a chat the user can
+send in, no noforwards, and a forwardable message (`ChatActivity.java:50707`).
+`repeatAsCopy` (the long-click / noforwards variant) stays out: it is a
+separate Android flag (`showRepeatAsCopy`) and a separate MENU-05 item.
+
+The web port: `repeatMessages` (`src/components/chat/repeatMessages.ts`,
+shaped like `confirmBotCommand`) asks through the shared `confirmationPopup`
+(title "Repeat", Android's `repeatConfirmText` verbatim) and then calls
+`appMessagesManager.forwardMessages({peerId, fromPeerId: peerId, mids})` —
+the manager-level forward, no popup. The message context menu gains the item
+(redo icon, beside Forward, the Android menu position) whose verify reads
+`showRepeat` plus the chat-level conditions: `!noForwards` (already computed
+per menu open), `message._ === 'message'`, not scheduled, `chat.canSend()`;
+outgoing messages are included, as in Android. The menu handler resolves the
+album/grouped mids through the existing `getMidsByMid` like Forward does.
+Rows: "Message menu" → **Repeat** (Android's message-menu composition group,
+the one item of MENU-05's 24 that this packet needs), and the ask-when
+group's **Repeating messages** between AskBeforeCalling and the bot-command
+row, exactly Android's group order. The settings-search deny on "Confirm" is
+avoided with the `Exteraless.AskWhenRepeating` key, per packet 033's
+workaround. Android EtgBackup exports the alias `showRepeatMessageButton`
+(`EtgBackup.java:371`), so it moved out of the unsupported list with a
+boolean mapping; `repeatConfirm` has no alias and none was invented.
+
+Tests: `repeatMessages` (4 new: asks and forwards into the same chat,
+cancellation cancels, confirm-off sends without asking, empty mids no-op),
+`exteralessSettings` (22, the defaults list gained both keys),
+`exteraBackup` (30, one new: the `showRepeatMessageButton` round-trip and
+non-boolean rejection, `repeatConfirm` absent from the export),
+`exteralessTabs` (15, the Chats row list gained both rows),
+`settingsSearchIndex` (8, regenerated, 484 entries). Typecheck passes. The
+live menu over real messages and the actual server forward are unverified in
+a browser; no server or browser was launched.

@@ -8,19 +8,37 @@ the source of truth for completion counts and pending feature IDs.
 
 ## Priority
 
-As of 27 October 2026, Forced MD3 is the active priority: its eight-part
-settings group and base web adaptations exist, but desktop visual review and
-parts of the full player are incomplete. Read [task 028](028-forced-md3.md)
-and the last section of [progress.md](progress.md). Do not mark LOOK-18–23 or
-PLAYER-01 complete merely because their controls exist. Finish or verify the
-remaining work before choosing unrelated features, unless the user changes the
-priority. If verification is unavailable, document the actual blocker and
-continue independent work within the same priority where possible.
+As of 31 October 2026, Forced MD3 remains the pending-priority block: its
+eight-part settings group, the base web adaptations and the MD3 player's
+style settings exist, but desktop visual review is blocked (no browser in
+the autonomous sessions). Read [task 028](028-forced-md3.md) and the last
+sections of [progress.md](progress.md). Do not mark LOOK-18–23 or the PLAYER
+entries complete merely because their controls exist — the player style rows
+(PLAYER-02..05, 08..10, 12, 15..17) are implemented with regression tests
+but their CSS result is unreviewed. PLAYER-01's remaining subsystem (queue,
+lyrics, gestures, block order, cover colors, background modes) waits on
+missing web primitives and was not faked.
+
+The 037–043 packets worked the unchecked Chats/Appearance list instead:
+HIDE-08 (hide the channel plate's gift button), CHAT-21 (disable global
+search in the chat list search), the resolved audit entries HIDE-13 and
+HIDE-11 (the web attach menu has neither a camera tile nor a money item),
+HIDE-05 (hide the "All chats" folder tab with live reshaping and the
+`hideAllChats` backup alias), LOOK-05 + LOOK-08 (centered header title and
+system fonts), CHAT-40 (wide channel posts, with the CHAT-41 verdict), and
+CHAT-35 (the web repeat action with its confirmation — the runbook gained
+the matching acceptance steps). The checklist count is 58/296. Remaining
+browser-free candidates are mostly subsystems: GEN-12 (sort by unread)
+needs surgery in the worker-side dialogs storage ordering (pagination and
+index assumptions), MEDIA-10 (compact GIFs) needs bubble-layout work.
+Other mid-size candidates:
+GEN-01 (translate presentation), CHAT-10/11 (double-tap actions), MENU-03..09
+(menu compositions), FOLD-10..13 (side menu layout). Pick from the checklist
+and verify against the Android source per packet.
 
 After that, pick unchecked items from the checklist, generally small to large.
 Plugins are deferred until the user explicitly asks to resume them. Phone-only
-hardware features are not desktop tasks. The latest recorded checklist count is
-38/296; verify the file instead of assuming this number is still current.
+hardware features are not desktop tasks.
 
 ## Operating constraints
 

@@ -6,7 +6,7 @@
 
 Статус интеграции не означает проверку на пользовательском аккаунте. Подробности и пределы проверок — в [журнале](tasks/progress.md). Проверки только на ПК, короткие и целевые. Плагины отложены; аппаратные Android-исключения перечислены в исходном каталоге и не выданы за выполненные функции.
 
-Current progress: **38 completed entries out of 296**. Update this checklist after each integration; the original catalog remains the source reference.
+Current progress: **58 completed entries out of 296**. Update this checklist after each integration; the original catalog remains the source reference.
 
 Типы: **П** — переносимая логика, **А** — веб-адаптация, **С** — подсистема. Их отсутствие в Web K не является причиной вычёркивать строку.
 
@@ -77,7 +77,7 @@ Current progress: **38 completed entries out of 296**. Update this checklist aft
 - [ ] **LOOK-04 — Свой текст заголовка списка чатов: приложение / username / имя / «Чаты» / собственный** (**А**).
   [`titleTextRow`](https://github.com/exteraless/exteraless/blob/8b7ec40ecada6ab3cfcc24e9f3d8ae262c02de63/TMessagesProj/src/main/java/app/exteraless/settings/OpenExteraAppearanceActivity.java#L127) — У Web K другая шапка; нужен осмысленный веб-вариант, а не автоматическое исключение.
 
-- [ ] **LOOK-05 — Заголовок по центру** (**А**).
+- [x] ~~LOOK-05 — Заголовок по центру~~ (**А**). 041: точный ключ `OEAppearanceCenterTitle` (bool, default false; в Android мигрирован в NaConfig.centerActionBarTitle); заголовки боковых панелей центрируются live-классом (веб-адаптация центрированного ActionBar-заголовка); backup alias `centerTitle` из Android EtgBackup (bool) round-trips.
   [`centerTitleRow`](https://github.com/exteraless/exteraless/blob/8b7ec40ecada6ab3cfcc24e9f3d8ae262c02de63/TMessagesProj/src/main/java/app/exteraless/settings/OpenExteraAppearanceActivity.java#L110)
 
 - [ ] **LOOK-06 — Снег и сезонное оформление шапки** (**А**).
@@ -86,7 +86,7 @@ Current progress: **38 completed entries out of 296**. Update this checklist aft
 - [ ] **LOOK-07 — Круглая или квадратная скруглённая плавающая кнопка** (**П**). **В коде есть реализация или её часть; полноту ещё сверить.**
   [`fabShapeRow`](https://github.com/exteraless/exteraless/blob/8b7ec40ecada6ab3cfcc24e9f3d8ae262c02de63/TMessagesProj/src/main/java/app/exteraless/settings/OpenExteraAppearanceActivity.java#L80)
 
-- [ ] **LOOK-08 — Системный шрифт вместо встроенного** (**А**).
+- [x] ~~LOOK-08 — Системный шрифт вместо встроенного~~ (**А**). 041: точный ключ NekoConfig `TypefaceUseDefault` (bool, default true — Android-дефолт включает системные шрифты); live-класс меняет `--font-regular` на системный стек, веб-семейства serif/mono/rounded сохраняют свои шрифты (в Android переключатель ведёт только основную Roboto); backup alias `useSystemFonts` из Android EtgBackup (bool) round-trips.
   [`useSystemFontsRow`](https://github.com/exteraless/exteraless/blob/8b7ec40ecada6ab3cfcc24e9f3d8ae262c02de63/TMessagesProj/src/main/java/app/exteraless/settings/OpenExteraAppearanceActivity.java#L81)
 
 - [ ] **LOOK-09 — Пружинящее растяжение аватара в профиле** (**А**).
@@ -143,7 +143,7 @@ Current progress: **38 completed entries out of 296**. Update this checklist aft
 - [ ] **LOOK-26 — Заголовки вкладок папок: текст / иконки / смешанный режим** (**П**).
   [`tabTitleStyleRow`](https://github.com/exteraless/exteraless/blob/8b7ec40ecada6ab3cfcc24e9f3d8ae262c02de63/TMessagesProj/src/main/java/app/exteraless/settings/OpenExteraAppearanceActivity.java#L133)
 
-- [ ] **LOOK-27 — Счётчик папок: все / кроме чатов без звука / выключен** (**П**).
+- [x] ~~LOOK-27 — Счётчик папок: все / кроме чатов без звука / выключен~~ (**П**). 034: точный ключ `IgnoreUnreadCount` (int 0..2, default 1), счётчики папок скрываются в режиме off, «все» считает и заглушённые; живое обновление; alias `tabCounter` из Android-бэкапа (bool: true=0, false=2).
   [`tabCounterRow`](https://github.com/exteraless/exteraless/blob/8b7ec40ecada6ab3cfcc24e9f3d8ae262c02de63/TMessagesProj/src/main/java/app/exteraless/settings/OpenExteraAppearanceActivity.java#L134)
 
 ## Папки и навигация приложения
@@ -246,13 +246,13 @@ Current progress: **38 completed entries out of 296**. Update this checklist aft
 - [ ] **CHAT-19 — Нажатие для переключения голосового сообщения и видеокружка** (**А**).
   [`tapToSwitchRecordRow`](https://github.com/exteraless/exteraless/blob/8b7ec40ecada6ab3cfcc24e9f3d8ae262c02de63/TMessagesProj/src/main/java/app/exteraless/settings/OpenExteraChatsActivity.java#L189)
 
-- [ ] **CHAT-20 — Постоянная кнопка вложений при наборе** (**А**).
-  [`keepAttachButtonRow`](https://github.com/exteraless/exteraless/blob/8b7ec40ecada6ab3cfcc24e9f3d8ae262c02de63/TMessagesProj/src/main/java/app/exteraless/settings/OpenExteraChatsActivity.java#L190) — Если Web K уже так работает, зафиксировать эквивалентность вместо пустого переключателя.
+- [x] ~~CHAT-20 — Постоянная кнопка вложений при наборе~~ (**А**). Веб-эквивалент: кнопка вложений в Web K никогда не сменяется при наборе — постоянство уже штатное поведение базы; отдельный переключатель не добавлен (был бы пустым). Ключ `OEChatsKeepAttachButton` остаётся в записи для совместимости.
+  [`keepAttachButtonRow`](https://github.com/exteraless/exteraless/blob/8b7ec40ecada6ab3cfcc24e9f3d8ae262c02de63/TMessagesProj/src/main/java/app/exteraless/settings/OpenExteraChatsActivity.java#L190)
 
-- [ ] **CHAT-21 — Отключение глобального поиска** (**П**).
+- [x] ~~CHAT-21 — Отключение глобального поиска~~ (**П**). 038: точный ключ `DisableGlobalSearch` (NaConfig bool, default false); глобальная (серверная) выдача «Global search» в поиске списка чатов скрывается, свои чаты/контакты и локальные результаты остаются; sponsored-плашки и поиск в чате — вне затрагивания (как в Android); alias в Android EtgBackup отсутствует.
   [`disableGlobalSearchRow`](https://github.com/exteraless/exteraless/blob/8b7ec40ecada6ab3cfcc24e9f3d8ae262c02de63/TMessagesProj/src/main/java/app/exteraless/settings/OpenExteraChatsActivity.java#L182)
 
-- [ ] **CHAT-22 — Область поиска хэштегов по умолчанию: чаты / каналы** (**П**).
+- [x] ~~CHAT-22 — Область поиска хэштегов по умолчанию: чаты / каналы~~ (**П**). 032: точные ключи `SearchHashtagDefaultPageChat`/`Channel` (int 0..2, default 0); поиск по хэштегу открывается на выбранной странице (публичный канал — свой ключ), ручной выбор сохраняется.
   [`searchHashtagChatRow`](https://github.com/exteraless/exteraless/blob/8b7ec40ecada6ab3cfcc24e9f3d8ae262c02de63/TMessagesProj/src/main/java/app/exteraless/settings/OpenExteraChatsActivity.java#L183)
 
 - [x] ~~CHAT-23 — Удаление хвостов пузырей сообщений~~ (**П**). 025: проверены штатный SVG, полное скругление входящих/исходящих, live on/off, RTL, reset и Android backup-alias.
@@ -276,22 +276,22 @@ Current progress: **38 completed entries out of 296**. Update this checklist aft
 - [ ] **CHAT-29 — Запоминание цепочки возвратов после переходов по ответам** (**А**).
   [`rememberAllRepliesRow`](https://github.com/exteraless/exteraless/blob/8b7ec40ecada6ab3cfcc24e9f3d8ae262c02de63/TMessagesProj/src/main/java/app/exteraless/settings/OpenExteraChatsActivity.java#L211)
 
-- [ ] **CHAT-30 — Исправление превью ссылок** (**П**).
-  [`fixLinkPreviewRow`](https://github.com/exteraless/exteraless/blob/8b7ec40ecada6ab3cfcc24e9f3d8ae262c02de63/TMessagesProj/src/main/java/app/exteraless/settings/OpenExteraChatsActivity.java#L288) — Нужно сверить точную семантику с Neko/Na-потребителем.
+- [x] ~~**CHAT-30 — Исправление превью ссылок** (**П**)~~. 036: точный ключ `FixLinkPreview` (NaConfig bool, default true); URL запроса превью переписывается встроенными правилами `PagePreviewRulesHelper` (x.com → fixupx.com и ещё 9, 1:1 с ревизией), отправляемый текст не меняется; удалённый канал правил на закреплённой ревизии отключён в Android — переносятся только встроенные. Проверка превью в браузере — в runbook.
+  [`fixLinkPreviewRow`](https://github.com/exteraless/exteraless/blob/8b7ec40ecada6ab3cfcc24e9f3d8ae262c02de63/TMessagesProj/src/main/java/app/exteraless/settings/OpenExteraChatsActivity.java#L288)
 
-- [ ] **CHAT-31 — Отключение превью ссылок по умолчанию** (**П**).
+- [x] ~~CHAT-31 — Отключение превью ссылок по умолчанию~~ (**П**). 031: точный ключ `DisableLinkPreviewByDefault` (default false); новые сообщения без fetch превью уходят с no_webpage; черновики и правки хранят своё состояние; live-переключение гасит зависший запрос.
   [`disableLinkPreviewRow`](https://github.com/exteraless/exteraless/blob/8b7ec40ecada6ab3cfcc24e9f3d8ae262c02de63/TMessagesProj/src/main/java/app/exteraless/settings/OpenExteraChatsActivity.java#L289)
 
 - [x] ~~CHAT-32 — Ask before opening links: hidden / all / never~~ (**П**). 027: live policy in Chats; native link handlers, ordinary anchors and middle clicks retain their navigation owners. Cancellation and account changes stop pending actions.
   [`openLinkConfirmationRow`](https://github.com/exteraless/exteraless/blob/8b7ec40ecada6ab3cfcc24e9f3d8ae262c02de63/TMessagesProj/src/main/java/app/exteraless/settings/OpenExteraChatsActivity.java#L290)
 
-- [ ] **CHAT-33 — Подтверждение отправки голосового сообщения/видеокружка** (**П**).
+- [x] ~~CHAT-33 — Подтверждение отправки голосового сообщения/видеокружка~~ (**П**). 033: точный ключ `ConfirmAVMessage` (default false); отпускание записи ставит её в существующее состояние превью-паузы, отправка оттуда — явное подтверждение, отмена — сброс.
   [`confirmAVMessageRow`](https://github.com/exteraless/exteraless/blob/8b7ec40ecada6ab3cfcc24e9f3d8ae262c02de63/TMessagesProj/src/main/java/app/exteraless/settings/OpenExteraChatsActivity.java#L292)
 
 - [x] ~~CHAT-34 — Подтверждение звонка~~ (**П**). 022: голосовой/видео, согласие до завершения текущего/старта нового звонка, отмена и режим off.
   [`askBeforeCallRow`](https://github.com/exteraless/exteraless/blob/8b7ec40ecada6ab3cfcc24e9f3d8ae262c02de63/TMessagesProj/src/main/java/app/exteraless/settings/OpenExteraChatsActivity.java#L293)
 
-- [ ] **CHAT-35 — Подтверждение повтора сообщения** (**П**).
+- [x] ~~CHAT-35 — Подтверждение повтора сообщения~~ (**П**). 043: точные ключи NekoConfig `showRepeat` (bool, default false — веб-действие «Repeat» в меню сообщения, `repeatConfirm` (bool, default true — подтверждение перед пересылкой в тот же чат, `ChatActivity.repeatMessage` → `doRepeatMessage`, диалог `repeatConfirmText`); noforwards/недоступные для отправки чаты и service-сообщения исключены; alias `showRepeatMessageButton` из Android EtgBackup (bool) round-trips, для `repeatConfirm` alias нет.
   [`repeatConfirmRow`](https://github.com/exteraless/exteraless/blob/8b7ec40ecada6ab3cfcc24e9f3d8ae262c02de63/TMessagesProj/src/main/java/app/exteraless/settings/OpenExteraChatsActivity.java#L294)
 
 - [x] ~~CHAT-36 — Подтверждение отправки команды боту~~ (**П**). 022: ссылки в сообщениях, меню бота и подсказки после «/»; отмена сохраняет ввод, контекст защищён от смены чата.
@@ -306,11 +306,11 @@ Current progress: **38 completed entries out of 296**. Update this checklist aft
 - [ ] **CHAT-39 — Обновление и возврат встроенного AdGuard-фильтра трекинга** (**А**).
   [`trackingFilterRow`](https://github.com/exteraless/exteraless/blob/8b7ec40ecada6ab3cfcc24e9f3d8ae262c02de63/TMessagesProj/src/main/java/app/exteraless/settings/OpenExteraChatsActivity.java#L299) — Не сводить к одному статическому списку query-параметров, если цель — паритет.
 
-- [ ] **CHAT-40 — Широкие посты и пересланные посты каналов** (**А**).
-  [`wideChannelPostsRow`](https://github.com/exteraless/exteraless/blob/8b7ec40ecada6ab3cfcc24e9f3d8ae262c02de63/TMessagesProj/src/main/java/app/exteraless/settings/OpenExteraChatsActivity.java#L304)
+- [x] ~~CHAT-40 — Широкие посты и пересланные посты каналов~~ (**А**). 042: точный ключ `OEChatsWideChannelPosts` (bool, default false); посты broadcast-канала (включая пересланные в канале — проверка по чату, как `hasWideChannelPostHeader`) растягивают пузырь на всю ширину строки live-классом; альбомы и медиа без подложки сохраняют свою раскладку (отдельный медиа-путь Android не воспроизводится); backup alias `wideChannelPosts` из Android EtgBackup (bool) round-trips.
+  [`wideChannelPostsRow`](https://github.com/exteraless/exteraless/blob/8b7ec40ecada6ab3cfcc24e9f3d8ae262c02de63/TMessagesProj/src/main/java/app/exteraless/settings/OpenExteraChatsActivity.java#L535)
 
-- [ ] **CHAT-41 — Широкие посты в ленте** (**А**).
-  [`wideFeedPostsRow`](https://github.com/exteraless/exteraless/blob/8b7ec40ecada6ab3cfcc24e9f3d8ae262c02de63/TMessagesProj/src/main/java/app/exteraless/settings/OpenExteraChatsActivity.java#L305)
+- [ ] **CHAT-41 — Широкие посты в ленте** (**А**). **Лента (FEED-01) в Web K отсутствует — настройка ждёт веб-примитив; ключ `OEChatsWideFeedPosts` хранится в записи и round-trips в backup как документированный no-op.**
+  [`wideFeedPostsRow`](https://github.com/exteraless/exteraless/blob/8b7ec40ecada6ab3cfcc24e9f3d8ae262c02de63/TMessagesProj/src/main/java/app/exteraless/settings/OpenExteraChatsActivity.java#L536)
 
 ## Настраиваемые меню и кнопки
 
@@ -346,7 +346,7 @@ Current progress: **38 completed entries out of 296**. Update this checklist aft
 - [x] ~~HIDE-01 — Скрытие emoji-статуса/значка Premium в заголовках~~ (**П**). 026: live CSS в заголовках чата/профиля; список чатов, verified/scam-значки и данные статуса сохраняются; backup/reset.
   [`hideActionBarStatusRow`](https://github.com/exteraless/exteraless/blob/8b7ec40ecada6ab3cfcc24e9f3d8ae262c02de63/TMessagesProj/src/main/java/app/exteraless/settings/OpenExteraChatsActivity.java#L362)
 
-- [ ] **HIDE-02 — Скрытие историй в шапке** (**П**).
+- [x] ~~HIDE-02 — Скрытие историй в шапке~~ (**П**). 035: exact NaConfig key `HideStoriesFromHeader` (bool, default true); the dialogs' stories strip is never shown (a root class hides `.stories-list`, live on/off, reset); backup alias `hideStories` from Android EtgBackup (bool) round-trips.
   [`hideStoriesRow`](https://github.com/exteraless/exteraless/blob/8b7ec40ecada6ab3cfcc24e9f3d8ae262c02de63/TMessagesProj/src/main/java/app/exteraless/settings/OpenExteraChatsActivity.java#L363)
 
 - [x] ~~HIDE-03 — Скрытие плавающей кнопки нового чата~~ (**П**). 005: только FAB, альтернативное создание чата через меню.
@@ -355,7 +355,7 @@ Current progress: **38 completed entries out of 296**. Update this checklist aft
 - [ ] **HIDE-04 — Скрытие строки поиска** (**П**).
   [`hideSearchBarRow`](https://github.com/exteraless/exteraless/blob/8b7ec40ecada6ab3cfcc24e9f3d8ae262c02de63/TMessagesProj/src/main/java/app/exteraless/settings/OpenExteraChatsActivity.java#L365) — Нужен альтернативный доступ к поиску с клавиатуры.
 
-- [ ] **HIDE-05 — Скрытие вкладки «Все чаты»** (**П**).
+- [x] ~~HIDE-05 — Скрытие вкладки «Все чаты»~~ (**П**). 040: точный ключ `HideAllTab` (NekoConfig bool, default false); вкладка «Все чаты» уходит из панели папок и боковой рейки, пока остаются настоящие папки (пустая панель не оставляется), выбор живой уходит в первую видимую папку общим кликом, обратное включение восстанавливает вкладку из фильтров; backup alias `hideAllChats` из Android EtgBackup (bool) round-trips.
   [`hideAllChatsRow`](https://github.com/exteraless/exteraless/blob/8b7ec40ecada6ab3cfcc24e9f3d8ae262c02de63/TMessagesProj/src/main/java/app/exteraless/settings/OpenExteraChatsActivity.java#L366)
 
 - [x] ~~HIDE-06 — Скрытие кнопки «Отправить как…»~~ (**П**). 025: кнопка и её отступ скрываются сразу, отправитель сохраняется; команды бота и выбор автора платной реакции остаются доступны; backup/reset.
@@ -364,7 +364,7 @@ Current progress: **38 completed entries out of 296**. Update this checklist aft
 - [x] ~~HIDE-07 — Скрытие боковой кнопки «Поделиться»~~ (**П**). 013: боковая пересылка постов, Saved Messages сохраняются.
   [`hideShareButtonRow`](https://github.com/exteraless/exteraless/blob/8b7ec40ecada6ab3cfcc24e9f3d8ae262c02de63/TMessagesProj/src/main/java/app/exteraless/settings/OpenExteraChatsActivity.java#L203)
 
-- [ ] **HIDE-08 — Скрытие кнопки подарков в каналах** (**П**).
+- [x] ~~HIDE-08 — Скрытие кнопки подарков в каналах~~ (**П**). 037: точный ключ `HideGiftButtonInChannel` (NaConfig bool, default false); gift-кнопка «невозможно писать»-плашки канала (Android BUTTON_GIFT) скрывается live-классом, send-gift в личных чатах не затрагивается; alias в Android EtgBackup отсутствует.
   [`hideGiftButtonRow`](https://github.com/exteraless/exteraless/blob/8b7ec40ecada6ab3cfcc24e9f3d8ae262c02de63/TMessagesProj/src/main/java/app/exteraless/settings/OpenExteraChatsActivity.java#L204)
 
 - [x] ~~HIDE-09 — Скрытие поиска в канале~~ (**П**). 012–013: применяется к открытому broadcast-чату сразу.
@@ -373,14 +373,14 @@ Current progress: **38 completed entries out of 296**. Update this checklist aft
 - [x] ~~HIDE-10 — Скрытие кнопки звонка~~ (**П**). 012–013: применяется к открытому чату сразу, доступность звонка сохраняется.
   [`hideCallButtonRow`](https://github.com/exteraless/exteraless/blob/8b7ec40ecada6ab3cfcc24e9f3d8ae262c02de63/TMessagesProj/src/main/java/app/exteraless/settings/OpenExteraChatsActivity.java#L206)
 
-- [ ] **HIDE-11 — Скрытие финансового пункта меню вложений** (**П**).
-  [`hideMoneyButtonRow`](https://github.com/exteraless/exteraless/blob/8b7ec40ecada6ab3cfcc24e9f3d8ae262c02de63/TMessagesProj/src/main/java/app/exteraless/settings/OpenExteraChatsActivity.java#L207) — Сначала сопоставить с доступным веб-элементом; не добавлять фиктивную строку.
+- [x] ~~HIDE-11 — Скрытие финансового пункта меню вложений~~ (**П**). 039: аудит разрешения — Android скрывает wallet-«Money» в шторке вложений (`ChatAttachAlert.java:7028`, только при walletAvailable); в Web K меню вложений финансового пункта нет, исход равен постоянному штатному поведению. Alias в Android EtgBackup отсутствует — переключатель не добавлялся.
+  [`hideMoneyButtonRow`](https://github.com/exteraless/exteraless/blob/8b7ec40ecada6ab3cfcc24e9f3d8ae262c02de63/TMessagesProj/src/main/java/app/exteraless/settings/OpenExteraChatsActivity.java#L207)
 
 - [x] ~~HIDE-12 — Скрытие реакций отдельно в каналах, группах и личных чатах~~ (**П**). 021: live CSS по типу peer из UI-кэша, без запросов и пересоздания полос реакций; backup/reset.
   [`hideReactionsGroupRow`](https://github.com/exteraless/exteraless/blob/8b7ec40ecada6ab3cfcc24e9f3d8ae262c02de63/TMessagesProj/src/main/java/app/exteraless/settings/OpenExteraChatsActivity.java#L158)
 
-- [ ] **HIDE-13 — Скрытие плитки камеры в меню вложений** (**А**).
-  [`hideCameraTileRow`](https://github.com/exteraless/exteraless/blob/8b7ec40ecada6ab3cfcc24e9f3d8ae262c02de63/TMessagesProj/src/main/java/app/exteraless/settings/OpenExteraChatsActivity.java#L328) — Если в Web K такой плитки нет, отмечается как уже не требуется, не как непереносимая фича.
+- [x] ~~HIDE-13 — Скрытие плитки камеры в меню вложений~~ (**А**). 039: аудит разрешения — Android скрывает плитку камеры в шторке вложений (`ChatAttachAlert.java:6062`, `ChatAttachAlertPhotoLayout.java:159`); в Web K меню вложений плитки камеры нет (моментальная камера — кнопка микрофона, другой элемент). Ключ `OEChatsHideCameraTile` остаётся в записи для совместимости, alias `hideCameraTile` из Android-бэкапа применяется без предупреждения (документированный no-op).
+  [`hideCameraTileRow`](https://github.com/exteraless/exteraless/blob/8b7ec40ecada6ab3cfcc24e9f3d8ae262c02de63/TMessagesProj/src/main/java/app/exteraless/settings/OpenExteraChatsActivity.java#L328)
 
 - [x] ~~HIDE-14 — Скрытие рекомендованных стикеров~~ (**П**). 018: рекомендации в поиске наборов и подсказке пустого окна; явный поиск сохраняется.
   [`disableTrendingRow`](https://github.com/exteraless/exteraless/blob/8b7ec40ecada6ab3cfcc24e9f3d8ae262c02de63/TMessagesProj/src/main/java/app/exteraless/settings/OpenExteraChatsActivity.java#L152)
@@ -447,13 +447,13 @@ Current progress: **38 completed entries out of 296**. Update this checklist aft
 - [ ] **MEDIA-12 — Жест перехода в «картинку в картинке»** (**А**).
   [`swipeToPipRow`](https://github.com/exteraless/exteraless/blob/8b7ec40ecada6ab3cfcc24e9f3d8ae262c02de63/TMessagesProj/src/main/java/app/exteraless/settings/OpenExteraChatsActivity.java#L337) — На ПК также нужна обычная кнопка/горячая клавиша; зависит от PiP API.
 
-- [ ] **MEDIA-13 — Автопауза видео при сворачивании** (**П**).
+- [x] ~~**MEDIA-13 — Автопауза видео при сворачивании** (**П**).~~ 030: точный Neko key `AutoPauseVideo` (default true), пауза по `visibilitychange` в контроллере воспроизведения, переключатель в Chats, совместимый alias `pauseOnMinimizeVideo` в `.extera`; регрессия гоняет настоящий обработчик.
   [`pauseVideoRow`](https://github.com/exteraless/exteraless/blob/8b7ec40ecada6ab3cfcc24e9f3d8ae262c02de63/TMessagesProj/src/main/java/app/exteraless/settings/OpenExteraChatsActivity.java#L343)
 
-- [ ] **MEDIA-14 — Автопауза голосовых при сворачивании** (**П**). **В коде есть реализация или её часть; полноту ещё сверить.**
+- [x] ~~**MEDIA-14 — Автопауза голосовых при сворачивании** (**П**).~~ 030: прежняя проводка `OEChatsPauseVoice` (default false) проверена регрессией на настоящем обработчике контроллера.
   [`pauseVoiceRow`](https://github.com/exteraless/exteraless/blob/8b7ec40ecada6ab3cfcc24e9f3d8ae262c02de63/TMessagesProj/src/main/java/app/exteraless/settings/OpenExteraChatsActivity.java#L344)
 
-- [ ] **MEDIA-15 — Автопауза видеокружков при сворачивании** (**П**). **В коде есть реализация или её часть; полноту ещё сверить.**
+- [x] ~~**MEDIA-15 — Автопауза видеокружков при сворачивании** (**П**).~~ 030: прежняя проводка `OEChatsPauseRound` (default false) проверена регрессией на настоящем обработчике контроллера.
   [`pauseRoundRow`](https://github.com/exteraless/exteraless/blob/8b7ec40ecada6ab3cfcc24e9f3d8ae262c02de63/TMessagesProj/src/main/java/app/exteraless/settings/OpenExteraChatsActivity.java#L345)
 
 - [ ] **MEDIA-16 — Шумоподавление и улучшение голоса** (**А**).
@@ -464,19 +464,19 @@ Current progress: **38 completed entries out of 296**. Update this checklist aft
 
 ## Полный музыкальный плеер и мини-плеер
 
-- [ ] **PLAYER-01 — Full MD3 music player** (**С**). **028: base music popup and existing mini-player adaptation implemented. Full style editor, queue, lyrics and gestures remain pending; see packet 028.**
+- [ ] **PLAYER-01 — Full MD3 music player** (**С**). **028: base music popup and existing mini-player adaptation implemented. 029: the style settings of Android's PlayerStyleEditor are ported into the hub and drive the popup (PLAYER-02..05, 08..10, 12, 15..17). Queue, lyrics, gestures, block order, cover colors and the background modes remain pending; see packets 028 and 029.**
   [`PlayerStyleEditor`](https://github.com/exteraless/exteraless/blob/8b7ec40ecada6ab3cfcc24e9f3d8ae262c02de63/TMessagesProj/src/main/java/app/exteraless/player/PlayerStyleEditor.java#L39) — Подсистема уже реализована в Android; на вебе нужна интеграция с существующим воспроизведением.
 
-- [ ] **PLAYER-02 — Стиль обложки: карточка / широкая / на весь экран / пластинка** (**П**).
+- [ ] **PLAYER-02 — Стиль обложки: карточка / широкая / на весь экран / пластинка** (**П**). **029: all four styles wired into the popup as CSS adaptations (card/wide 6:5/full backdrop/disc); desktop visual review pending.**
   [`OEPlayerCoverCard`](https://github.com/exteraless/exteraless/blob/8b7ec40ecada6ab3cfcc24e9f3d8ae262c02de63/TMessagesProj/src/main/java/app/exteraless/player/PlayerStyleEditor.java#L73)
 
-- [ ] **PLAYER-03 — Размер обложки** (**П**).
+- [ ] **PLAYER-03 — Размер обложки** (**П**). **029: 60..100% fraction drives the card and disc covers; desktop visual review pending.**
   [`OEPlayerCoverSize`](https://github.com/exteraless/exteraless/blob/8b7ec40ecada6ab3cfcc24e9f3d8ae262c02de63/TMessagesProj/src/main/java/app/exteraless/player/PlayerStyleEditor.java#L76)
 
-- [ ] **PLAYER-04 — Радиус обложки** (**П**).
+- [ ] **PLAYER-04 — Радиус обложки** (**П**). **029: 0..48 radius applies to the card cover only, like refreshVisibility; desktop visual review pending.**
   [`OEPlayerCoverRadius`](https://github.com/exteraless/exteraless/blob/8b7ec40ecada6ab3cfcc24e9f3d8ae262c02de63/TMessagesProj/src/main/java/app/exteraless/player/PlayerStyleEditor.java#L78)
 
-- [ ] **PLAYER-05 — Вращение пластинки во время воспроизведения** (**П**).
+- [ ] **PLAYER-05 — Вращение пластинки во время воспроизведения** (**П**). **029: disc spins 16s/turn while playing, off at reduced motion; desktop visual review pending.**
   [`OEPlayerDiscSpin`](https://github.com/exteraless/exteraless/blob/8b7ec40ecada6ab3cfcc24e9f3d8ae262c02de63/TMessagesProj/src/main/java/app/exteraless/player/PlayerStyleEditor.java#L80)
 
 - [ ] **PLAYER-06 — Переключение треков жестом по обложке** (**А**).
@@ -485,19 +485,19 @@ Current progress: **38 completed entries out of 296**. Update this checklist aft
 - [ ] **PLAYER-07 — Продолжение обложки вниз** (**П**).
   [`OEPlayerCoverExtend`](https://github.com/exteraless/exteraless/blob/8b7ec40ecada6ab3cfcc24e9f3d8ae262c02de63/TMessagesProj/src/main/java/app/exteraless/player/PlayerStyleEditor.java#L82)
 
-- [ ] **PLAYER-08 — Выравнивание названия трека** (**П**).
+- [ ] **PLAYER-08 — Выравнивание названия трека** (**П**). **029: start (Android default) / centered alignment wired; desktop visual review pending.**
   [`OEPlayerAlignStart`](https://github.com/exteraless/exteraless/blob/8b7ec40ecada6ab3cfcc24e9f3d8ae262c02de63/TMessagesProj/src/main/java/app/exteraless/player/PlayerStyleEditor.java#L85)
 
-- [ ] **PLAYER-09 — Размер названия** (**П**).
+- [ ] **PLAYER-09 — Размер названия** (**П**). **029: small/medium/large 22/26/31 and 15/16/17 title/artist sizes; desktop visual review pending.**
   [`OEPlayerSizeSmall`](https://github.com/exteraless/exteraless/blob/8b7ec40ecada6ab3cfcc24e9f3d8ae262c02de63/TMessagesProj/src/main/java/app/exteraless/player/PlayerStyleEditor.java#L88)
 
-- [ ] **PLAYER-10 — Положение названия: над обложкой / под ней** (**П**).
+- [ ] **PLAYER-10 — Положение названия: над обложкой / под ней** (**П**). **029: above/below follows refreshVisibility (framed styles only); desktop visual review pending.**
   [`OEPlayerTitleBelow`](https://github.com/exteraless/exteraless/blob/8b7ec40ecada6ab3cfcc24e9f3d8ae262c02de63/TMessagesProj/src/main/java/app/exteraless/player/PlayerStyleEditor.java#L90)
 
 - [ ] **PLAYER-11 — Кнопка добавления трека в профиль** (**А**).
   [`OEPlayerShowLike`](https://github.com/exteraless/exteraless/blob/8b7ec40ecada6ab3cfcc24e9f3d8ae262c02de63/TMessagesProj/src/main/java/app/exteraless/player/PlayerStyleEditor.java#L92) — Зависит от поддержки музыки профиля в движке Web K.
 
-- [ ] **PLAYER-12 — Показ источника воспроизведения** (**П**).
+- [ ] **PLAYER-12 — Показ источника воспроизведения** (**П**). **029: 'Playing from chat' line with the real peer title, hidden-in-place when off; desktop visual review pending.**
   [`OEPlayerShowSource`](https://github.com/exteraless/exteraless/blob/8b7ec40ecada6ab3cfcc24e9f3d8ae262c02de63/TMessagesProj/src/main/java/app/exteraless/player/PlayerStyleEditor.java#L93)
 
 - [ ] **PLAYER-13 — Порядок блоков: прогресс / управление / действия** (**П**).
@@ -506,13 +506,13 @@ Current progress: **38 completed entries out of 296**. Update this checklist aft
 - [ ] **PLAYER-14 — Показ скорости, текста и очереди** (**П**).
   [`OEPlayerShowActions`](https://github.com/exteraless/exteraless/blob/8b7ec40ecada6ab3cfcc24e9f3d8ae262c02de63/TMessagesProj/src/main/java/app/exteraless/player/PlayerStyleEditor.java#L100)
 
-- [ ] **PLAYER-15 — Показ перемешивания и повтора** (**П**).
+- [ ] **PLAYER-15 — Показ перемешивания и повтора** (**П**). **029: repeat control hides when off; shuffle has no web counterpart (controller lacks it), so the port is partial.**
   [`OEPlayerShowModes`](https://github.com/exteraless/exteraless/blob/8b7ec40ecada6ab3cfcc24e9f3d8ae262c02de63/TMessagesProj/src/main/java/app/exteraless/player/PlayerStyleEditor.java#L101)
 
-- [ ] **PLAYER-16 — Волна на полосе прогресса** (**П**).
+- [ ] **PLAYER-16 — Волна на полосе прогресса** (**П**). **029: WavyProgressLine ports the WavySeekBar wave (amplitude 4, wavelength 34, 6 rad/s) over the existing seek owner; desktop visual review pending.**
   [`OEPlayerShowWave`](https://github.com/exteraless/exteraless/blob/8b7ec40ecada6ab3cfcc24e9f3d8ae262c02de63/TMessagesProj/src/main/java/app/exteraless/player/PlayerStyleEditor.java#L102)
 
-- [ ] **PLAYER-17 — Размер кнопок управления** (**П**).
+- [ ] **PLAYER-17 — Размер кнопок управления** (**П**). **029: compact/normal/large 0.84/1/1.14 scale of the transport; desktop visual review pending.**
   [`OEPlayerControlsCompact`](https://github.com/exteraless/exteraless/blob/8b7ec40ecada6ab3cfcc24e9f3d8ae262c02de63/TMessagesProj/src/main/java/app/exteraless/player/PlayerStyleEditor.java#L106)
 
 - [ ] **PLAYER-18 — Цвета из обложки или из темы** (**П**).
@@ -905,7 +905,7 @@ Current progress: **38 completed entries out of 296**. Update this checklist aft
 - [ ] **OTHER-02 — Настройка отчётов о сбоях** (**А**).
   [`crashReportsRow`](https://github.com/exteraless/exteraless/blob/8b7ec40ecada6ab3cfcc24e9f3d8ae262c02de63/TMessagesProj/src/main/java/app/exteraless/settings/OpenExteraOtherActivity.java#L70) — Пункт присутствует в экране; комментарии исходника указывают на проблемы Android Crashlytics. Работоспособность потребителя не подтверждена. Для веба нужен собственный механизм диагностики.
 
-- [ ] **OTHER-03 — Сброс настроек клиента** (**П**).
+- [x] ~~OTHER-03 — Сброс настроек клиента~~ (**П**). Сброс OE-записи и единственной родной настройки (showArchiveInChatList) с подтверждением; покрыт регрессией и fixture-проверкой (1440×900, LTR/RTL). Полный `resetAllSettings` Android с перезапуском приложения на вебе не воспроизводится и не заявляется.
   [`resetSettingsRow`](https://github.com/exteraless/exteraless/blob/8b7ec40ecada6ab3cfcc24e9f3d8ae262c02de63/TMessagesProj/src/main/java/app/exteraless/settings/OpenExteraOtherActivity.java#L94)
 
 - [ ] **OTHER-04 — Локальное отображение Premium-возможностей** (**А**).

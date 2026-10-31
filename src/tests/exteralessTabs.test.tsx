@@ -197,7 +197,7 @@ describe('the exteraless Appearance tab', () => {
     document.body.replaceChildren();
   });
 
-  it('renders the two wired sliders with the Android ranges and defaults', () => {
+  it('renders the wired sliders with the Android ranges and defaults', () => {
     const sliders = [...document.querySelectorAll<HTMLElement>('.range-setting-selector')].map((el) => ({
       name: el.dataset.name,
       value: +el.dataset.value,
@@ -206,9 +206,41 @@ describe('the exteraless Appearance tab', () => {
     }));
 
     expect(sliders).toEqual([
+      // * the player-style rows of Android's PlayerStyleEditor come right after
+      // * the MD3 group; the cover is a card by default, so only its style
+      // * selector shows and the size and radius sliders follow their
+      // * refreshVisibility
+      {name: 'Exteraless.Player.Cover.Style', value: 0, min: 0, max: 3},
+      {name: 'Exteraless.Player.Cover.Size', value: 100, min: 60, max: 100},
+      {name: 'Exteraless.Player.Cover.Radius', value: 28, min: 0, max: 48},
+      {name: 'Exteraless.Player.TitleAlign', value: 0, min: 0, max: 1},
+      {name: 'Exteraless.Player.TitleSize', value: 1, min: 0, max: 2},
+      {name: 'Exteraless.Player.TitlePosition', value: 0, min: 0, max: 1},
+      {name: 'Exteraless.Player.ControlsSize', value: 1, min: 0, max: 2},
+      {name: 'Exteraless.TabCounter', value: 1, min: 0, max: 2},
       {name: 'Exteraless.AvatarCorners', value: OE_DEFAULTS.OEAppearanceAvatarCorners, min: 0, max: 28},
       {name: 'Exteraless.SectionRadius', value: OE_DEFAULTS.OEAppearanceSectionRadius, min: 0, max: 28}
     ]);
+  });
+
+  it('shows the player rows their cover style makes visible', async() => {
+    const sliderNames = () => [...document.querySelectorAll<HTMLElement>('.range-setting-selector')]
+    .map((el) => el.dataset.name);
+    const rowTitles = () => [...document.querySelectorAll<HTMLElement>('.row .row-title')].map((el) => el.textContent);
+
+    // * the card shows the radius slider and no spin toggle
+    expect(sliderNames()).toContain('Exteraless.Player.Cover.Radius');
+    expect(rowTitles()).not.toContain('Exteraless.Player.DiscSpin');
+
+    // * the disc drops the radius slider and shows the spin toggle, and the
+    // * size slider stays for both framed styles
+    setExteralessSetting('OEPlayerCoverStyle', 3);
+    await vi.waitFor(() => {
+      expect(sliderNames()).not.toContain('Exteraless.Player.Cover.Radius');
+      expect(sliderNames()).toContain('Exteraless.Player.Cover.Size');
+      expect(rowTitles()).toContain('Exteraless.Player.DiscSpin');
+    });
+    setExteralessSetting('OEPlayerCoverStyle', 0);
   });
 
   it('moves a slider into the store', () => {
@@ -249,6 +281,19 @@ describe('the exteraless Appearance tab', () => {
 
     setExteralessSetting('OEAppearanceSingleCornerRadius', OE_DEFAULTS.OEAppearanceSingleCornerRadius);
   });
+
+  it('renders the centered title and system font rows of Android\'s appearance group', () => {
+    const rowTitles = () => [...document.querySelectorAll<HTMLElement>('.row .row-title')].map((el) => el.textContent);
+    expect(rowTitles()).toContain('Exteraless.CenterTitle');
+    expect(rowTitles()).toContain('Exteraless.UseSystemFonts');
+
+    const systemFontsRow = [...document.querySelectorAll<HTMLElement>('.row')]
+    .find((row) => row.textContent.includes('Exteraless.UseSystemFonts'));
+    systemFontsRow.querySelector<HTMLInputElement>('input').click();
+    expect(useExteralessSettings()[0].TypefaceUseDefault).toBe(!OE_DEFAULTS.TypefaceUseDefault);
+
+    setExteralessSetting('TypefaceUseDefault', OE_DEFAULTS.TypefaceUseDefault);
+  });
 });
 
 describe('the exteraless Chats tab', () => {
@@ -273,24 +318,35 @@ describe('the exteraless Chats tab', () => {
       'Exteraless.DateOfForwardedMsg',
       'Exteraless.MessageTimeDetails',
       'Exteraless.HideShareButton',
+      'Exteraless.HideGiftButton',
       'Exteraless.HideSendAsPeer',
       'Exteraless.DisableGreetingSticker',
       'Exteraless.DisableTrending',
       'Exteraless.HideGroupSticker',
       'Exteraless.DeleteChatForBothSides',
+      'Exteraless.AskBeforeAVMessage',
       'Exteraless.AskBeforeCalling',
+      'Exteraless.AskWhenRepeating',
       'Exteraless.AskBeforeBotCommand',
       'Exteraless.DontAutoPlayNextVoice',
       'Exteraless.HidePremiumSection',
       'Exteraless.HideHelpSection',
+      'Exteraless.HideStories',
       'Exteraless.HideFloatingButton',
+      'Exteraless.HideAllChats',
       'Exteraless.ReplyColors',
       'Exteraless.ReplyEmoji',
       'Exteraless.ReplyBackground',
       'Exteraless.ShowResultsBeforeVoting',
       'Exteraless.AlwaysSendInHD',
+      'Exteraless.FixLinkPreview',
+      'Exteraless.DisableLinkPreviewByDefault',
+      'Exteraless.DisableGlobalSearch',
       'Exteraless.StripTrackingOnOpen',
       'Exteraless.StripTrackingOnPaste',
+      'Exteraless.WideChannelPosts',
+      'Exteraless.MenuRepeat',
+      'Exteraless.PauseVideo',
       'Exteraless.PauseVoice',
       'Exteraless.PauseRound',
       'Exteraless.HideReactions.Channels',

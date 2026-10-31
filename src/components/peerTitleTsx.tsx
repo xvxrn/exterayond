@@ -13,6 +13,8 @@ export const PeerTitleTsx = (props: {
   username?: boolean,
   limitSymbols?: number,
   withIcons?: boolean,
+  /** Render the user's own peer as Saved Messages. */
+  meAsNotes?: boolean,
   onClick?: () => void
 }) => {
   const peerTitle = new PeerTitle();
@@ -30,7 +32,8 @@ export const PeerTitleTsx = (props: {
         onlyFirstName: props.onlyFirstName,
         username: props.username,
         limitSymbols: props.limitSymbols,
-        withIcons: props.withIcons
+        withIcons: props.withIcons,
+        meAsNotes: props.meAsNotes
       });
       if(props.onClick) {
         attachClickEvent(peerTitle.element, props.onClick, {listenerSetter});

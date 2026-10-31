@@ -15,11 +15,28 @@
   padding: 8px 24px 24px;
 }
 
+.source {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  width: 100%;
+  font-size: var(--font-size-12);
+  color: var(--secondary-text-color);
+  overflow: hidden;
+  white-space: nowrap;
+
+  // * Android keeps the source's space in the header (View.INVISIBLE)
+  &.hidden {
+    visibility: hidden;
+  }
+}
+
 .cover {
   position: relative;
-  width: min(280px, 100%);
+  width: calc(min(280px, 100%) * var(--oe-player-cover-size, 1));
   aspect-ratio: 1;
-  border-radius: 28px;
+  border-radius: var(--oe-player-cover-radius, 28px);
   overflow: hidden;
   display: grid;
   place-items: center;
@@ -40,20 +57,25 @@
 }
 
 .metadata {
-  text-align: center;
+  text-align: start;
   width: 100%;
   overflow-wrap: anywhere;
 
   h2 {
-    font-size: 22px;
+    font-size: var(--oe-player-title-size, 26px);
     line-height: 1.25;
     margin: 0 0 8px;
   }
 
   p {
     color: var(--secondary-text-color);
+    font-size: var(--oe-player-artist-size, 16px);
     margin: 0;
   }
+}
+
+.is-title-center .metadata {
+  text-align: center;
 }
 
 .timeline {
@@ -84,6 +106,10 @@
   display: flex;
   align-items: center;
   gap: 24px;
+
+  :global(.btn-icon) {
+    transform: scale(var(--oe-player-controls-scale, 1));
+  }
 }
 
 .play {
@@ -97,4 +123,60 @@
 .active {
   color: var(--primary-color);
   background: color-mix(in srgb, var(--primary-color) 16%, var(--surface-color));
+}
+
+// * Android `PlayerSheet.applyStyle` cover styles: only the card keeps its
+// * radius, the disc is a circle, wide is a full-width 6:5 plate and full
+// * puts the artwork behind the whole dialog
+.is-wide .cover {
+  width: 100%;
+  aspect-ratio: 6 / 5;
+  max-height: 320px;
+  border-radius: 0;
+}
+
+.is-disc .cover {
+  border-radius: 50%;
+}
+
+@include animation-level-global(2) {
+  .is-disc.is-spinning .artwork {
+    animation: md3-player-spin var(--oe-player-spin-duration, 16s) linear infinite;
+  }
+}
+
+@keyframes md3-player-spin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.is-full {
+  min-height: min(480px, 70vh);
+  justify-content: flex-end;
+
+  .cover {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    border-radius: 0;
+
+    // * a light scrim keeps the blocks legible over the artwork, where
+    // * Android draws its CoverScrim
+    &:after {
+      content: ' ';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(to top, color-mix(in srgb, var(--surface-color) 88%, transparent), transparent 45%);
+    }
+  }
+
+  > :global(*):not(.cover) {
+    position: relative;
+    z-index: 1;
+  }
 }

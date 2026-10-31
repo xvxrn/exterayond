@@ -5,6 +5,10 @@ import CheckboxFieldTsx from '@components/checkboxFieldTsx';
 import {i18n} from '@lib/langPack';
 import {
   OE_AVATAR_CORNERS_MAX,
+  OE_PLAYER_COVER_RADIUS_MAX,
+  OE_PLAYER_COVER_SIZE_MAX,
+  OE_PLAYER_COVER_SIZE_MIN,
+  getPlayerCoverStyle,
   getMd3StyleCount,
   setAllMd3Styles,
   useExteralessSettings
@@ -14,7 +18,9 @@ import {
  * The Appearance category of the exteraless Preferences hub. Every control is
  * a ported Android setting with its behavior wired into Web K (the CSS choke
  * points named in src/stores/exteralessSettings.ts); ranges, defaults and
- * labels follow `OpenExteraAppearanceActivity`.
+ * labels follow `OpenExteraAppearanceActivity`. The player-style group ports
+ * the rows of Android's `PlayerStyleEditor`; the visibility of dependent rows
+ * follows its `refreshVisibility`.
  */
 const ExteralessAppearance = () => {
   const [exteralessSettings, setExteralessSetting] = useExteralessSettings();
@@ -29,6 +35,15 @@ const ExteralessAppearance = () => {
     ['OEAppearanceMd3Player', 'Exteraless.Md3.Player'],
     ['OEAppearanceMd3MiniPlayer', 'Exteraless.Md3.MiniPlayer']
   ] as const;
+
+  // * Android PlayerStyleEditor.refreshVisibility: size for the framed covers,
+  // * radius for the card only, spin and title position for the framed ones.
+  // * Reads stay inside the JSX so the rows follow a style change live
+  const coverStyle = () => getPlayerCoverStyle();
+  const framedCover = () => {
+    const style = coverStyle();
+    return style === 0 || style === 3;
+  };
 
   const avatarCornersLabel = (value: number) => {
     if(value === OE_AVATAR_CORNERS_MAX) {
@@ -68,6 +83,134 @@ const ExteralessAppearance = () => {
             </Row>
           ))}
         </details>
+      </Section>
+      <Section name="Exteraless.Player.Cover" caption="Exteraless.Player.StyleInfo">
+        <RangeSettingSelector
+          textLeft={i18n('Exteraless.Player.Cover.Style')}
+          textRight={(value) => i18n(value === 0 ? 'Exteraless.Player.Cover.Card' : value === 1 ? 'Exteraless.Player.Cover.Wide' : value === 2 ? 'Exteraless.Player.Cover.Full' : 'Exteraless.Player.Cover.Disc')}
+          step={1}
+          value={exteralessSettings.OEPlayerCoverStyle}
+          minValue={0}
+          maxValue={3}
+          onChange={(value) => setExteralessSetting('OEPlayerCoverStyle', value)}
+        />
+        {framedCover() && (
+          <RangeSettingSelector
+            textLeft={i18n('Exteraless.Player.Cover.Size')}
+            textRight={(value) => value + '%'}
+            step={5}
+            value={exteralessSettings.OEPlayerCoverSize}
+            minValue={OE_PLAYER_COVER_SIZE_MIN}
+            maxValue={OE_PLAYER_COVER_SIZE_MAX}
+            onChange={(value) => setExteralessSetting('OEPlayerCoverSize', value)}
+          />
+        )}
+        {coverStyle() === 0 && (
+          <RangeSettingSelector
+            textLeft={i18n('Exteraless.Player.Cover.Radius')}
+            textRight={(value) => '' + value}
+            step={2}
+            value={exteralessSettings.OEPlayerCoverRadius}
+            minValue={0}
+            maxValue={OE_PLAYER_COVER_RADIUS_MAX}
+            onChange={(value) => setExteralessSetting('OEPlayerCoverRadius', value)}
+          />
+        )}
+        {coverStyle() === 3 && (
+          <Row>
+            <Row.CheckboxFieldToggle>
+              <CheckboxFieldTsx
+                toggle
+                checked={exteralessSettings.OEPlayerDiscSpin}
+                onChange={(value) => setExteralessSetting('OEPlayerDiscSpin', value)}
+              />
+            </Row.CheckboxFieldToggle>
+            <Row.Title>{i18n('Exteraless.Player.DiscSpin')}</Row.Title>
+          </Row>
+        )}
+      </Section>
+      <Section name="Exteraless.Player.Title">
+        <RangeSettingSelector
+          textLeft={i18n('Exteraless.Player.TitleAlign')}
+          textRight={(value) => i18n(value === 0 ? 'Exteraless.Player.Align.Start' : 'Exteraless.Player.Align.Center')}
+          step={1}
+          value={exteralessSettings.OEPlayerTitleAlign}
+          minValue={0}
+          maxValue={1}
+          onChange={(value) => setExteralessSetting('OEPlayerTitleAlign', value)}
+        />
+        <RangeSettingSelector
+          textLeft={i18n('Exteraless.Player.TitleSize')}
+          textRight={(value) => i18n(value === 0 ? 'Exteraless.Player.Size.Small' : value === 1 ? 'Exteraless.Player.Size.Medium' : 'Exteraless.Player.Size.Large')}
+          step={1}
+          value={exteralessSettings.OEPlayerTitleSize}
+          minValue={0}
+          maxValue={2}
+          onChange={(value) => setExteralessSetting('OEPlayerTitleSize', value)}
+        />
+        {framedCover() && (
+          <RangeSettingSelector
+            textLeft={i18n('Exteraless.Player.TitlePosition')}
+            textRight={(value) => i18n(value === 0 ? 'Exteraless.Player.Title.Below' : 'Exteraless.Player.Title.Above')}
+            step={1}
+            value={exteralessSettings.OEPlayerTitleAbove ? 1 : 0}
+            minValue={0}
+            maxValue={1}
+            onChange={(value) => setExteralessSetting('OEPlayerTitleAbove', value === 1)}
+          />
+        )}
+        <Row>
+          <Row.CheckboxFieldToggle>
+            <CheckboxFieldTsx
+              toggle
+              checked={exteralessSettings.OEPlayerShowSource}
+              onChange={(value) => setExteralessSetting('OEPlayerShowSource', value)}
+            />
+          </Row.CheckboxFieldToggle>
+          <Row.Title>{i18n('Exteraless.Player.ShowSource')}</Row.Title>
+        </Row>
+      </Section>
+      <Section name="Exteraless.Player.Layout" caption="Exteraless.Player.LayoutInfo">
+        <Row>
+          <Row.CheckboxFieldToggle>
+            <CheckboxFieldTsx
+              toggle
+              checked={exteralessSettings.OEPlayerShowModes}
+              onChange={(value) => setExteralessSetting('OEPlayerShowModes', value)}
+            />
+          </Row.CheckboxFieldToggle>
+          <Row.Title>{i18n('Exteraless.Player.ShowModes')}</Row.Title>
+        </Row>
+        <Row>
+          <Row.CheckboxFieldToggle>
+            <CheckboxFieldTsx
+              toggle
+              checked={exteralessSettings.OEPlayerWavy}
+              onChange={(value) => setExteralessSetting('OEPlayerWavy', value)}
+            />
+          </Row.CheckboxFieldToggle>
+          <Row.Title>{i18n('Exteraless.Player.ShowWave')}</Row.Title>
+        </Row>
+        <RangeSettingSelector
+          textLeft={i18n('Exteraless.Player.ControlsSize')}
+          textRight={(value) => i18n(value === 0 ? 'Exteraless.Player.Controls.Compact' : value === 1 ? 'Exteraless.Player.Controls.Normal' : 'Exteraless.Player.Controls.Large')}
+          step={1}
+          value={exteralessSettings.OEPlayerControlsSize}
+          minValue={0}
+          maxValue={2}
+          onChange={(value) => setExteralessSetting('OEPlayerControlsSize', value)}
+        />
+      </Section>
+      <Section name="Exteraless.TabCounter" caption="Exteraless.TabCounter.Info">
+        <RangeSettingSelector
+          textLeft={i18n('Exteraless.TabCounter')}
+          textRight={(value) => i18n(value === 0 ? 'Exteraless.TabCounter.All' : value === 1 ? 'Exteraless.TabCounter.Unmuted' : 'Exteraless.TabCounter.Off')}
+          step={1}
+          value={exteralessSettings.IgnoreUnreadCount}
+          minValue={0}
+          maxValue={2}
+          onChange={(value) => setExteralessSetting('IgnoreUnreadCount', value)}
+        />
       </Section>
       <Section name="Exteraless.AvatarCorners">
         <div class="exteraless-avatar-preview">
@@ -148,6 +291,27 @@ const ExteralessAppearance = () => {
           </Row.CheckboxFieldToggle>
           <Row.Title>{i18n('Exteraless.SquareFab')}</Row.Title>
           <Row.Subtitle>{i18n('Exteraless.SquareFab.Info')}</Row.Subtitle>
+        </Row>
+        <Row>
+          <Row.CheckboxFieldToggle>
+            <CheckboxFieldTsx
+              toggle
+              checked={exteralessSettings.OEAppearanceCenterTitle}
+              onChange={(value) => setExteralessSetting('OEAppearanceCenterTitle', value)}
+            />
+          </Row.CheckboxFieldToggle>
+          <Row.Title>{i18n('Exteraless.CenterTitle')}</Row.Title>
+        </Row>
+        <Row>
+          <Row.CheckboxFieldToggle>
+            <CheckboxFieldTsx
+              toggle
+              checked={exteralessSettings.TypefaceUseDefault}
+              onChange={(value) => setExteralessSetting('TypefaceUseDefault', value)}
+            />
+          </Row.CheckboxFieldToggle>
+          <Row.Title>{i18n('Exteraless.UseSystemFonts')}</Row.Title>
+          <Row.Subtitle>{i18n('Exteraless.UseSystemFonts.Info')}</Row.Subtitle>
         </Row>
         <Row>
           <Row.CheckboxFieldToggle>

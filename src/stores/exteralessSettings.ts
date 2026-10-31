@@ -34,6 +34,12 @@ export const OE_FAB_SQUIRCLE_RADIUS = '28.571%';
 export const OE_STICKER_SHAPE_ROUNDED_RADIUS = '6px';
 export const OE_STICKER_SHAPE_BUBBLE_RADIUS = '15px';
 
+/** Android `PlayerStyle.COVER_SIZE_MIN`/`COVER_SIZE_MAX` (a percentage). */
+export const OE_PLAYER_COVER_SIZE_MIN = 60;
+export const OE_PLAYER_COVER_SIZE_MAX = 100;
+/** Android `PlayerStyle.COVER_RADIUS_MAX`. */
+export const OE_PLAYER_COVER_RADIUS_MAX = 48;
+
 export const OE_DEFAULTS = {
   OEAppearanceAvatarCorners: OE_AVATAR_CORNERS_MAX,
   OEAppearanceSectionRadius: OE_SECTION_RADIUS_STOCK,
@@ -44,14 +50,46 @@ export const OE_DEFAULTS = {
   OEAppearanceSenderMiniAvatars: true,
   OEAppearanceCustomThemes: true,
   OEAppearanceGlassMessageMenu: true,
+  /**
+   * Android AppearanceConfig.centerTitle, migrated to NaConfig's
+   * centerActionBarTitle: the sidebar header title is centered.
+   */
+  OEAppearanceCenterTitle: false,
+  /**
+   * Android NekoConfig.typeface (`TypefaceUseDefault`, default true): the
+   * interface uses the platform's fonts instead of the bundled Roboto.
+   */
+  TypefaceUseDefault: true,
   OEAppearanceNewChatHeaderStyle: false,
   OEAppearanceNewLoadingStyle: true,
   SliderStyle: 2,
   SwitchStyle: 2,
   OEAppearanceNewNavigationBarStyle: false,
   OEAppearanceM3ListItems: false,
+  /**
+   * Android NaConfig folder-tab counter mode: 0 all chats, 1 except muted
+   * (the effective default through NaConfig's legacy preference), 2 off.
+   */
+  IgnoreUnreadCount: 1,
   OEAppearanceMd3Player: true,
   OEAppearanceMd3MiniPlayer: true,
+  /**
+   * Android `PlayerStyleEditor` keys (`AppearanceConfig.kt` 281–323). Cover
+   * style: 0 card, 1 wide, 2 full, 3 disc; title align: 0 start, 1 centered;
+   * title size: 0 small, 1 medium, 2 large; controls size: 0 compact,
+   * 1 normal, 2 large. Android EtgBackup exports none of them.
+   */
+  OEPlayerCoverStyle: 0,
+  OEPlayerCoverSize: 100,
+  OEPlayerCoverRadius: 28,
+  OEPlayerDiscSpin: true,
+  OEPlayerTitleAlign: 0,
+  OEPlayerTitleSize: 1,
+  OEPlayerTitleAbove: false,
+  OEPlayerShowModes: true,
+  OEPlayerShowSource: true,
+  OEPlayerWavy: true,
+  OEPlayerControlsSize: 1,
   OEChatsRemoveMessageTail: true,
   OEChatsHideCallButton: false,
   OEChatsHideChannelSearchButton: false,
@@ -64,6 +102,11 @@ export const OE_DEFAULTS = {
   /** Android NaConfig keys and defaults. */
   UseEditedIcon: true,
   HideShareButtonInChannel: false,
+  /**
+   * Android NaConfig.HideGiftButtonInChannel: the channel "can't write" plate
+   * loses its gift button (ChatActivity's bottomChannelButtonsLayout BUTTON_GIFT).
+   */
+  HideGiftButtonInChannel: false,
   /** Android NaConfig: 0 hidden, 1 Telegram API, 2 Bot API. */
   IdDcType: 1,
   DontSendGreetingSticker: true,
@@ -75,18 +118,73 @@ export const OE_DEFAULTS = {
   hideSendAsChannel: false,
   /** Android NaConfig; only preselects an available revoke checkbox. */
   DeleteChatForBothSides: true,
+  /** Android NekoConfig.confirmAVMessage: a recording's release pauses for preview instead of sending. */
+  ConfirmAVMessage: false,
   AskBeforeCalling: true,
+  /** Android NekoConfig.repeatConfirm: the "Repeat" action asks before it forwards (default true). */
+  repeatConfirm: true,
+  /** Android NekoConfig.showRepeat: the message menu gains the "Repeat" action. */
+  showRepeat: false,
   DisableClickCommandToSend: false,
   DateOfForwardedMsg: false,
   ShowTimeHint: false,
   ConfirmAllLinks: false,
   SkipOpenLinkConfirm: false,
+  /** Android NekoConfig.disableLinkPreviewByDefault: fresh compositions skip the preview fetch and send with no_webpage. */
+  DisableLinkPreviewByDefault: false,
+  /**
+   * Android NaConfig.FixLinkPreview (default true): the URL used to fetch the
+   * composer's link preview is rewritten by the page preview rules
+   * (x.com → fixupx.com); the sent text is never rewritten.
+   */
+  FixLinkPreview: true,
+  /**
+   * Android NaConfig.HideStoriesFromHeader (default true): the dialogs' stories
+   * strip in the chat list header is never shown (DialogsActivity.updateStoriesVisibility).
+   */
+  HideStoriesFromHeader: true,
+  /**
+   * Android NaConfig.DisableGlobalSearch (default false): the chat list search
+   * shows no server-wide results — only the user's own chats, contacts and
+   * their messages (DialogsSearchAdapter.globalResultsAllowed).
+   */
+  DisableGlobalSearch: false,
+  /**
+   * Android NekoConfig.hideAllTab (default false): the folder tab bar drops
+   * the "All chats" tab while real folders remain (FilterTabsView).
+   */
+  HideAllTab: false,
+  /**
+   * Android ChatsConfig.wideChannelPosts (default false): a broadcast
+   * channel's posts stretch their bubble to the full row width
+   * (ChatMessageCell.applyWideChannelPostWidth).
+   */
+  OEChatsWideChannelPosts: false,
+  /**
+   * Android ChatsConfig.wideFeedPosts (default false): the same treatment in
+   * the Feed. Web K has no feed, so the flag is a documented no-op kept in
+   * the record for `.extera` backup compatibility (no UI row).
+   */
+  OEChatsWideFeedPosts: false,
+  /**
+   * Android NaConfig: the page a hashtag search opens on — 0 this chat,
+   * 1 my messages, 2 public posts. The chat key applies everywhere, the
+   * channel key to public broadcast channels.
+   */
+  SearchHashtagDefaultPageChat: 0,
+  SearchHashtagDefaultPageChannel: 0,
   /** Neko float, 4..20; 14 preserves Web K's default sticker dimensions. */
   stickerSize: 14,
   OEChatsStickerShape: 1,
   OEChatsBottomButton: 1,
   OEChatsAlwaysSendInHD: true,
   OEChatsKeepAttachButton: false,
+  /**
+   * Android ChatsConfig.hideCameraTile. Web K's attach menu has no camera
+   * tile, so the setting's outcome is the base's permanent behavior; the key
+   * stays in the record for `.extera` backup compatibility (no UI row).
+   */
+  OEChatsHideCameraTile: false,
   OEChatsStickerTimeSide: false,
   HideTimeForSticker: false,
   OEChatsShowResultsBeforeVoting: false,
@@ -100,6 +198,8 @@ export const OE_DEFAULTS = {
   OEChatsHideReactionsPrivate: false,
   OEChatsPauseVoice: false,
   OEChatsPauseRound: false,
+  /** Android NekoConfig.autoPauseVideo: pause video playback when the tab hides. */
+  AutoPauseVideo: true,
   OERelativeLastSeen: false,
   OEAddCommaAfterMention: true,
   /** Android `NekoConfig.showSeconds`: the persisted name is the contract, so no OE* alias. */
@@ -125,7 +225,16 @@ const NUMERIC_RANGES: {[K in NumericKey]: readonly [min: number, max: number]} =
   OEChatsStickerShape: [0, 2],
   OEChatsBottomButton: [0, 2],
   IdDcType: [0, 2],
-  stickerSize: [4, 20]
+  IgnoreUnreadCount: [0, 2],
+  SearchHashtagDefaultPageChat: [0, 2],
+  SearchHashtagDefaultPageChannel: [0, 2],
+  stickerSize: [4, 20],
+  OEPlayerCoverStyle: [0, 3],
+  OEPlayerCoverSize: [OE_PLAYER_COVER_SIZE_MIN, OE_PLAYER_COVER_SIZE_MAX],
+  OEPlayerCoverRadius: [0, OE_PLAYER_COVER_RADIUS_MAX],
+  OEPlayerTitleAlign: [0, 1],
+  OEPlayerTitleSize: [0, 2],
+  OEPlayerControlsSize: [0, 2]
 };
 
 /** A value of the wrong type or out of range falls back like an untrusted import. */
@@ -191,22 +300,26 @@ const [exteralessSettings, setExteralessSettings] = createStore<ExteralessSettin
   ...readPersisted()
 });
 
+/**
+ * The settings whose consumers re-read the store from this event; no new bus,
+ * no effect per row or message.
+ */
+const LIVE_EVENT_KEYS: ExteralessSettingsKey[] = ['DisableNumberRounding', 'IgnoreUnreadCount', 'HideAllTab'];
+
 /** Sets one setting (validated) and writes the whole record back. */
 const setExteralessSetting = <K extends ExteralessSettingsKey>(key: K, value: ExteralessSettingValue<K>) => {
   const clamped = clampExteralessSetting(key, value);
   const previous = exteralessSettings[key];
   setExteralessSettings({[key]: clamped} as Partial<ExteralessSettings>);
   persist(unwrap(exteralessSettings));
-  // * the visible, imperative counters (`formatCount` owners) re-read the store from
-  // * here; no new bus, no effect per row or message
-  if(key === 'DisableNumberRounding' && previous !== clamped) {
+  if(LIVE_EVENT_KEYS.includes(key) && previous !== clamped) {
     rootScope.dispatchEventSingle('exteraless_settings_updated', {key, value: clamped});
   }
 };
 
 /** Reset this client's OE preferences; Telegram settings and account data have other records. */
 const resetExteralessSettings = () => {
-  const previousNumberRounding = exteralessSettings.DisableNumberRounding;
+  const previous = {...exteralessSettings};
   setExteralessSettings({...OE_DEFAULTS});
   try {
     globalThis.localStorage?.removeItem(STORAGE_KEY);
@@ -215,11 +328,10 @@ const resetExteralessSettings = () => {
     persist(unwrap(exteralessSettings));
   }
 
-  if(previousNumberRounding !== OE_DEFAULTS.DisableNumberRounding) {
-    rootScope.dispatchEventSingle('exteraless_settings_updated', {
-      key: 'DisableNumberRounding',
-      value: OE_DEFAULTS.DisableNumberRounding
-    });
+  for(const key of LIVE_EVENT_KEYS) {
+    if(previous[key] !== OE_DEFAULTS[key]) {
+      rootScope.dispatchEventSingle('exteraless_settings_updated', {key, value: OE_DEFAULTS[key]});
+    }
   }
 };
 
@@ -230,6 +342,19 @@ export const getStickerTimeMode = (settings: Pick<ExteralessSettings, 'HideTimeF
   settings.HideTimeForSticker ? 2 : settings.OEChatsStickerTimeSide ? 1 : 0;
 
 export const getOpenLinkConfirmation = () => exteralessSettings.ConfirmAllLinks ? 1 : exteralessSettings.SkipOpenLinkConfirm ? 2 : 0;
+
+/**
+ * Android's hashtag search default page (`ChatActivity`, per open): a public
+ * broadcast channel reads `SearchHashtagDefaultPageChannel`, everything else
+ * `SearchHashtagDefaultPageChat`; 0 this chat (Web K's stock default), 1 my
+ * messages, 2 public posts. Out-of-range values clamp like the store does.
+ */
+export const getHashtagSearchType = (publicChannel: boolean): 'my' | 'public' | undefined => {
+  const key: 'SearchHashtagDefaultPageChannel' | 'SearchHashtagDefaultPageChat' =
+    publicChannel ? 'SearchHashtagDefaultPageChannel' : 'SearchHashtagDefaultPageChat';
+  const page = clampExteralessSetting(key, exteralessSettings[key]);
+  return page === 1 ? 'my' : page === 2 ? 'public' : undefined;
+};
 
 const MD3_BOOLEAN_KEYS = [
   'OEAppearanceNewLoadingStyle', 'OEAppearanceNewChatHeaderStyle',
@@ -298,6 +423,29 @@ export const stickerShapeToCss = (shape: number) => {
   return clamped === 2 ? OE_STICKER_SHAPE_BUBBLE_RADIUS : '0px';
 };
 
+/** Android `PlayerStyle.coverSize()`: a 60..100 percentage as a 0.6..1 fraction. */
+export const playerCoverSizeFraction = (value = exteralessSettings.OEPlayerCoverSize) =>
+  clampExteralessSetting('OEPlayerCoverSize', value) / 100;
+
+/** Android `PlayerStyle.controlsScale()`: 0 compact 0.84, 1 normal 1, 2 large 1.14. */
+export const playerControlsScale = (value = exteralessSettings.OEPlayerControlsSize) => {
+  const clamped = clampExteralessSetting('OEPlayerControlsSize', value);
+  return clamped === 0 ? 0.84 : clamped === 2 ? 1.14 : 1;
+};
+
+/**
+ * Android `PlayerSheet.applyStyle` title sizes: 0 small 22/15, 1 medium 26/16,
+ * 2 large 31/17 (title/artist, dp).
+ */
+export const playerTitleSizes = (value = exteralessSettings.OEPlayerTitleSize): readonly [title: number, artist: number] => {
+  const clamped = clampExteralessSetting('OEPlayerTitleSize', value);
+  return clamped === 0 ? [22, 15] : clamped === 2 ? [31, 17] : [26, 16];
+};
+
+/** Android `PlayerStyle.coverStyle()`: card, wide, full, disc. */
+export const getPlayerCoverStyle = (value = exteralessSettings.OEPlayerCoverStyle) =>
+  clampExteralessSetting('OEPlayerCoverStyle', value);
+
 if(typeof document !== 'undefined') {
   // * one effect owns the custom properties and the root classes: every
   // * consumer reads them in CSS. The store's properties are read directly —
@@ -335,9 +483,12 @@ if(typeof document !== 'undefined') {
       classList.toggle('oe-hide-new-chat-button', exteralessSettings.DisableDialogsFloatingButton);
       classList.toggle('oe-edited-icon', exteralessSettings.UseEditedIcon);
       classList.toggle('oe-hide-channel-share-button', exteralessSettings.HideShareButtonInChannel);
+      classList.toggle('oe-hide-channel-gift-button', exteralessSettings.HideGiftButtonInChannel);
       classList.toggle('oe-hide-call-button', exteralessSettings.OEChatsHideCallButton);
       classList.toggle('oe-hide-send-as', exteralessSettings.hideSendAsChannel);
       classList.toggle('oe-hide-channel-search-button', exteralessSettings.OEChatsHideChannelSearchButton);
+      classList.toggle('oe-hide-stories', exteralessSettings.HideStoriesFromHeader);
+      classList.toggle('oe-wide-posts', exteralessSettings.OEChatsWideChannelPosts);
       classList.toggle('oe-hide-reactions-private', exteralessSettings.OEChatsHideReactionsPrivate);
       classList.toggle('oe-hide-reactions-channels', exteralessSettings.OEChatsHideReactionsChannels);
       classList.toggle('oe-hide-reactions-groups', exteralessSettings.OEChatsHideReactionsGroups);
@@ -345,6 +496,8 @@ if(typeof document !== 'undefined') {
       // * the replyColors / replyEmoji / replyBackground trio defaults to true;
       // * the classes mark only the off states, so the default adds nothing
       classList.toggle('oe-no-glass-menus', !exteralessSettings.OEAppearanceGlassMessageMenu);
+      classList.toggle('oe-center-title', exteralessSettings.OEAppearanceCenterTitle);
+      classList.toggle('oe-system-font', exteralessSettings.TypefaceUseDefault);
       classList.toggle('oe-new-chat-header', exteralessSettings.OEAppearanceNewChatHeaderStyle);
       classList.toggle('oe-md3-loading', exteralessSettings.OEAppearanceNewLoadingStyle);
       classList.toggle('oe-md3-sliders', exteralessSettings.SliderStyle === 2);

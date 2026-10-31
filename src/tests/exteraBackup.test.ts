@@ -105,10 +105,11 @@ describe('exteraless .extera backup (EtgBackup contract)', () => {
         avatarCorners: 10,
         removeMessageTail: false,
         stickerTimeMode: 1,
+        pauseOnMinimizeVideo: false,
         // out of range: rejected like an untrusted file
         bottomButton: 5,
         // the NagramX half: recognized, unsupported, not applied
-        pauseOnMinimizeVideo: true
+        useSystemIconShape: true
       },
       // unknown Android-only key: ignored
       [SECTION_MAIN]: {bubbleRadius: 12}
@@ -117,13 +118,138 @@ describe('exteraless .extera backup (EtgBackup contract)', () => {
     const result = applyExteraBackup(root as Record<string, Record<string, unknown>>);
     await FLUSH();
 
-    expect(result.applied).toBe(3);
+    expect(result.applied).toBe(4);
     expect(exteralessSettings.OEAppearanceAvatarCorners).toBe(10);
     expect(exteralessSettings.OEChatsRemoveMessageTail).toBe(false);
     expect(exteralessSettings.OEChatsStickerTimeSide).toBe(true);
+    expect(exteralessSettings.AutoPauseVideo).toBe(false);
     // untouched
     expect(exteralessSettings.OEChatsBottomButton).toBe(OE_DEFAULTS.OEChatsBottomButton);
-    expect(result.unsupported).toContain('pauseOnMinimizeVideo');
+    expect(result.unsupported).toContain('useSystemIconShape');
+  });
+
+  it('round trips the pause-on-minimize trio the way Android exports it', async() => {
+    setExteralessSetting('AutoPauseVideo', false);
+    setExteralessSetting('OEChatsPauseVoice', true);
+    const parsed = JSON.parse(etgBackup.buildBackup(false, exteralessSettings));
+    expect(parsed.exteraconfig.pauseOnMinimizeVideo).toBe(false);
+    expect(parsed.exteraconfig.pauseOnMinimizeVoice).toBe(true);
+    expect(parsed.exteraconfig.pauseOnMinimizeRound).toBe(false);
+    setExteralessSetting('AutoPauseVideo', true);
+    const result = applyExteraBackup({[SECTION_EXTERA]: {pauseOnMinimizeVideo: true, pauseOnMinimizeRound: true}});
+    expect(result.applied).toBe(2);
+    expect(result.unsupported).toEqual([]);
+    expect(exteralessSettings.AutoPauseVideo).toBe(true);
+    expect(exteralessSettings.OEChatsPauseRound).toBe(true);
+    expect(applyExteraBackup({[SECTION_EXTERA]: {pauseOnMinimizeVideo: 'yes'}}).applied).toBe(0);
+  });
+
+  it('round trips hideStories as the Android stories-header alias', async() => {
+    // * Android exports NaConfig.getHideStoriesFromHeader() as "hideStories"
+    setExteralessSetting('HideStoriesFromHeader', false);
+    const parsed = JSON.parse(etgBackup.buildBackup(false, exteralessSettings));
+    expect(parsed.exteraconfig.hideStories).toBe(false);
+
+    const result = applyExteraBackup({[SECTION_EXTERA]: {hideStories: true}});
+    expect(result.applied).toBe(1);
+    expect(result.unsupported).toEqual([]);
+    expect(exteralessSettings.HideStoriesFromHeader).toBe(true);
+    // * a non-boolean is rejected like any untrusted value
+    expect(applyExteraBackup({[SECTION_EXTERA]: {hideStories: 'off'}}).applied).toBe(0);
+  });
+
+  it('round trips hideCameraTile even though the web attach menu has no camera tile', async() => {
+    // * Android exports ChatsConfig.hideCameraTile as "hideCameraTile"; on the
+    // * web the flag is a documented no-op (the attach menu has no camera
+    // * tile), so the alias applies silently instead of reporting unsupported
+    const parsed = JSON.parse(etgBackup.buildBackup(false, exteralessSettings));
+    expect(parsed.exteraconfig.hideCameraTile).toBe(false);
+
+    const result = applyExteraBackup({[SECTION_EXTERA]: {hideCameraTile: true}});
+    expect(result.applied).toBe(1);
+    expect(result.unsupported).toEqual([]);
+    expect(exteralessSettings.OEChatsHideCameraTile).toBe(true);
+    expect(applyExteraBackup({[SECTION_EXTERA]: {hideCameraTile: 1}}).applied).toBe(0);
+  });
+
+  it('round trips hideAllChats as the Android all-chats-tab alias', async() => {
+    // * Android exports NekoConfig.hideAllTab as "hideAllChats"
+    const parsed = JSON.parse(etgBackup.buildBackup(false, exteralessSettings));
+    expect(parsed.exteraconfig.hideAllChats).toBe(false);
+
+    const result = applyExteraBackup({[SECTION_EXTERA]: {hideAllChats: true}});
+    expect(result.applied).toBe(1);
+    expect(result.unsupported).toEqual([]);
+    expect(exteralessSettings.HideAllTab).toBe(true);
+    expect(applyExteraBackup({[SECTION_EXTERA]: {hideAllChats: 'yes'}}).applied).toBe(0);
+  });
+
+  it('round trips centerTitle and useSystemFonts as the Android appearance aliases', async() => {
+    // * Android exports NaConfig.centerActionBarTitle as "centerTitle"
+    // * (EtgBackup.java:325) and NekoConfig.typeface as "useSystemFonts" (:339)
+    setExteralessSetting('OEAppearanceCenterTitle', true);
+    const parsed = JSON.parse(etgBackup.buildBackup(false, exteralessSettings));
+    expect(parsed.exteraconfig.centerTitle).toBe(true);
+    // * Android's default: the platform fonts replace the bundled Roboto
+    expect(parsed.exteraconfig.useSystemFonts).toBe(true);
+
+    const result = applyExteraBackup({[SECTION_EXTERA]: {centerTitle: false, useSystemFonts: false}});
+    expect(result.applied).toBe(2);
+    expect(result.unsupported).toEqual([]);
+    expect(exteralessSettings.OEAppearanceCenterTitle).toBe(false);
+    expect(exteralessSettings.TypefaceUseDefault).toBe(false);
+    expect(applyExteraBackup({[SECTION_EXTERA]: {centerTitle: 'on'}}).applied).toBe(0);
+    expect(applyExteraBackup({[SECTION_EXTERA]: {useSystemFonts: 1}}).applied).toBe(0);
+  });
+
+  it('round trips the wide posts aliases the way Android exports them', async() => {
+    // * Android exports ChatsConfig.wideChannelPosts/wideFeedPosts
+    // * (EtgBackup.java:365-366); the web has no feed, so wideFeedPosts is a
+    // * documented no-op that still round-trips
+    setExteralessSetting('OEChatsWideChannelPosts', true);
+    const parsed = JSON.parse(etgBackup.buildBackup(false, exteralessSettings));
+    expect(parsed.exteraconfig.wideChannelPosts).toBe(true);
+    expect(parsed.exteraconfig.wideFeedPosts).toBe(false);
+
+    const result = applyExteraBackup({[SECTION_EXTERA]: {wideChannelPosts: false, wideFeedPosts: true}});
+    expect(result.applied).toBe(2);
+    expect(result.unsupported).toEqual([]);
+    expect(exteralessSettings.OEChatsWideChannelPosts).toBe(false);
+    expect(exteralessSettings.OEChatsWideFeedPosts).toBe(true);
+    expect(applyExteraBackup({[SECTION_EXTERA]: {wideChannelPosts: 'yes'}}).applied).toBe(0);
+  });
+
+  it('round trips showRepeatMessageButton as the Android repeat-menu alias', async() => {
+    // * Android exports NekoConfig.showRepeat as "showRepeatMessageButton"
+    // * (EtgBackup.java:371); NekoConfig.repeatConfirm has no alias
+    setExteralessSetting('showRepeat', true);
+    const parsed = JSON.parse(etgBackup.buildBackup(false, exteralessSettings));
+    expect(parsed.exteraconfig.showRepeatMessageButton).toBe(true);
+    expect(parsed.exteraconfig.repeatConfirm).toBeUndefined();
+
+    const result = applyExteraBackup({[SECTION_EXTERA]: {showRepeatMessageButton: false}});
+    expect(result.applied).toBe(1);
+    expect(result.unsupported).toEqual([]);
+    expect(exteralessSettings.showRepeat).toBe(false);
+    expect(applyExteraBackup({[SECTION_EXTERA]: {showRepeatMessageButton: 'on'}}).applied).toBe(0);
+  });
+
+  it('round trips the tab counter alias the way Android exports it', async() => {
+    // * Android's alias is a boolean: true = counters on (mode 0), false = off
+    // * (mode 2); the except-muted mode never round-trips through the format
+    setExteralessSetting('IgnoreUnreadCount', 1);
+    const exported = JSON.parse(etgBackup.buildBackup(false, exteralessSettings));
+    expect(exported.exteraconfig.tabCounter).toBe(true);
+
+    const result = applyExteraBackup({[SECTION_EXTERA]: {tabCounter: false}});
+    expect(result.applied).toBe(1);
+    expect(result.unsupported).toEqual([]);
+    expect(exteralessSettings.IgnoreUnreadCount).toBe(2);
+
+    expect(applyExteraBackup({[SECTION_EXTERA]: {tabCounter: true}}).applied).toBe(1);
+    expect(exteralessSettings.IgnoreUnreadCount).toBe(0);
+    expect(applyExteraBackup({[SECTION_EXTERA]: {tabCounter: 3}}).applied).toBe(0);
+    expect(exteralessSettings.IgnoreUnreadCount).toBe(0);
   });
 
   it('round trips all sticker-time modes and gives the composite mode precedence', () => {

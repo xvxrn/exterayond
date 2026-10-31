@@ -32,7 +32,11 @@ export default function createMusicPlayerFixture(message: Message.message, track
       media.dispatchEvent(new Event(paused ? 'pause' : 'play'));
     },
     cycleRepeatMode: () => {
-      playbackParams.round = !playbackParams.round;
+      if(!playbackParams.round) playbackParams.round = true;
+      else if(playbackParams.loop) {
+        playbackParams.round = false;
+        playbackParams.loop = false;
+      } else playbackParams.loop = true;
       events.dispatchEvent('playbackParams', {...playbackParams});
     },
     stop: () => events.dispatchEvent('stop')

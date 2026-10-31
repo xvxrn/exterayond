@@ -49,14 +49,28 @@ describe('exteraless settings store', () => {
       OEAppearanceSenderMiniAvatars: true,
       OEAppearanceCustomThemes: true,
       OEAppearanceGlassMessageMenu: true,
+      OEAppearanceCenterTitle: false,
+      TypefaceUseDefault: true,
       OEAppearanceNewChatHeaderStyle: false,
       OEAppearanceNewLoadingStyle: true,
       SliderStyle: 2,
       SwitchStyle: 2,
       OEAppearanceNewNavigationBarStyle: false,
       OEAppearanceM3ListItems: false,
+      IgnoreUnreadCount: 1,
       OEAppearanceMd3Player: true,
       OEAppearanceMd3MiniPlayer: true,
+      OEPlayerCoverStyle: 0,
+      OEPlayerCoverSize: 100,
+      OEPlayerCoverRadius: 28,
+      OEPlayerDiscSpin: true,
+      OEPlayerTitleAlign: 0,
+      OEPlayerTitleSize: 1,
+      OEPlayerTitleAbove: false,
+      OEPlayerShowModes: true,
+      OEPlayerShowSource: true,
+      OEPlayerWavy: true,
+      OEPlayerControlsSize: 1,
       OEChatsRemoveMessageTail: true,
       OEChatsHideCallButton: false,
       OEChatsHideChannelSearchButton: false,
@@ -65,6 +79,7 @@ describe('exteraless settings store', () => {
       OEChatsBottomButton: 1,
       OEChatsAlwaysSendInHD: true,
       OEChatsKeepAttachButton: false,
+      OEChatsHideCameraTile: false,
       OEChatsStickerTimeSide: false,
       HideTimeForSticker: false,
       OEChatsShowResultsBeforeVoting: false,
@@ -75,6 +90,7 @@ describe('exteraless settings store', () => {
       OEChatsReplyBackground: true,
       OEChatsPauseVoice: false,
       OEChatsPauseRound: false,
+      AutoPauseVideo: true,
       OEChatsHideReactionsChannels: false,
       OEChatsHideReactionsGroups: false,
       OEChatsHideReactionsPrivate: false,
@@ -86,6 +102,7 @@ describe('exteraless settings store', () => {
       ZalgoFilter: false,
       UseEditedIcon: true,
       HideShareButtonInChannel: false,
+      HideGiftButtonInChannel: false,
       IdDcType: 1,
       DontSendGreetingSticker: true,
       DontAutoPlayNextVoice: false,
@@ -96,12 +113,24 @@ describe('exteraless settings store', () => {
       hideSendAsChannel: false,
       stickerSize: 14,
       DeleteChatForBothSides: true,
+      ConfirmAVMessage: false,
       AskBeforeCalling: true,
+      repeatConfirm: true,
+      showRepeat: false,
       DisableClickCommandToSend: false,
       DateOfForwardedMsg: false,
       ShowTimeHint: false,
       ConfirmAllLinks: false,
-      SkipOpenLinkConfirm: false
+      SkipOpenLinkConfirm: false,
+      FixLinkPreview: true,
+      DisableLinkPreviewByDefault: false,
+      DisableGlobalSearch: false,
+      HideAllTab: false,
+      OEChatsWideChannelPosts: false,
+      OEChatsWideFeedPosts: false,
+      HideStoriesFromHeader: true,
+      SearchHashtagDefaultPageChat: 0,
+      SearchHashtagDefaultPageChannel: 0
     });
     expect(OE_AVATAR_CORNERS_MAX).toBe(28);
     expect(OE_SECTION_RADIUS_STOCK).toBe(20);
@@ -121,6 +150,30 @@ describe('exteraless settings store', () => {
     expect(clampExteralessSetting('stickerSize', -1)).toBe(4);
     expect(clampExteralessSetting('stickerSize', 100)).toBe(20);
     expect(clampExteralessSetting('stickerSize', NaN)).toBe(14);
+    expect(clampExteralessSetting('OEPlayerCoverStyle', 4)).toBe(3);
+    expect(clampExteralessSetting('OEPlayerCoverStyle', -1)).toBe(0);
+    expect(clampExteralessSetting('OEPlayerCoverSize', 40)).toBe(60);
+    expect(clampExteralessSetting('OEPlayerCoverRadius', 99)).toBe(48);
+    expect(clampExteralessSetting('OEPlayerTitleAlign', 2)).toBe(1);
+    expect(clampExteralessSetting('OEPlayerTitleSize', 3)).toBe(2);
+    expect(clampExteralessSetting('OEPlayerControlsSize', -5)).toBe(0);
+  });
+
+  test('the player style mappings follow Android PlayerStyle', async() => {
+    const {playerCoverSizeFraction, playerControlsScale, playerTitleSizes, getPlayerCoverStyle} = await loadStore();
+    expect(playerCoverSizeFraction(100)).toBe(1);
+    expect(playerCoverSizeFraction(60)).toBe(0.6);
+    expect(playerCoverSizeFraction(85)).toBe(0.85);
+    // * PlayerStyle.controlsScale: 0 compact 0.84, 1 normal 1, 2 large 1.14
+    expect(playerControlsScale(0)).toBe(0.84);
+    expect(playerControlsScale(1)).toBe(1);
+    expect(playerControlsScale(2)).toBe(1.14);
+    // * PlayerSheet.applyStyle title sizes: 0 22/15, 1 26/16, 2 31/17
+    expect(playerTitleSizes(0)).toEqual([22, 15]);
+    expect(playerTitleSizes(1)).toEqual([26, 16]);
+    expect(playerTitleSizes(2)).toEqual([31, 17]);
+    expect(getPlayerCoverStyle(2)).toBe(2);
+    expect(getPlayerCoverStyle(9)).toBe(3);
   });
 
   test('link modes match the Android two-flag contract and All wins conflicts', async() => {
@@ -138,6 +191,27 @@ describe('exteraless settings store', () => {
     expect(getOpenLinkConfirmation()).toBe(2);
     resetExteralessSettings();
     expect(getOpenLinkConfirmation()).toBe(0);
+  });
+
+  test('the hashtag search page follows the Android chat/channel key split', async() => {
+    const {getHashtagSearchType, setExteralessSetting, resetExteralessSettings} = await loadStore();
+    // * 0 is the stock default: no type picked, the search opens on this chat
+    expect(getHashtagSearchType(false)).toBeUndefined();
+    expect(getHashtagSearchType(true)).toBeUndefined();
+    setExteralessSetting('SearchHashtagDefaultPageChat', 1);
+    setExteralessSetting('SearchHashtagDefaultPageChannel', 2);
+    expect(getHashtagSearchType(false)).toBe('my');
+    expect(getHashtagSearchType(true)).toBe('public');
+    setExteralessSetting('SearchHashtagDefaultPageChat', 2);
+    expect(getHashtagSearchType(false)).toBe('public');
+    // * out-of-range values clamp to the ends of the Android 0..2 range
+    setExteralessSetting('SearchHashtagDefaultPageChat', 5);
+    expect(getHashtagSearchType(false)).toBe('public');
+    setExteralessSetting('SearchHashtagDefaultPageChannel', -1);
+    expect(getHashtagSearchType(true)).toBeUndefined();
+    resetExteralessSettings();
+    expect(getHashtagSearchType(true)).toBeUndefined();
+    expect(getHashtagSearchType(false)).toBeUndefined();
   });
 
   test('Forced MD3 composes eight Android settings and resets their original defaults', async() => {
@@ -336,6 +410,51 @@ describe('exteraless settings application (jsdom)', () => {
     expect(root.classList.contains('oe-hide-new-chat-button')).toBe(false);
   });
 
+  test('the centered header title and the system font follow the Android defaults and reset', async() => {
+    const {setExteralessSetting, resetExteralessSettings} = await loadStore();
+    const root = document.documentElement;
+
+    // * Android defaults: OEAppearanceCenterTitle false, TypefaceUseDefault true
+    expect(root.classList.contains('oe-center-title')).toBe(false);
+    expect(root.classList.contains('oe-system-font')).toBe(true);
+
+    setExteralessSetting('OEAppearanceCenterTitle', true);
+    setExteralessSetting('TypefaceUseDefault', false);
+    await flush();
+    expect(root.classList.contains('oe-center-title')).toBe(true);
+    expect(root.classList.contains('oe-system-font')).toBe(false);
+
+    setExteralessSetting('OEChatsWideChannelPosts', true);
+    await flush();
+    expect(root.classList.contains('oe-wide-posts')).toBe(true);
+
+    resetExteralessSettings();
+    await flush();
+    expect(root.classList.contains('oe-center-title')).toBe(false);
+    expect(root.classList.contains('oe-system-font')).toBe(true);
+    expect(root.classList.contains('oe-wide-posts')).toBe(false);
+  });
+
+  test('the stories strip hiding follows the Android default and resets off', async() => {
+    const {setExteralessSetting, resetExteralessSettings} = await loadStore();
+    const root = document.documentElement;
+
+    // * Android NaConfig.HideStoriesFromHeader defaults to true: the strip is hidden
+    expect(root.classList.contains('oe-hide-stories')).toBe(true);
+
+    setExteralessSetting('HideStoriesFromHeader', false);
+    await flush();
+    expect(root.classList.contains('oe-hide-stories')).toBe(false);
+
+    setExteralessSetting('HideStoriesFromHeader', true);
+    await flush();
+    expect(root.classList.contains('oe-hide-stories')).toBe(true);
+
+    resetExteralessSettings();
+    await flush();
+    expect(root.classList.contains('oe-hide-stories')).toBe(true);
+  });
+
   test('reaction visibility updates live and reset clears all three categories', async() => {
     const {setExteralessSetting, resetExteralessSettings} = await loadStore();
     const flags = [
@@ -362,5 +481,27 @@ describe('exteraless settings application (jsdom)', () => {
     await flush();
     expect(document.documentElement.classList.contains('oe-hide-send-as')).toBe(false);
     expect(document.documentElement.classList.contains('oe-remove-message-tail')).toBe(true);
+  });
+
+  test('the channel gift button hiding is off by default, live, and reset clears it', async() => {
+    const {setExteralessSetting, resetExteralessSettings} = await loadStore();
+    const root = document.documentElement;
+
+    // * Android NaConfig.HideGiftButtonInChannel defaults to false: stock plate
+    expect(root.classList.contains('oe-hide-channel-gift-button')).toBe(false);
+
+    setExteralessSetting('HideGiftButtonInChannel', true);
+    await flush();
+    expect(root.classList.contains('oe-hide-channel-gift-button')).toBe(true);
+
+    setExteralessSetting('HideGiftButtonInChannel', false);
+    await flush();
+    expect(root.classList.contains('oe-hide-channel-gift-button')).toBe(false);
+
+    setExteralessSetting('HideGiftButtonInChannel', true);
+    await flush();
+    resetExteralessSettings();
+    await flush();
+    expect(root.classList.contains('oe-hide-channel-gift-button')).toBe(false);
   });
 });

@@ -404,6 +404,28 @@ video::-webkit-media-controls-enclosure {
       transform-origin: var(--transform-origin-left-center);
     }
   }
+
+  // * the MD3 player's wavy bar (`WavyProgressLine`): the wave replaces the
+  // * straight fill while it is visible and follows the tape, so it is never
+  // * mirrored
+  &__wave {
+    display: none;
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    overflow: visible;
+    stroke: var(--color);
+  }
+
+  &.is-wavy {
+    .progress-line__wave {
+      display: block;
+    }
+
+    .progress-line__filled:not(.progress-line__loaded) {
+      background-color: transparent;
+    }
+  }
 }
 
 input[type=range] {

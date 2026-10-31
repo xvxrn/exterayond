@@ -21,17 +21,22 @@ const TOGGLES: Array<[key: ExteralessSettingsKey, langKey: LangPackKey, infoKey?
   ['DateOfForwardedMsg', 'Exteraless.DateOfForwardedMsg', 'Exteraless.DateOfForwardedMsg.Info'],
   ['ShowTimeHint', 'Exteraless.MessageTimeDetails', 'Exteraless.MessageTimeDetails.Info'],
   ['HideShareButtonInChannel', 'Exteraless.HideShareButton'],
+  ['HideGiftButtonInChannel', 'Exteraless.HideGiftButton'],
   ['hideSendAsChannel', 'Exteraless.HideSendAsPeer', 'Exteraless.HideSendAsPeer.Info'],
   ['DontSendGreetingSticker', 'Exteraless.DisableGreetingSticker', 'Exteraless.DisableGreetingSticker.Info'],
   ['DisableTrending', 'Exteraless.DisableTrending', 'Exteraless.DisableTrending.Info'],
   ['hideGroupSticker', 'Exteraless.HideGroupSticker', 'Exteraless.HideGroupSticker.Info'],
   ['DeleteChatForBothSides', 'Exteraless.DeleteChatForBothSides', 'Exteraless.DeleteChatForBothSides.Info'],
+  ['ConfirmAVMessage', 'Exteraless.AskBeforeAVMessage', 'Exteraless.AskBeforeAVMessage.Info'],
   ['AskBeforeCalling', 'Exteraless.AskBeforeCalling'],
+  ['repeatConfirm', 'Exteraless.AskWhenRepeating'],
   ['DisableClickCommandToSend', 'Exteraless.AskBeforeBotCommand'],
   ['DontAutoPlayNextVoice', 'Exteraless.DontAutoPlayNextVoice'],
   ['HidePremiumSection', 'Exteraless.HidePremiumSection'],
   ['HideHelpSection', 'Exteraless.HideHelpSection'],
+  ['HideStoriesFromHeader', 'Exteraless.HideStories', 'Exteraless.HideStories.Info'],
   ['DisableDialogsFloatingButton', 'Exteraless.HideFloatingButton'],
+  ['HideAllTab', 'Exteraless.HideAllChats'],
   ['OEChatsReplyColors', 'Exteraless.ReplyColors'],
   ['OEChatsReplyEmoji', 'Exteraless.ReplyEmoji'],
   ['OEChatsReplyBackground', 'Exteraless.ReplyBackground'],
@@ -45,6 +50,7 @@ const STRIP_TRACKING_TOGGLES: Array<[key: ExteralessSettingsKey, langKey: LangPa
 ];
 
 const PAUSE_TOGGLES: Array<[key: ExteralessSettingsKey, langKey: LangPackKey]> = [
+  ['AutoPauseVideo', 'Exteraless.PauseVideo'],
   ['OEChatsPauseVoice', 'Exteraless.PauseVoice'],
   ['OEChatsPauseRound', 'Exteraless.PauseRound']
 ];
@@ -97,6 +103,28 @@ const ExteralessChats = () => {
         />
       </Section>
       <Section name="Exteraless.OpenLinkPolicy" caption="Exteraless.OpenLinkPolicy.Info">
+        <Row>
+          <Row.CheckboxFieldToggle>
+            <CheckboxFieldTsx
+              toggle
+              checked={exteralessSettings.FixLinkPreview}
+              onChange={(value) => setExteralessSetting('FixLinkPreview', value)}
+            />
+          </Row.CheckboxFieldToggle>
+          <Row.Title>{i18n('Exteraless.FixLinkPreview')}</Row.Title>
+          <Row.Subtitle>{i18n('Exteraless.FixLinkPreview.Info')}</Row.Subtitle>
+        </Row>
+        <Row>
+          <Row.CheckboxFieldToggle>
+            <CheckboxFieldTsx
+              toggle
+              checked={exteralessSettings.DisableLinkPreviewByDefault}
+              onChange={(value) => setExteralessSetting('DisableLinkPreviewByDefault', value)}
+            />
+          </Row.CheckboxFieldToggle>
+          <Row.Title>{i18n('Exteraless.DisableLinkPreviewByDefault')}</Row.Title>
+          <Row.Subtitle>{i18n('Exteraless.DisableLinkPreviewByDefault.Info')}</Row.Subtitle>
+        </Row>
         <RangeSettingSelector
           textLeft={i18n('Exteraless.OpenLinkPolicy')}
           textRight={(value) => i18n(value === 0 ? 'Exteraless.OpenLinkPolicy.Hidden' : value === 1 ? 'Exteraless.OpenLinkPolicy.All' : 'Exteraless.OpenLinkPolicy.Never')}
@@ -105,6 +133,38 @@ const ExteralessChats = () => {
           maxValue={2}
           step={1}
           onChange={setOpenLinkConfirmation}
+        />
+      </Section>
+      <Section name="Exteraless.DisableGlobalSearch">
+        <Row>
+          <Row.CheckboxFieldToggle>
+            <CheckboxFieldTsx
+              toggle
+              checked={exteralessSettings.DisableGlobalSearch}
+              onChange={(value) => setExteralessSetting('DisableGlobalSearch', value)}
+            />
+          </Row.CheckboxFieldToggle>
+          <Row.Title>{i18n('Exteraless.DisableGlobalSearch')}</Row.Title>
+        </Row>
+      </Section>
+      <Section name="Exteraless.HashtagSearch" caption="Exteraless.HashtagSearch.Info">
+        <RangeSettingSelector
+          textLeft={i18n('Exteraless.HashtagSearch.Chats')}
+          textRight={(value) => i18n(value === 0 ? 'Search.Types.ThisChat' : value === 1 ? 'Search.Types.MyMessages' : 'Search.Types.PublicPosts')}
+          value={exteralessSettings.SearchHashtagDefaultPageChat}
+          minValue={0}
+          maxValue={2}
+          step={1}
+          onChange={(value) => setExteralessSetting('SearchHashtagDefaultPageChat', value)}
+        />
+        <RangeSettingSelector
+          textLeft={i18n('Exteraless.HashtagSearch.Channels')}
+          textRight={(value) => i18n(value === 0 ? 'Search.Types.ThisChat' : value === 1 ? 'Search.Types.MyMessages' : 'Search.Types.PublicPosts')}
+          value={exteralessSettings.SearchHashtagDefaultPageChannel}
+          minValue={0}
+          maxValue={2}
+          step={1}
+          onChange={(value) => setExteralessSetting('SearchHashtagDefaultPageChannel', value)}
         />
       </Section>
       <Section name="Exteraless.StripTracking">
@@ -120,6 +180,31 @@ const ExteralessChats = () => {
             <Row.Title>{i18n(langKey)}</Row.Title>
           </Row>
         ))}
+      </Section>
+      <Section name="Exteraless.ChannelPosts" caption="Exteraless.ChannelPosts.Info">
+        <Row>
+          <Row.CheckboxFieldToggle>
+            <CheckboxFieldTsx
+              toggle
+              checked={exteralessSettings.OEChatsWideChannelPosts}
+              onChange={(value) => setExteralessSetting('OEChatsWideChannelPosts', value)}
+            />
+          </Row.CheckboxFieldToggle>
+          <Row.Title>{i18n('Exteraless.WideChannelPosts')}</Row.Title>
+        </Row>
+      </Section>
+      <Section name="Exteraless.MessageMenu">
+        <Row>
+          <Row.CheckboxFieldToggle>
+            <CheckboxFieldTsx
+              toggle
+              checked={exteralessSettings.showRepeat}
+              onChange={(value) => setExteralessSetting('showRepeat', value)}
+            />
+          </Row.CheckboxFieldToggle>
+          <Row.Title>{i18n('Exteraless.MenuRepeat')}</Row.Title>
+          <Row.Subtitle>{i18n('Exteraless.MenuRepeat.Info')}</Row.Subtitle>
+        </Row>
       </Section>
       <Section name="Exteraless.StickerSize" caption="Exteraless.StickerSize.Info">
         <RangeSettingSelector

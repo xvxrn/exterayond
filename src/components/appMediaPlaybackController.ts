@@ -233,8 +233,9 @@ export class AppMediaPlaybackController extends EventListenerBase<{
       }
     });
 
-    // * exteraless pauseOnMinimizeVoice / pauseOnMinimizeRound: media pauses
-    // * when the tab hides (MediaController.pauseInBackgroundIfNeeded)
+    // * exteraless pauseOnMinimizeVoice / pauseOnMinimizeRound / autoPauseVideo:
+    // * media pauses when the tab hides (MediaController.pauseInBackgroundIfNeeded);
+    // * music keeps playing, like Android
     hotListen(import.meta.hot, getAppWindow().document, 'visibilitychange', () => {
       if(!getAppWindow().document.hidden || !this.playingMedia || this.playingMedia.paused) {
         return;
@@ -242,7 +243,9 @@ export class AppMediaPlaybackController extends EventListenerBase<{
 
       const shouldPause = this.playingDocType === 'round' ?
         exteralessSettings.OEChatsPauseRound :
-        this.playingDocType === 'voice' && exteralessSettings.OEChatsPauseVoice;
+        this.playingDocType === 'voice' ?
+          exteralessSettings.OEChatsPauseVoice :
+          this.playingDocType === 'video' && exteralessSettings.AutoPauseVideo;
       if(shouldPause) {
         this.pause();
       }

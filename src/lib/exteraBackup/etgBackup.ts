@@ -45,25 +45,25 @@ export const KNOWN_UNSUPPORTED_KEYS: string[] = [
   // exteraconfig (Neko/Na/Android-bound targets)
   'uploadSpeedBoost',
   'archiveOnPull', 'disableUnarchiveSwipe',
-  'doNotUseProxy', 'centerTitle', 'hideStories',
-  'hideDialogsSearchBar', 'hideAllChats',
-  'iosNavigationBarStyle', 'iosChatHeader', 'profileMusicCard', 'useSystemFonts',
+  'doNotUseProxy',
+  'hideDialogsSearchBar',
+  'iosNavigationBarStyle', 'iosChatHeader', 'profileMusicCard',
   'gooeyAvatarAnimation', 'navigationDrawer', 'immersiveDrawerAnimation', 'showFeedTab',
   'hideKeyboardOnScroll', 'inlineMathResult',
   'showOnlineStatus',
-  'wideChannelPosts', 'wideFeedPosts', 'showCopyPhotoButton', 'showSaveMessageButton',
-  'showRepeatMessageButton', 'showClearButton', 'showHistoryButton', 'showReportButton',
+  'showCopyPhotoButton', 'showSaveMessageButton',
+  'showClearButton', 'showHistoryButton', 'showReportButton',
   'showDetailsButton', 'groupMessageMenu', 'extendedFramesPerSecond', 'cameraStabilization',
   'cameraMirrorMode', 'rememberLastUsedCamera', 'startWithWideAngleCamera', 'staticZoom',
-  'hideCameraTile', 'preferOriginalQuality', 'swipeToPip', 'unmuteWithVolumeButtons',
-  'pauseOnMinimizeVideo', 'useSystemIconShape', 'infiniteScrolling', 'useGoogleCrashlytics',
+  'preferOriginalQuality', 'swipeToPip', 'unmuteWithVolumeButtons',
+  'useSystemIconShape', 'infiniteScrolling', 'useGoogleCrashlytics',
   'inAppVibration', 'titleText', 'downloadSpeedBoost', 'tabletMode', 'glassOutlineStyle',
   'doubleTapSeekDuration', 'cameraType', 'videoMessagesCamera',
   'translationProvider', 'tabIcons', 'doubleTapAction', 'doubleTapActionOutOwner',
   'predictiveBackIntensity', 'flashWarmth', 'flashIntensity',
   'dividerStyle', 'bottomNavigationBarMode',
   'unlimitedRecentStickers', 'quickAdminShortcuts', 'mainMenuLayout', 'mainMenuHiddenItems',
-  'tabCounter', 'targetLang',
+  'targetLang',
   // * the plugin flags with a web target moved to SUPPORTED; the two without
   // * one (compact view, art options) stay recognized-but-unsupported
   'pluginsCompactView', 'pluginsDisableArtOpts',
@@ -76,6 +76,7 @@ const SUPPORTED: SupportedEntry[] = [
   {section: SECTION_EXTERA, key: 'showIdAndDc', kind: 'int', min: 0, max: 2, storeKey: 'IdDcType'},
   {section: SECTION_EXTERA, key: 'replaceEditedWithIcon', kind: 'bool', storeKey: 'UseEditedIcon'},
   {section: SECTION_EXTERA, key: 'hideShareButton', kind: 'bool', storeKey: 'HideShareButtonInChannel'},
+  {section: SECTION_EXTERA, key: 'hideAllChats', kind: 'bool', storeKey: 'HideAllTab'},
   {section: SECTION_EXTERA, key: 'filterZalgo', kind: 'bool', storeKey: 'ZalgoFilter'},
   {section: SECTION_EXTERA, key: 'hideArchiveFolder', kind: 'bool', storeKey: 'HideArchive'},
   {section: SECTION_EXTERA, key: 'hidePhoneNumber', kind: 'bool', storeKey: 'HidePhone'},
@@ -84,9 +85,15 @@ const SUPPORTED: SupportedEntry[] = [
   {section: SECTION_EXTERA, key: 'relativeLastSeen', kind: 'bool', storeKey: 'OERelativeLastSeen'},
   {section: SECTION_EXTERA, key: 'singleCornerRadius', kind: 'bool', storeKey: 'OEAppearanceSingleCornerRadius'},
   {section: SECTION_EXTERA, key: 'hideActionBarStatus', kind: 'bool', storeKey: 'OEAppearanceHideActionBarStatus'},
+  // * Android exports NaConfig.getHideStoriesFromHeader() under this alias (EtgBackup.java:326)
+  {section: SECTION_EXTERA, key: 'hideStories', kind: 'bool', storeKey: 'HideStoriesFromHeader'},
   {section: SECTION_EXTERA, key: 'hideFloatingButton', kind: 'bool', storeKey: 'DisableDialogsFloatingButton'},
   {section: SECTION_EXTERA, key: 'senderMiniAvatars', kind: 'bool', storeKey: 'OEAppearanceSenderMiniAvatars'},
   {section: SECTION_EXTERA, key: 'squareFab', kind: 'bool', storeKey: 'OEAppearanceSquareFab'},
+  // * Android exports NaConfig.centerActionBarTitle under this alias (EtgBackup.java:325)
+  {section: SECTION_EXTERA, key: 'centerTitle', kind: 'bool', storeKey: 'OEAppearanceCenterTitle'},
+  // * Android exports NekoConfig.typeface under this alias (EtgBackup.java:339)
+  {section: SECTION_EXTERA, key: 'useSystemFonts', kind: 'bool', storeKey: 'TypefaceUseDefault'},
   {section: SECTION_EXTERA, key: 'sectionsSeparatedHeaders', kind: 'bool', storeKey: 'OEAppearanceSeparateHeaders'},
   {section: SECTION_EXTERA, key: 'newChatHeaderStyle', kind: 'bool', storeKey: 'OEAppearanceNewChatHeaderStyle'},
   {section: SECTION_EXTERA, key: 'newLoadingStyle', kind: 'bool', storeKey: 'OEAppearanceNewLoadingStyle'},
@@ -105,13 +112,28 @@ const SUPPORTED: SupportedEntry[] = [
   {section: SECTION_EXTERA, key: 'hideReactionsInChannels', kind: 'bool', storeKey: 'OEChatsHideReactionsChannels'},
   {section: SECTION_EXTERA, key: 'hideReactionsInGroups', kind: 'bool', storeKey: 'OEChatsHideReactionsGroups'},
   {section: SECTION_EXTERA, key: 'showResultsBeforeVoting', kind: 'bool', storeKey: 'OEChatsShowResultsBeforeVoting'},
+  // * Android exports NekoConfig.showRepeat under this alias (EtgBackup.java:371)
+  {section: SECTION_EXTERA, key: 'showRepeatMessageButton', kind: 'bool', storeKey: 'showRepeat'},
   {section: SECTION_EXTERA, key: 'alwaysSendInHD', kind: 'bool', storeKey: 'OEChatsAlwaysSendInHD'},
+  // * Android hides the attach panel's camera tile; the web attach menu has
+  // * none, so the applied flag is a documented no-op (kept for round-trips)
+  {section: SECTION_EXTERA, key: 'hideCameraTile', kind: 'bool', storeKey: 'OEChatsHideCameraTile'},
+  // * Android widens a broadcast channel's posts (EtgBackup.java:365)
+  {section: SECTION_EXTERA, key: 'wideChannelPosts', kind: 'bool', storeKey: 'OEChatsWideChannelPosts'},
+  // * the same treatment in the Feed; the web has no feed, so the applied
+  // * flag is a documented no-op (kept for round-trips)
+  {section: SECTION_EXTERA, key: 'wideFeedPosts', kind: 'bool', storeKey: 'OEChatsWideFeedPosts'},
   {section: SECTION_EXTERA, key: 'pauseOnMinimizeVoice', kind: 'bool', storeKey: 'OEChatsPauseVoice'},
   {section: SECTION_EXTERA, key: 'pauseOnMinimizeRound', kind: 'bool', storeKey: 'OEChatsPauseRound'},
+  // * Android maps NekoConfig.autoPauseVideo; the persisted key is the contract
+  {section: SECTION_EXTERA, key: 'pauseOnMinimizeVideo', kind: 'bool', storeKey: 'AutoPauseVideo'},
   {section: SECTION_EXTERA, key: 'hideStickerTime', kind: 'bool', storeKey: 'HideTimeForSticker'},
   {section: SECTION_EXTERA, key: 'stickerSize', kind: 'float', min: 4, max: 20, storeKey: 'stickerSize'},
   {section: SECTION_EXTERA, key: 'stickerTimeMode', kind: 'int', min: 0, max: 2, storeKey: 'StickerTimeMode'},
   {section: SECTION_EXTERA, key: 'bottomButton', kind: 'int', min: 0, max: 2, storeKey: 'OEChatsBottomButton'},
+  // * Android's alias is a boolean: true = counters on (mode 0), false = off
+  // * (mode 2); the middle mode never round-trips through the format
+  {section: SECTION_EXTERA, key: 'tabCounter', kind: 'bool', storeKey: 'IgnoreUnreadCount', toEtg: (value) => value !== 2, toOurs: (value) => value ? 0 : 2},
   {section: SECTION_EXTERA, key: 'stickerShape', kind: 'int', min: 0, max: 2, storeKey: 'OEChatsStickerShape'},
   {section: SECTION_EXTERA, key: 'avatarCorners', kind: 'float', min: 0, max: 28, storeKey: 'OEAppearanceAvatarCorners'},
   {section: SECTION_EXTERA, key: 'sectionRadius', kind: 'float', min: 0, max: 28, storeKey: 'OEAppearanceSectionRadius'}

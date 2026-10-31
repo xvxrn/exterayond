@@ -15,6 +15,17 @@ const state = vi.hoisted(() => ({
 }));
 vi.mock('@components/confirmationPopup', () => ({default: state.confirm}));
 vi.mock('@components/wrappers/getPeerTitle', () => ({default: async() => document.createTextNode('Test user')}));
+// * the popup's source line resolves the chat's title over the managers; the
+// * fixture peer has none, and the line's presence is what the tests assert
+vi.mock('@components/peerTitleTsx', () => ({
+  PeerTitleTsx: (props: {peerId: PeerId, meAsNotes?: boolean}) => {
+    const span = document.createElement('span');
+    span.className = 'mock-peer-title';
+    span.dataset.peerId = String(props.peerId);
+    span.dataset.meAsNotes = String(!!props.meAsNotes);
+    return span;
+  }
+}));
 vi.mock('@lib/calls/callsController', () => ({default: {
   getCallByUserId: state.existingCall,
   startCallInternal: state.startCall
@@ -146,10 +157,144 @@ test('the real MD3 music popup follows media events, delegates controls and clos
   document.querySelector<HTMLButtonElement>(`button[aria-label="${nextLabel}"]`).click();
   expect(next).toHaveBeenCalledOnce();
   expect(document.body.textContent).toContain('Sandbox Track 2');
+  for(const [current, nextMode] of [
+    ['Exteraless.Md3.RepeatOff', 'Exteraless.Md3.RepeatPlaylist'],
+    ['Exteraless.Md3.RepeatPlaylist', 'Exteraless.Md3.RepeatTrack'],
+    ['Exteraless.Md3.RepeatTrack', 'Exteraless.Md3.RepeatOff']
+  ] as const) {
+    document.querySelector<HTMLButtonElement>(`button[aria-label="${I18n.format(current, true)}"]`).click();
+    expect(document.querySelector(`button[aria-label="${I18n.format(nextMode, true)}"]`)).not.toBeNull();
+  }
   setExteralessSetting('OEAppearanceMd3Player', false);
   await vi.waitFor(() => expect(PopupElement.POPUPS.length).toBe(0));
   controller.stop();
   setExteralessSetting('OEAppearanceMd3Player', true);
+});
+
+test('the MD3 player style settings reshape the popup live and keep the Android defaults', async() => {
+  const {default: showMd3Player} = await import('@components/popups/md3Player');
+  const {default: createMusicPlayerFixture} = await import('@components/popupSandbox/musicPlayerFixture');
+  const {default: PopupElement} = await import('@components/popups/indexTsx');
+  const {default: I18n} = await import('@lib/langPack');
+  const styles = (await import('@components/popups/md3Player.module.scss')).default;
+  setExteralessSetting('OEAppearanceMd3Player', true);
+  const controller = createMusicPlayerFixture({pFlags: {}, peerId: 123, mid: 1} as any);
+  showMd3Player(controller);
+  await vi.waitFor(() => expect(document.body.textContent).toContain('Sandbox Track'));
+
+  const content = document.querySelector<HTMLElement>(`.${styles.content}`);
+  expect(content).not.toBeNull();
+  const metadata = content.querySelector(`.${styles.metadata}`) as HTMLElement;
+  const cover = content.querySelector(`.${styles.cover}`) as HTMLElement;
+
+  // * Android defaults: card cover (no style class), title below, source and
+  // * modes shown, wave on, size 100, radius 28, normal controls
+  expect(content.classList.contains(styles['is-wide'])).toBe(false);
+  expect(content.classList.contains(styles['is-disc'])).toBe(false);
+  expect(cover.compareDocumentPosition(metadata) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  expect(content.style.getPropertyValue('--oe-player-cover-size')).toBe('1');
+  expect(content.style.getPropertyValue('--oe-player-cover-radius')).toBe('28px');
+  expect(content.style.getPropertyValue('--oe-player-controls-scale')).toBe('1');
+
+  const source = content.querySelector(`.${styles.source}`) as HTMLElement;
+  expect(source.classList.contains(styles.hidden)).toBe(false);
+  expect(source.getAttribute('aria-hidden')).toBe('false');
+  expect(source.querySelector('.mock-peer-title').getAttribute('data-peer-id')).toBe('123');
+  expect(content.querySelector(`.progress-line__wave`)).not.toBeNull();
+
+  const nextLabel = I18n.format('KeyboardShortcuts.Action.NextMedia', true);
+  const repeatLabel = I18n.format('Exteraless.Md3.RepeatOff', true);
+  expect(content.querySelector(`button[aria-label="${repeatLabel}"]`)).not.toBeNull();
+
+  // * PLAYER-15: modes off removes the repeat control, source off hides its row
+  setExteralessSetting('OEPlayerShowModes', false);
+  await vi.waitFor(() => expect(content.querySelector(`button[aria-label="${repeatLabel}"]`)).toBeNull());
+  setExteralessSetting('OEPlayerShowSource', false);
+  await vi.waitFor(() => expect(source.classList.contains(styles.hidden)).toBe(true));
+  expect(source.getAttribute('aria-hidden')).toBe('true');
+
+  // * PLAYER-02/03/04: the wide cover loses the radius rows' effect, the disc
+  // * is a circle; size and radius travel as custom properties
+  setExteralessSetting('OEPlayerCoverStyle', 1);
+  await vi.waitFor(() => expect(content.classList.contains(styles['is-wide'])).toBe(true));
+  setExteralessSetting('OEPlayerCoverSize', 60);
+  setExteralessSetting('OEPlayerControlsSize', 0);
+  await vi.waitFor(() => {
+    expect(content.style.getPropertyValue('--oe-player-cover-size')).toBe('0.6');
+    expect(content.style.getPropertyValue('--oe-player-controls-scale')).toBe('0.84');
+  });
+
+  // * PLAYER-10: the title moves above the cover only for the framed styles
+  setExteralessSetting('OEPlayerTitleAbove', true);
+  expect(cover.compareDocumentPosition(metadata) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  setExteralessSetting('OEPlayerCoverStyle', 3);
+  await vi.waitFor(() => expect(content.classList.contains(styles['is-disc'])).toBe(true));
+  expect(metadata.compareDocumentPosition(cover) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+
+  // * PLAYER-05: the disc spins while playing and the setting turns it off
+  controller.toggle();
+  await vi.waitFor(() => expect(content.classList.contains(styles['is-spinning'])).toBe(true));
+  setExteralessSetting('OEPlayerDiscSpin', false);
+  await vi.waitFor(() => expect(content.classList.contains(styles['is-spinning'])).toBe(false));
+
+  // * PLAYER-16: the wave rises with playback and flattens on pause. The test
+  // * harness has no signed-in state, so liteMode is unset; the stock default
+  // * has every animation available
+  const {setAppSettingsSilent} = await import('@stores/appSettings');
+  setAppSettingsSilent('liteMode', {all: false, animations: false, motion: false} as any);
+  const waveContainer = content.querySelector(`.progress-line`) as HTMLElement;
+  await vi.waitFor(() => expect(waveContainer.classList.contains('is-wavy')).toBe(true), {timeout: 5000});
+  controller.toggle();
+
+  // * the decay eases over ~70 frames, so it is asserted on a standalone bar
+  // * with a pumped frame queue instead of wall-clock rAF
+  const {default: WavyProgressLine} = await import('@components/wavyProgressLine');
+  const frames: FrameRequestCallback[] = [];
+  const rafSpy = vi.spyOn(window, 'requestAnimationFrame').mockImplementation((callback) => {
+    frames.push(callback);
+    return frames.length;
+  });
+  try {
+    const media = document.createElement('audio');
+    const wave = new WavyProgressLine({}, 4);
+    wave.setMedia({media, duration: 10});
+    document.body.append(wave.container);
+    (wave as any).width = 300;
+    let now = 0;
+    const pump = (count: number) => {
+      for(let i = 0; i < count; ++i) frames.shift()?.(now += 16);
+    };
+
+    media.dispatchEvent(new Event('play'));
+    pump(4);
+    expect(wave.container.classList.contains('is-wavy')).toBe(true);
+    expect((wave.container.querySelector('.progress-line__wave path') as SVGPathElement).getAttribute('d')).toContain('L');
+    media.dispatchEvent(new Event('pause'));
+    pump(150);
+    expect(wave.container.classList.contains('is-wavy')).toBe(false);
+    expect((wave.container.querySelector('.progress-line__wave path') as SVGPathElement).getAttribute('d')).toBeNull();
+    // * a zero amplitude keeps the flat bar even while playing (OEPlayerWavy off)
+    wave.setMaxAmplitude(0);
+    media.dispatchEvent(new Event('play'));
+    pump(4);
+    expect(wave.container.classList.contains('is-wavy')).toBe(false);
+    wave.removeListeners();
+    wave.container.remove();
+  } finally {
+    rafSpy.mockRestore();
+  }
+
+  setExteralessSetting('OEAppearanceMd3Player', false);
+  await vi.waitFor(() => expect(PopupElement.POPUPS.length).toBe(0));
+  controller.stop();
+  setExteralessSetting('OEAppearanceMd3Player', true);
+  setExteralessSetting('OEPlayerShowModes', true);
+  setExteralessSetting('OEPlayerShowSource', true);
+  setExteralessSetting('OEPlayerCoverStyle', 0);
+  setExteralessSetting('OEPlayerCoverSize', 100);
+  setExteralessSetting('OEPlayerControlsSize', 1);
+  setExteralessSetting('OEPlayerTitleAbove', false);
+  setExteralessSetting('OEPlayerDiscSpin', true);
 });
 
 test.each(['voice', 'video'] as const)('the real %s call method waits for confirmation before leaving or starting a call', async(type) => {

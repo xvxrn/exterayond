@@ -9,7 +9,7 @@ import temmlUrl from 'temml/dist/temml.min.js?url';
 export type TemmlOptions = {
   displayMode?: boolean,
   throwOnError?: boolean,
-  // added by patches/temml.patch: the tokens macro expansions may emit, and the MathML nodes
+  // added by scripts/patches/temml.patch: the tokens macro expansions may emit, and the MathML nodes
   // the builder may create, in one render
   maxExpandTokens?: number,
   maxNodes?: number

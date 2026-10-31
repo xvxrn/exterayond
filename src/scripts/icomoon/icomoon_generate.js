@@ -4,7 +4,7 @@ const pipeline = require('./icomoon');
 const fs = require('fs');
 const path = require('path');
 
-const iconsPath = path.join(__dirname, '../../../assets/icons/');
+const iconsPath = path.join(__dirname, '../../../src/assets/icons/');
 const tsOutPath = path.join(__dirname, '../../icons.ts');
 const files = fs.readdirSync(iconsPath);
 const currentIconOrder = new Map(

@@ -752,7 +752,7 @@ echo "[start-preview] preview: http://localhost:$PORT"
 # and a preview answers whichever form the caller uses, by name or by literal.
 # Still loopback: not exposed to the LAN.
 VITE=(env PREVIEW_SEED="$SEED" PREVIEW_SEED_2="${SECOND_SEED:+$SEED_2}" TWEB_PREVIEW=1 TWEB_NO_WORKER="$NO_WORKER"
-      pnpm --config.verify-deps-before-run=false exec vite --config vite.preview.config.ts)
+      pnpm --config.verify-deps-before-run=false exec vite --config scripts/vite.preview.config.ts)
 
 if [ "$BUNDLED" = 1 ]; then
   echo "[start-preview] full bundle mode: one in-memory bundle for local and remote requests, hot-patched on edit"
@@ -800,7 +800,7 @@ fi
 
 # The build does NOT copy public/ (build.copyPublicDir is false: the production
 # deploy target IS public/, which carries its own copy). The dev server serves it
-# as Vite's publicDir, and `node server.js --dist` layers it under dist/ — a bare
+# as Vite's publicDir, and `node scripts/server.js --dist` layers it under dist/ — a bare
 # `vite preview` would serve neither, and the app would boot without its 38 MB of
 # runtime assets (chat pattern, fonts, tgs, emoji). Symlink, don't copy: per-id
 # copies of the same 38 MB add up, and sirv resolves through the link.

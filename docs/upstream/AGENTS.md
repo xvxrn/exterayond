@@ -41,9 +41,8 @@ Debug query params: `?test=1` (test DCs), `?debug=1` (verbose logging), `?noShar
 
 Launch an authorized local preview with `bash scripts/start-preview.sh` (never
 plain `vite`) — it mints a fresh per-preview auth + picks a free port. Flags and
-details: see the script header. `.claude/launch.json` wires it into Claude
-Code's preview pane; other agents run the script directly and open the printed
-URL with their own browser tooling.
+details: see the script header. Run the script directly and open the printed
+URL with your own browser tooling.
 
 **One preview per checkout, shared through leases.** An agent runs
 `bash scripts/start-preview.sh --detach` (outside Claude Code's Bash sandbox —
@@ -72,7 +71,7 @@ restart; pass it again to rename.
 
 Every popup, opened by click with mock data and **no Telegram traffic**. Two ways in:
 
-- `?popups=1` on any dev/preview build (`.claude/launch.json` has a
+- `?popups=1` on any dev/preview build (`launch.json` of a coding agent has a
   `tweb-popups` server for it — a plain vite server is enough, no auth needed).
   `src/index.ts` hands over before the session is restored, so nothing but the
   sandbox ever runs.
@@ -652,21 +651,15 @@ import {Message, Chat, User, InputPeer} from '@layer';
   A priority run goes ahead of waiting runs, though never ahead of a running
   one. Do not set `TWEB_TEST_QUEUE_PRIORITY=1` for an ordinary test suite.
   `TWEB_TEST_QUEUE=0` runs without the queue; CI never queues.
-- **A code review goes to Codex first.** Asked to review a change, an agent
-  other than Codex does not review its own work: it hands the change, and what
-  it is for, to Codex (GPT) with `scripts/codex-review.sh`, then checks each
-  finding against the code before fixing or reporting it — the `codex-review`
-  skill (`.claude/skills/codex-review/SKILL.md`) has the steps. Only when Codex
-  is unavailable (the script exits 3: not installed, signed out, every model
-  refused) does the agent review the change itself, and its report says so.
-- **"Финализируй" (`/finalize`) means review, fix and commit.** It is the
-  explicit request to commit that the rule under "What NOT to Do" waits for,
-  and it covers only the change at hand: review it as above, fix what the review
-  confirms, run the tests the final review calls for, and commit it as one
-  commit of only that change — never pushed. A fix the code and the rules
-  already settle is made without asking; a question only the user can answer
-  holds the commit until they have answered and said to commit. The steps are in
-  `.claude/skills/finalize/SKILL.md`.
+- **Review changes against the owning Web K behavior, not only the agent's or
+  your own test summary.** There is no external reviewer pipeline; if a second
+  opinion is warranted, spawn a subagent with the diff and the owning code.
+- **Committing is the user's explicit call.** No agent commits or pushes unless
+  the user asked for it in that session; a phrase like "финализируй" counts as
+  such a request and covers only the change at hand — one commit of only that
+  change, never pushed. A fix the code and the rules already settle is made
+  without asking; a question only the user can answer holds the commit until
+  they have answered and said to commit.
 
 ## Accessibility (a11y) is part of every UI feature
 
@@ -832,7 +825,7 @@ client, whose RTL support is incomplete.
   the working tree, and when asked to commit, fold the whole feature into ONE
   commit (directly on master, no feature branch) unless told otherwise.
 - Do not add `oxlint-disable` (or legacy `eslint-disable`) comments without a reason
-- Never hand-edit or manually run `format-lang` to regenerate `src/scripts/out/langPack.strings` — it is auto-generated from `lang.ts`/`langSign.ts` by the Vite-wired lang watcher (`watch-lang.js`) on dev-server start, on every `lang.ts` change, and on build. Edit the lang `.ts` source only.
+- Never hand-edit or manually run `format-lang` to regenerate `src/scripts/out/langPack.strings` — it is auto-generated from `lang.ts`/`langSign.ts` by the Vite-wired lang watcher (`scripts/watch-lang.js`) on dev-server start, on every `lang.ts` change, and on build. Edit the lang `.ts` source only.
 - Never hand-edit `src/lib/settingsSearch/generated.ts` — it is the settings-search index, generated from the tabs (see "Settings tabs are indexed for search"). Change what the tabs render, or the extractor, and let it regenerate.
 - Do not import from `react` or use React patterns — this is Solid.js
 - Do not use heavy CSS selectors (deep descendant chains, universal `*`, expensive attribute matchers, `:not()` with complex arguments) — prefer a dedicated class on the target element
@@ -881,7 +874,7 @@ tune the split, and `--project=chromium` drops the other engines (~70 s).
 `test:popups` works the same way: parallel, the story sweep split into parts
 (`POPUPS_WORKERS` / `POPUP_STORY_PARTS`), Chromium unless `POPUPS_ALL_ENGINES=1`
 (`test:popups:full`, implied on CI). So does `test:focus`, on the popup suite's
-kind of server (`playwright.focus.config.ts`): a part per worker but one, which
+kind of server (`e2e/playwright.focus.config.ts`): a part per worker but one, which
 the sign-in sweep takes (`FOCUS_WORKERS` / `FOCUS_STORY_PARTS`,
 `FOCUS_STORIES=a,b` picks stories).
 `test:editor:e2e` too: parallel (`EDITOR_E2E_WORKERS`), Chromium unless
@@ -889,12 +882,12 @@ the sign-in sweep takes (`FOCUS_WORKERS` / `FOCUS_STORY_PARTS`,
 every test opens the fixture by navigating, a Chromium worker keeps one page and
 navigates it again for each test (`samePage` in `e2e/workerContext.ts`) — a new
 document in a warm renderer, three times faster to open than a new page.
-Playwright suites run on `vite.e2e.config.ts` — the dev server without hot
+Playwright suites run on `e2e/vite.e2e.config.ts` — the dev server without hot
 reload, so an edit made while a suite runs no longer reloads the page under it.
 Each suite's server listens on a port of its checkout's own (`e2e/ports.ts`), so
 the suites of different checkouts and worktrees run side by side.
 The sandbox suites (`test:popups`, `test:focus`, `test:a11y`) get the app as a
-bundle instead (`vite.popups-e2e.config.ts`: Vite's Full Bundle Mode, built
+bundle instead (`e2e/vite.popups-e2e.config.ts`: Vite's Full Bundle Mode, built
 once as the server starts, ~25 s). Each of their tests opens the sandbox anew,
 and served module by module that is ~1800 requests a page — ~25 s each with a
 full run's pages at once, against ~7 s bundled. A bundle has no module URLs, so
@@ -902,7 +895,7 @@ a test that reaches into the app — a store, `rootScope`, a popup to open, a
 harness of `e2e/fixtures` — calls `window.e2eImport('/src/…')` in the page,
 never `import('/src/…')`; it gives the app's own instance on either kind of
 server. Write the path whole, as a string in the spec: the bundle can import
-only the modules some spec under `e2e/` names that way (`vite.e2e.config.ts`
+only the modules some spec under `e2e/` names that way (`e2e/vite.e2e.config.ts`
 reads them out), and asked for another, `e2eImport` says so.
 `TWEB_E2E_BUNDLED=0` serves the modules as they are (no build, the quicker for
 one spec); `popupSandboxHotRerun.spec.ts`, which runs every module again by its
@@ -928,36 +921,20 @@ PLAYWRIGHT_BASE_URL=http://localhost:9001 pnpm test:a11y:app
 
 ## Agents & shared tooling
 
-Skills and commands live **in the repo** as the single source; per-agent
-integration only points at them:
+Skills live **in the repo** as the single source; per-agent integration only
+points at them:
 
-- **Skills** — `.claude/skills/*/SKILL.md` (standard Agent Skills format:
-  `name` + `description` frontmatter, optional bundled scripts). Claude Code
-  discovers them automatically. Codex discovers them via symlinks in
-  `~/.codex/skills/` pointing at these directories. An agent without skill
+- **Skills** — `.agents/skills/*/SKILL.md` (standard Agent Skills format:
+  `name` + `description` frontmatter, optional bundled scripts). ZCode and
+  Claude Code discover them automatically. An agent without skill
   auto-discovery should still open the matching SKILL.md and follow it when a
   task fits its description. Paths inside skills are relative to the repo root.
-- **Commands / prompts** — `.claude/commands/*.md` are slash-command prompt
-  files (`$ARGUMENTS`-style placeholders); Codex reads them via symlinks in
-  `~/.codex/prompts/`. Exception: `forge.md` is Claude-Code-only — it depends
-  on a Claude statusline usage gate and will not work elsewhere.
-- **Tool-name mapping** — skill/command texts may name Claude Code tools.
+  graphify is retired — it cost more tokens than the lookups were worth; do
+  not recreate it or its `graphify-out/` artifacts.
+- **Tool-name mapping** — skill texts may name Claude Code tools.
   Substitute your agent's equivalent: "Agent tool" / "subagent" / `Explore`
   → spawn a sub-task or do the search inline; browser-pane `preview_start`
   → run `bash scripts/start-preview.sh --detach` and open the printed URL;
   `AskUserQuestion` → ask in chat.
-- `.claude/launch.json` (preview servers) and `.claude/settings.local.json`
-  (permissions) are Claude-Code-specific; the Codex counterpart is
-  `~/.codex/config.toml`.
-
-Re-create the Codex symlinks on a new machine (run from the repo root):
-
-```bash
-mkdir -p ~/.codex/skills ~/.codex/prompts
-for s in graphify run-build tg-port-feature tweb-bugs tweb-mtproto-debug; do
-  ln -sfn "$(pwd)/.claude/skills/$s" ~/.codex/skills/$s
-done
-for c in planner task refactor-popup-procedural; do
-  ln -sfn "$(pwd)/.claude/commands/$c.md" ~/.codex/prompts/$c.md
-done
-```
+- Per-agent configuration (`.claude/launch.json`, `~/.codex/*`) is
+  machine-local and not part of the repository.

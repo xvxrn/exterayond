@@ -182,7 +182,7 @@ const formatReach = (s) => `an edit reaches on average ${s.mean} test files (med
 // * HMR
 
 function workerEntries() {
-  const found = ['sw.ts'];
+  const found = ['src/sw.ts'];
   const walk = (dir) => {
     for(const entry of fs.readdirSync(dir, {withFileTypes: true})) {
       const p = path.join(dir, entry.name);
@@ -347,7 +347,7 @@ export async function hmrGraph({live, loaded, boot} = {}) {
       else graph.delete(f);
     }
   }
-  const files = [...graph.keys()].filter((f) => f.startsWith('src/') || f === 'sw.ts');
+  const files = [...graph.keys()].filter((f) => f.startsWith('src/') || f === 'src/sw.ts');
   const importers = new Map(files.map((f) => [f, new Set()]));
   for(const f of files) for(const {to} of graph.get(f)) importers.get(to)?.add(f);
   const boundaries = live ? await liveBoundaries(files, live) : staticBoundaries(files);

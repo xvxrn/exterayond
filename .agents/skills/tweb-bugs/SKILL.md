@@ -2,7 +2,7 @@
 name: tweb-bugs
 description: "Parse, deduplicate, and prioritize bugs from GitHub (morethanwords/tweb) and bugs.telegram.org (WebK). Use when the user asks to analyze tweb bugs, triage issues, or review the tweb bug backlog."
 user-invocable: true
-argument-hint: "[--refresh] [--top N] [--label LABEL] [--platform github|telegram|all] [--status open|fixed|all] [--detailed] [--semantic-dupes]"
+argument-hint: "[--refresh] [--top N] [--label LABEL] [--platform github|telegram|all] [--status open|fixed|all] [--detailed]"
 allowed-tools: ["Read", "Write", "Bash(*)", "Glob", "Grep", "WebFetch", "Agent"]
 ---
 
@@ -25,9 +25,7 @@ Fetch open bugs from **both** platforms, normalize to a unified format, deduplic
 - `--platform github|telegram|all` — which platform to fetch/report (default: `all`)
 - `--status open|fixed|all` — filter by status (default: `open` for GitHub, `all` for Telegram)
 - `--detailed` — for Telegram bugs, fetch each individual page for full description, votes, device info (slower but more accurate scoring)
-- `--no-graph` — skip graphify graph lookup in Step 3.5 (useful if graph is outdated or not built)
-- `--semantic-dupes` — run LLM-powered root-cause duplicate analysis on ALL bugs (see Step 6 below). Uses cached categorizations if available (<7 days), otherwise dispatches 5 parallel Sonnet agents. Produces `graphify-semantic-duplicates-report.md`
-- No arguments — use cache if fresh (< 24h), otherwise re-fetch. Graph lookup is enabled by default if `graphify-out/graph.json` exists
+- No arguments — use cache if fresh (< 24h), otherwise re-fetch.
 
 ## Cache Location
 
@@ -46,7 +44,7 @@ bugs-cache/
 │   ├── last-fetch.txt        — ISO timestamp of last fetch
 │   └── issues-scored.json    — analyzed, scored issues
 ├── report.md                 — combined prioritized report
-└── graph-lookup.json         — cached graph community mappings per bug (from Step 3.5)
+└── report-tmp/               — per-run scratch files
 ```
 
 ## Unified Bug Format
@@ -205,122 +203,6 @@ final = (severity * 3 + repro_prob * 2 + breadth * 2 + community * 1.5 + age * 1
 
 Normalize to 1-10 scale.
 
-### Step 3.5: Graph-Based Root Cause Lookup (graphify integration)
-
-**Prerequisite:** `graphify-out/graph.json` and `graphify-out/wiki/index.md` must exist in the tweb project root. If they don't, skip this step and note "Graph not available — run /graphify to enable root cause analysis" in the report.
-
-For each scored issue, perform a graph lookup to identify the code community (cluster of related source files/functions) most likely responsible for the bug. This step transforms textual similarity deduplication into **structural code-graph deduplication**.
-
-#### Why this matters
-
-Bugs with identical titles (e.g. two bugs both titled "Download") may map to completely different code communities:
-- "Download completes but file not saved" → **Download Manager** community (appDownloadManager.ts, SW iframe path)
-- "Download keeps restarting" → **File Download Engine** community (apiFileManager.ts, MTProto chunk loop)
-
-Text-based dedup would merge them. Graph-based dedup correctly separates them.
-
-#### How to perform the lookup
-
-```bash
-python -c "
-import json, sys
-from pathlib import Path
-from networkx.readwrite import json_graph
-
-graph_path = Path('graphify-out/graph.json')
-if not graph_path.exists():
-    print('SKIP: no graph')
-    sys.exit(0)
-
-data = json.loads(graph_path.read_text(encoding='utf-8'))
-G = json_graph.node_link_graph(data, edges='links')
-
-# Load community labels
-labels_path = Path('.graphify_labels.json')
-if labels_path.exists():
-    labels = {int(k): v for k, v in json.loads(labels_path.read_text(encoding='utf-8')).items()}
-else:
-    labels = {}
-
-def lookup_bug(keywords):
-    '''Find matching graph nodes and their communities for a list of keywords.'''
-    terms = [t.lower() for t in keywords if len(t) > 2]
-    scored = []
-    for nid, ndata in G.nodes(data=True):
-        label = ndata.get('label', '').lower()
-        source = ndata.get('source_file', '').lower()
-        score = sum(2 for t in terms if t in label) + sum(1 for t in terms if t in source)
-        if score > 0:
-            scored.append((score, nid, ndata))
-    scored.sort(reverse=True)
-    top = scored[:10]
-
-    # Group by community
-    communities = {}
-    for score, nid, ndata in top:
-        cid = ndata.get('community', -1)
-        if cid not in communities:
-            communities[cid] = {
-                'community_id': cid,
-                'community_name': labels.get(cid, f'Community {cid}'),
-                'nodes': [],
-                'source_files': set()
-            }
-        communities[cid]['nodes'].append(ndata.get('label', nid))
-        if ndata.get('source_file'):
-            communities[cid]['source_files'].add(ndata['source_file'])
-
-    # Return top 3 communities by match score
-    result = []
-    for cid, info in list(communities.items())[:3]:
-        info['source_files'] = list(info['source_files'])
-        result.append(info)
-    return result
-
-# Example: lookup_bug(['download', 'save', 'file', 'progress'])
-# Returns: [{'community_id': 106, 'community_name': 'Download Manager', 'nodes': [...], 'source_files': [...]}]
-"
-```
-
-For each bug, extract 3-8 keywords from the title + body (feature area, action, error type) and call `lookup_bug(keywords)`. Add the result to the scored issue:
-
-```json
-{
-  "graph_root": {
-    "primary_community": {
-      "id": 106,
-      "name": "Download Manager",
-      "key_files": ["src/lib/appDownloadManager.ts"]
-    },
-    "related_communities": [
-      {"id": 496, "name": "Save-to-Disk Anchor"},
-      {"id": 17, "name": "API Manager Proxy & SW"}
-    ]
-  }
-}
-```
-
-#### Graph-enhanced deduplication rules
-
-After the standard text-based deduplication, apply these additional rules:
-
-1. **Same community = candidate duplicate** — even if titles differ, bugs mapping to the same primary community are likely related. Flag them as a duplicate group.
-2. **Different community = NOT duplicate** — even if titles are identical, bugs mapping to different primary communities should NOT be merged. Note the community difference explicitly.
-3. **Adjacent communities = related** — if two bugs map to communities that share edges in the graph, note them as "related but distinct root cause."
-
-#### Reading wiki articles for context
-
-If `graphify-out/wiki/` exists, read the wiki article for the matched community to get richer context:
-
-```bash
-# For a bug matching community "Download Manager":
-cat graphify-out/wiki/Download_Manager.md
-```
-
-This provides the list of key functions, their connections, source files, and audit trail — useful for writing the "root cause" description in the report.
-
-
-
 Create `report.md` with:
 
 ```markdown
@@ -348,157 +230,19 @@ Generated: {date} | GitHub: {N} issues | Telegram: {M} issues | Duplicates remov
 - Issues #X, #Y, #Z — same root cause: {description}
 ...
 
-## By Code Area (graphify communities)
-### {community_name} (community {id})
+## By Code Area
+### {area name}
 - [#{bug_number}] Score {score} — {title}
 - [#{bug_number}] Score {score} — {title}
-  → Key files: {source_files}
-  → Wiki: graphify-out/wiki/{community_name}.md
+  → Key files: {source files from the dedup step}
 ...
 ```
 
-### Step 5: Output
+### Step 4: Output
 
 - Save `issues-scored.json` to each platform's cache dir and `report.md` to the cache root
 - Display the report to the user (or top N if `--top` was passed)
 - Mention how many were fetched per platform, how many dupes found, cache status
-
-### Step 6: Semantic Duplicate Analysis (`--semantic-dupes`)
-
-This step uses LLM root-cause analysis to find duplicate bugs that text matching cannot detect. Two bugs phrased completely differently ("video not playing" vs "media fails to load in channels") get the same standardized root_problem string, exposing them as duplicates.
-
-**Why this is needed:** Text matching (TF-IDF, fuzzy) groups bugs by shared words, not shared problems. It merges unrelated bugs ("video not playing" + "no audio in video") and misses true duplicates with different wording. LLM analysis understands the actual problem.
-
-#### Step 6.1: Ensure graphify-input batch files exist
-
-Check if `$CACHE_DIR/graphify-input/bugs-batch-01.md` exists. If not, run the export script:
-
-```bash
-node "$SKILL_DIR/export-for-graphify.mjs"
-```
-
-This creates `$CACHE_DIR/graphify-input/bugs-batch-NN.md` files — ~100 bugs per batch, 29 files total for ~2815 bugs. Each bug includes number, title, status, date, URL, body text, device info.
-
-#### Step 6.2: Check categorization cache
-
-Check if `$CACHE_DIR/cats-01.json` through `cats-05.json` exist. Each file has a JSON array of `{"n": bug_number, "rp": "root problem", "cat": "category"}`. If ALL 5 files exist and were written within the last 7 days, skip to Step 6.4.
-
-#### Step 6.3: Dispatch 5 parallel Sonnet agents for categorization
-
-Dispatch **5 agents in a single message** (they MUST be parallel). Each agent reads 5-6 batch files (~500-600 bugs) and **writes** its result to a numbered file using the Write tool.
-
-Agent assignment:
-- Agent 1: batches 01-06 → `$CACHE_DIR/cats-01.json`
-- Agent 2: batches 07-12 → `$CACHE_DIR/cats-02.json`
-- Agent 3: batches 13-18 → `$CACHE_DIR/cats-03.json`
-- Agent 4: batches 19-24 → `$CACHE_DIR/cats-04.json`
-- Agent 5: batches 25-29 → `$CACHE_DIR/cats-05.json`
-
-Each agent receives this prompt (substitute FILE_LIST, OUTPUT_PATH):
-
-```
-You are a bug analyst. Read these files of Telegram WebK bug reports. For EVERY bug, determine the root problem.
-
-Files: FILE_LIST
-
-For EACH bug produce: {"n": bug_number, "rp": "root problem in 5-15 words", "cat": "category"}
-
-Categories: video-playback, audio, calls, downloads, message-input, message-display, message-status, drafts, notifications, stickers-emoji, ui-rendering, scrolling, performance, settings, auth-login, folders-archive, search, media-upload, reactions, polls, keyboard-shortcuts, rtl-layout, bots, premium-payments, contacts, dark-mode, profile, privacy, scheduled-messages, stories, mini-apps, browser-compat, other
-
-Rules:
-- Root problem = YOUR diagnosis, not user's words. Standardize similar issues to IDENTICAL strings.
-- "video not playing" and "can't watch video" → SAME rp
-- "video not playing" and "no audio in video" → DIFFERENT rp (playback failure vs audio codec)
-- "can't download" and "download is slow" → DIFFERENT rp (failure vs speed)
-- Vague reports (title is just "bug") → rp: "report too vague to determine root cause", cat: "other"
-- You MUST include EVERY bug, no skipping
-
-IMPORTANT: After building the JSON array, WRITE IT to OUTPUT_PATH using the Write tool. Write ONLY valid JSON array.
-```
-
-Use `model: "sonnet"` for all 5 agents. Estimated time: ~7 minutes total (parallel).
-
-#### Step 6.4: Merge and find duplicates
-
-```python
-import json, re
-from pathlib import Path
-from collections import defaultdict
-
-CACHE = Path('.Codex/bugs-cache')
-
-# Merge all categorized files
-all_bugs = []
-for i in range(1, 6):
-    fp = CACHE / f'cats-0{i}.json'
-    data = json.loads(fp.read_text(encoding='utf-8'))
-    all_bugs.extend(data)
-
-# Deduplicate by bug number
-seen = set()
-unique = []
-for b in all_bugs:
-    if b['n'] not in seen:
-        seen.add(b['n'])
-        unique.append(b)
-
-# Group by exact root_problem string
-rp_groups = defaultdict(list)
-for b in unique:
-    rp = b.get('rp', '').lower().strip()
-    if rp != 'report too vague to determine root cause':
-        rp_groups[rp].append(b)
-
-# Duplicate groups = root problems with 2+ bugs
-dupes = {rp: entries for rp, entries in rp_groups.items() if len(entries) >= 2}
-```
-
-#### Step 6.5: Build graphify graph
-
-Create a graphify extraction where each duplicate group is a hub node connected to its member bugs:
-
-```python
-nodes = []
-edges = []
-for rp, entries in dupes.items():
-    rp_id = 'rp_' + re.sub(r'[^a-z0-9]+', '_', rp)[:60]
-    nodes.append({'id': rp_id, 'label': rp.title(), 'file_type': 'document', ...})
-    for entry in entries:
-        bug_id = f'bug_{entry["n"]}'
-        nodes.append({'id': bug_id, 'label': f'#{entry["n"]}: {title}', ...})
-        edges.append({'source': bug_id, 'target': rp_id, 'relation': 'has_root_problem', ...})
-```
-
-Run through graphify pipeline (build → cluster → visualize):
-```python
-from graphify.build import build_from_json
-from graphify.cluster import cluster
-from graphify.export import to_json, to_html
-G = build_from_json(extraction)
-communities = cluster(G)
-to_json(G, communities, 'graphify-out/graph_semantic.json')
-to_html(G, communities, 'graphify-out/graph_semantic.html')
-```
-
-#### Step 6.6: Generate report
-
-Write `$CACHE_DIR/graphify-semantic-duplicates-report.md` with:
-- Summary metrics (total bugs, groups, coverage)
-- All duplicate groups sorted by size (largest first)
-- Each group: root_problem, category, table of bug numbers with titles/status/votes
-- Category distribution table
-
-#### Cache files produced
-
-```
-bugs-cache/
-├── cats-01.json through cats-05.json    — per-agent categorizations
-├── all-bugs-categorized.json            — merged categorizations
-├── graphify-semantic-duplicates-report.md — final report
-└── graphify-input/graphify-out/
-    ├── graph_semantic.json              — graphify graph
-    └── graph_semantic.html              — interactive visualization
-```
 
 ## Important Notes
 

@@ -2,11 +2,15 @@
 
 Unofficial web implementation of **exteraless** for Linux, BSD, macOS and Windows.
 The name is always written lowercase: `exterayond`. GPL-3.0; preserve tweb's license,
-notices and attribution.
+notices and attribution. Browser-only client — there is no additional backend; the
+server that serves it is ours.
 
 tweb repo mechanics (dev server, preview leases, tests, lint, conventions) live in
 [`docs/upstream/AGENTS.md`](docs/upstream/AGENTS.md) — read it before working in the
-codebase; it is subordinate to this file.
+codebase; it is subordinate to this file. Operational skills live in
+`.agents/skills/` (`tg-port-feature`, `run-build`, `tweb-bugs`,
+`tweb-mtproto-debug`); graphify was retired as too token-expensive — do not
+recreate it.
 
 ## Product model — locked decisions
 
@@ -40,17 +44,15 @@ ported as-is.
   `exteraconfig` / `pillstackconfig` / `mainconfig`, the exteraGram-key mapping table,
   and range validation of untrusted files. Unknown Android-only keys are ignored and
   shown as unsupported, never treated as working.
-- **Plugins are deferred.** Do not work on plugin execution until the user
-  explicitly resumes it. When that work resumes, implement the existing plugin
-  contract at explicit, documented Web K
-  extension points (avatar render, dialog row, message render, menus, events):
-  the `elyx_runtime` facade (`base_plugin`, `hook_utils`, `plugin_settings`,
-  `ui/alert`, `ui/bulletin`), the permission model — `ui`, `messages.read`,
-  `messages.send`, `network`, `files`, `intents`, `settings`, `hooks`, `native` —
-  granted at install time, and the plugin settings models (Switch/Selector/Slider).
-  Botile 1.2.0 is a compatibility target only: never copy its implementation, never
-  bundle any plugin. Android/JNI/reflection hooks are unsupported in a browser and
-  must be surfaced as unsupported, never faked.
+- **Plugins (ported, complete).** The plugin contract lives at explicit, documented
+  Web K extension points (avatar render, dialog row, message render, menus, events):
+  the `elyx_runtime` facade in `src/plugins/runtime.ts` (`base_plugin`,
+  `hook_utils`, `plugin_settings`, `ui/alert`, `ui/bulletin`), the permission model —
+  `ui`, `messages.read`, `messages.send`, `network`, `files`, `intents`, `settings`,
+  `hooks`, `native` — granted at install time, and the plugin settings models
+  (Switch/Selector/Slider). Botile 1.2.0 is a compatibility target only: never copy
+  its implementation, never bundle any plugin. Android/JNI/reflection hooks are
+  unsupported in a browser and must be surfaced as unsupported, never faked.
 
 ## Portability classes
 

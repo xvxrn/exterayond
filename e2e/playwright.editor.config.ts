@@ -1,7 +1,7 @@
 import {defineConfig, devices} from '@playwright/test';
 import path from 'path';
-import {playwrightWorkers} from './scripts/testQueue';
-import e2ePort from './e2e/ports';
+import {playwrightWorkers} from '../scripts/testQueue';
+import e2ePort from './ports';
 
 const PORT = e2ePort('editor');
 
@@ -10,14 +10,14 @@ const PORT = e2ePort('editor');
 const allEngines = !!(process.env.EDITOR_E2E_ALL_ENGINES || process.env.CI);
 
 export default defineConfig<{freshContext: boolean}, {samePage: boolean}>({
-  testDir: './e2e',
+  testDir: '.',
   testMatch: /chatInputEditor.*\.spec\.ts/,
   // Every test opens its own fixture document, with its own clipboard, and shares nothing with the
   // others, so they run side by side; one worker made this 26 minutes long.
   fullyParallel: true,
   workers: playwrightWorkers(process.env.EDITOR_E2E_WORKERS ? Number(process.env.EDITOR_E2E_WORKERS) : '75%'),
   // waits for its turn in the machine-wide queue of heavy test runs (scripts/test-queue.sh)
-  globalSetup: path.join(__dirname, 'scripts/testQueue.ts'),
+  globalSetup: path.join(__dirname, '../scripts/testQueue.ts'),
   timeout: 30_000,
   reporter: [['list']],
   use: {
@@ -47,7 +47,7 @@ export default defineConfig<{freshContext: boolean}, {samePage: boolean}>({
     ] : [])
   ],
   webServer: {
-    command: `node_modules/.bin/vite --config vite.editor-e2e.config.ts --host 127.0.0.1 --port ${PORT} --strictPort`,
+    command: `node_modules/.bin/vite --config e2e/vite.editor-e2e.config.ts --host 127.0.0.1 --port ${PORT} --strictPort`,
     url: `http://127.0.0.1:${PORT}/e2e/fixtures/chatInputEditor.html`,
     env: {
       TWEB_E2E: '1',

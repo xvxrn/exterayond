@@ -31,7 +31,7 @@ describe('formatting MarkupTooltip layout', () => {
     'utf8'
   );
   const aiLettersPlainSource = readFileSync(
-    resolve(__dirname, '../../assets/icons/ai_letters_plain.svg'),
+    resolve(__dirname, '../assets/icons/ai_letters_plain.svg'),
     'utf8'
   );
   const popupSource = readFileSync(

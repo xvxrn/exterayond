@@ -27,15 +27,15 @@ if(serveDist) {
 app.use(express.static(publicFolderName));
 
 app.get('/', (req, res) => {
-  res.sendFile(__dirname + `/${indexFolderName}/index.html`);
+  res.sendFile(__dirname + `/../${indexFolderName}/index.html`);
 });
 
 const server = useHttp ? http : https;
 
 const options = {};
 if(!useHttp) {
-  options.key = fs.readFileSync(__dirname + '/certs/server-key.pem');
-  options.cert = fs.readFileSync(__dirname + '/certs/server-cert.pem');
+  options.key = fs.readFileSync(__dirname + '/../certs/server-key.pem');
+  options.cert = fs.readFileSync(__dirname + '/../certs/server-cert.pem');
 }
 
 server.createServer(options, app).listen(port, () => {

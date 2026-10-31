@@ -4,6 +4,8 @@ import {defineConfig, type AliasOptions} from 'vite';
 // page under a test that is half done
 import e2eConfig, {cacheModulesForTheRun, optimizeDepsFor} from './vite.e2e.config';
 
+const ROOT = resolve(__dirname, '..');
+
 const fixtureStubs = [
   ['@components/buttonMenu', 'buttonMenu.ts'],
   ['@components/buttonMenuToggle', 'buttonMenuToggle.ts'],
@@ -22,8 +24,8 @@ function aliasEntries(aliases: AliasOptions = []) {
 
 const base = e2eConfig;
 const baseOptimizeEntries = Array.isArray(base.optimizeDeps?.entries) ? base.optimizeDeps.entries : [];
-const stubDirectory = resolve(__dirname, 'e2e/fixtures/stubs');
-const cacheDir = resolve(__dirname, 'node_modules/.vite-editor-e2e');
+const stubDirectory = resolve(ROOT, 'e2e/fixtures/stubs');
+const cacheDir = resolve(ROOT, 'node_modules/.vite-editor-e2e');
 
 export default defineConfig({
   ...base,

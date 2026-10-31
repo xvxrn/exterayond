@@ -1,7 +1,7 @@
 import {defineConfig, devices} from '@playwright/test';
 import path from 'path';
-import {playwrightWorkers} from './scripts/testQueue';
-import e2ePort from './e2e/ports';
+import {playwrightWorkers} from '../scripts/testQueue';
+import e2ePort from './ports';
 
 // Browser tests for lottie sticker rendering.
 //
@@ -19,11 +19,11 @@ const PORT = e2ePort('default');
 const externalBaseURL = process.env.PLAYWRIGHT_BASE_URL;
 
 export default defineConfig({
-  testDir: './e2e',
+  testDir: '.',
   fullyParallel: false,
   workers: playwrightWorkers(1), // one sticker on screen at a time keeps the screenshot detector unambiguous
   // waits for its turn in the machine-wide queue of heavy test runs (scripts/test-queue.sh)
-  globalSetup: path.join(__dirname, 'scripts/testQueue.ts'),
+  globalSetup: path.join(__dirname, '../scripts/testQueue.ts'),
   timeout: 60_000,
   reporter: [['list']],
   use: {
@@ -32,9 +32,9 @@ export default defineConfig({
     viewport: {width: 800, height: 600}
   },
   projects: [{name: 'chromium', use: {...devices['Desktop Chrome']}}],
-  // No hot reload (vite.e2e.config.ts): an edit during a run must not reload the page under a test.
+  // No hot reload (e2e/vite.e2e.config.ts): an edit during a run must not reload the page under a test.
   webServer: externalBaseURL ? undefined : {
-    command: `pnpm exec vite --config vite.e2e.config.ts --port ${PORT} --strictPort`,
+    command: `pnpm exec vite --config e2e/vite.e2e.config.ts --port ${PORT} --strictPort`,
     url: `http://localhost:${PORT}/`,
     env: {TWEB_PREVIEW: '1', TWEB_E2E: '1'},
     reuseExistingServer: !process.env.CI,

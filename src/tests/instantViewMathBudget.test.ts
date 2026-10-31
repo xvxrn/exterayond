@@ -5,7 +5,7 @@ import {MAX_FORMULA_EXPANDED_TOKENS, MAX_FORMULA_NODES, renderLatexInto} from '@
 import type {Temml} from '@helpers/math/loadTemml';
 import {getMiddleware} from '@helpers/middleware';
 
-// The Node build carries the same patch as the script the app loads (patches/temml.patch), so
+// The Node build carries the same patch as the script the app loads (scripts/patches/temml.patch), so
 // the library-level budget is exercised on real Temml; the app loads its copy via a <script>
 // tag jsdom cannot fetch, so `loadTemml` is the seam.
 const require = createRequire(import.meta.url);

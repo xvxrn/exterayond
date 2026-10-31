@@ -29,7 +29,7 @@ import ServiceMessagePort from '@lib/serviceWorker/serviceMessagePort';
 import deferredPromise, {CancellablePromise} from '@helpers/cancellablePromise';
 import {makeWorkerURL} from '@helpers/setWorkerProxy';
 import usableWorkerURL from '@helpers/usableWorkerURL';
-import ServiceWorkerURL from '../../sw?worker&url';
+import ServiceWorkerURL from '../sw?worker&url';
 import MainWorkerURL from './mainWorker/index.worker.ts?worker&url';
 import setDeepProperty, {joinDeepPath, splitDeepPath} from '@helpers/object/setDeepProperty';
 import getThumbKey from '@lib/storages/utils/thumbs/getThumbKey';

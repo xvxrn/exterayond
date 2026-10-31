@@ -1,7 +1,7 @@
 import {defineConfig, devices} from '@playwright/test';
 import path from 'path';
-import {playwrightWorkers} from './scripts/testQueue';
-import e2ePort from './e2e/ports';
+import {playwrightWorkers} from '../scripts/testQueue';
+import e2ePort from './ports';
 
 const PORT = e2ePort('popups');
 // the modules as they are, for popupSandboxHotRerun.spec.ts: it runs every module again by its URL
@@ -10,7 +10,7 @@ const MODULES_PORT = e2ePort('popupsModules');
 // The app's server for the sandbox suites (vite.popups-e2e.config.ts): a bundle, ready once it is built, which
 // /__e2e/ready says — or, `bundled` false, the modules as they are
 export const appServer = (port = PORT, bundled = true) => ({
-  command: `node_modules/.bin/vite --config vite.popups-e2e.config.ts --host 127.0.0.1 --port ${port} --strictPort`,
+  command: `node_modules/.bin/vite --config e2e/vite.popups-e2e.config.ts --host 127.0.0.1 --port ${port} --strictPort`,
   url: `http://127.0.0.1:${port}/__e2e/ready`,
   env: {TWEB_PREVIEW: '1', TWEB_E2E: '1', ...(!bundled && {TWEB_E2E_BUNDLED: '0'})},
   reuseExistingServer: false,
@@ -28,14 +28,14 @@ const allEngines = !!(process.env.POPUPS_ALL_ENGINES || process.env.CI);
 const LONG = /popupSandbox(Rtl|HotRerun|StarsTransactions)?\.spec\.ts$/;
 
 export default defineConfig<{freshContext: boolean, modulesURL: string}>({
-  testDir: './e2e',
+  testDir: '.',
   testMatch: /popupSandbox.*\.spec\.ts/,
   // Every test opens its own sandbox page and shares nothing with the others, so they run side by
   // side; one worker made this 13 minutes long.
   fullyParallel: true,
   workers: playwrightWorkers(process.env.POPUPS_WORKERS ? Number(process.env.POPUPS_WORKERS) : '75%'),
   // waits for its turn in the machine-wide queue of heavy test runs (scripts/test-queue.sh)
-  globalSetup: path.join(__dirname, 'scripts/testQueue.ts'),
+  globalSetup: path.join(__dirname, '../scripts/testQueue.ts'),
   timeout: 60_000,
   reporter: [['list']],
   use: {

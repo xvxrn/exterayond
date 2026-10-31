@@ -6,7 +6,7 @@ type ManagerCall = {manager: string, method: string, args: unknown[]};
 
 declare global {
   interface Window {
-    /** The app's own instance of a module (`'/src/…'`, `'/e2e/fixtures/…'`) on an e2e server: vite.e2e.config.ts */
+    /** The app's own instance of a module (`'/src/…'`, `'/e2e/fixtures/…'`) on an e2e server: e2e/vite.e2e.config.ts */
     e2eImport(path: string): Promise<any>;
     popupSandbox: {
       ready(): Promise<void>,

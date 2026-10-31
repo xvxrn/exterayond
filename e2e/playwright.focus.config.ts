@@ -1,7 +1,7 @@
 import {defineConfig, devices} from '@playwright/test';
 import popups, {appServer} from './playwright.popups.config';
-import {playwrightWorkers} from './scripts/testQueue';
-import e2ePort from './e2e/ports';
+import {playwrightWorkers} from '../scripts/testQueue';
+import e2ePort from './ports';
 
 // The popup suite's setup — the sandbox on a server that caches modules for the run, tests side by
 // side on a context shared per worker — for the focus sweep, which ran on the lottie config one

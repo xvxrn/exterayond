@@ -35,7 +35,7 @@ node scripts/publish-local.mjs
 
 The second command combines `dist/` and the static assets in `public/` into
 `tmp/startup-verified-dist/`. To serve the build directly, use
-`node server.js 0 8080 --dist`; that server reads both `dist/` and `public/`.
+`node scripts/server.js 0 8080 --dist`; that server reads both `dist/` and `public/`.
 The repository does not contain generated JavaScript bundles or source maps.
 
 For a container image, run

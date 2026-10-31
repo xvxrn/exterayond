@@ -1,14 +1,14 @@
 // @ts-check
 
 const fs = require('fs');
-const fileNames = fs.readdirSync('./');
+const fileNames = fs.readdirSync('./docs');
 
 const logsPath = './public/changelogs/';
 fs.rmSync(logsPath, {force: true, recursive: true});
 fs.mkdirSync(logsPath);
 
 const processChangelog = (fileName) => {
-  const text = fs.readFileSync('./' + fileName).toString('utf-8');
+  const text = fs.readFileSync('./docs/' + fileName).toString('utf-8');
 
   const lang = (fileName.split('_')[1] || 'en').split('.')[0];
   const writeTo = `${logsPath}${lang}_{VERSION}.md`;

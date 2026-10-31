@@ -45,7 +45,7 @@ function namespaceLabelIds(element: HTMLElement) {
 // same in a single expansion; a dozen nested `\cancelto`s build their body 2^12 times without any
 // macro at all. The MathML is worse still: Chrome appends `<mi>` siblings in quadratic time, so
 // 100k of them held the main thread for 14 s and left the tab at "Page Unresponsive" every time
-// the chat opened. patches/temml.patch adds two budgets, both enforced while the work happens
+// the chat opened. scripts/patches/temml.patch adds two budgets, both enforced while the work happens
 // rather than after it: every token an expansion emits is charged against `maxExpandTokens`,
 // and every MathML node the builder creates against `maxNodes`. A formula over either falls back
 // to its source, like one that does not parse. 4k nodes is three times the largest formula

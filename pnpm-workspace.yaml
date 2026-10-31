@@ -76,4 +76,4 @@ minimumReleaseAgeExclude:
 # a release carries it, a temml upgrade means re-applying the patch (`pnpm patch temml`),
 # and src/tests/instantViewMathBudget.test.ts checks the shipped build for it.
 patchedDependencies:
-  temml: patches/temml.patch
+  temml: scripts/patches/temml.patch

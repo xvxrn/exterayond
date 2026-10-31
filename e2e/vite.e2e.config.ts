@@ -7,7 +7,9 @@
 import {existsSync, readdirSync, readFileSync, statSync} from 'fs';
 import {resolve} from 'path';
 import {normalizePath, type Plugin, type UserConfig} from 'vite';
-import baseConfig from './vite.config';
+import baseConfig from '../vite.config';
+
+const ROOT = resolve(__dirname, '..');
 
 // Nothing the server gives out changes during a run (no watcher, no hot reload), so every module can
 // be cached for the run instead of answering `no-cache`: a worker's pages after its first then boot
@@ -43,12 +45,12 @@ export const cacheModulesForTheRun: Plugin = {
 const E2E_IMPORT = 'virtual:e2e-import';
 function namedModules() {
   const named = new Set<string>();
-  const dir = resolve(__dirname, 'e2e');
+  const dir = resolve(ROOT, 'e2e');
   for(const file of readdirSync(dir).filter((name) => name.endsWith('.ts'))) {
     const source = readFileSync(resolve(dir, file), 'utf8');
     for(const [, path] of source.matchAll(/['"`](\/(?:src|e2e\/fixtures)\/[\w./-]+\.(?:tsx?|scss))['"`]/g)) named.add(path);
   }
-  return [...named].filter((path) => existsSync(resolve(__dirname, path.slice(1)))).sort();
+  return [...named].filter((path) => existsSync(resolve(ROOT, path.slice(1)))).sort();
 }
 
 export const e2eImport: Plugin = (() => {
@@ -74,7 +76,7 @@ window.e2eImport = (path) => modules[path] ? modules[path]() :
     },
     transform(code, id) {
       // Vite's ids have forward slashes wherever the paths do not
-      if(bundled && id.split('?')[0] === normalizePath(resolve(__dirname, 'src/index.ts'))) return {code: `${code}\nimport '${E2E_IMPORT}';\n`, map: null};
+      if(bundled && id.split('?')[0] === normalizePath(resolve(ROOT, 'src/index.ts'))) return {code: `${code}\nimport '${E2E_IMPORT}';\n`, map: null};
     }
   };
 })();
@@ -109,10 +111,10 @@ export function optimizeDepsFor(cacheDir: string, optimizeDeps = baseConfig.opti
     const path = resolve(directory, entry.name);
     return entry.isDirectory() ? hasNewer(path) : statSync(path).mtimeMs > built;
   });
-  return {...optimizeDeps, force: !!built && hasNewer(resolve(__dirname, 'src/vendor'))};
+  return {...optimizeDeps, force: !!built && hasNewer(resolve(ROOT, 'src/vendor'))};
 }
 
-const cacheDir = resolve(__dirname, 'tmp/vite-e2e-cache');
+const cacheDir = resolve(ROOT, 'tmp/vite-e2e-cache');
 
 const config: UserConfig = {
   ...baseConfig,

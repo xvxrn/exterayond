@@ -3,7 +3,7 @@ const path = require('path');
 const crypto = require('crypto');
 const {execSync} = require('child_process');
 
-const SRC_DIR = path.join(__dirname, 'src');
+const SRC_DIR = path.join(__dirname, '..', 'src');
 const LANG_FILE_NAMES = ['lang.ts', 'langSign.ts'];
 const LANG_FILES = LANG_FILE_NAMES.map((name) => path.join(SRC_DIR, name));
 const EDIT_FILE_PATH = path.join(SRC_DIR, 'langPackLocalVersion.ts');

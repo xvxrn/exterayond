@@ -20,8 +20,8 @@ src/langPackLocalVersion.ts
 /.ai
 tmp
 /.research/
-/snapshot-server/
-/demo.html
+
+
 /src/scripts/demo.ts
 
 # Generated production bundles; keep the static assets and codec workers.

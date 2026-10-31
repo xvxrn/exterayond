@@ -1,4 +1,4 @@
-// The preview switcher. vite.preview.config.ts injects it into every preview's
+// The preview switcher. scripts/vite.preview.config.ts injects it into every preview's
 // page, and it is the whole of the /_previews page. It names the tab after the
 // task its checkout works on (`start-preview.sh --label`) and puts a badge in
 // the corner that lists every running preview: the registry behind

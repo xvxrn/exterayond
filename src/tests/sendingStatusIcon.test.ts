@@ -11,7 +11,7 @@ function expectPath(d: string, expected: number[]) {
 }
 
 describe('SendingStatusIcon', () => {
-  // a still icon has to be the tgico glyph's own drawing (assets/icons/sending.svg, 1check.svg,
+  // a still icon has to be the tgico glyph's own drawing (src/assets/icons/sending.svg, 1check.svg,
   // 2checks.svg, sendingerror_filled.svg) - it is drawn in the glyph's box instead of the glyph
   test('still states draw the glyphs point for point', () => {
     const sending = getSendingStatusIconDrawing('sending');

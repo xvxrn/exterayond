@@ -19,11 +19,13 @@ import {basename, dirname, join, normalize, resolve} from 'path';
 import {execFileSync, spawn, ChildProcess} from 'child_process';
 import {connect} from 'net';
 import express from 'express';
-import baseConfig from './vite.config';
+import baseConfig from '../vite.config';
+
+const ROOT = resolve(__dirname, '..');
 
 const seedPath = process.env.PREVIEW_SEED ?
   resolve(process.env.PREVIEW_SEED) :
-  resolve(__dirname, 'tmp/seed-preview.json');
+  resolve(ROOT, 'tmp/seed-preview.json');
 const seed = JSON.parse(readFileSync(seedPath, 'utf8'));
 // the preview's second account (start-preview.sh with TWEB_SECOND_SEED)
 const seed2 = process.env.PREVIEW_SEED_2 ?
@@ -39,15 +41,15 @@ const cacheKey = basename(seedPath).replace(/\.json$/, '');
 // into it up front; the dev server builds into it lazily, on the first request
 // that has to be answered without HMR. Keyed by preview id, like the seed.
 const staticDir = process.env.TWEB_PREVIEW_STATIC_DIR ||
-  resolve(__dirname, 'tmp/preview-dist', cacheKey);
+  resolve(ROOT, 'tmp/preview-dist', cacheKey);
 
 // The main checkout: this one, or the one a worktree hangs off.
 const mainCheckout = (() => {
   try {
-    const commonDir = execFileSync('git', ['rev-parse', '--git-common-dir'], {cwd: __dirname, encoding: 'utf8'});
-    return dirname(resolve(__dirname, commonDir.trim()));
+    const commonDir = execFileSync('git', ['rev-parse', '--git-common-dir'], {cwd: ROOT, encoding: 'utf8'});
+    return dirname(resolve(ROOT, commonDir.trim()));
   } catch{
-    return __dirname;
+    return ROOT;
   }
 })();
 
@@ -59,7 +61,7 @@ const mainCheckout = (() => {
 // nothing defers to the main checkout's: the knob is about the machine, and
 // every new worktree would otherwise come up serving the bundle.
 const remoteGetsDev = (process.env.TWEB_PREVIEW_REMOTE ??
-  loadEnv('development', __dirname, 'TWEB_PREVIEW_').TWEB_PREVIEW_REMOTE ??
+  loadEnv('development', ROOT, 'TWEB_PREVIEW_').TWEB_PREVIEW_REMOTE ??
   loadEnv('development', mainCheckout, 'TWEB_PREVIEW_').TWEB_PREVIEW_REMOTE) === 'dev';
 
 // Hashed names can be pinned forever; the service worker never (a new build has
@@ -347,9 +349,9 @@ function staticForRemotePlugin() {
     const log = openSync(staticDir + '.build.log', 'a');
     builder = spawn('pnpm', [
       '--config.verify-deps-before-run=false', 'exec', 'vite', 'build',
-      '--config', 'vite.preview.config.ts', '--outDir', staticDir, '--watch'
+      '--config', 'scripts/vite.preview.config.ts', '--outDir', staticDir, '--watch'
     ], {
-      cwd: __dirname,
+      cwd: ROOT,
       // KEEP_OUTDIR: a rebuild must not wipe the chunks a page loaded seconds
       // ago is still pulling.
       // NODE_ENV: the dev server has set it to development, and a build that
@@ -432,7 +434,7 @@ function staticForRemotePlugin() {
 // the same list as a page of its own, /_previews/list as data (no extension: the
 // app's service worker would cache a *.json for good).
 const previewRegistry = join(mainCheckout, 'tmp/previews');
-const switcherScript = resolve(__dirname, 'scripts/preview-switcher.js');
+const switcherScript = resolve(ROOT, 'scripts/preview-switcher.js');
 
 function readFirstLine(path: string) {
   try {
@@ -564,7 +566,7 @@ function previewSwitcherPlugin() {
 }
 
 export default mergeConfig(baseConfig as any, {
-  cacheDir: resolve(__dirname, 'tmp/vite-preview-cache', cacheKey),
+  cacheDir: resolve(ROOT, 'tmp/vite-preview-cache', cacheKey),
   build: {
     // start-preview.sh --watch sets this. Between rebuilds the out dir must keep
     // the previous hashed chunks: a phone that fetched index.html a second ago is

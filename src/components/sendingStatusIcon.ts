@@ -1,6 +1,6 @@
 /*
  * The status of an outgoing message — clock, check, two checks, error — drawn in the tgico glyphs'
- * own 19×14 box (assets/icons/sending.svg, 1check.svg, 2checks.svg, sendingerror_filled.svg: same
+ * own 19×14 box (src/assets/icons/sending.svg, 1check.svg, 2checks.svg, sendingerror_filled.svg: same
  * points, same 1.3 and 1.2 widths). One status gives way to the next as a dissolve about their common
  * centre — the clock's, which is the check's and the error disk's too: the old icon shrinks towards
  * half its size and fades while the new one grows from half its size, a touch past 1 and back, and

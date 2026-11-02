@@ -46,6 +46,6 @@ For a container image, run
 exterayond is an unofficial project and is not affiliated with Telegram.
 It is based on Telegram Web K by Eduard Kuzmenko and contributors, itself based
 on Webogram. Android behavior is referenced from exteraless and its upstream
-projects. The project is distributed under [GPL-3.0](LICENSE); third-party
+projects. The project is distributed under [GPL-3.0](LICENSE.md); third-party
 notices and licenses are retained in the source tree and in
 [third-party attribution](docs/attribution.md).

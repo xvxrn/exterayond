@@ -2,7 +2,7 @@
 
 exterayond is based on Telegram Web K by Eduard Kuzmenko and contributors,
 which is based on Webogram. Android behavior is referenced from exteraless and
-its upstream projects. The project's [GPL-3.0 license](../LICENSE) and the
+its upstream projects. The project's [GPL-3.0 license](../LICENSE.md) and the
 licenses in `src/vendor/` apply to the respective code.
 
 The upstream project credits these dependencies:

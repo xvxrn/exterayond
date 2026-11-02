@@ -1116,3 +1116,804 @@ non-boolean rejection, `repeatConfirm` absent from the export),
 `settingsSearchIndex` (8, regenerated, 484 entries). Typecheck passes. The
 live menu over real messages and the actual server forward are unverified in
 a browser; no server or browser was launched.
+
+## 044 / GEN-12 — Sort chats by unread (2026-11-01)
+
+The General hub gains **Sort by Unread** with the exact Android key: NaConfig's
+`SortByUnread` (bool, default false, `NaConfig.kt:1398`; the row sits in the
+archive group before "Unlimited pinned", `OpenExteraGeneralActivity.java:209`,
+label `strings_nax.xml` "Sort by Unread"). Android's consumers are the two
+dialog comparators (`MessagesController.java:1457/1500`): pinned dialogs keep
+their order, then `ChatsHelper.isUnreadSortPriority`
+(`ChatsHelper.java:375`) lifts a dialog above the rest — unread mentions,
+unread reactions, or an unmuted unread counter, a forum's aggregate computed
+over its topics — and only then the date decides. The toggle re-sorts live
+(`sortDialogs(null)` + `dialogsNeedReload`). Android EtgBackup exports no
+alias, so none was invented.
+
+The web dialogs storage orders every folder array by a stored numeric index
+`(date * 0x10000) + tail`, with `0x7fff0000…` reserved for the pinned band —
+and today's dates already fill ~83% of the range below it, so no additive
+priority level fits. The port (all in `src/lib/storages/dialogs.ts`) halves
+every non-pinned date while the setting is on and reserves the freed top half
+for the priority band: read indexes stay under `2^46`, unread-priority ones in
+`[2^46, 0x7fff0000)`, pinned above both — Android's comparator order, with the
+2-second granularity of the halved dates still broken by the insertion tail.
+Indexes are per-session (`setDialogsFromState` deletes them on restore), so
+the two layouts never mix; the flag flips only through `setSortByUnread`,
+which re-indexes every cached dialog and topic in place (the same pass a
+filter update runs) and then broadcasts `exteraless_settings_updated`, to
+which every autonomous chat list answers with `fullReset()` — the web analog
+of `dialogsNeedReload`, so held rows and the pagination cursors rebuild under
+the new layout. Priority staleness is detected from the stored index itself
+(`index >= 2^46`), so a filter pass regenerates instead of reusing an index
+made under the other state. The flag reaches the worker through a
+`appMessagesManager.setSortByUnread` passthrough, pushed from the settings
+store on `user_auth`, on `account_switched` and on every change (the worker
+has no access to the tab's Solid store); `clear()` resets it.
+
+Tests: `dialogSortByUnread` (6 new: the stock layout byte-exact at flag off,
+the priority band and halved dates at flag on, the Android predicate incl.
+mentions-while-muted and the forum aggregate, the live folder re-sort with the
+descending-index invariant and the pinned band above it, the stale-index
+regeneration), `exteralessSettings` (22, the defaults list gained
+`SortByUnread`), `exteralessTabs` (15, the General row list picked the row
+up), `settingsSearchIndex` (8, regenerated, 487 entries). Typecheck passes.
+Limits: a forum's aggregate reads only the cached topics (a freshly loaded
+forum stays date-ordered until its topics arrive — the topic save path
+re-sorts the parent, debounced); future-dated dialogs past year 2038 would
+cross the pinned band exactly as the stock layout would. The rebuilt list's
+visual result is unverified in a browser; no server or browser was launched.
+
+## 045 / V-1 — Wallpaper pattern toggle (2026-11-01)
+
+First packet of the user-directed look & feel stream (brief:
+[`look-and-feel.md`](look-and-feel.md)). Android research: no exteraless,
+Neko or Na config key owns the wallpaper pattern — the owner is Telegram's
+own pattern dimming, the wallpaper record's `settings.intensity` (0..100,
+edited by the wallpaper editor's "Intensity" seekbar,
+`ThemePreviewActivity`), with the same value mirrored into a theme accent's
+`patternIntensity`. Per the brief the web toggle maps onto that dimension
+rather than inventing a separate concept: **off is intensity 0** — the
+background renderer draws the wallpaper's color/gradient only — and **on**
+(the default, stock) keeps the record's own intensity. Store key
+`OEAppearanceWallpaperPattern` (bool, default true); EtgBackup exports no
+wallpaper alias (verified against `EtgBackup.java`), so none was invented.
+
+The gate lives at the background renderer's choke points
+(`src/components/chat/bubbles/chatBackground.tsx`, the renderer behind the
+chat, the wallpaper picker tiles, the passcode lock and Document PiP):
+`getWallPaperUrl` does not even fetch a pattern whose drawing is denied, and
+`buildContent` skips the pattern layer, its intensity dimming (a pattern-less
+gradient keeps its full color — Android's intensity 0), and the dark-mask
+mirror flag for the folders sidebar. Image wallpapers and their own dimming
+are untouched. The decision predicate `wallpaperDrawsPattern` lives with the
+other store mappings. Live without a reload: the setting is a live-event key
+and the page-wide background singleton re-renders the current background on
+it (`reRender`, whose cloned theme reference busts every guard).
+
+Row: Appearance hub, beside Custom Themes in Chats. Tests:
+`exteralessSettings` (24: the defaults list, the gate predicate over
+pattern/image records, the live event), `settingsSearchIndex` (8,
+regenerated, 488 entries), `exteralessTabs` (15). Typecheck passes. The
+visual result (pattern disappearing live, gradient-only fallback on the
+night theme's mask render) is unverified in a browser; no server or browser
+was launched.
+
+## 046 / V-2 — Floating vs attached sidebar (2026-11-01)
+
+Android has no floating panels — its navigation drawer runs the app's full
+height — and no config key exists for this (the "floating" hits in the
+Android source are the bottom-navigation mode), so the setting is a
+web-only adaptation: `OEAppearanceAttachedSidebar` (bool, default false =
+stock floating; no backup alias). Web research: the float lives on
+`#column-left` — `margin-block`/`margin-inline-start` from
+`--page-chats-padding` plus the folders-rail offset, the outer
+`--main-column-border-radius` radius and `--column-box-shadow`.
+
+The setting toggles the root class `oe-attached-sidebar`; one rule in
+`_leftSidebar.scss` zeroes the page margins and outer rounding, drops the
+shadow and lets the panel run the full height, while keeping the
+folders-rail offset so the two panels stay side by side. The inner section
+cards keep their radius (`--oe-section-radius`), so attached still reads
+exteraless rather than square; the interplay with
+`OEAppearanceSingleCornerRadius` is unchanged (both compose at their own
+choke points). Logical margins only — nothing to mirror in RTL; handhelds
+already run zero root padding, so the class is a no-op there.
+
+Row: Appearance hub, under Center Title. Tests: `exteralessSettings` (25:
+the defaults list plus the live root-class/reset pass), a standalone sass
+compile of `_leftSidebar.scss` (the compiled selector is
+`:root.oe-attached-sidebar #column-left`). The visual result — both
+directions, with the folders rail shown and hidden — is unverified in a
+browser; no server or browser was launched.
+
+## 047 / V-4 — Theme palettes and the accent picker (2026-11-01)
+
+Web K theme research first: the stock system already ships iOS-ported
+accent presets per base (`themePresets.ts`) applied through
+`themeController.applyAccentPreset` → `applyNewTheme` (a synthetic
+`preset:*` theme persisted into the app's own theme state — the stock theme
+objects in `SETTINGS_INIT` are never touched, and `resetActiveTheme`
+restores the factory entry), the stock accent picker row is Dark-only, and
+surface colors are CSS variables the theme applier writes inline on `<html>`
+for `tinted` and leaves to static rules for `night`.
+
+Ladder as shipped: (1) **exteraless palette** and (3) **AMOLED** — one
+Appearance selector `OEAppearanceThemePalette` (0 stock default, 1
+exteraless, 2 AMOLED; `exteralessThemePalette.ts`): a palette override of
+the seven surface variables (`surface-color`, `background-color`,
+`body-background-color`, `message-background-color`,
+`input-search-background-color`, `border-color`, `secondary-color`, plus
+their `-rgb` companions) with fixed values — the exteraless near-black
+surfaces with muted cards, and the AMOLED pure black of Android's bundled
+`amoled.attheme`. It applies only while the resolved theme is dark (the
+`.night` class `_setTheme` toggles covers night and tinted), re-applies
+after every theme application (`theme_changed` fires inside `_setTheme`
+after the theme's own writes, plus `user_auth` for the silent first boot
+apply) and clears exactly the variables it wrote, so the theme's own inline
+values survive. (2) **accent color picker** — an Appearance row with the
+existing `ColorPicker` component (lazily loaded on first reveal): a drag
+previews through `applyTheme` (variable writes only) and a debounced commit
+goes through `applyAccentPreset` with `accentPresetFromColor` (new helper in
+`themePresets.ts`: dark bases derive iOS' bubble gradient, light bases take
+the solid fill), so the pick is per-theme and survives a reload. Reset is
+the stock `resetActiveTheme`. (4) the custom-theme editor is not built —
+everything shipped is expressed through the stock system; the palette does
+not touch the wallpaper (Chat Wallpaper keeps its owner) and the `.night`
+menu-mirror keeps the underlying theme's surfaces (documented limit).
+
+Rows: Appearance hub, "Theme Palette" selector and "Accent Color" section.
+Tests: `exteralessThemePalette` (5 new: resolution, the apply/clear matrix
+with foreign inline values preserved, the accent-preset composition),
+`exteralessSettings` (25: the defaults list plus the palette clamp),
+`exteralessTabs` (15: the palette selector in the slider list),
+`settingsSearchIndex` (8, regenerated, 493 entries). Typecheck passes; the
+standalone sass compile passes. The palettes' and picker's visual result is
+unverified in a browser; no server or browser was launched.
+
+## 048 / V-3 — Forced MD3 coverage audit and the slider extension (2026-11-01)
+
+The audit first (per the brief), surface by surface, under the current
+eight-part group (`oe-md3-loading`, `oe-md3-sliders`, `oe-md3-switches`,
+`oe-new-chat-header`, `oe-md3-navigation`, `oe-md3-list-items`,
+`OEAppearanceMd3Player`, `oe-md3-mini-player`):
+
+| Surface | Verdict under the eight parts | Owner |
+|---|---|---|
+| Switches (every toggle in the app) | covered | `oe-md3-switches` — the rule targets `.checkbox-field-toggle` globally |
+| Loading indicators | covered | `oe-md3-loading` — the M3 wave rides the shared `putPreloader` and `preloaderRing`, so every spinner |
+| Settings rows / section cards | covered | `oe-md3-list-items` — the Section component's `sidebar-left-section` choke point renders left-sidebar tabs, right-sidebar tabs (profile and 23 more) and 28 popups' sections, so every Section row is covered |
+| Settings sliders | covered | `oe-md3-sliders` — the settings `RangeSettingSelector` family |
+| Chat header | covered | `oe-new-chat-header` — the flat tonal topbar |
+| Folder navigation | covered | `oe-md3-navigation` — the folders rail and the tab bar's active pill |
+| Music player popup | covered | `OEAppearanceMd3Player` + the PLAYER style group |
+| Mini player | covered | `oe-md3-mini-player` — tonal plate, cover, radius |
+| Chat list rows | covered by contract | Android's eight parts do not M3-ify chat rows either (`M3ListItems` is row heights/tonal fills for sectioned lists only) — the stock dialog row is the faithful mapping |
+| Audio rows' seek line (chat bubbles) | **was not covered → extended** | `oe-md3-sliders` — Android's SliderStyle styles every SeekBarView; the web's other slider family now takes the same M3 track and gap handle the settings sliders wear. Voice rows keep their waveform (`.audio.is-voice` excluded); the mini player's and media viewer's sliders keep their own chrome |
+| Popup / context menu / dialog card chrome | waiting on a decision, not a primitive | Android themes modals through the theme; the web's eight parts have no modal-surface owner, and a ninth part would change the master's count semantics, which the brief forbids |
+| Search input chrome | waiting | same — no owning toggle |
+| Media viewer chrome | waiting | same — the viewer is its own shell |
+| Composer | waiting | same — the composer has no MD3 sub-toggle |
+
+The one extension ships behind the existing `oe-md3-sliders` toggle (ported
+values verbatim, no new semantics, off = stock): the audio rows' seek line
+(`_leftSidebar.scss`, `.audio:not(.is-voice) .progress-line`). Everything
+else in the table above the line was verified covered by reading the actual
+choke points, not assumed. The remaining "waiting" surfaces are listed for
+the user's acceptance session to prioritize (extending them means deciding
+which toggle owns modal chrome). Standalone sass compile passes; no test
+(CSS-only), no browser run.
+
+## 049 / Acceptance round 1 — the F-1..F-6 fix list (2026-11-01)
+
+The user's first acceptance pass over the look & feel stream
+([`look-and-feel.md`](look-and-feel.md), fix list F-1..F-6), plus a mid-work
+refinement of F-3 from the user (the background tab's "Set a color" must
+cohere with the accent, and the accent tinting must reach every surface
+family).
+
+**F-1 — attached sidebar keeps its outer rounding.** The `oe-attached-sidebar`
+rule set no longer zeroes the radius: both modes are rounded, they differ in
+margins and height only (the shadow stays off in attached mode — a float
+affordance, not part of the complaint). RTL unaffected (logical margins,
+symmetric radius); the folders-rail offset is untouched. Standalone sass
+compile verified: the compiled selector stays `:root.oe-attached-sidebar
+#column-left`.
+
+**F-2 — Theme Palette is a single toggle.** `OEAppearanceThemePalette` is a
+boolean now (default false = stock): off keeps the theme's own surfaces, on
+applies the near-black palette to dark themes. The Stock/Exteraless/AMOLED
+selector and the AMOLED palette are removed entirely (`THEME_PALETTES` → the
+single `THEME_PALETTE_SURFACES`), and the store's numeric range entry with
+them. The persisted value migrates by the store's own clamping (a stale 1/2
+falls back to the boolean default). The row is a plain checkbox; the settings
+search index was regenerated for it (the checked-in index had also gone stale
+— the V-1/V-2/V-4 rows are now in it).
+
+**F-3 — the accent tints the surfaces and carries the material elements**
+(with the user's mid-work refinement). Research first: the stock
+`applyAccentPreset` pipeline wraps the preset into a synthetic `preset:` theme
+and re-applies it through `applyNewTheme` (wallpaper included); `applyTheme`
+derives `--primary-color`, links, saved-color and the outgoing bubbles from
+the accent, but on `night`/`tinted` the surface family comes from
+`finalize()`'s static `colorMap` — which is why the accent never touched the
+background — and the chat canvas renders the wallpaper record, which the
+custom-accent preset never carried. Two extensions, both inside the stock
+pipeline:
+
+- *Surfaces.* While the palette toggle is on, `applyThemePalette` tints every
+  surface of its family (the seven `colorMap.night` keys) with the accent's
+  hue Material-You style: each surface keeps its lightness and takes the
+  source hue at a low, source-scaled saturation (capped at 24% so text-bearing
+  surfaces stay readable); an achromatic source leaves the surfaces neutral.
+  The tint source is the explicit "Set a color" pick when there is one (a
+  `wallPaperNoFile` record with a `background_color` — the user's own choice
+  wins over the palette, and it survives accent changes since the accent's
+  material wallpaper below only replaces factory wallpaper), otherwise the
+  active theme's accent — so accent changes retint the chrome live via the
+  `theme_changed` re-apply, and a background pick re-hues it the same way.
+  Image wallpapers are not hue-read (the palette keeps the accent hue there).
+- *Background.* A committed custom accent now bundles a Material-You wallpaper
+  (`materialWallpaperFromAccent` in `themePresets.ts`): four accent-hued
+  gradient stops following the iOS dark-tinted wallpaper convention (dark
+  muted stops, intensity 40, `dark`) on dark bases and pastel stops at
+  intensity 50 on light ones, rendered with the bundled `pattern.svg` through
+  the existing `preset:*` slug path — so the background follows the accent and
+  keeps its material elements, with no new rendering code and no server fetch.
+  It attaches only while the palette toggle is on and the current wallpaper is
+  not user-owned (`pFlags.default` marks factory and preset-owned records;
+  a "Set a color" pick, an upload or a grid pick is never replaced). The
+  preview during a drag stays variables-only; the wallpaper lands on commit.
+
+The wiring moved wholesale into `exteralessThemePalette.ts` (the tint-source
+resolver, the `theme_changed`/`user_auth`/live-event re-applies, self-registered
+at boot beside the store's dynamic import in `index.ts`): the store must not
+import `themeController`, because a stateful store re-run by a themeController
+hot edit is exactly the import-graph hazard the budget ratchet caught
+(`dirtyPage` grew to 2). The ratchet is green again — and packet 044's own
+debt (the store stacked duplicate `user_auth`/`account_switched` listeners on
+every hot re-run) went with it, both listeners now go through `hotListen`.
+
+**F-4 — Custom Themes in Chats was not dead at the gate.** End-to-end read of
+the wiring: the row → the store → chat.ts's per-chat resolution →
+`publishBackground` → `setBackground` are all connected, and the ON state is
+byte-for-byte the stock Web K behavior this gate was wrapped around
+(`if(_fullPeer)` → `if(_fullPeer && OEAppearanceCustomThemes)`). The
+resolution logic is now extracted (`resolveChatThemeOverride`, next to the
+other store decision predicates) with a real regression test: off drops the
+peer's theme emoticon and wallpaper exactly like `ChatActivity.setupChatTheme`'s
+early return; on resolves the emoticon through the account themes and keeps
+the wallpaper record when the emoticon resolves to nothing. LOOK-10 stays
+unchecked with the finding recorded: the visible effect needs a chat whose
+theme or wallpaper was set from another client — the web has no UI to set one
+— which is why the row reads as dead in acceptance.
+
+**F-5 — the brand is out of the user-visible text.** The palette keys were the
+last user-visible "exteraless"/"AMOLED" strings (the hub's own titles have said
+"exterayond" since packet 024): the selector's three value labels are gone
+with F-2, the toggle's info text and search keywords are neutral. Kept
+deliberately: the code comments citing the Android/exteraless sources
+(attribution is required), the internal `Exteraless.*` lang-key prefix (591
+usages — renaming them is mass churn with regression risk for zero visible
+gain; flagged for the user to order explicitly if wanted), and internal CSS
+class names. No aria text carries the brand.
+
+**F-6 — animations and polish, bounded tranche.** Audit findings: shared
+scrolling already rides the level-aware helpers (`fastSmoothScroll`,
+`smoothScrollBehavior`, the TransitionSlider); the real instant jumps on the
+surfaces this stream touched were (a) the `<details>` reveals in the hub (the
+accent picker, the MD3 customize list) and (b) the attach/detach toggle.
+Shipped: (a) the reveals grow open where the platform can animate a keyword
+size (`interpolate-size` + `::details-content`, Chrome 131+) at full animation
+level, and open at once everywhere else; (b) the attach toggle eases its
+margins/rounding/shadow behind a one-shot `oe-sidebar-layout-animate` root
+class the store raises for 500ms — so the folders-rail offset and every
+resize path stay instant, and the level mixin gives reduced animations the
+margins and shadow fade only. Deliberately left out: app-wide CSS
+`scroll-behavior: smooth` (the app's scroll positions are JS-owned and would
+fight `fastSmoothScroll`), popup/menu/dialog entrance animation (packet 048's
+chrome question — no owning toggle), per-row chat-list animations (per-row
+cost; the stock row is the contract).
+
+Rows/tests: `exteralessThemePalette` (13: resolution, tint behavior incl. the
+achromatic case, the apply/clear matrix, the wiring lifecycle over the store's
+live channel, the accent preset, the material wallpaper for both base kinds),
+`exteralessSettings` (27: boolean palette default + clamp, the custom-themes
+gate, the one-shot animate class, the pre-existing suite),
+`exteralessTabs` (16: the palette is a toggle, the slider list without it),
+`settingsSearchIndex` (8, regenerated — the checked-in index had gone stale
+and now carries the V rows), `importGraphBudget` (back within budget after the
+palette-module move). Typecheck passes, oxlint passes on the touched files,
+the standalone sass compile passes. Unverified in a browser (no server or
+browser launched): every visual result — the rounded attached corners, the
+hue-tinted chrome, the accent's material wallpaper, the details/attach
+animations — belongs to the user's acceptance round 2, steps 1.21–1.24.
+
+## 050 / Acceptance round 2 — the G-1..G-4 fix list (2026-11-01)
+
+The user's second acceptance pass over the look & feel stream
+([`look-and-feel.md`](look-and-feel.md), fix list G-1..G-4), plus a live
+mid-work bug report on the attached sidebar overlapping the chat (folded
+into G-3 below).
+
+**G-1 — the background color pick.** The render path was traced end to end
+and proved intact with a flow regression test (`exteralessBackgroundPick`):
+the pick persists through `setWallpaperForCurrentTheme` (a fresh wallpaper
+reference every time — the Solid store does not merge it in place), and the
+real `appChatBackground` dedup guards land a canvas render per pick, over a
+preset-carried theme state too. What actually degraded the pick: every
+background re-apply ran through `themeController.setTheme()` — the
+theme-switch view transition (`startViewTransition` wraps `_setTheme` plus a
+wallpaper-ready wait), one per 16ms throttle tick during a color drag, each
+pausing heavy rendering. Shipped: `themeController.applyThemeFast()` — the
+fast branch extracted verbatim — and `appImManager.applyCurrentTheme` (every
+caller is a wallpaper re-apply, none a theme switch) routes through it, so a
+pick applies in the same task and the canvas slot fade carries the visual;
+theme switches keep the reveal. The tint priority chain was made explicit
+and tested (`resolvePaletteTintSource` in `exteralessThemePalette.ts`).
+
+**G-2 — hub motion.** The plumbing finding: the stock animation level
+resolves 2 by default (`liteMode.getAnimationLevel()`, the body classes land
+at boot via `appImManager.setAnimationLevel`, covered by
+`animationLevel.test.ts`) — **the F-6 level gate did not keep the reveals
+instant; the platform gate did**: the F-6 reveal animates only where
+`interpolate-size` + `::details-content` exist (Chromium 131+), instant
+everywhere else. The tranche, all level-gated: (a) the `<details>` reveals
+fade their content in from reduced level (`fade-in-opacity`, every engine) —
+the size growth stays Chromium-only at full; (b) the hub's `Customize`
+summaries are controls now — they take the row hover/press highlight
+(`hover-background-effect`, rounded to the section radius, eased); (c) the
+shared `.row-clickable` hover/press highlight eases with the standard timing
+instead of snapping (`--transition-standard-*`, Material's
+`cubic-bezier(.4, 0, .2, 1)`), reduced shortens it, off snaps. Tab switches
+were verified already animated (the stock SuperTab slide, `--tabs-transition`)
+— untouched. Deliberately skipped: app-wide smooth scrolling and per-row
+chat-list animations (the F-6 exclusions stand), popup/menu/dialog entrance
+animation (packet 048's no-owning-toggle decision), making the hub's toggle
+rows click-to-toggle like Android's SwitchBarRow (a behavior port, not
+motion — needs its own decision), the accent picker's preview flicker
+(`applyTheme` writes the theme's own surfaces during the drag until the
+commit re-tints), section-card entrance animations (Android has none).
+Verification: standalone sass compiles of `_leftSidebar.scss` and `_row.scss`
+(the compiled selectors carry `body.animation-level-1` / the no-touch hover
+rules).
+
+**G-3 — attached sidebar.** Corners: only the content-facing edge keeps its
+rounding — `border-start-start-radius`/`border-end-start-radius` zeroed on
+`#column-left`, so the inline-end edge (top-right/bottom-right in LTR,
+mirrored in RTL by the logical properties themselves) stays rounded and the
+window-facing corners square; the folders-rail offset and the no-shadow
+decision unchanged; logical radii only, no physical twin in the block.
+Live bug from the user mid-round: in attached mode the chat did not offset —
+the docked-range pop-out (collapsed sidebar + an open tab) overlays the chat
+by stock design (layout reserves 80, the panel renders 360, a scrim dims the
+chat), and the drawer range covers it with a fixed push. Attached never
+overlays now: `updateColumnWidths` computes the chat's space (and the
+`rightColumnFits` threshold) from the panel's VISUAL width while
+`OEAppearanceAttachedSidebar` is on (the helper imports the store — the
+budget ratchet stays green), re-runs on the setting's live event, and caps
+`--chat-width` in the drawer range too; `#column-center` re-centers beside
+the visual width in the docked range (both the plain and right-column-shown
+shifts) and in the drawer range while the panel is shown (eased, level
+gated); the pop-out scrim is suppressed in attached mode. The topbar, pinned
+bar and composer plates all ride `--chat-width`, so one recompute covers
+them; the shift rides `--reflect` (RTL mirror). Off = stock byte-for-byte.
+Tests: `attachedSidebarWidths` (the chat clears the popped-out panel only
+while attached, 696px vs 616px at the pop-out state). The corner rules are
+verified by sass compile (`:root.oe-attached-sidebar #column-left` carries
+the two zeroed logical radii).
+
+**G-4 — theme from wallpaper.** The Pixel/Material You port: while the
+palette toggle is on and the wallpaper is an image, its dominant chromatic
+color tints the surface family. The extractor (`helpers/wallpaperTint.ts`)
+is JS-only canvas sampling — the source downscales to ≤48px once, pixels
+bucket into a 36-bucket hue histogram weighted by saturation, the winning
+bucket's mean color returns; a gray-dominant image yields undefined (no
+tint); samples cache per wallpaper record (bounded, 8), so theme re-renders
+do not resample. No server, no workers. The hook point is the chat
+background renderer itself: it already decodes every wallpaper for the
+canvas layers, so it samples the same decoded image at render time and
+announces the result on the new typed `exteraless_wallpaper_tint` event —
+every wallpaper change re-renders and therefore re-derives live. The
+priority chain, explicit and tested (`resolvePaletteTintSource`): **explicit
+background color > explicit accent PICK > wallpaper-derived > the theme's
+own accent (F-3) > palette default** — an explicit accent pick is the accent
+picker's synthetic `preset:*` theme; the factory/cloud-carried accent is not
+a pick and yields to the wallpaper, the way the Pixel behavior the user
+asked for reads. The palette applies the matching-key sample only (a stale
+sample of another record never applies) and a pattern/color render clears
+the level. Tests: `wallpaperTint` (the bucketing decision logic incl. the
+gray skip, the cache, the announcement event), `exteralessBackgroundPick`
+(the full chain, and the derived level applying and clearing live over the
+factory accent through the real `applyThemeFast` re-apply).
+
+Rows/tests/typecheck/lint: no new settings (G-4 is the palette toggle's
+extended behavior; G-1/G-3 have no new keys), so the settings-search index
+is unchanged and `exteralessTabs`/`exteralessSettings` pass untouched
+(81 tests across the 8 touched suites). Typecheck passes, oxlint passes on
+the touched files, the import-graph budget ratchet is green (404/0/35).
+Limits: the extractor samples the decoded image the renderer already has —
+the first sample lands after the wallpaper's decode (one canvas draw + one
+48px pass, cached), so the chrome's tint follows the canvas within a frame
+or two of the wallpaper landing; a blurred variant samples the blurred
+bitmap (same hue family); the average-bucket color is a defensible dominant,
+not Android's full Monet palette. Unverified in a browser (no server or
+browser launched): the rounded content-facing corners and the chat offset in
+both modes and directions, the hub motion, the pick's instant apply, and the
+wallpaper-derived tint — the user's re-acceptance, runbook 1.22–1.23
+rewritten for the new behavior.
+
+## 051 / CHAT-10 + CHAT-11 — Double-tap actions (2026-11-01)
+
+Android research: the two NaConfig keys `DoubleTapAction` /
+`DoubleTapActionOut` (ints, defaults 1 = send the quick reaction on both
+sides) with the action enum of `xyz.nextalone.nagram.helper.DoubleTap.kt`
+(0..12); the consumer is `ChatActivity.onDoubleClick` — the direction picks
+the key (`isOutOwner`), then a switch dispatches: send the chosen reaction
+(`MediaDataController.getDoubleTapReaction` — the local
+`reaction_on_double_tap` emoji setting), open the message menu
+(`createMenu(..., onDoubleTapped)`), translate (native or LLM), reply,
+forward, save (nkbtn_savemessage = forward to the own user id), repeat /
+repeat as copy (`repeatMessage`'s copy flag → forward without the header),
+edit, delete, download (`saveByDoubleTap`, media only). The settings dialog
+offers EDIT only on the outgoing side; the reaction row
+(`doubleTapReactionRow`) shows only while an action is send-reactions.
+EtgBackup exports neither key — no backup alias invented.
+
+The web store keeps the enum and defaults verbatim
+(`src/stores/exteralessSettings.ts`, ranges [0, 12]); the decision predicate
+`resolveDoubleTapAction` (direction → key, values pass through) and the
+option lists sit beside the other store decision predicates. The hub's Chats
+tab gains the "Double tap" section: two `RangeSettingSelector` rows that step
+a filtered option list (Android's `showDoubleTapOptions` order minus
+`TRANSLATE_LLM` — the web has no LLM translator provider, so it is not
+offered and an imported value resolves to a no-op, never faked; the selector
+view maps index ↔ enum value so the store stays Android-faithful), and the
+CHAT-11 reaction row — visible under Android's own condition — opens the
+stock Quick Reaction subtab (`AppQuickReactionTab`,
+`messages.setDefaultReaction`), which is the web's existing account reaction
+chooser and the honest stand-in for `reaction_on_double_tap`.
+
+The consumer is the bubble's stock dblclick handler
+(`src/components/chat/bubbles.ts`): the stock guards and the
+text-selection-aware bubble resolution stay byte-for-byte, the stock
+`canSendPlain` early return moves into the Reply branch (Android allows
+react/delete/forward where sending is restricted), and the configured action
+dispatches through `performDoubleTapAction` — every action rides an existing
+web handler: `chat.sendReaction` with the quick reaction, a synthetic
+contextmenu on the bubble for Show Reactions (the same untrusted-contextmenu
+path the a11y keyboard support already synthesizes), `openTranslatePopup`
+behind `peerTranslation.canTranslate` and the shared language detector,
+`hotReloadGuard.showForwardPopup`, forward to `rootScope.myId` for Save,
+`repeatMessages` for Repeat (the CHAT-35 confirmation applies), `dropAuthor`
+forward for Repeat as Copy, `showDeleteMessagesPopup`, `initMessageEditing`
+behind `canEditMessage('text')`, and `appDownloadManager.downloadToDisc` for
+Download. A double click that selected text never reaches the dispatch (the
+stock selection guard) — the PC coordination the checklist asks for.
+
+Rows/tests: `exteralessSettings` (28: the defaults list gained the two keys,
+a new test over the direction split, the enum table, the filtered option
+lists and the unsupported-value passthrough), `exteralessTabs` (17: the
+reaction row's condition live in both directions and the click opening the
+quick-reaction tab), `settingsSearchIndex` (8, regenerated — 497 entries),
+`dialogSortByUnread` (6, untouched, regression). Typecheck passes, oxlint
+passes on the touched files, the import-graph budget ratchet is green.
+Unverified in a browser (no server or browser launched): every dispatched
+action's visible result, the reaction row's live appearance, and the
+selector views — runbook step 2.17.
+
+## 052 / PILLS-01 + PILLS-06 + PILLS-12 — Pill Stack: store, registry, strip (2026-11-02)
+
+First packet of the user's real-config priority (the pill stack is the
+biggest used-but-missing subsystem in their export). Android research:
+`PillStackConfig.kt` — the four layout keys verbatim: `OEPillActivePills`
+(string, default `DEFAULT_ACTIVE` = "5,6", the pills that need no network),
+`OEPillHiddenPills` (string, default empty), `OEPillInfiniteScrolling` (bool,
+default true), `OEPillLastActiveId` (int, default -1); `PillType.java` — the
+exteraGram ids 1..15 (WEATHER, GRAM, BTC, USD, CACHE, PROXY, GHOST, RAM, CPU,
+NET_SPEED, DC_PING, GOLD, ETH, EUR, LAST_SEEN); `PillRegistry.java` — the
+default registrations and the open-registry rule the strip obeys
+(`createPill` returns null for an unregistered id, so unknown ids are
+skipped, never rendered); `PillStackController.java` — the strip attaches to
+the search field at its inline end (6dp), hides while the field holds text,
+rebuilds on layout events; `EtgBackup.java` — `activePills`/`hiddenPills`
+export under the `pillstackconfig` section with the exteraGram names,
+validated by `isPillsLayout` (empty ok, ints 1..100000, no duplicates, ≤100,
+4096 chars), and `infiniteScrolling` exports as an exteraGram bool alias.
+
+The store gained the four keys (its first string-valued settings — the
+record's type map now kinds string defaults, the clamp passes strings
+through, `OEPillLastActiveId` ranges [-1, 15]) and the two layout keys joined
+the live-event list. New `src/stores/exteralessPills.ts` carries the contract:
+the id table, the web registry, `parsePillIds` (Android `parseList`),
+`resolvePillLayout` (an id in both strings reads active, like
+`loadConfig`), `getVisiblePillIds` (the registry filter), `setPillActive`
+(Android's move-between-lists), `resetPillLayout` (`DEFAULT_ACTIVE`).
+
+The web registry registers only what this client can really back. Verdicts
+for the rest (recorded in the checklist entries): PILLS-05 weather and
+PILLS-11 rates wait on an external data provider the hub has none of;
+PILLS-07 proxy is class 3 — the browser client has no proxy subsystem at all
+(no SOCKS/MTProto transport exists in Web K); PILLS-08 ghost and PILLS-09
+last-seen wait on their owning subsystems (GHOST-01, AYU-09); RAM/CPU/
+NET_SPEED are OS-bound (a page has no such counters); PILLS-10 DC ping waits
+on a manager-level primitive (UI code does not reach into MTProto). The
+cached ids stay in the stored strings — Android's dormant-pill behavior — so
+registering one later restores its place.
+
+The strip (`src/components/sidebarLeft/pillStack.ts`) mounts into the chat
+list's InputSearch container from `sidebarLeft`'s construct, one button per
+registered active pill, `inset-inline-end: 6px` (RTL mirrors by itself),
+hidden by an `input` listener while the field holds text, rebuilt live on the
+settings store's `exteraless_settings_updated` for the two layout keys. The
+cache pill (PILLS-06, id 5, Android's name is `R.string.StorageUsage`) shows
+the real client cache — the Data & Storage tab's own collectors, extracted
+verbatim from `storageQuota.tsx` into `dataAndStorage/cachedSizes.ts` so
+there is one implementation (files + stream chunks) — refreshed on Android's
+3-minute interval; the click opens Data & Storage (the web owner of the same
+data, the analog of `CachePill.openCacheSettings`). The hub gained the Pill
+Stack screen (`AppExteralessPillStackTab`, declared in tabs.ts, opened from
+an Appearance row exactly like Android's `pillStackRow`): infinite scrolling
+toggle, Active/Hidden pill sections (click moves a pill, Android's
+`onItemClick`; the lists show registered pills only, the same set the strip
+renders), and Reset to Default with the `PillStackResetDone` toast. The
+`.extera` backup gained `pillstackconfig.activePills`/`hiddenPills` (with the
+`isPillsLayout` validator as a per-entry string check) and moved
+`infiniteScrolling` out of the unsupported list.
+
+Rows/tests: `exteralessPills` (9 new: defaults, parseList semantics, the
+active-wins read, the registry filter over a stored PROXY id, setPillActive,
+reset, hub groups, the pills-section round-trip, the isPillsLayout negative
+matrix), `exteralessSettings` (29: the defaults list gained the four keys),
+`exteraBackup`/`exteralessTabs`/`settingsSearchIndex` (regenerated by the
+watcher — 502 entries, the new tab and rows in it), `formatCount` (type-only
+widen of the live-event payload). Typecheck passes, oxlint passes on the
+touched files, the standalone sass compile carries
+`#column-left .item-main .oe-pill-stack` and the `.night` pill variant, the
+import-graph budget ratchet is green. Limits: the strip shows one visible
+pill (switching is PILLS-03's packet); the Android storage-fill ring around
+the cache icon is not ported (a page has no disk-size number); drag-reorder
+in the hub lists waits for a second registered pill (PILLS-02 stays
+unchecked); long-press menus on pills are not ported yet. Unverified in a
+browser (no server or browser launched): the strip's position, the
+hide-on-text behavior, the refresh and the hub flows — runbook step 5.19.
+
+## 053 / PILLS-03 + PILLS-04 — the strip's switch machinery (2026-11-02)
+
+The second pill-stack packet: Android's `PillStackView` vertical swipe, on
+the PC terms the checklist itself asks for ("колёсиком/клавишами"). The
+switch decision is a pure, tested function (`nextPillIndex` in
+`exteralessPills.ts`): direction 1 = next (a swipe/wheel up), -1 = previous;
+with `OEPillInfiniteScrolling` the index wraps (Android's
+`animateToNextPill`), without it it clamps — the strip keeps the same pill,
+which is Android's pull-and-resist read without porting the overscroll
+animation. The strip renders every registered pill with exactly one visible
+(`is-hidden-pill`), a roving tabindex (only the current pill is a tab stop),
+`aria-hidden` on the others, and restores `OEPillLastActiveId` on rebuild
+like `PillStackController.rebuildContents` (the id's index, else 0); a switch
+persists the id back through the store. The PC inputs: one wheel notch per
+switch over the strip (preventDefault, a 300 ms trackpad cooldown) and
+ArrowUp/ArrowDown on the focused pill, which stopPropagation so the sidebar's
+own key handlers never see them. The enter animation is level-gated in the
+SCSS (a fade at reduced level, a 50% slide at full, instant at level 0) and
+restarts on a repeated same-direction switch (one forced reflow per user
+action — the one-off case the review rules allow). With the web registry
+carrying a single pill the switch is inert by design — `nextPillIndex` on
+count 1 returns the same index — and both entries stay unchecked until a
+second pill registers (the verdicts of packet 052 stand); the machinery, the
+wrap toggle's behavior and the restore are real and covered.
+
+Tests: `exteralessPills` (11: the wrap/clamp matrix incl. the one-pill
+no-op, the `OEPillLastActiveId` domain). Typecheck passes; the standalone
+sass compile carries the `body.animation-level-1/-2` enter selectors.
+Unverified in a browser (no server or browser launched): the wheel/keyboard
+switching, the level-gated animation — inert until a second pill lands.
+
+## 054 / FOLD-10..13 — the main menu layout over the burger menu (2026-11-02)
+
+The user's second real-config priority: their export carries
+`OEAppearanceMainMenuLayout` =
+`14,18,8,17,106;2,6,11,105,3,10,102,101`. Android research:
+`MainMenuLayout.java` — one string key `AppearanceConfig.mainMenuLayout`
+holding `"visible;hidden"`, comma-separated `MainMenuItem` ids
+(`MainMenuItem.java` verbatim: NEW_GROUP 2, CONTACTS 6, NEW_CHANNEL 3, CALLS
+10, SAVED 11, SETTINGS 8, ARCHIVE 14, PROFILE 18, QR 17, BROWSER 101,
+PLUGINS 102, BOTS 105, FEED 106, GHOST_MODE 107, RECENT_CHATS 108, WALLET
+109, EXTERALESS_SETTINGS 110, KILL_APP 111, DIVIDER -1). So the user's value
+means visible = Archive, Profile, Settings, QR, Feed; hidden = New Group,
+Contacts, Saved, Bots, New Channel, Calls, Plugins, Browser. An empty string
+is "never customized" — the consumers show exactly the stock menu. Parse
+drops unknown ids and duplicates, dividers live in the visible half only,
+ids listed in neither half are hidden, and `ensureSettingsVisibility`
+appends Settings whenever the bottom navigation bar is off — which on the
+web is always, so Settings can never be hidden.
+
+The web's main menu is the left sidebar's burger (tools) menu
+(`createToolsMenu`). Its id-mappable items are tagged with `oeMenuId`
+(Saved 11, Archive 14, Contacts 6, Calls 10, Settings 8); the web-only
+composites (add account, "Create a new", stories, "More") keep their stock
+frame around the laid-out block. The layout applies on every menu open, in
+`onOpenBefore` before the stock per-open filtering: an uncustomized key
+returns the pristine list untouched (byte-for-byte stock), a customized one
+lays the mapped items out in the visible order, skips ids without a web
+backing (the pill-registry rule — Profile/QR/Feed/etc. render nothing,
+never a stub), and a DIVIDER in the visible half becomes a hairline after
+the previous item (`separatorDown`; the marks reset each application since
+the item objects are reused by identity). The attach-menu bots still insert
+before Settings and the account rows still splice at the top — both stock
+paths run after the layout. The hub gained the Main Menu screen
+(`AppExteralessMainMenuTab`, from an Appearance row): Visible/Hidden toggle
+lists for the five backed ids (a toggle moves the id between the halves
+exactly like Android's editor save) and Reset to Default. The `.extera`
+backup gained `mainMenuLayout`/`mainMenuHiddenItems` — Android exports the
+halves as exteraGram JSON arrays validated by `isIdArray`; both bridge into
+the single string, a fresh client applying a hidden half keeps the stock
+menu's own mappable order as its visible half (Android saves
+`(getLayout(), hidden)`).
+
+Rows/tests: `exteralessMenuLayout` (13: the verbatim parse incl. the
+neither-listed rule, the divider rules, Settings kept-at-position vs
+appended, the uncustomized stock read, the toggle move, reset, the
+`isIdArray` matrix, both backup halves, and the button-list consumption —
+the web-only frame, the unbacked skip, the divider hairline and its reset),
+`exteralessSettings` (30: the defaults list gained the key),
+`exteraBackup`/`exteralessTabs`/`exteralessPills` regression. Typecheck
+passes, oxlint passes on the touched files. Limits: no drag-reorder editor
+on the web (the order changes only through the layout string or a `.extera`
+import — FOLD-10 stays unchecked with that annotation); dividers cannot be
+added from the web yet (FOLD-12 likewise); PLUGINS/EXTERALESS_SETTINGS menu
+rows wait on their own decision. Unverified in a browser (no server or
+browser launched): the laid-out menu's visual result — runbook step 5.20.
+
+## 055 / W-1..W-5 — the message-menu toggles (2026-11-02)
+
+The W-entry stream begins: the Neko/Na keys the user runs that the 296-line
+catalog never carried. Android research (NekoConfig.java:98-104,
+NaConfig.kt:165, ChatActivity consumers): `showAddToSavedMessages` (bool,
+default false) adds the "Add to Saved Messages" item — a direct forward to
+the own chat, shown when the message is real, not the self chat,
+forwardable (`ChatActivity:50685`); `showCopyPhoto` (persisted key
+`CopyPhoto`, bool, default false) adds "Copy photo" for clipboard-copyable
+media (`allowCopyPhoto` branches); `showReport` (bool, default false) adds
+the per-message Report for incoming messages outside the stock contexts
+(`ChatActivity:50200`); `showMessageDetails` (bool, default false) opens the
+message-details popup; `showViewHistory` (bool, default false) opens the
+Ayu edit-history viewer. EtgBackup exports all five under the exteraGram
+aliases `showSaveMessageButton` / `showCopyPhotoButton` / `showReportButton`
+/ `showDetailsButton` / `showHistoryButton` (EtgBackup.java:368-374).
+
+The web port: the store gained all five keys verbatim. The message context
+menu (`src/components/chat/contextMenu.ts`) gained two items and one
+broadening — "Add to Saved Messages" (the double-tap Save's direct forward
+to `rootScope.myId`, Android's conditions verbatim), "Copy" behind
+`CopyPhoto` (the media viewer's own `copyMediaToClipboard` path with its
+MediaCopied/MediaCopyFailed toasts, offered only where
+`canCopyMediaToClipboard` says the media is copyable), and the stock
+per-message "Report" item's verify extended with Android's showReport branch
+(incoming, real message — any peer, not just channels; the stock
+`showMessageReport` popup is the web's report surface). `showMessageDetails`
+and `showViewHistory` are class 3: the web has no message-details surface
+and the edit-history viewer waits on AYU-02 — the keys round-trip, an
+imported true is a documented no-op, never faked (W-4/W-5 in the checklist).
+
+The hub's Chats tab gained the three real rows. The backup moved the three
+real aliases to SUPPORTED; `showDetailsButton`/`showHistoryButton` stay
+recognized-but-unsupported. One self-inflicted typecheck detour worth
+recording: binding the helper's DEFAULT export (the async
+`copyMediaToClipboard`, `Promise<void>`) under the name
+`canCopyMediaToClipboard` retyped three verify call sites at once — the
+import line is `import copyMediaToClipboard, {canCopyMediaToClipboard,
+CopyableMedia} from '@helpers/copyMediaToClipboard'`.
+
+Rows/tests: `exteraBackup` (31, +1: the three aliases round-trip,
+`showDetailsButton` lands in `unsupported`), `exteralessSettings` (defaults
+list at 35 keys), `exteralessTabs` regression (the Chats rows). Typecheck
+passes, oxlint passes on the touched files. Unverified in a browser (no
+server or browser launched): the three items' visible behavior — runbook
+step 5.21.
+
+## 056 / W-6 + W-7 — bubbleRadius, and the decoration verdicts (2026-11-02)
+
+Android research: `SharedConfig.bubbleRadius` (int, default 17, the
+mainconfig section, `EtgBackup` exports it 1:1 as KIND_INT 0..17) — the
+consumer is `MessageDrawable`: the far corners take dp(radius), the
+tail-side corners clamp to dp(min(6, radius)). The web's bubble geometry is
+corner variables per side (`.bubble.is-in`: medium tail corners at
+start-start/end-start, big far corners; `.bubble.is-out` mirrored;
+medium = 5px, big = 15px — already the web's own 6/17dp pair). The port: the
+store key `bubbleRadius` (range [0, 17]) maps through `bubbleRadiusToCss` —
+undefined at 17 (the stock geometry, byte-for-byte, so a reset never
+restyles), otherwise the far corners take the value in px and the tail side
+min(6, value) — written as `--oe-bubble-radius` / `--oe-bubble-tail-radius`
+from the store's single hot effect; the SCSS substitutes them into the
+in/out base blocks and the is-group-first/is-forced-rounded override (the
+drawn tail's own 0-radius rules are untouched, like Android's tail
+geometry). The Appearance tab gained the slider (0–17, "Stock" at 17). The
+`.extera` alias `bubbleRadius` moved from recognized-but-unsupported to
+SUPPORTED. One material limit: at 16 the far corner is 16px — one pixel over
+the web's own stock 15px, a discontinuity inherent in "the default keeps the
+base's geometry" (the alternative, restyling at the default, violates the
+off = stock rule).
+
+The decorations verdict (W-7, the user runs snow on both): NekoConfig
+`ActionBarDecoration` (0..3 — 0 depends-on-date, 1 snowflakes, 2 fireworks,
+3 none) and NaConfig `chatDecoration` (0..2) drive Android's
+`SnowflakesEffect`/`FireworksEffect` canvas overlays (ActionBar +
+SizeNotifierFrameLayout.drawOverlays, `Theme.canStartHolidayAnimation` for
+the date-dependent mode; exteraless's `migrateDecorations` collapses both to
+snow/none). The web client has no canvas-effect subsystem (no snow or
+fireworks anywhere in Web K), and porting the two effect implementations
+verbatim is its own packet — the verdict is recorded with the sources, the
+keys are not stored (EtgBackup exports neither, so there is no round-trip
+contract to keep), and nothing is approximated or faked.
+
+Tests: `exteralessPills` (+1: the bubbleRadius mapping — the stock at 17,
+the tail clamp, 0), `exteralessSettings` (defaults at 36 keys),
+`exteraBackup` (the trusted-file test now asserts bubbleRadius applies from
+the mainconfig section and `mediaColumnsCount` stays the unsupported
+example). Typecheck passes, oxlint passes on the touched files, the
+standalone sass compile of `_chatBubble.scss` carries the two variables with
+their stock fallbacks. Unverified in a browser (no server or browser
+launched): the rounded bubbles live — runbook step 5.22.
+
+## 057 / Verification pass — the rest of the user's real config (2026-11-02)
+
+A no-code packet that walks the remaining keys of the user's export against
+the port and records the verdicts (the user-directed section of the
+checklist carries them; the private file itself is never committed).
+
+**Covered by completed catalog entries, verified against the Android
+defaults.** `HidePhone` — NekoConfig hidePhone (persisted `HidePhone`),
+default **true** — the store's true matches; the hub row lives in General
+(GEN-06, packet 009) and the `.extera` alias `hidePhoneNumber` round-trips.
+`ZalgoFilter` — NaConfig, default false; store false (GEN-04). `UseEditedIcon`
+— NekoConfig, default true; store true (CHAT-24). `HideTimeForSticker` —
+NekoConfig, default false (CHAT-03's sticker-time trio). `stickerSize` —
+NekoConfig float default 14.0 (CHAT-01). `HideIvSummary` /
+`HideMessageSummary` — not W-entries at all: the catalog carries them as the
+pending HIDE-19/HIDE-18 (the AI IV / message summary rows); the user's
+export does not set them.
+
+**LOOK-05 and CenterActionBarTitleType.** NaConfig's type is 0 Off, 1 On,
+2 SettingsOnly, 3 ChatsOnly (`NekoGeneralSettingsActivity`); the user runs 1
+— exactly the ported boolean's On. The 2/3 scoping variants are a documented
+limitation of LOOK-05 (the centered-title live class has no scope
+qualifier); an imported 2/3 has no store key and no effect.
+
+**Pending catalog entries the user's keys map to (not W-entries).**
+`EnableSaveDeletedMessages` / `SaveDeletedInPrivateChats` /
+`MessageSavingSaveMedia` → AYU-01/AYU-05 (+ the AyuGadget saving subsystem);
+`EnableSaveEditsHistory` → AYU-02; `RegexFilters` (user off) → AYU-15;
+`DisableAvatarBlur` → LOOK-17; `SwipeToPip` → MEDIA-12; `PreferOriginalQuality`
+→ MEDIA-08; `ImmersiveDrawer` / `OEAppearanceNavigationDrawer` → FOLD-09/FOLD-08;
+`TabTitleType` (user 1) → LOOK-26; `BackAnimationStyle` (user 2) → FOLD-02;
+`TabletMode` (user 2) → FOLD-01; `TranslatorModeWithOriginalMigrated` (true)
+→ TRANS-05. All remain unchecked with their Android keys intact in the
+catalog links.
+
+**Class-3 verdicts with reasons.** `OEChatsCameraType`,
+`CameraInVideoMessages`, `OEChatsCameraStabilization`,
+`OEChatsExtendedFps` — hardware-bound: the web attach path has no camera
+(the HIDE-13 audit established the attach menu has no camera tile at all);
+ExtendedFps widens the Android camera's FPS range, there is no camera to
+widen. `uploadBoost` (user true) / `OEGeneralDownloadSpeedBoost` (user 2) —
+GEN-08/GEN-09's own caveat stands: a real loader strategy must be measured
+and ported first, a switch that promises speed is not shipped. Icon packs
+(`OEIconPacksEnabled` true, `IconReplacements` 1) — the ICONS-01..06
+subsystem (Android resource-id → web icon mapping); per AGENTS the
+hardware/app-icon family is removed from the hub entirely. `autoNight` (the
+mainconfig autoNight* family) — the work order fixes class 3: no web
+primitive. `OEGeneralLastFmExplained` — not a setting: the "explained"
+flag of Android's Last.fm onboarding dialog (GEN-17 stays pending); nothing
+to port. Observed in the export but outside the ordered priority list, noted
+for a future order: `DisableStories` (true), `showDeleteDownloadedFile`,
+`ShowRPCError`, `SwitchStyle`/`SliderStyle` non-defaults (already ported via
+the MD3 group), and the themeconfig/mainconfig sections that belong to
+Telegram's own theme machinery.
+
+**localPremium — parked, unchanged.** The user runs it on; the port does not
+ship client-side premium faking: OTHER-04 stays pending and the decision is
+the user's (a policy call about which local premium affordances are honest
+to surface), not a port. Recorded here and in the checklist so the parked
+state is visible.

@@ -91,7 +91,10 @@ features underneath it.
   checklist, and `git status`. Read the latest relevant section of the progress
   log and inspect the actual code before choosing work. Update the current-state
   note and the checklist after each integration; leave partial work unchecked.
-  Commit or push only when explicitly requested.
+  Commit or push only when explicitly requested — except the scheduled
+  housekeeping pass (user instruction, 2026-11-01): it may commit fully
+  documented packets in small commits and push them, skipping any in-flight or
+  half-documented state.
 
 - **Feature scope (user instruction).** The complete working list is
   `docs/exterayond-feature-checklist.md`, with all 296 original catalog IDs.

@@ -6,7 +6,11 @@
 
 Статус интеграции не означает проверку на пользовательском аккаунте. Подробности и пределы проверок — в [журнале](tasks/progress.md). Проверки только на ПК, короткие и целевые. Плагины отложены; аппаратные Android-исключения перечислены в исходном каталоге и не выданы за выполненные функции.
 
-Current progress: **58 completed entries out of 296**. Update this checklist after each integration; the original catalog remains the source reference.
+Current progress: **64 completed entries out of 296**, plus 4 completed
+user-directed look & feel entries (V-1..V-4) and 4 completed W entries
+(W-1..W-3, W-6) in the user-directed sections below — outside the catalog
+count. Update this checklist after each integration; the original
+catalog remains the source reference.
 
 Типы: **П** — переносимая логика, **А** — веб-адаптация, **С** — подсистема. Их отсутствие в Web K не является причиной вычёркивать строку.
 
@@ -45,7 +49,7 @@ Current progress: **58 completed entries out of 296**. Update this checklist aft
 - [ ] **GEN-11 — Папка сохранения файлов** (**А**).
   [`savePathRow`](https://github.com/exteraless/exteraless/blob/8b7ec40ecada6ab3cfcc24e9f3d8ae262c02de63/TMessagesProj/src/main/java/app/exteraless/settings/OpenExteraGeneralActivity.java#L123) — Браузерные разрешения и поддержка различаются; произвольный путь Android не переносится буквально.
 
-- [ ] **GEN-12 — Сортировка чатов по непрочитанным** (**П**).
+- [x] ~~GEN-12 — Сортировка чатов по непрочитанным~~ (**П**). 044: точный ключ `SortByUnread` (NaConfig bool, default false); worker-side раскладка индексов диалогов: непрочитанные (упоминания, реакции, незаглушённый счётчик — как `ChatsHelper.isUnreadSortPriority`, агрегат форума по кэшу тем) поднимаются над прочитанными под полосой закреплённых; live-переключение переиндексирует хранилище и перестраивает списки; alias в Android EtgBackup отсутствует.
   [`sortByUnreadRow`](https://github.com/exteraless/exteraless/blob/8b7ec40ecada6ab3cfcc24e9f3d8ae262c02de63/TMessagesProj/src/main/java/app/exteraless/settings/OpenExteraGeneralActivity.java#L134)
 
 - [ ] **GEN-13 — Расширенные локальные закрепления** (**А**).
@@ -93,6 +97,7 @@ Current progress: **58 completed entries out of 296**. Update this checklist aft
   [`gooeyAvatarRow`](https://github.com/exteraless/exteraless/blob/8b7ec40ecada6ab3cfcc24e9f3d8ae262c02de63/TMessagesProj/src/main/java/app/exteraless/settings/OpenExteraAppearanceActivity.java#L82) — Это анимация интерфейса, не аппаратная функция телефона.
 
 - [ ] **LOOK-10 — Индивидуальные темы и обои чатов** (**П**). **В коде есть реализация или её часть; полноту ещё сверить.**
+  049 (acceptance round 1, F-4): the row's gate is extracted into `resolveChatThemeOverride` and regression-tested — off drops the peer's theme emoticon and wallpaper exactly like `ChatActivity.setupChatTheme`'s early return, on is the stock Web K per-chat behavior. It reads as dead in acceptance because the visible effect needs a chat whose theme or wallpaper was set from another client (the web has no UI to set one); the authenticated data path is unverified here.
   [`customThemesRow`](https://github.com/exteraless/exteraless/blob/8b7ec40ecada6ab3cfcc24e9f3d8ae262c02de63/TMessagesProj/src/main/java/app/exteraless/settings/OpenExteraAppearanceActivity.java#L83)
 
 - [ ] **LOOK-11 — Радиус карточек разделов настроек** (**П**). **В коде есть реализация или её часть; полноту ещё сверить.**
@@ -175,16 +180,16 @@ Current progress: **58 completed entries out of 296**. Update this checklist aft
 - [ ] **FOLD-09 — Полное смещение содержимого при открытии drawer** (**А**).
   [`ID_IMMERSIVE`](https://github.com/exteraless/exteraless/blob/8b7ec40ecada6ab3cfcc24e9f3d8ae262c02de63/TMessagesProj/src/main/java/app/exteraless/settings/OpenExteraAppNavigationActivity.java#L66)
 
-- [ ] **FOLD-10 — Перестановка пунктов главного меню** (**П**).
+- [ ] **FOLD-10 — Перестановка пунктов главного меню** (**П**). **054: раскладка потребляется — `OEAppearanceMainMenuLayout` («видимые;скрытые», схема id `MainMenuItem` 1:1) переставляет и скрывает пункты меню «⋮» левой панели при каждом открытии; порядок меняется строкой раскладки (импорт .extera переносит её), отдельного drag&drop-редактора порядка на вебе пока нет.**
   [`MainMenuLayout.getLayout()`](https://github.com/exteraless/exteraless/blob/8b7ec40ecada6ab3cfcc24e9f3d8ae262c02de63/TMessagesProj/src/main/java/app/exteraless/settings/OpenExteraAppNavigationActivity.java#L137)
 
-- [ ] **FOLD-11 — Скрытие и восстановление пунктов главного меню** (**П**).
+- [x] ~~**FOLD-11 — Скрытие и восстановление пунктов главного меню** (**П**).~~ 054: экран «Main Menu» в хабе (открывается из Appearance): переключатели видимости переносят пункт между половинами строки ровно как сохранение редактора Android; «Настройки» скрыть нельзя — веб всегда без нижней панели (`ensureSettingsVisibility`); id без веб-аналога не предлагаются (правило реестра пилюль).
   [`MainMenuLayout.getHiddenItems()`](https://github.com/exteraless/exteraless/blob/8b7ec40ecada6ab3cfcc24e9f3d8ae262c02de63/TMessagesProj/src/main/java/app/exteraless/settings/OpenExteraAppNavigationActivity.java#L189)
 
-- [ ] **FOLD-12 — Добавление и перестановка разделителей меню** (**П**).
+- [ ] **FOLD-12 — Добавление и перестановка разделителей меню** (**П**). **054: разделитель читается из строки раскладки (DIVIDER(-1), только в видимой половине) и рисуется линией после предыдущего пункта; добавить/переставить разделитель с веба пока нельзя — только через строку раскладки/.extera.**
   [`MainMenuItem.DIVIDER`](https://github.com/exteraless/exteraless/blob/8b7ec40ecada6ab3cfcc24e9f3d8ae262c02de63/TMessagesProj/src/main/java/app/exteraless/settings/OpenExteraAppNavigationActivity.java#L210)
 
-- [ ] **FOLD-13 — Сброс раскладки меню** (**П**).
+- [x] ~~**FOLD-13 — Сброс раскладки меню** (**П**).~~ 054: строка «Reset to Default» возвращает пустую строку — «настройку не трогали», меню байт-в-байт штатное (`MainMenuLayout.reset`).
   [`resetMenuLayout`](https://github.com/exteraless/exteraless/blob/8b7ec40ecada6ab3cfcc24e9f3d8ae262c02de63/TMessagesProj/src/main/java/app/exteraless/settings/OpenExteraAppNavigationActivity.java#L119)
 
 ## Сообщения, ввод, поиск и жесты
@@ -216,10 +221,10 @@ Current progress: **58 completed entries out of 296**. Update this checklist aft
 - [ ] **CHAT-09 — Расширенная история GIF** (**А**).
   [`unlimitedGifsRow`](https://github.com/exteraless/exteraless/blob/8b7ec40ecada6ab3cfcc24e9f3d8ae262c02de63/TMessagesProj/src/main/java/app/exteraless/settings/OpenExteraChatsActivity.java#L157)
 
-- [ ] **CHAT-10 — Разные действия двойного нажатия по входящим и исходящим** (**А**).
+- [x] ~~**CHAT-10 — Разные действия двойного нажатия по входящим и исходящим** (**А**).~~ 051: `DoubleTapAction` / `DoubleTapActionOut` (NaConfig, the `DoubleTap.kt` enum 0..12 verbatim, Android defaults 1/1 = send reactions) in the Chats tab's "Double tap" section; the bubble's dblclick handler dispatches — the quick reaction (`chat.sendReaction`, CHAT-11), the message context menu (Show Reactions), the native translate popup, Reply (the stock web path), Forward, Save (forward to Saved Messages), Save to device, Repeat (CHAT-35), Repeat as Copy (`dropAuthor`), Delete, Edit; the LLM translate is not offered (no web provider) and an imported value no-ops. A double click that selects text stays a selection.
   [`doubleTapIncomingRow`](https://github.com/exteraless/exteraless/blob/8b7ec40ecada6ab3cfcc24e9f3d8ae262c02de63/TMessagesProj/src/main/java/app/exteraless/settings/OpenExteraChatsActivity.java#L167) — Нет действия; отправить/показать реакции; обычный/LLM-перевод; ответ; пересылка; сохранение; скачивание; повтор; повтор копией; редактирование своего; удаление. На ПК согласовать с выделением текста и двойным кликом.
 
-- [ ] **CHAT-11 — Выбор реакции для действия двойного нажатия** (**П**).
+- [x] ~~**CHAT-11 — Выбор реакции для действия двойного нажатия** (**П**).~~ 051: a "Reaction on Double Tap" row shows while either side sends a reaction (Android's `doubleTapReactionRow` condition) and opens the stock Quick Reaction subtab — the web analog of `reaction_on_double_tap` (`MediaDataController.getDoubleTapReaction`) is the account's quick reaction (`messages.setDefaultReaction`).
   [`doubleTapReactionRow`](https://github.com/exteraless/exteraless/blob/8b7ec40ecada6ab3cfcc24e9f3d8ae262c02de63/TMessagesProj/src/main/java/app/exteraless/settings/OpenExteraChatsActivity.java#L169)
 
 - [ ] **CHAT-12 — Быстрый переход к следующему каналу** (**А**).
@@ -601,40 +606,40 @@ Current progress: **58 completed entries out of 296**. Update this checklist aft
 
 ## Pill Stack — виджеты в поле поиска
 
-- [ ] **PILLS-01 — Полоса виджетов в строке поиска** (**С**).
+- [x] ~~**PILLS-01 — Полоса виджетов в строке поиска** (**С**).~~ 052: полоса прикреплена к полю поиска списка чатов (`attachPillStackStrip`), позиция — инлайн-конец поля (6px, как в Android), скрыта при набранном тексте, live-пересборка по изменению раскладки; полоса рендерит только пилюли веб-реестра — точная семантика `PillRegistry.createPill`. Переключение жестом — PILLS-03.
   [`PillStackSettingsActivity`](https://github.com/exteraless/exteraless/blob/8b7ec40ecada6ab3cfcc24e9f3d8ae262c02de63/TMessagesProj/src/main/java/app/exteraless/pillstack/PillStackSettingsActivity.java#L37)
 
-- [ ] **PILLS-02 — Активные/скрытые виджеты и их порядок** (**П**).
+- [ ] **PILLS-02 — Активные/скрытые виджеты и их порядок** (**П**). **052: контракт перенесён (ключи `OEPillActivePills`/`OEPillHiddenPills`, значения по умолчанию Android, парсинг `parseList`, фильтр реестра, клик-переключение как `onItemClick`, backup `activePills`/`hiddenPills`/`infiniteScrolling`); осталось: drag&drop-перестановка списка в настройках (значима, когда пилюль больше одной).**
   [`active`](https://github.com/exteraless/exteraless/blob/8b7ec40ecada6ab3cfcc24e9f3d8ae262c02de63/TMessagesProj/src/main/java/app/exteraless/pillstack/PillStackSettingsActivity.java#L39) — Точный контракт хранится в PillStackConfig и PillRegistry.
 
-- [ ] **PILLS-03 — Переключение виджетов жестом** (**А**).
+- [ ] **PILLS-03 — Переключение виджетов жестом** (**А**). **053: эквиваленты для ПК реализованы — колесо мыши над полосой и ArrowUp/ArrowDown на самой пилюле (веб-аналог вертикального свайпа), решение индекса `nextPillIndex` покрыто тестами, восстановление `OEPillLastActiveId` как в `rebuildContents`; строка ждёт второй зарегистрированной пилюли, чтобы переключение стало видимым (сейчас реестр несёт одну), тач-свайп не переносился.**
   [`PillStack`](https://github.com/exteraless/exteraless/blob/8b7ec40ecada6ab3cfcc24e9f3d8ae262c02de63/TMessagesProj/src/main/java/app/exteraless/pillstack/PillStackSettingsActivity.java#L37) — На ПК нужен эквивалент колёсиком/клавишами/кнопкой.
 
-- [ ] **PILLS-04 — Бесконечная прокрутка виджетов** (**П**).
+- [ ] **PILLS-04 — Бесконечная прокрутка виджетов** (**П**). **052: ключ `OEPillInfiniteScrolling` (bool, default true) хранится, переносится в backup и имеет строку в хабе; 053: поведение подключено — зацикливание в `nextPillIndex` (тесты), остаётся неотмеченной до проверки с несколькими пилюлями.**
   [`infinite`](https://github.com/exteraless/exteraless/blob/8b7ec40ecada6ab3cfcc24e9f3d8ae262c02de63/TMessagesProj/src/main/java/app/exteraless/pillstack/PillStackSettingsActivity.java#L42)
 
-- [ ] **PILLS-05 — Виджет погоды и выбор местоположения** (**А**).
+- [ ] **PILLS-05 — Виджет погоды и выбор местоположения** (**А**). **052: вердикт — ключи погоды читаются из PillStackConfig, но веб-реестр не регистрирует пилюлю: нет выбранного источника погоды и явного разрешения на геолокацию (как требует строка ниже). Не подделывается.**
   [`Weather`](https://github.com/exteraless/exteraless/blob/8b7ec40ecada6ab3cfcc24e9f3d8ae262c02de63/TMessagesProj/src/main/java/app/exteraless/pillstack/PillStackSettingsActivity.java#L171) — Отдельно источник погоды и явное разрешение на геолокацию.
 
-- [ ] **PILLS-06 — Виджет размера кэша клиента** (**А**).
+- [x] ~~**PILLS-06 — Виджет размера кэша клиента** (**П**).~~ 052: точный id 5 (`PillType.CACHE`, имя Android = R.string.StorageUsage); показывает реальный размер кэша клиента (файлы + потоковые чанки — сборщики раздела Data & Storage, выделены в общий модуль), обновление раз в 3 минуты, клик открывает Data & Storage (веб-владелец тех же данных, аналог `CacheControlActivity`); кольцо заполнения накопителя не переносится (у страницы нет объёма диска).
   [`CachePill`](https://github.com/exteraless/exteraless/blob/8b7ec40ecada6ab3cfcc24e9f3d8ae262c02de63/TMessagesProj/src/main/java/app/exteraless/pillstack/PillRegistry.java#L20) — Показывать кэш этого приложения, а не выдуманный размер памяти устройства.
 
-- [ ] **PILLS-07 — Виджет состояния прокси** (**А**).
+- [ ] **PILLS-07 — Виджет состояния прокси** (**А**). **052: вердикт — класс 3: в браузерном клиенте нет подсистемы прокси (браузер не открывает SOCKS/MTProto-транспорт), Web K не имеет ни настроек, ни состояния прокси; id 6 остаётся в строке раскладки (хранится, переносится в backup), полоса его не рендерит. Не подделывается.**
   [`ProxyPill`](https://github.com/exteraless/exteraless/blob/8b7ec40ecada6ab3cfcc24e9f3d8ae262c02de63/TMessagesProj/src/main/java/app/exteraless/pillstack/PillRegistry.java#L25) — Зависит от выбранной веб-архитектуры подключения.
 
-- [ ] **PILLS-08 — Виджет переключения Ghost Mode** (**С**).
+- [ ] **PILLS-08 — Виджет переключения Ghost Mode** (**С**). **052: вердикт — ждёт собственную подсистему (GHOST-01 не переносился); пилюля не регистрируется, не подделывается.**
   [`GhostPill`](https://github.com/exteraless/exteraless/blob/8b7ec40ecada6ab3cfcc24e9f3d8ae262c02de63/TMessagesProj/src/main/java/app/exteraless/pillstack/PillRegistry.java#L22)
 
-- [ ] **PILLS-09 — Виджет локального статуса/последней активности** (**А**).
+- [ ] **PILLS-09 — Виджет локального статуса/последней активности** (**А**). **052: вердикт — ждёт AYU-09 (локальная история последней активности); пилюля не регистрируется.**
   [`LastSeenPill`](https://github.com/exteraless/exteraless/blob/8b7ec40ecada6ab3cfcc24e9f3d8ae262c02de63/TMessagesProj/src/main/java/app/exteraless/pillstack/PillRegistry.java#L23)
 
-- [ ] **PILLS-10 — Виджет пинга дата-центра** (**А**).
+- [ ] **PILLS-10 — Виджет пинга дата-центра** (**А**). **052: вердикт — ждёт примитив уровня менеджера (измерять прикладной транспорт, как требует строка ниже; UI-код не лезет в MTProto напрямую); пилюля не регистрируется.**
   [`PillStack`](https://github.com/exteraless/exteraless/blob/8b7ec40ecada6ab3cfcc24e9f3d8ae262c02de63/TMessagesProj/src/main/java/app/exteraless/pillstack/PillStackSettingsActivity.java#L37) — См. DcPingPill.java; измерять прикладной транспорт, не обещать системный ICMP.
 
-- [ ] **PILLS-11 — Настраиваемые курсы валют и криптовалют, цена золота** (**С**).
+- [ ] **PILLS-11 — Настраиваемые курсы валют и криптовалют, цена золота** (**С**). **052: вердикт — внешние источники курсов (Coinbase и т.п.) не выбирались; пилюли курсов не регистрируются.**
   [`RateInstances`](https://github.com/exteraless/exteraless/blob/8b7ec40ecada6ab3cfcc24e9f3d8ae262c02de63/TMessagesProj/src/main/java/app/exteraless/pillstack/PillStackSettingsActivity.java#L129) — RateInstances.java, ExchangeRates.java, GoldPrice.java; экземпляры курса, пары валют, источники и кэш.
 
-- [ ] **PILLS-12 — Сброс раскладки виджетов** (**П**).
+- [x] ~~**PILLS-12 — Сброс раскладки виджетов** (**П**).~~ 052: строка «Reset to Default» в хабе возвращает `DEFAULT_ACTIVE` ("5,6") и пустые скрытые (Android `resetLayout`), с уведомлением `PillStackResetDone`.
   [`reset`](https://github.com/exteraless/exteraless/blob/8b7ec40ecada6ab3cfcc24e9f3d8ae262c02de63/TMessagesProj/src/main/java/app/exteraless/pillstack/PillStackSettingsActivity.java#L61)
 
 ## Перевод сообщений, чатов и статей
@@ -941,3 +946,46 @@ Current progress: **58 completed entries out of 296**. Update this checklist aft
 
 - [ ] **THEME-03 — Показ вкладки Feed и счётчика непрочитанных** (**А**).
   [`val showFeedTab`](https://github.com/exteraless/exteraless/blob/8b7ec40ecada6ab3cfcc24e9f3d8ae262c02de63/TMessagesProj/src/main/kotlin/app/exteraless/appearance/AppearanceConfig.kt#L467) — Настройки AppearanceConfig.showFeedTab/showFeedUnreadCounter дополняют FeedConfig.
+
+## User-directed look & feel (stream brief: docs/tasks/look-and-feel.md)
+
+These entries come from the user's review of exteraless on Android, not from
+the original 296-item catalog; the IDs (V-1..V-4) are new and the catalog
+above stays untouched. Same rules apply: a setting gates it, off = stock,
+Android source first where a key exists.
+
+- [x] ~~V-1 — Wallpaper pattern toggle~~. 045: the Android owner is Telegram's own pattern dimming (the wallpaper record's `settings.intensity`, `ThemePreviewActivity`'s "Intensity" seekbar), so the web toggle maps onto it — off is intensity 0 (color/gradient only), on (default) is stock; the background renderer's pattern layer is gated (no fetch, no canvas, no mask dimming), live without a reload.
+
+- [x] ~~V-2 — Floating vs attached sidebar~~. 046: web-only adaptation (Android has no floating panels and no key); `OEAppearanceAttachedSidebar` toggles the `oe-attached-sidebar` root class — zero page margins and no shadow, full-height left panel, folders-rail offset kept, inner section cards keep their radius. Default off = stock floating. Acceptance round 1 (F-1): the rounding is kept in attached mode too. Acceptance round 2 (G-3): only the content-facing edge keeps it (the inline-end corners — the right edge in LTR, mirrored in RTL), the window-facing corners square; and the attached panel never overlays the chat — the chat's space math uses the panel's visual width (`updateColumnWidths`), `#column-center` re-centers beside it in the docked and the shown-drawer ranges, the pop-out scrim is suppressed; off = stock byte-for-byte.
+
+- [x] ~~V-4 — Theme palettes and the accent picker~~. 047: ladder (1) near-black palette and (3) AMOLED variant as one `OEAppearanceThemePalette` selector over the dark surface variables (dark themes only, live, clears only its own writes, no theme object touched); (2) a per-theme accent color picker through the stock `applyAccentPreset` pipeline (preview via `applyTheme`, debounced commit, survives reload, reset = factory theme); (4) the custom-theme editor was not needed — the stock system expresses the rest. Acceptance round 1 reshaped it: F-2 dropped the selector for a single toggle (off = stock, on = the near-black palette; AMOLED removed entirely), and F-3 made it Material-You — the palette tints every surface of its family from the accent color or an explicit "Set a color" pick (the pick wins), and a committed accent carries an accent-hued material wallpaper (gradient + the shared pattern) unless the user owns the background. Acceptance round 2 (G-1/G-4): a "Set a color" pick applies in the same task (`applyThemeFast` — background re-applies no longer run the theme-switch view transition) and wins over everything; the palette's tint chain is explicit — explicit background color > explicit accent PICK (the picker's `preset:*` theme) > wallpaper-derived > the theme's own accent — and an image wallpaper's dominant color (JS canvas sampling at render time, cached per record, `exteraless_wallpaper_tint`) tints the family while the toggle is on, re-derived on every wallpaper change.
+
+- [x] ~~V-3 — Forced MD3 coverage strengthening~~. 048: the coverage audit table lives in the journal (packet 048); the eight-part group's choke points verified covered (switches, loading, Section rows app-wide, settings sliders, chat header, folder navigation, player, mini player), chat-list rows covered by contract, and the audio rows' seek line extended behind `oe-md3-sliders` (the web's other slider family, ported M3 values); popup/menu/dialog card chrome, search input, media viewer chrome and the composer are listed as waiting on an owning-toggle decision.
+
+## User-directed W entries (the Neko/Na keys the 296-catalog never carried)
+
+Added 2026-11-02 from the priority override (the user's real config, see
+CURRENT.md): keys the original 296-line catalog does not carry, integrated
+under the same rules — Android source first, off = stock, backup aliases only
+where Android's `EtgBackup` exports one.
+
+- [x] ~~W-1 — `showAddToSavedMessages`~~. 055: NekoConfig bool, default false (the user runs it on); the message context menu gains "Add to Saved Messages" — a direct forward to the own chat (the same handler the double-tap Save uses), Android's conditions verbatim (a real message, not the self chat, forwardable, not scheduled); backup alias `showSaveMessageButton` (bool) round-trips. Hub row in Chats.
+  [`ChatActivity.java:50685`](https://github.com/exteraless/exteraless/blob/8b7ec40ecada6ab3cfcc24e9f3d8ae262c02de63/TMessagesProj/src/main/java/org/telegram/ui/ChatActivity.java#L50685)
+
+- [x] ~~W-2 — `CopyPhoto`~~. 055: NaConfig.showCopyPhoto bool, default false (the user runs it on; the persisted name is the contract); the message context menu gains "Copy" for clipboard-copyable media — the media viewer's own copy path (`copyMediaToClipboard`) with its feedback toasts; backup alias `showCopyPhotoButton` (bool) round-trips. Hub row in Chats.
+  [`ChatActivity.java` allowCopyPhoto](https://github.com/exteraless/exteraless/blob/8b7ec40ecada6ab3cfcc24e9f3d8ae262c02de63/TMessagesProj/src/main/java/org/telegram/ui/ChatActivity.java#L50477)
+
+- [x] ~~W-3 — `showReport`~~. 055: NekoConfig bool, default false; the stock per-message "Report" item (channels only in Web K) also shows for incoming messages outside channels — Android's condition (a real incoming message in a chat or with a bot) mapped onto the existing `showMessageReport` popup; backup alias `showReportButton` (bool) round-trips. Hub row in Chats.
+  [`ChatActivity.java:50200`](https://github.com/exteraless/exteraless/blob/8b7ec40ecada6ab3cfcc24e9f3d8ae262c02de63/TMessagesProj/src/main/java/org/telegram/ui/ChatActivity.java#L50200)
+
+- [ ] **W-4 — `showMessageDetails`** (**С**). 055: NekoConfig bool, default false (the user leaves it off); the web has no message-details surface (Android's popup shows ids, dates, forwards, signature) — the key is stored and round-trips, an imported true is a documented no-op; waits on a web details view, never faked. Backup alias `showDetailsButton` stays recognized-but-unsupported.
+  [`ChatActivity.java:51064`](https://github.com/exteraless/exteraless/blob/8b7ec40ecada6ab3cfcc24e9f3d8ae262c02de63/TMessagesProj/src/main/java/org/telegram/ui/ChatActivity.java#L51064)
+
+- [ ] **W-5 — `showViewHistory`** (**С**). 055: NekoConfig bool, default false; the item opens the edit/delete history viewer (AyuMessageHistory) — waits on the history subsystem (AYU-02); the key is stored and round-trips, an imported true is a documented no-op. Backup alias `showHistoryButton` stays recognized-but-unsupported.
+  [`AyuMessageHistory`](https://github.com/exteraless/exteraless/blob/8b7ec40ecada6ab3cfcc24e9f3d8ae262c02de63/TMessagesProj/src/main/java/com/radolyn/ayugram/ui/AyuMessageHistory.java)
+
+- [x] ~~W-6 — `bubbleRadius`~~. 056: Android `SharedConfig.bubbleRadius` (mainconfig, int 0..17, default 17; `MessageDrawable` takes the radius for the far corners and clamps the tail side to min(6, radius)); the store maps it to `--oe-bubble-radius` / `--oe-bubble-tail-radius` over the in/out bubble corner variables, the default 17 leaves Web K's own geometry byte-for-byte (the stock 15px/5px pair ≈ Android's 17/6dp); slider in Appearance; the `.extera` alias `bubbleRadius` (mainconfig, int 0..17) round-trips.
+  [`SharedConfig.java:339`](https://github.com/exteraless/exteraless/blob/8b7ec40ecada6ab3cfcc24e9f3d8ae262c02de63/TMessagesProj/src/main/java/org/telegram/messenger/SharedConfig.java#L339)
+
+- [ ] **W-7 — `ActionBarDecoration` / `chatDecoration`** (**А**). 056: NekoConfig `ActionBarDecoration` (int 0..3: 0 depends-on-date, 1 snow, 2 fireworks, 3 none; the user runs 1) and NaConfig `chatDecoration` (int 0..2, the user runs 1) draw `SnowflakesEffect` / `FireworksEffect` canvas overlays over the action bar and the chat (`SizeNotifierFrameLayout.drawOverlays`, `ActionBar`; exteraless's `migrateDecorations` collapses both to snow/none). Verdict: the web client has no canvas-effect subsystem at all (no snow/fireworks anywhere in Web K), and porting the two effect implementations verbatim is its own packet — recorded, not approximated, not faked; EtgBackup exports neither key, so nothing is stored.
+  [`SizeNotifierFrameLayout.java:563`](https://github.com/exteraless/exteraless/blob/8b7ec40ecada6ab3cfcc24e9f3d8ae262c02de63/TMessagesProj/src/main/java/org/telegram/ui/Components/SizeNotifierFrameLayout.java#L563)

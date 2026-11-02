@@ -27,18 +27,61 @@ HIDE-05 (hide the "All chats" folder tab with live reshaping and the
 `hideAllChats` backup alias), LOOK-05 + LOOK-08 (centered header title and
 system fonts), CHAT-40 (wide channel posts, with the CHAT-41 verdict), and
 CHAT-35 (the web repeat action with its confirmation — the runbook gained
-the matching acceptance steps). The checklist count is 58/296. Remaining
-browser-free candidates are mostly subsystems: GEN-12 (sort by unread)
-needs surgery in the worker-side dialogs storage ordering (pagination and
-index assumptions), MEDIA-10 (compact GIFs) needs bubble-layout work.
-Other mid-size candidates:
-GEN-01 (translate presentation), CHAT-10/11 (double-tap actions), MENU-03..09
-(menu compositions), FOLD-10..13 (side menu layout). Pick from the checklist
-and verify against the Android source per packet.
+the matching acceptance steps), and packet 044 closed GEN-12 (sort by
+unread: `SortByUnread`, worker-side dialog index layout with live
+re-sorting). The checklist count is 59/296.
+
+**Active side stream — look & feel** (user-directed, see
+[`look-and-feel.md`](look-and-feel.md)): packets 045–048 worked the V entries
+to completion (V-1 wallpaper pattern gate, V-2 attached sidebar, V-4 theme
+palette + accent picker, V-3 the Forced MD3 audit), packet 049 the user's
+acceptance round 1 (F-1..F-6), and packet 050 the acceptance round 2
+(G-1..G-4): a "Set a color" pick applies in the same task (background
+re-applies run `applyThemeFast`, no theme-switch view transition) and the
+palette tint chain is explicit and tested — explicit background color >
+explicit accent PICK > wallpaper-derived > the theme's own accent; the hub
+gained real, level-gated motion (eased row/summary hover-press, cross-engine
+reveal fades — the F-6 reveal's instant open off Chromium 131+ was the
+finding); the attached sidebar rounds only its content-facing edge, never
+overlays the chat (the visual-width space math in `updateColumnWidths` plus
+the `#column-center` re-centering, both mirrored in RTL); and an image
+wallpaper's dominant color (JS canvas sampling in the background renderer,
+cached, announced on `exteraless_wallpaper_tint`) drives the chrome while
+the palette toggle is on, re-derived on every wallpaper change. All four V
+entries remain checked in the checklist's user-directed section; the visual
+results await the user's re-acceptance — runbook steps 1.22–1.23 in batch 1
+of [`../verification.md`](../verification.md) were rewritten for the new
+behavior (1.21 and 1.24 are unchanged).
+
+**Priority override — the user's real config (2026-11-01).** The user
+provided their Android settings export and directed that the port cover
+their actually-used settings before any catalog order. Worked in packets
+052–057 (2026-11-02): **Pill Stack** — the four `PillStackConfig` keys
+verbatim, the web registry with the cache pill really backed (PILLS-01/06/12
+done; PILLS-02/03/04 carry the machinery with the remaining piece recorded;
+PILLS-05/07..11 carry class verdicts), **the main menu layout** —
+`OEAppearanceMainMenuLayout` consumed over the burger menu with the hub
+screen and the `.extera` halves (FOLD-11/13 done; FOLD-10/12 annotated), the
+**W-entries** — showAddToSavedMessages, CopyPhoto, showReport wired into the
+message menu (W-1..W-3), bubbleRadius over the bubble corners (W-6), the
+decoration effects' class verdict (W-7), showMessageDetails/showViewHistory
+stored as documented no-ops (W-4/W-5); the catalog-covered keys (HidePhone,
+ZalgoFilter, UseEditedIcon, HideTimeForSticker, stickerSize) verified
+against the Android defaults, LOOK-05 covers the user's
+CenterActionBarTitleType=1, the camera/boost/icon-pack/autoNight keys carry
+class-3 verdicts with reasons, `localPremium` stays parked (OTHER-04,
+user's call). Defaults always come from the Android source; the private
+export sets priorities only and is never committed. The checklist count is
+64/296 plus the user-directed sections.
 
 After that, pick unchecked items from the checklist, generally small to large.
-Plugins are deferred until the user explicitly asks to resume them. Phone-only
-hardware features are not desktop tasks.
+Remaining browser-free candidates are mostly subsystems: MEDIA-10 (compact
+GIFs) needs bubble-layout work. Other mid-size candidates:
+GEN-01 (translate presentation), CHAT-10/11 (double-tap actions), MENU-03..09
+(menu compositions), FOLD-10..13 (side menu layout). Pick from the checklist
+and verify against the Android source per packet. Plugins are deferred until
+the user explicitly asks to resume them. Phone-only hardware features are not
+desktop tasks.
 
 ## Operating constraints
 

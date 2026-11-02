@@ -11,7 +11,9 @@ porting journal), and what toggling it off must restore.
 **Snapshot.** This is a snapshot at **54/296** checklist entries checked
 (2026-10-31, packets 001–036; CHAT-30 from packet 036 was appended to batch 2
 right after the first snapshot, packets 037–040 appended 2.14, 2.15, 5.3a and
-5.3b). Future porting packets append their own
+5.3b, packet 044 appended 5.1a; the checklist is at 59/296 plus the four
+user-directed V entries as of packet 048, whose acceptance steps are 1.21–1.24
+below). Future porting packets append their own
 entries to the checklist in `docs/exterayond-feature-checklist.md` and should
 append their acceptance steps to the matching batch here. The count and the
 batch tally at the bottom go stale by design; the checklist stays the source
@@ -104,6 +106,8 @@ behavior the tests stubbed out (the fixture gaps are listed per step) — not
   no-folders case).
 - Link-preview rewrite rules (CHAT-30) over the built-in rule table:
   `pagePreviewRules` (5, packet 036).
+- Sort-by-unread index layout and live re-sort (GEN-12) over the real dialogs
+  storage: `dialogSortByUnread` (6, packet 044).
 - Exact counters: `src/tests/formatNumber.test.ts` (off state byte-identical)
   plus packet 004's 79 tests across 11 files over 25 counter consumers.
 - Per-feature regression suites accumulated per packet (mini avatars, seconds,
@@ -320,6 +324,126 @@ cover-derived colors (PLAYER-18), background modes (PLAYER-19) and the
 mini-player customization rows (PLAYER-20…30) wait on missing web primitives
 and were not faked (packet 029). PLAYER-01's remaining subsystem (queue,
 lyrics, gestures) likewise stays open.
+
+### 1.21 V-1 — "Wallpaper Pattern" (Appearance, beside Custom Themes)
+
+- Default **on** (stock). Off → every wallpaper's pattern layer (узоры)
+  disappears live, without a reload: the chat background keeps its colors and
+  gradient only; the wallpaper picker tiles and the passcode lock show the
+  same gradient-only rendering. On → the pattern returns with its own
+  intensity dimming. An image wallpaper (a custom photo) and its dimming are
+  unaffected either way.
+- Look at: the default wallpaper's doodles, a dark theme (the night mask
+  render falls back to the pure gradient), the folders sidebar mirror
+  brightening with the gradient when a dark mask pattern is hidden, and the
+  toggle's live round trip (off → on, no reload).
+- **[AUTH · content: any chat; the settings row]**
+- PASS/FAIL:
+
+### 1.22 V-2 — "Attached Sidebar" (Appearance, under Center Title)
+
+- Default **off** (stock floating). On → the left panel loses the page
+  margins and shadow and runs the window's full height, edge to edge. The
+  rounding lives only on the **content-facing edge** (acceptance round 2,
+  G-3): the right edge of the left sidebar in LTR keeps its top/bottom
+  corners rounded, the window-facing corners are square; mirrored in RTL.
+  The folders rail keeps its place beside it and the section cards inside
+  keep their rounding. The toggle eases its margins and rounding (F-6);
+  everything else stays instant. Off → the floating panel returns, all four
+  corners rounded.
+- The attached panel **never overlays the chat** (G-3): the chat column and
+  its header/pinned/composer plates re-center beside the panel at every
+  width, including the collapsed sidebar popped out for an open tab (stock
+  overlays it there with a scrim — attached pushes the chat instead, and no
+  scrim shows); in the 601–925 drawer range the chat offsets while the panel
+  is shown. Off → the stock overlay/pop-out behavior returns.
+- Look at: both directions live; the rounded content-facing corners and the
+  square window-facing corners at full height (attached), with the folders
+  rail shown and hidden; a chat open beside the panel — header, pinned bar
+  and input all clear it; the collapsed sidebar with an open tab (the chat
+  must offset beside the full panel, no dark scrim); RTL (the corners and
+  the offset mirror); no scrollbar regressions; dialogs and popups stay
+  above the attached panel.
+- **[AUTH · content: any chat]**
+- PASS/FAIL:
+
+### 1.23 V-4 — "Theme Palette" and "Accent Color" (Appearance, top)
+
+- Theme Palette is a **single toggle** since acceptance round 1 (F-2 — the
+  Stock/Exteraless/AMOLED selector is gone, AMOLED is removed). Default **off**
+  (stock). On → on a dark theme (night or tinted) the surfaces go near-black
+  **tinted Material-You style (F-3): every surface of the family takes its hue
+  from the accent color** — pick a different accent and the chrome follows.
+  Off → the theme's own surfaces return. On a light theme the toggle does
+  nothing (a dark palette by design). The chat wallpaper is not part of the
+  palette — it keeps whatever Chat Wallpaper holds, with one exception below.
+- An explicit background choice wins over the palette: pick **Set a color** on
+  the Chat Wallpaper tab (or an image, or a grid pick) and the palette tints
+  its surfaces with THAT color's hue instead of the accent's; toggling the
+  palette off and on re-derives from the pick. Accent changes no longer
+  replace a picked background.
+- An explicit background choice wins over everything (acceptance round 2,
+  G-1): pick **Set a color** on the Chat Wallpaper tab and the chat background
+  repaints **at once, without a page-wide transition** (background re-applies
+  no longer run the theme-switch view transition), and the pick beats the
+  accent, the wallpaper-derived tint (below) and the accent's material
+  wallpaper. The priority chain is: explicit background color > explicit
+  accent PICK > wallpaper-derived > the theme's own accent > palette default.
+- Theme from wallpaper (G-4, Pixel/Material You style): while the palette
+  toggle is on, an **image** wallpaper (a photo upload or grid pick) tints
+  the whole surface family with its dominant color — pick a different photo
+  and the chrome follows it live; switching to a pattern/color wallpaper (or
+  an accent pick) takes the wallpaper's tint away again. A gray-dominant
+  photo carries no hue (the chrome falls back to the theme's accent). The
+  explicit picks above always win over the derived tint; the theme's own
+  (never-picked) accent yields to the wallpaper.
+- Look at: the toggle on night and on tinted; a switch to a light theme with
+  the toggle on (it must fall away); a theme re-apply with the toggle on (the
+  palette must win over the theme's own writes); the hue following the accent
+  picker; a "Set a color" pick repainting the chat instantly and driving the
+  chrome hue; a photo wallpaper driving the chrome hue and a wallpaper swap
+  re-deriving it live; an accent pick outranking the photo; menus that opt
+  into the `.night` mirror keep the underlying theme's surfaces (a documented
+  limit, not a FAIL).
+- Hub motion (G-2, judged here by eye): settings rows answer hover and press
+  with an eased highlight (Material's standard easing; with Interface
+  Animations off everything snaps); the "Customize" reveals fade their
+  content in on every browser and grow open on Chromium 131+ at the full
+  animation level.
+- Accent Color default **theme's own**. "Pick a color" → the embedded picker;
+  dragging previews the accent live and the pick commits (survives a reload);
+  on a dark base the outgoing bubbles take the derived gradient. With the
+  Theme Palette on, a committed accent **carries a Material-You wallpaper**
+  (F-3): the chat background becomes a gradient of the accent's hue with the
+  shared pattern elements — live, without a reload. If the current wallpaper
+  is an explicit user pick (a "Set a color" choice, an upload, a grid pick),
+  the accent never replaces it. The row's swatch follows the applied accent.
+  "Reset to Default" → the factory theme entry (wallpaper included).
+- Look at: preview during the drag, the commit after release, reload
+  persistence, reset, and a pick on day/night/tinted alike; with the palette
+  on, the background's hue following the accent and the pattern elements
+  appearing; a picked background surviving an accent change.
+- **[AUTH · content: any chat]**
+- PASS/FAIL:
+
+### 1.24 V-3 — Forced MD3 coverage extension (with the MD3 group on)
+
+- The coverage audit table lives in the journal (packet 048 in
+  `docs/tasks/progress.md`): switches, loading indicators, Section rows
+  (left tabs, right sidebar/profile tabs, popup sections), settings sliders,
+  chat header, folder navigation, player and mini player are covered; chat
+  list rows are covered by contract; popup/menu/dialog card chrome, search
+  input, media viewer chrome and the composer wait on an owning-toggle
+  decision (do not file as FAIL).
+- The one extension, behind **Forced MD3 → Sliders**: with Sliders on, a chat
+  audio attachment's seek line takes the M3 track (8px) and the elongated
+  gap handle the settings sliders wear; voice messages keep their waveform;
+  the mini player and the media viewer keep their own chrome. Sliders off →
+  the stock thin line and round thumb return.
+- Look at: an audio attachment in a chat with Sliders on and off; a voice
+  message (unchanged waveform); the settings sliders still fine.
+- **[AUTH · content: an audio message]**
+- PASS/FAIL:
 
 ---
 
@@ -581,6 +705,37 @@ Two rows: Chats tab → "Message menu" → **Repeat** (Android
 - Look at: repeat a text message to the same chat and see it arrive with the
   forward header; toggle "Repeating messages" and see the dialog disappear.
 - **[AUTH · content: a chat you can post in]**
+- PASS/FAIL:
+
+### 2.17 CHAT-10 / CHAT-11 — Double-tap actions (packet 051)
+
+Chats tab → "Double tap": **Double Tap Incoming** and **Double Tap Outgoing**
+selectors (Android NaConfig `DoubleTapAction` / `DoubleTapActionOut`,
+defaults 1 = Send Reactions on both sides), and — while either side sends
+reactions — a **Reaction on Double Tap** row that opens the stock Quick
+Reaction subtab (the web's own account reaction chooser stands in for
+Android's `reaction_on_double_tap`).
+
+- The actions: None, Send Reactions, Show Reactions (opens the message's
+  context menu at the bubble), Translate, Reply, Forward, Add to Saved
+  Messages, Save to device (media only), Repeat (the repeat confirmation
+  applies), Repeat as Copy (sent again without the forward header), Delete;
+  the outgoing selector adds Edit. Android's LLM translate has no web
+  provider and is not offered — an imported value of it does nothing.
+- The stock web behavior (double click replies to an incoming message,
+  nothing on outgoing) is the Reply / None combination.
+- A double click that selects text stays a selection — no action fires on it.
+- Look at: the defaults — double-click an incoming and an outgoing message,
+  the quick reaction lands on both; set incoming to Reply and outgoing to
+  None — the stock behavior returns; walk the other actions (Show Reactions,
+  Translate on a foreign-language message, Forward, Add to Saved Messages,
+  Save to device on a photo, Repeat with and without its confirmation,
+  Repeat as Copy — no forward header on arrival, Delete, Edit on an outgoing
+  message); the Reaction row disappears when neither side sends reactions and
+  comes back otherwise; the chosen Quick Reaction is what the double click
+  sends; double-click a word to select it — no action fires.
+- **[AUTH · content: a chat you can post in; a photo message; a
+  foreign-language message; Saved Messages visible]**
 - PASS/FAIL:
 
 ---
@@ -918,6 +1073,29 @@ only prior check was synthetic.
 - **[AUTH · content: at least one archived chat]**
 - PASS/FAIL:
 
+### 5.1a GEN-12 — "Sort by Unread" (packet 044; appended after the snapshot)
+
+- General tab, right above "Hide archive folder". Default **off** (= stock:
+  the list is ordered by the last message's date, pinned on top).
+- On → chats with unread mentions, unread reactions or an unmuted unread
+  counter rise above every read chat in the open folder, under the pinned
+  ones; among themselves and among the read ones the date order holds. Muted
+  unread chats stay in date order. The toggle is live: the open list rebuilds
+  once (Android answers the same toggle with a full re-sort); folders,
+  the archive and forum topic lists follow the same order.
+- Off → the stock date order returns, live.
+- Look at: a folder where an old chat is unread and a newer one is read —
+  with the setting on the unread one must stand above; pin a chat and confirm
+  it stays above the unread block; mark the unread chat read and watch it
+  drop back; scroll deep into the list and page further (pagination walks the
+  same indexes). A forum with unread topics rises as a whole.
+- Caveats carried from packet 044: a freshly loaded forum sorts by date until
+  its topics arrive; the rebuilt list's animation and RTL are unverified in a
+  browser.
+- **[AUTH · content: a folder with at least one unread chat and one read
+  chat; ideally an old unread chat]**
+- PASS/FAIL:
+
 ### 5.2 LOOK-27 — "Notification counter" (All chats / Except muted / Off)
 
 - Appearance tab → section "Notification counter". Default **Except muted**
@@ -1146,6 +1324,74 @@ only prior check was synthetic.
 
 ---
 
+### 5.19 PILLS-01 / PILLS-06 / PILLS-12 — the Pill Stack strip and its cache pill (packet 052)
+
+- Appearance tab → row "Pill Stack" opens the Pill Stack screen (the web
+  analog of Android's `PillStackSettingsActivity`, reachable from Appearance
+  on Android too).
+- The strip lives at the inline end of the chat list search field. Default
+  layout "5,6" shows one pill — **Storage Usage** (the web registry carries
+  only the cache pill; Proxy has no web counterpart and stays in the stored
+  layout unrendered).
+- Look at: the pill shows the client's cached size and refreshes (3-minute
+  interval, like `CachePill`); typing in the search field hides the strip,
+  clearing it brings it back; the pill's click opens Data & Storage; hub →
+  tap the pill in "Active Pills" (it moves to Hidden, the strip empties live),
+  tap it in "Hidden Pills" (it returns); "Reset to Default" restores 5,6 with
+  a toast; `?rtl=1` — the strip sits at the left edge of the field. The
+  switch machinery (packet 053) is inert with one pill — it becomes visible
+  when a second pill registers: wheel over the strip and ArrowUp/ArrowDown on
+  the pill switch, `OEPillInfiniteScrolling` decides wrap vs. clamp.
+- **[no chat data]**
+- PASS/FAIL:
+
+### 5.20 FOLD-11 / FOLD-13 — the main menu layout over the burger menu (packet 054)
+
+- Appearance tab → row "Main Menu" opens the screen. The stock key (empty)
+  keeps the burger menu byte-for-byte stock — check that first.
+- Set a layout (e.g. import a `.extera` carrying the Android string, or hide
+  an item from the hub): the burger menu re-lays its id-mapped items on the
+  next open. "Settings" is never hideable (the web always runs without the
+  bottom navigation bar); ids without a web counterpart (Profile, QR, Feed,
+  Wallet…) render nothing — never a stub.
+- Look at: "Saved Messages", "Archive", "Contacts", "Calls" move between
+  Visible/Hidden live (the next menu open follows); "Reset to Default"
+  restores the stock menu with a toast; `?rtl=1` — the menu mirrors itself
+  (stock behavior, the layout only picks items).
+- **[no chat data]**
+- PASS/FAIL:
+
+### 5.21 W-1..W-3 — the message-menu toggles (packet 055)
+
+- Chats tab → "Add to Saved Messages", "Copy Photo", "Report for incoming
+  messages" (all off = stock by default; the user's own config runs the
+  first two on).
+- With "Add to Saved Messages" on: the message menu shows "Add to Saved
+  Messages" on a forwardable message from another peer — clicking sends it
+  to your own chat (the same direct forward the double-tap Save uses); the
+  item never shows on your own chat or on protected messages. "Copy Photo"
+  adds "Copy" on photos and clipboard-copyable documents (toast "Media
+  copied" / "Media copy failed"). "Report for incoming messages" extends the
+  per-message "Report" item (stock: channels only) to any incoming message;
+  it opens the stock report popup.
+- Off: no item — byte-for-byte stock.
+- **[no chat data]**
+- PASS/FAIL:
+
+### 5.22 W-6 — "Bubble Radius" (packet 056)
+
+- Appearance tab → "Bubble Radius" slider (0–17, default 17 = Stock).
+- 17 keeps the stock Web K bubble corners byte-for-byte; lower values round
+  the far corners to the value in px and clamp the tail-side corners to
+  min(6, value) — Android's `MessageDrawable` rule. 0 = square bubbles.
+- Look at: a chat with bubbles at 8 then back to 17 (stock returns); both
+  incoming and outgoing bubbles, grouped media (the group-first corner
+  follows the far radius), the drawn tail keeps its own geometry.
+- **[no chat data]**
+- PASS/FAIL:
+
+---
+
 ## Batch 6 — Settings backup (.extera) round-trip
 
 Hub location: **Other** tab → "Import settings (.extera)" and "Export
@@ -1163,7 +1409,10 @@ this real-file round trip.
 - Set a recognizable spread of settings first, e.g.: Remove Message Tail off,
   Notification counter Off, Sticker Shape Message, Sticker size 6, Ask before
   opening links → All links, Disable link preview on, Auto-Pause Voice on,
-  folder counter mode 0, Safe mode (Plugins tab) on.
+  folder counter mode 0, Safe mode (Plugins tab) on, Pill Stack: hide the
+  cache pill and Infinite Scrolling off (packet 052: the pill layout strings
+  travel under `pillstackconfig.activePills` / `hiddenPills`, the scrolling
+  flag under `exteraconfig.infiniteScrolling`).
 - Import the file on a reset profile (or after OTHER-03): the toast "Applied
   N settings from the backup" appears and every setting above returns,
   including **plugin flags** — `pluginsSafeMode` and `pluginsDevMode` travel
@@ -1215,13 +1464,13 @@ visual review.
 
 | Batch | Features | Checklist IDs covered | Checked by user (Y/N) | Date | Notes |
 |---|---|---|---|---|---|
-| 1 — Forced MD3 + player style | 19 | LOOK-18…23, PLAYER-02…05, 08…10, 12, 15…17 (+ master; the MD3 Music player / Mini-player toggles share one block) | | | desktop visual review pending for all |
-| 2 — Composer / sending path | 14 | CHAT-32, 31, 33, 30, 34, 36, 38, 16, 14, 35; MENU-01; HIDE-06; MEDIA-01*, CHAT-37* | | | * unchecked entries, completeness unverified; CHAT-35 appended from packet 043 |
+| 1 — Forced MD3 + player style | 23 | LOOK-18…23, PLAYER-02…05, 08…10, 12, 15…17 (+ master; the MD3 Music player / Mini-player toggles share one block); V-1, V-2, V-3, V-4 appended from packets 045–048 | | | desktop visual review pending for all |
+| 2 — Composer / sending path | 15 | CHAT-32, 31, 33, 30, 34, 36, 38, 16, 14, 35; MENU-01; HIDE-06; MEDIA-01*, CHAT-37*; CHAT-10/11 appended from packet 051 | | | * unchecked entries, completeness unverified; CHAT-35 appended from packet 043 |
 | 3 — Live playback | 5 | MEDIA-13, 14, 15, 17; PLAYER-01 (base) | | | needs real media and tab-hiding |
 | 4 — Dialogs / headers / message visuals | 20 | LOOK-03, 02*, 05, 08; GEN-02…07; CHAT-04…06, 23, 24, 27, 28, 40; HIDE-01, 12 | | | * unchecked entry; LOOK-05/08 + CHAT-40 appended from packets 041/042 |
 | 5 — Folders, search, stickers, rest | 18 | GEN-14; LOOK-27; CHAT-01…03, 20, 22; HIDE-02, 03, 07, 09, 10, 14…16, 21, 22; OTHER-03 | | | |
 | 6 — Backup round-trip | 1 | OTHER-01 (unchecked entry) | | | with plugin flags |
-| **Total** | **77** | 49 checked + 20 packet-028/029 items (17 entries + master + player toggles + base popup) + 3 wired-but-unchecked (LOOK-02, MEDIA-01, CHAT-37) + OTHER-01 | | | snapshot at 58/296; CHAT-30 (036), LOOK-05/08 (041), CHAT-40 (042), CHAT-35 (043) appended |
+| **Total** | **82** | 49 checked + 20 packet-028/029 items (17 entries + master + player toggles + base popup) + 3 wired-but-unchecked (LOOK-02, MEDIA-01, CHAT-37) + OTHER-01 + 4 user-directed V entries (045–048) | | | snapshot at 58/296; CHAT-30 (036), LOOK-05/08 (041), CHAT-40 (042), CHAT-35 (043), V-1..V-4 (045–048), CHAT-10/11 (051) appended; PILLS-01/06/12 + FOLD-11/13 (052–054) and W-1..W-3, W-6 (055–056) appended — steps 5.19–5.22 |
 
 After each session of user verification, record the outcomes: update the
 tally here, and let the maintainer strike through or annotate the matching

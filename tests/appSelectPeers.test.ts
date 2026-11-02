@@ -10,7 +10,7 @@ const mocks = vi.hoisted(() => ({
 vi.mock('@lib/appDialogsManager', () => ({default: {addDialogNew: mocks.addDialogNew}}));
 vi.mock('@components/selectorSearch', () => ({default: class {}}));
 vi.mock('@components/popups/premium', () => ({default: class {}}));
-vi.mock('@lib/rootScope', () => ({default: {}}));
+vi.mock('@lib/rootScope', () => ({default: {addEventListener: vi.fn(), removeEventListener: vi.fn(), dispatchEventSingle: vi.fn()}}));
 vi.mock('@lib/apiManagerProxy', () => ({default: {}}));
 vi.mock('@lib/langPack', () => ({i18n: vi.fn()}));
 vi.mock('@components/emptyPlaceholder', () => ({default: vi.fn()}));

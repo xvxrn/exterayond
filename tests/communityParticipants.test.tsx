@@ -99,7 +99,10 @@ vi.mock('@lib/langPack', () => ({
 
 vi.mock('@lib/rootScope', () => ({
   default: {
-    myId: (1 as UserId).toPeerId(false)
+    myId: (1 as UserId).toPeerId(false),
+    addEventListener: vi.fn(),
+    removeEventListener: vi.fn(),
+    dispatchEventSingle: vi.fn()
   }
 }));
 

@@ -51,6 +51,60 @@ export const cleanLink = async(url: string, where: 'open' | 'paste'): Promise<st
   return instance.clean(url);
 };
 
+/**
+ * The synchronous open-path clean, like `LinkCleaner.clean`: it only sees the
+ * already-loaded instance (boot-preloaded by `preloadLinkCleaner`), so an
+ * unloaded filter lets the URL pass untouched — the click path cannot wait on
+ * a fetch, exactly Android's `getCleaner() ?: url` fallback.
+ */
+export const cleanLinkSync = (url: string, where: 'open' | 'paste'): string => {
+  if(!settingFor(where) || !cleaner) return url;
+  return cleaner.clean(url);
+};
+
+/**
+ * Android boots `LinkCleaner.preloadIfEnabled()`: with either strip setting on
+ * the filter is parsed before the first link is opened, so the synchronous
+ * clean above actually has an instance.
+ */
+export const preloadLinkCleaner = (): Promise<UrlCleaner | undefined> | undefined => {
+  if(exteralessSettings.OEChatsStripTrackingOnOpen || exteralessSettings.OEChatsStripTrackingOnPaste) {
+    return loadCleaner();
+  }
+
+  return undefined;
+};
+
+const EXTERNAL_ANCHOR_HREF = /^https?:/i;
+
+/**
+ * Rewrites an anchor's href with the cleaned URL in place, synchronously, so
+ * every way the browser navigates (plain click, middle click, the confirm
+ * alert's re-click) reads the cleaned destination. This is the piece of the
+ * Android `Browser.openUrl` choke point that plain message anchors have no
+ * programmatic path through — they navigate natively. A no-op unless the
+ * filter is loaded, the open setting is on and the clean changes the URL; the
+ * displayed href restores right after the navigation took the cleaned value
+ * (the same pattern as the autologin rewrite beside the click handler), so
+ * hover and copy still show the original.
+ */
+export const stripAnchorTracking = (anchor: HTMLAnchorElement): void => {
+  if(!cleaner || !exteralessSettings.OEChatsStripTrackingOnOpen || !anchor?.getAttribute) return;
+  const href = anchor.getAttribute('href');
+  if(!href || anchor.hasAttribute('download') || anchor.closest('[contenteditable="true"]')) return;
+  // * the cleaner only handles absolute http(s) URLs; tg:// and in-page
+  // * anchors belong to the app
+  if(!EXTERNAL_ANCHOR_HREF.test(href)) return;
+
+  const cleaned = cleaner.clean(href);
+  if(cleaned === href) return;
+
+  anchor.setAttribute('href', cleaned);
+  setTimeout(() => {
+    if(anchor.getAttribute('href') === cleaned) anchor.setAttribute('href', href);
+  }, 0);
+};
+
 /** Cleans every link in a piece of text (the paste path, like LinkCleaner's paste wrapper). */
 export const cleanLinksInText = async(text: string, where: 'open' | 'paste'): Promise<string> => {
   if(!settingFor(where) || !URL_IN_TEXT.test(text)) return text;

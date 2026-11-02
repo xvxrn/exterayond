@@ -92,6 +92,7 @@ import callsController from '@lib/calls/callsController';
 import {preloadNoiseSuppression} from '@lib/calls/noiseSuppression/noiseSuppression';
 import {exteralessSettings} from '@stores/exteralessSettings';
 import {confirmExternalAnchorClick} from '@helpers/addAnchorListener';
+import {preloadLinkCleaner, stripAnchorTracking} from '@lib/linkCleaner';
 import getConferenceInviteErrorLangKey from '@lib/calls/conferenceInviteError';
 import {groupCallToInput} from '@lib/calls/helpers/groupCallUpdates';
 import sameInputGroupCall from '@lib/calls/helpers/sameInputGroupCall';
@@ -1046,6 +1047,9 @@ export class AppImManager extends EventListenerBase<{
     this.attachKeydownListener();
     this.attachCopyListener();
     this.handleAutologinDomains();
+    // * exteraless stripTrackingOnOpen: Android boots LinkCleaner.preloadIfEnabled
+    // * so the synchronous clean has its filter before the first link opens
+    void preloadLinkCleaner();
     this.handlePeerColors();
     this.checkForShare();
     this.init();
@@ -1625,7 +1629,13 @@ export class AppImManager extends EventListenerBase<{
     // are still clickable when the client is popped into a Document PiP window.
     bindActiveWindowListener((w) => w.document, 'click', async(e) => {
       const anchor = findUpTag(e.target as HTMLElement, 'A') as HTMLAnchorElement;
+      // * exteraless stripTrackingOnOpen: the cleaned href has to be in place
+      // * before the browser's default action reads it — the navigation itself —
+      // * the way Android cleans at the top of Browser.openUrl
+      stripAnchorTracking(anchor);
       if(anchor && confirmExternalAnchorClick(e, anchor, (approved) => {
+        // * the confirm alert can outlast the href restore timer
+        stripAnchorTracking(approved);
         onAuthAnchorClick(approved);
         onSponsoredAnchorClick(anchor);
         approved.click();

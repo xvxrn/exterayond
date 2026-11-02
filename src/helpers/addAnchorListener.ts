@@ -3,6 +3,7 @@ import matchTelegramUrlHost from '@lib/richTextProcessor/matchTelegramUrlHost';
 import cancelEvent from '@helpers/dom/cancelEvent';
 import parseUriParams from '@helpers/string/parseUriParams';
 import {exteralessSettings} from '@stores/exteralessSettings';
+import {stripAnchorTracking} from '@lib/linkCleaner';
 
 const LOCAL_ACTIONS = new Set(['showMaskedAlert', 'execBotCommand', 'searchByHashtag', 'setMediaTimestamp']);
 
@@ -137,6 +138,11 @@ function onMaskedAnchorAuxClick(e: MouseEvent) {
   if(!anchor?.href) {
     return false;
   }
+
+  // * exteraless stripTrackingOnOpen reaches the middle-click navigation too:
+  // * rewrite the href before the native new-tab action reads it (plain
+  // * anchors return false below and navigate natively)
+  stripAnchorTracking(anchor);
 
   const callback = getAnchorCallbackName(anchor);
   const masked = callback === 'showMaskedAlert';

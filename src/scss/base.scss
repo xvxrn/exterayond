@@ -892,8 +892,9 @@ b {
   cursor: pointer;
   overflow: hidden;
 
+  // * exteraless avatarCorners on forums, same as .avatar.is-forum
   &.is-forum {
-    border-radius: var(--avatar-border-radius-forum);
+    border-radius: var(--oe-avatar-radius-forum, var(--avatar-border-radius-forum));
   }
 
   // * exteraless singleCornerRadius, same as .avatar.is-forum

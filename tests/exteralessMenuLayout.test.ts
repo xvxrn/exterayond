@@ -23,11 +23,15 @@ import {
   MAIN_MENU_ITEMS,
   WEB_MENU_ITEM_IDS,
   WEB_MENU_STOCK_ORDER,
+  addMenuDivider,
   applyMainMenuHalf,
   applyMainMenuLayoutToButtons,
   getEditorMainMenuLayout,
+  getEditorVisibleEntries,
   isMenuIdArray,
+  moveMenuEntry,
   parseMainMenuLayout,
+  removeMenuDivider,
   resolveMainMenuLayout,
   resetMainMenuLayout,
   setMenuItemVisible
@@ -130,6 +134,91 @@ describe('main menu layout (MainMenuLayout contract)', () => {
     resetMainMenuLayout();
     expect(exteralessSettings.OEAppearanceMainMenuLayout).toBe('');
     expect(resolveMainMenuLayout()).toEqual({visible: [], hidden: []});
+  });
+});
+
+// * FOLD-10/12 in the hub editor: Android's editor reorders by long-press
+// * drag inside the visible section and manages dividers with an add button
+// * and a click on the divider row (OpenExteraAppNavigationActivity:114-124,
+// * 361-370, 403-420); the desktop adaptation moves entries with the row's
+// * up/down buttons and does the same to the dividers.
+describe('the editor reorder and dividers (FOLD-10/12)', () => {
+  beforeEach(RESET_STORAGE);
+
+  it('the displayed entries are the backed ids and the dividers, unbacked ids skipped', () => {
+    expect(getEditorVisibleEntries()).toEqual([...WEB_MENU_STOCK_ORDER, MAIN_MENU_ITEMS.SETTINGS]);
+
+    setExteralessSetting('OEAppearanceMainMenuLayout', USER_LAYOUT);
+    // * 18 (Profile), 17 (QR) and 106 (Feed) have no web backing
+    expect(getEditorVisibleEntries()).toEqual([MAIN_MENU_ITEMS.ARCHIVE, MAIN_MENU_ITEMS.SETTINGS]);
+
+    setExteralessSetting('OEAppearanceMainMenuLayout', '11,-1,14,8;2');
+    expect(getEditorVisibleEntries()).toEqual([
+      MAIN_MENU_ITEMS.SAVED, MAIN_MENU_ITEMS.DIVIDER, MAIN_MENU_ITEMS.ARCHIVE, MAIN_MENU_ITEMS.SETTINGS
+    ]);
+  });
+
+  it('moveMenuEntry swaps displayed neighbors and keeps Settings at its position', () => {
+    // * the stock editor layout: Saved, Archive, Contacts, Calls, Settings
+    moveMenuEntry(1, 'up');
+    expect(exteralessSettings.OEAppearanceMainMenuLayout.split(';')[0]).toBe('14,11,6,10,8');
+    expect(getEditorVisibleEntries()).toEqual([14, 11, 6, 10, 8]);
+
+    // * the entry now at index 1 is Saved — it moves down past Contacts
+    moveMenuEntry(1, 'down');
+    expect(getEditorVisibleEntries()).toEqual([14, 6, 11, 10, 8]);
+    // * Settings keeps its own position (save's ensureSettingsVisibility)
+    moveMenuEntry(4, 'up');
+    expect(getEditorVisibleEntries()).toEqual([14, 6, 11, 8, 10]);
+  });
+
+  it('moveMenuEntry clamps at the ends and is a no-op outside the range', () => {
+    moveMenuEntry(0, 'up');
+    expect(getEditorVisibleEntries()).toEqual([...WEB_MENU_STOCK_ORDER, MAIN_MENU_ITEMS.SETTINGS]);
+    moveMenuEntry(-1, 'down');
+    moveMenuEntry(99, 'up');
+    expect(exteralessSettings.OEAppearanceMainMenuLayout).toBe('');
+    moveMenuEntry(4, 'down');
+    expect(getEditorVisibleEntries()).toEqual([...WEB_MENU_STOCK_ORDER, MAIN_MENU_ITEMS.SETTINGS]);
+  });
+
+  it('moveMenuEntry splices across unbacked ids between the displayed neighbors', () => {
+    // * visible = Saved, Profile(unbacked), Contacts, Calls, Settings
+    setExteralessSetting('OEAppearanceMainMenuLayout', '11,18,6,10,8;');
+    moveMenuEntry(1, 'up'); // * Contacts moves above Saved; Profile drifts along
+    expect(exteralessSettings.OEAppearanceMainMenuLayout.split(';')[0]).toBe('6,11,18,10,8');
+    expect(getEditorVisibleEntries()).toEqual([6, 11, 10, 8]);
+  });
+
+  it('moveMenuEntry moves a divider like any displayed entry', () => {
+    setExteralessSetting('OEAppearanceMainMenuLayout', '11,-1,14,8;2');
+    moveMenuEntry(1, 'down');
+    expect(exteralessSettings.OEAppearanceMainMenuLayout.split(';')[0]).toBe('11,14,-1,8');
+    moveMenuEntry(2, 'up');
+    expect(exteralessSettings.OEAppearanceMainMenuLayout.split(';')[0]).toBe('11,-1,14,8');
+  });
+
+  it('addMenuDivider appends to the end of the visible half (Android ID_ADD_DIVIDER)', () => {
+    addMenuDivider();
+    expect(exteralessSettings.OEAppearanceMainMenuLayout.split(';')[0]).toBe('11,14,6,10,8,-1');
+    expect(getEditorVisibleEntries()).toEqual([11, 14, 6, 10, 8, -1]);
+    // * the parser keeps dividers in the visible half only; a second one is fine
+    addMenuDivider();
+    expect(exteralessSettings.OEAppearanceMainMenuLayout.split(';')[0]).toBe('11,14,6,10,8,-1,-1');
+  });
+
+  it('removeMenuDivider removes the nth divider, unknown ordinals are no-ops', () => {
+    setExteralessSetting('OEAppearanceMainMenuLayout', '11,-1,14,-1,8;2');
+    removeMenuDivider(0);
+    expect(exteralessSettings.OEAppearanceMainMenuLayout.split(';')[0]).toBe('11,14,-1,8');
+    // * only ordinal 0 exists now — 1 is a no-op
+    removeMenuDivider(1);
+    expect(exteralessSettings.OEAppearanceMainMenuLayout.split(';')[0]).toBe('11,14,-1,8');
+    removeMenuDivider(0);
+    // * no dividers left, further removals are no-ops
+    expect(exteralessSettings.OEAppearanceMainMenuLayout.split(';')[0]).toBe('11,14,8');
+    removeMenuDivider(0);
+    expect(exteralessSettings.OEAppearanceMainMenuLayout.split(';')[0]).toBe('11,14,8');
   });
 });
 

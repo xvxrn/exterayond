@@ -1841,3 +1841,37 @@
 html.oe-hide-new-chat-button #new-menu {
   display: none !important;
 }
+
+// * the main menu layout screen (FOLD-10/12): the desktop reorder adaptation —
+// * an entry moves with its up/down buttons where Android long-press drags
+.exteraless-menu-move-buttons {
+  display: inline-flex;
+  align-items: center;
+  gap: .125rem;
+  margin-inline-start: .5rem;
+}
+
+.exteraless-menu-move-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  padding: 0;
+  border: none;
+  border-radius: var(--oe-section-radius, #{$section-rounded-border-radius});
+  background: none;
+  color: var(--secondary-text-color);
+  cursor: pointer;
+
+  @include hover-background-effect();
+
+  &:disabled {
+    opacity: .4;
+    cursor: default;
+  }
+
+  .tgico {
+    font-size: 1.25rem;
+  }
+}

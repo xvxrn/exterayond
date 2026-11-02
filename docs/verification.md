@@ -617,16 +617,25 @@ never confirm a deletion you do not mean.
 - **[AUTH · content: a test chat + a photo]**
 - PASS/FAIL:
 
-### 2.12 CHAT-37 — "When opening links" (wired; **checklist entry unchecked — completeness explicitly unverified**)
+### 2.12 CHAT-37 — "When opening links" (packet 061; checklist entry unchecked — the click path awaits this review)
 
 - Chats tab → section "Remove tracking from links" → first row. Default
-  **on**.
-- On → opening a link strips tracking parameters with the same AdGuard filter
-  as 2.6; off → the URL is passed through untouched. The checklist notes the
-  exact semantics still need to be reconciled with the upstream consumer.
-- Look at: open (not paste) a tracked URL from a message; confirm the opened
-  destination lost its tracking parameters; check interaction with 2.1's
-  confirmation dialog if both are active.
+  **on** (Android's default too).
+- On → every opened link strips tracking parameters with the same AdGuard
+  filter as 2.6 — both the app's own openUrl calls (bot buttons, poll links,
+  stories) and, since packet 061, plain message anchors: the anchor's href is
+  rewritten before the browser navigates, and every way a link opens (plain
+  click, middle click, the 2.1 confirmation's re-click) reads the cleaned
+  destination. The alert of 2.1 names the cleaned URL (Android cleans before
+  its own confirm too). Off → URLs pass through untouched.
+- Look at: open (not paste) a tracked URL from a message (e.g. an
+  `?fbclid=` link); confirm the opened destination lost its tracking
+  parameters; the link's hover preview and right-click "Copy link address"
+  still show the original; middle-click the link — the new tab is cleaned
+  too; with 2.1 set to confirm, the dialog names the cleaned URL and the
+  opened page is cleaned; a link without tracking parameters navigates
+  exactly as before (no tab-focus or timing change); a `tg://` link still
+  routes inside the app.
 - **[AUTH · content: a message with a tracked link]**
 - PASS/FAIL:
 
@@ -1061,6 +1070,42 @@ only prior check was synthetic.
 - **[AUTH · content: a channel with posts]**
 - PASS/FAIL:
 
+### 4.21 LOOK-01 / LOOK-02 — "Avatar Corners" and "Single Corner Radius" (packets 059, appended)
+
+- Appearance tab, "Avatar Corners" section (the slider with the avatar
+  preview, then the toggle). Slider default **28** (= stock circles), toggle
+  default **off**.
+- Slider: drag it down — every avatar squares off (28 = circle … 0 = square);
+  the live preview row follows. Forum chats (topics groups) now follow the
+  slider too, at ~2/3 of the normal radius (Android's 42/64 forum scale) —
+  check a topics-group avatar in the chat list against a regular chat's.
+- Toggle on → forum avatars take exactly the common radius (no scale).
+- Back to 28 → everything returns to the stock circles byte-for-byte
+  (including the forum's own 37% squircle).
+- Look at: chat list with a topics group, a chat header, the profile;
+  RTL unchanged (radius is direction-neutral).
+- **[AUTH · content: a topics group in the chat list]**
+- PASS/FAIL:
+
+### 4.22 LOOK-11 / LOOK-12 — "Section Radius" and "Separate Headers" (packets 060, appended)
+
+- Appearance tab, "Sections" area. Radius default **20** (= stock Web K
+  cards), Separate Headers default **on** (Android's default).
+- Radius: set 0 → every settings card (both sidebars and popups that use the
+  section card) goes square-cornered; set 28 → pill-like cards. Back to 20 →
+  the stock 24px radius returns. The hub's own summary chips and MD3
+  list-item segments follow the slider.
+- Separate Headers: on → each section's title floats free above its card
+  (its own line, not inside the card). Off → titles sit inside the card
+  again (the stock Web K look). Live toggle anywhere in the Preferences hub.
+  With the MD3 "List items" toggle on, titles stay separated even when
+  Separate Headers is off.
+- Look at: the Preferences hub tabs, a sidebarRight tab (e.g. Chat Settings
+  of a peer), a popup with section cards; RTL — the separated header's
+  margins are logical, the card edges mirror.
+- **[AUTH · content: any account — hub only]**
+- PASS/FAIL:
+
 ---
 
 ## Batch 5 — Folders, search, stickers and everything else
@@ -1352,7 +1397,7 @@ only prior check was synthetic.
 - **[no chat data]**
 - PASS/FAIL:
 
-### 5.20 FOLD-11 / FOLD-13 — the main menu layout over the burger menu (packet 054)
+### 5.20 FOLD-10..13 — the main menu layout over the burger menu (packets 054, 062)
 
 - Appearance tab → row "Main Menu" opens the screen. The stock key (empty)
   keeps the burger menu byte-for-byte stock — check that first.
@@ -1361,15 +1406,24 @@ only prior check was synthetic.
   empty — Android's editor read of the current layout (packet 058). The first
   toggle edits that layout: unchecking "Saved Messages" hides exactly it and
   the menu keeps the rest.
+- Reorder (packet 062): each visible row has up/down buttons — move "Archive"
+  above "Saved Messages"; the next menu open shows the new order. "Settings"
+  keeps its position; at the ends the buttons do nothing.
+- Dividers (packet 062): "Add a divider" appends a Divider row at the end of
+  the visible list (a hairline under the previous item in the burger menu);
+  the up/down buttons move it between items; clicking the Divider row removes
+  it again. Importing a `.extera` that carries a divider shows the same row.
 - Set a layout (e.g. import a `.extera` carrying the Android string, or hide
   an item from the hub): the burger menu re-lays its id-mapped items on the
   next open. "Settings" is never hideable (the web always runs without the
   bottom navigation bar); ids without a web counterpart (Profile, QR, Feed,
-  Wallet…) render nothing — never a stub.
+  Wallet…) render nothing — never a stub — and cannot be grabbed by the move
+  buttons (they drift along invisibly when their neighbors move).
 - Look at: "Saved Messages", "Archive", "Contacts", "Calls" move between
-  Visible/Hidden live (the next menu open follows); "Reset to Default"
-  restores the stock menu with a toast; `?rtl=1` — the menu mirrors itself
-  (stock behavior, the layout only picks items).
+  Visible/Hidden live (the next menu open follows); the reordered menu keeps
+  its web-only composites in their stock frame; "Reset to Default" restores
+  the stock menu with a toast; `?rtl=1` — the menu and the screen mirror
+  themselves (the move buttons sit at the row's far end).
 - **[no chat data]**
 - PASS/FAIL:
 
@@ -1403,6 +1457,23 @@ only prior check was synthetic.
   incoming and outgoing bubbles, grouped media (the group-first corner
   follows the far radius), the drawn tail keeps its own geometry.
 - **[no chat data]**
+- PASS/FAIL:
+
+### 5.23 CHAT-26 — "Show Results Before Voting" (packet 063, appended)
+
+- Chats tab, the polls area. Default **off** (= stock: a poll shows options
+  until you vote).
+- On → a public poll that arrives with results tallied (the server attached
+  them; the viewer has not voted) shows its result bars immediately, like
+  Android's preview. A `hide_results_until_close` poll keeps hiding them —
+  except from the poll's creator. A closed poll always shows results
+  (stock), the setting adds nothing there.
+- Look at: a channel/group poll you have not voted in where the client
+  received results (e.g. a poll someone voted in from another client); the
+  bars and percentages appear without voting; voting still works and
+  switching back to off restores the stock "vote to see results" state; a
+  quiz poll behaves as before.
+- **[AUTH · content: a poll with received results you have not voted in]**
 - PASS/FAIL:
 
 ---
@@ -1485,7 +1556,7 @@ visual review.
 | 4 — Dialogs / headers / message visuals | 20 | LOOK-03, 02*, 05, 08; GEN-02…07; CHAT-04…06, 23, 24, 27, 28, 40; HIDE-01, 12 | | | * unchecked entry; LOOK-05/08 + CHAT-40 appended from packets 041/042 |
 | 5 — Folders, search, stickers, rest | 18 | GEN-14; LOOK-27; CHAT-01…03, 20, 22; HIDE-02, 03, 07, 09, 10, 14…16, 21, 22; OTHER-03 | | | |
 | 6 — Backup round-trip | 1 | OTHER-01 (unchecked entry) | | | with plugin flags |
-| **Total** | **82** | 49 checked + 20 packet-028/029 items (17 entries + master + player toggles + base popup) + 3 wired-but-unchecked (LOOK-02, MEDIA-01, CHAT-37) + OTHER-01 + 4 user-directed V entries (045–048) | | | snapshot at 58/296; CHAT-30 (036), LOOK-05/08 (041), CHAT-40 (042), CHAT-35 (043), V-1..V-4 (045–048), CHAT-10/11 (051) appended; PILLS-01/06/12 + FOLD-11/13 (052–054) and W-1..W-3, W-6 (055–056) appended — steps 5.19–5.22 |
+| **Total** | **82** | 49 checked + 20 packet-028/029 items (17 entries + master + player toggles + base popup) + 2 wired-but-unchecked (MEDIA-01, CHAT-37) + OTHER-01 + 4 user-directed V entries (045–048) | | | snapshot at 58/296; CHAT-30 (036), LOOK-05/08 (041), CHAT-40 (042), CHAT-35 (043), V-1..V-4 (045–048), CHAT-10/11 (051) appended; PILLS-01/06/12 + FOLD-11/13 (052–054) and W-1..W-3, W-6 (055–056) appended — steps 5.19–5.22; LOOK-01/02 (059) and LOOK-11/12 (060) appended — steps 4.21–4.22; FOLD-10/12 joined 5.20 (062), 2.12 rewritten for the CHAT-37 anchor strip (061), CHAT-26 appended — 5.23 (063) |
 
 After each session of user verification, record the outcomes: update the
 tally here, and let the maintainer strike through or annotate the matching

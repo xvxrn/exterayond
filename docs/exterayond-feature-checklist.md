@@ -6,7 +6,10 @@
 
 Статус интеграции не означает проверку на пользовательском аккаунте. Подробности и пределы проверок — в [журнале](tasks/progress.md). Проверки только на ПК, короткие и целевые. Плагины отложены; аппаратные Android-исключения перечислены в исходном каталоге и не выданы за выполненные функции.
 
-Current progress: **64 completed entries out of 296**, plus 4 completed
+Current progress: **73 completed entries out of 296** — a literal recount of
+the checked catalog lines after packets 059–063 (the previous running count
+said 64 before this run; the two-entry drift predates it — CHAT-36 and
+GEN-07 are checked and integrated but were not counted). Plus 4 completed
 user-directed look & feel entries (V-1..V-4) and 4 completed W entries
 (W-1..W-3, W-6) in the user-directed sections below — outside the catalog
 count. Update this checklist after each integration; the original
@@ -16,7 +19,7 @@ catalog remains the source reference.
 
 ## Основные: форматирование, профиль, загрузки и архив
 
-- [ ] **GEN-01 — Перевод в отдельном окне/нижней панели** (**А**).
+- [ ] **GEN-01 — Перевод в отдельном окне/нижней панели** (**А**). **061: вердикт — на вебе нет второго представления ручного перевода.** Android: `OEChatsTranslateInSheet` (ChatsConfig bool, default false) выбирает, куда ложится результат кнопки «Translate»: off — штатный форковый конвейер `MessageTrans.kt` (перевод прямо в сообщении, варианты translatorMode с оригиналом/заменой), on — штатный нижний лист `TranslateAlert2` (`ChatActivity:48295`, внутри листа `nekoProviders` ведёт перевод через провайдер форка). Веб-аналог листа — существующий translate-попап (`openTranslatePopup`), единственное представление ручного перевода; встроенный конвейер — отдельная подсистема (территория TRANS-02/TRANS-05). Переключатель с одинаковыми состояниями не добавляется; EtgBackup ключ не экспортирует (проверено) — хранить нечего.
   [`translateInSheetRow`](https://github.com/exteraless/exteraless/blob/8b7ec40ecada6ab3cfcc24e9f3d8ae262c02de63/TMessagesProj/src/main/java/app/exteraless/settings/OpenExteraGeneralActivity.java#L100) — Нужен веб-эквивалент представления результата, а не новая система перевода.
 
 - [x] ~~GEN-02 — Точные числа вместо округления «1,2 тыс.»~~ (**П**). 004: все исходные потребители счётчиков, живое обновление, backup/reset.
@@ -69,10 +72,10 @@ catalog remains the source reference.
 
 ## Внешний вид, шапки и дизайн настроек
 
-- [ ] **LOOK-01 — Форма аватаров: квадрат → скругление → круг** (**П**). **В коде есть реализация или её часть; полноту ещё сверить.**
+- [x] ~~**LOOK-01 — Форма аватаров: квадрат → скругление → круг** (**П**).~~ 059: точный ключ `OEAppearanceAvatarCorners` (int 0..28, default 28 = круг, `AVATAR_CORNERS_MAX = 28`); слайдер ведёт `--oe-avatar-radius` через единую точку `.avatar` (corners/28·50%, 0 = квадрат); 059 закрыл пробел полноты — с выключенным `singleCornerRadius` ползунок теперь масштабирует и аватары форумов (× 42/64, Android `getAvatarCorners` CORNER_TYPE_FORUM) отдельной переменной, на дефолте переменная снимается и штатный радиус форума Web K (37%) остаётся; alias `avatarCorners` из Android-бэкапа (floatToInt 0..28) round-trips. Правка hasStories (−2.5dp) — внутренняя подгонка Android под кольцо историй; веб-кольцо историй — свой компонент со своей геометрией. Визуальная проверка — runbook 4.21.
   [`avatarCornersPreviewRow`](https://github.com/exteraless/exteraless/blob/8b7ec40ecada6ab3cfcc24e9f3d8ae262c02de63/TMessagesProj/src/main/java/app/exteraless/settings/OpenExteraAppearanceActivity.java#L102)
 
-- [ ] **LOOK-02 — Единое скругление для обычных чатов, форумов и сообществ** (**П**). **В коде есть реализация или её часть; полноту ещё сверить.**
+- [x] ~~**LOOK-02 — Единое скругление для обычных чатов, форумов и сообществ** (**П**).~~ 059: точный ключ `OEAppearanceSingleCornerRadius` (bool, default false); включённый — аватары форумов получают общий радиус avatarCorners (live-класс); 059 дополнил выключенное состояние: без объединения ползунок всё равно масштабирует форумы (× 42/64), так что форма форумов следует слайдеру, как в Android. Масштаб сообществ (40/72, CORNER_TYPE_COMMUNITY) веб-аналога не имеет — Web K не рендерит отдельный класс аватара сообщества (monoforum ведёт свою маску); записано как предел. Alias `singleCornerRadius` (bool) round-trips.
   [`singleCornerRadiusRow`](https://github.com/exteraless/exteraless/blob/8b7ec40ecada6ab3cfcc24e9f3d8ae262c02de63/TMessagesProj/src/main/java/app/exteraless/settings/OpenExteraAppearanceActivity.java#L103)
 
 - [x] ~~LOOK-03 — Мини-аватар автора в строке группового чата~~ (**П**). 002: настоящий владелец строки диалога, обновление и очистка.
@@ -100,10 +103,10 @@ catalog remains the source reference.
   049 (acceptance round 1, F-4): the row's gate is extracted into `resolveChatThemeOverride` and regression-tested — off drops the peer's theme emoticon and wallpaper exactly like `ChatActivity.setupChatTheme`'s early return, on is the stock Web K per-chat behavior. It reads as dead in acceptance because the visible effect needs a chat whose theme or wallpaper was set from another client (the web has no UI to set one); the authenticated data path is unverified here.
   [`customThemesRow`](https://github.com/exteraless/exteraless/blob/8b7ec40ecada6ab3cfcc24e9f3d8ae262c02de63/TMessagesProj/src/main/java/app/exteraless/settings/OpenExteraAppearanceActivity.java#L83)
 
-- [ ] **LOOK-11 — Радиус карточек разделов настроек** (**П**). **В коде есть реализация или её часть; полноту ещё сверить.**
+- [x] ~~**LOOK-11 — Радиус карточек разделов настроек** (**П**).~~ 060 (аудит полноты): точный ключ `OEAppearanceSectionRadius` (int 0..28, default 20); на вебе дефолт нейтрален — штатный радиус карточек Web K ($section-rounded-border-radius, 24px) остаётся, остальные значения применяются пикселями через `--oe-section-radius` к единой точке карточек-секций `.sidebar-left-section` (компонент Section используется по всему приложению: вкладки обеих панелей и попапы), к радиусам summary/reveal хаба и сегментам MD3-списка; это заявленная веб-адаптация — Android красит все RecyclerListView-секции уже на дефолте. Alias `sectionRadius` (floatToInt 0..28) round-trips.
   [`sectionRadiusRow`](https://github.com/exteraless/exteraless/blob/8b7ec40ecada6ab3cfcc24e9f3d8ae262c02de63/TMessagesProj/src/main/java/app/exteraless/settings/OpenExteraAppearanceActivity.java#L88)
 
-- [ ] **LOOK-12 — Отдельные заголовки разделов** (**П**). **В коде есть реализация или её часть; полноту ещё сверить.**
+- [x] ~~**LOOK-12 — Отдельные заголовки разделов** (**П**).~~ 060: поведение уже было подключено — компонент Section при включённом рендерит заголовок вне карточки (`.is-separated`), ровно как Android исключает HeaderCell из фона секции (`sectionsSeparatedHeaders()`); 060 добавил отсутствовавшую регрессию (off — заголовок внутри карточки, on — своя карточка-заголовок, живой тумблер в обе стороны, M3-списки форсируют разделение — веб-гейт `separateHeaders || m3ListItems`, стиля «Сегменты» на вебе нет); alias `sectionsSeparatedHeaders` (bool) round-trips. Визуальная проверка — runbook 4.22.
   [`separateHeadersRow`](https://github.com/exteraless/exteraless/blob/8b7ec40ecada6ab3cfcc24e9f3d8ae262c02de63/TMessagesProj/src/main/java/app/exteraless/settings/OpenExteraAppearanceActivity.java#L89)
 
 - [ ] **LOOK-13 — Разделители: скрытые / линии / сегментированные карточки** (**А**).
@@ -180,13 +183,13 @@ catalog remains the source reference.
 - [ ] **FOLD-09 — Полное смещение содержимого при открытии drawer** (**А**).
   [`ID_IMMERSIVE`](https://github.com/exteraless/exteraless/blob/8b7ec40ecada6ab3cfcc24e9f3d8ae262c02de63/TMessagesProj/src/main/java/app/exteraless/settings/OpenExteraAppNavigationActivity.java#L66)
 
-- [ ] **FOLD-10 — Перестановка пунктов главного меню** (**П**). **054: раскладка потребляется — `OEAppearanceMainMenuLayout` («видимые;скрытые», схема id `MainMenuItem` 1:1) переставляет и скрывает пункты меню «⋮» левой панели при каждом открытии; порядок меняется строкой раскладки (импорт .extera переносит её), отдельного drag&drop-редактора порядка на вебе пока нет.**
+- [x] ~~**FOLD-10 — Перестановка пунктов главного меню** (**П**).~~ 054 + 062: раскладка потребляется — `OEAppearanceMainMenuLayout` («видимые;скрытые», схема id `MainMenuItem` 1:1) переставляет и скрывает пункты меню «⋮» левой панели при каждом открытии; 062 добавил и редактор порядка в хабе: у строк видимой половины появились кнопки вверх/вниз (десктоп-адаптация долгого нажатия-перетаскивания Android-редактора, `allowReorder`+`onReordered`), перенос сплайсит по сохранённой последовательности — пункты без веб-аналога пропускаются, но сохраняют своё место в строке; «Настройки» остаются на своём месте (`saveMainMenuLayout`); импорт `.extera` по-прежнему переносит строку целиком.
   [`MainMenuLayout.getLayout()`](https://github.com/exteraless/exteraless/blob/8b7ec40ecada6ab3cfcc24e9f3d8ae262c02de63/TMessagesProj/src/main/java/app/exteraless/settings/OpenExteraAppNavigationActivity.java#L137)
 
 - [x] ~~**FOLD-11 — Скрытие и восстановление пунктов главного меню** (**П**).~~ 054: экран «Main Menu» в хабе (открывается из Appearance): переключатели видимости переносят пункт между половинами строки ровно как сохранение редактора Android; «Настройки» скрыть нельзя — веб всегда без нижней панели (`ensureSettingsVisibility`); id без веб-аналога не предлагаются (правило реестра пилюль).
   [`MainMenuLayout.getHiddenItems()`](https://github.com/exteraless/exteraless/blob/8b7ec40ecada6ab3cfcc24e9f3d8ae262c02de63/TMessagesProj/src/main/java/app/exteraless/settings/OpenExteraAppNavigationActivity.java#L189)
 
-- [ ] **FOLD-12 — Добавление и перестановка разделителей меню** (**П**). **054: разделитель читается из строки раскладки (DIVIDER(-1), только в видимой половине) и рисуется линией после предыдущего пункта; добавить/переставить разделитель с веба пока нельзя — только через строку раскладки/.extera.**
+- [x] ~~**FOLD-12 — Добавление и перестановка разделителей меню** (**П**).~~ 054 + 062: разделитель читается из строки раскладки (DIVIDER(-1), только в видимой половине) и рисуется линией после предыдущего пункта; 062 добавил управление в хабе: строка «Add a divider» дописывает разделитель в конец видимой половины (как кнопка Android-редактора, ID_ADD_DIVIDER), строка-разделитель в списке кликабельна и удаляется (как клик по разделителю в Android), разделители тоже переставляются кнопками вверх/вниз.
   [`MainMenuItem.DIVIDER`](https://github.com/exteraless/exteraless/blob/8b7ec40ecada6ab3cfcc24e9f3d8ae262c02de63/TMessagesProj/src/main/java/app/exteraless/settings/OpenExteraAppNavigationActivity.java#L210)
 
 - [x] ~~**FOLD-13 — Сброс раскладки меню** (**П**).~~ 054: строка «Reset to Default» возвращает пустую строку — «настройку не трогали», меню байт-в-байт штатное (`MainMenuLayout.reset`).
@@ -269,7 +272,7 @@ catalog remains the source reference.
 - [ ] **CHAT-25 — Индикатор онлайна** (**П**).
   [`showOnlineStatusRow`](https://github.com/exteraless/exteraless/blob/8b7ec40ecada6ab3cfcc24e9f3d8ae262c02de63/TMessagesProj/src/main/java/app/exteraless/settings/OpenExteraChatsActivity.java#L202)
 
-- [ ] **CHAT-26 — Результаты опросов до голосования** (**П**). **В коде есть реализация или её часть; полноту ещё сверить.**
+- [x] ~~**CHAT-26 — Результаты опросов до голосования** (**П**).~~ 063 (аудит полноты + регрессия): точный ключ `OEChatsShowResultsBeforeVoting` (ChatsConfig bool, default false); гейт — таблица истинности `ChatMessageCell.isPollResultsPreviewEnabled()` (ChatMessageCell.java:1473-1491) один в один: настройка вкл, опрос не закрыт, на сообщении есть результаты с голосами, `hide_results_until_close` прячет их от всех кроме создателя опроса; предикат выделен в чистую функцию и покрыт таблицей (5 кейсов); строка в Chats, alias `showResultsBeforeVoting` (bool, EtgBackup.java:367) round-trips. Android-внутренний `forceShowPollResults` (ручное «просмотреть как автор») — состояние штатного веб-потока опроса, к гейту настройки не относится.
   [`showResultsBeforeVotingRow`](https://github.com/exteraless/exteraless/blob/8b7ec40ecada6ab3cfcc24e9f3d8ae262c02de63/TMessagesProj/src/main/java/app/exteraless/settings/OpenExteraChatsActivity.java#L208) — Только там, где сервер реально предоставляет результаты.
 
 - [x] ~~CHAT-27 — Дата исходного пересланного сообщения~~ (**П**). 023: дата/время оригинала рядом с автором пересылки; локализованный формат, обновление существующих сообщений при повторном открытии чата.
@@ -302,7 +305,7 @@ catalog remains the source reference.
 - [x] ~~CHAT-36 — Подтверждение отправки команды боту~~ (**П**). 022: ссылки в сообщениях, меню бота и подсказки после «/»; отмена сохраняет ввод, контекст защищён от смены чата.
   [`disableClickCommandToSendRow`](https://github.com/exteraless/exteraless/blob/8b7ec40ecada6ab3cfcc24e9f3d8ae262c02de63/TMessagesProj/src/main/java/app/exteraless/settings/OpenExteraChatsActivity.java#L295)
 
-- [ ] **CHAT-37 — Удаление трекинговых параметров при открытии ссылок** (**П**). **В коде есть реализация или её часть; полноту ещё сверить.**
+- [ ] **CHAT-37 — Удаление трекинговых параметров при открытии ссылок** (**П**). **061: проводка завершена, ожидает проверки кликов пользователем (implemented-but-unreviewed).** Точный ключ `OEChatsStripTrackingOnOpen` (ChatsConfig bool, default true — совпадает); движок — байт-порт `UrlCleaner`/`AdGuardRule` со штатным фильтром `adguard_url_tracking.txt` (не статический список), роута «open» уже шла через `appImManager.openUrl`; 061 закрыл пробел против Android `Browser.openUrl:295`: обычные ссылки сообщений навигируют нативно, поэтому `stripAnchorTracking` синхронно переписывает href внешних http(s)-анкоров до дефолтного действия браузера (клик и средняя кнопка, повтор перед подтверждением CHAT-32 — Android тоже чистит до своего подтверждения), href возвращается после навигации (наведения/копирование показывают оригинал); префеч фильтра на загрузке приложения (`preloadIfEnabled`), при незагруженном фильтре URL проходит нетронутым (`getCleaner() ?: url`). Регрессия: `linkCleanerOpen` (5). Alias в Android EtgBackup отсутствует.
   [`stripTrackingOpenRow`](https://github.com/exteraless/exteraless/blob/8b7ec40ecada6ab3cfcc24e9f3d8ae262c02de63/TMessagesProj/src/main/java/app/exteraless/settings/OpenExteraChatsActivity.java#L297)
 
 - [x] ~~CHAT-38 — Удаление трекинговых параметров при вставке ссылок~~ (**П**). 006: сохранение вставки, защита от позднего ответа, Undo/Redo.

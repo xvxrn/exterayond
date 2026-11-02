@@ -1,27 +1,24 @@
 import CheckboxFieldTsx from '@components/checkboxFieldTsx';
+import {IconTsx} from '@components/iconTsx';
 import Row from '@components/rowTsx';
 import Section from '@components/section';
 import {toastNew} from '@components/toast';
 import {For, createMemo} from 'solid-js';
 import {i18n, LangPackKey} from '@lib/langPack';
-import {
-  MAIN_MENU_ITEMS,
-  WEB_MENU_ITEM_IDS,
-  getEditorMainMenuLayout,
-  isMainMenuCustomized,
-  resetMainMenuLayout,
-  setMenuItemVisible
-} from '@stores/exteralessMenuLayout';
+import {MAIN_MENU_ITEMS, WEB_MENU_ITEM_IDS, addMenuDivider, getEditorMainMenuLayout, isMainMenuCustomized, moveMenuEntry, removeMenuDivider, resetMainMenuLayout, setMenuItemVisible} from '@stores/exteralessMenuLayout';
 
 /**
- * The main menu layout screen (FOLD-11/13; the reorder of FOLD-10 stays with
- * the Android editor and the `.extera` backup): which of the tools-menu items
+ * The main menu layout screen (FOLD-10..13): which of the tools-menu items
  * that map to Android's `MainMenuItem` ids the left sidebar's burger menu
- * shows. A row toggles its id between the halves of
- * `OEAppearanceMainMenuLayout` exactly like Android's editor save; Settings
- * is never hideable (the web always runs without the bottom navigation bar,
- * Android's `ensureSettingsVisibility`); ids without a web backing are not
- * offered (the pill-registry rule).
+ * shows, in which order, and where the dividers sit. Android's editor
+ * (`OpenExteraAppNavigationActivity`) reorders by long-press drag inside the
+ * visible section and manages dividers with an "add divider" button and a
+ * click on the divider row; the desktop adaptation moves an entry with the
+ * row's up/down buttons and does the same to the dividers. A toggle moves its
+ * id between the halves of `OEAppearanceMainMenuLayout` exactly like
+ * Android's editor save; Settings is never hideable (the web always runs
+ * without the bottom navigation bar, Android's `ensureSettingsVisibility`);
+ * ids without a web backing are not offered (the pill-registry rule).
  */
 
 const MENU_ITEM_NAME_KEYS: {[id: number]: LangPackKey} = {
@@ -32,25 +29,104 @@ const MENU_ITEM_NAME_KEYS: {[id: number]: LangPackKey} = {
   [MAIN_MENU_ITEMS.SETTINGS]: 'Settings'
 };
 
-const MenuItemListSection = (props: {nameKey: LangPackKey, infoKey?: LangPackKey, visible: boolean}) => {
+const MoveButtons = (props: {onMove: (direction: 'up' | 'down') => void}) => (
+  <span class="exteraless-menu-move-buttons">
+    <button
+      class="exteraless-menu-move-button"
+      aria-label={i18n('Exteraless.MainMenu.MoveUp').textContent}
+      onClick={(e) => {
+        e.stopPropagation();
+        props.onMove('up');
+      }}
+    >
+      <IconTsx icon="up" />
+    </button>
+    <button
+      class="exteraless-menu-move-button"
+      aria-label={i18n('Exteraless.MainMenu.MoveDown').textContent}
+      onClick={(e) => {
+        e.stopPropagation();
+        props.onMove('down');
+      }}
+    >
+      <IconTsx icon="down" />
+    </button>
+  </span>
+);
+
+const VisibleItemsSection = () => {
   // * Android's editor read: an uncustomized key lists the layout the menu
-  // * really runs (the stock halves), so the first toggle edits it instead of
-  // * collapsing the menu to the one toggled item
-  const layout = createMemo(() => getEditorMainMenuLayout());
-  const ids = () => {
-    const half = props.visible ? layout().visible : layout().hidden;
-    return half.filter((id) => WEB_MENU_ITEM_IDS.includes(id) && MENU_ITEM_NAME_KEYS[id]);
-  };
+  // * really runs (the stock halves), so the first edit customizes it instead
+  // * of collapsing the menu to the one touched item. The displayed entries
+  // * are the backed ids and the dividers; unbacked ids stay in storage,
+  // * invisible.
+  const entries = createMemo(() => {
+    const rows: {id: number, dividerOrdinal: number}[] = [];
+    let dividers = 0;
+    for(const id of getEditorMainMenuLayout().visible) {
+      if(id === MAIN_MENU_ITEMS.DIVIDER) {
+        rows.push({id, dividerOrdinal: dividers++});
+      } else if(WEB_MENU_ITEM_IDS.includes(id) && MENU_ITEM_NAME_KEYS[id]) {
+        rows.push({id, dividerOrdinal: -1});
+      }
+    }
+
+    return rows;
+  });
 
   return (
-    <Section name={props.nameKey} caption={props.infoKey}>
+    <Section name="Exteraless.MainMenu.Visible">
+      <For each={entries()}>{(entry, index) => {
+        const move = (direction: 'up' | 'down') => moveMenuEntry(index(), direction);
+        if(entry.id === MAIN_MENU_ITEMS.DIVIDER) {
+          const ordinal = entry.dividerOrdinal;
+          return (
+            // * Android's editor: clicking a divider row removes it
+            <Row clickable={() => removeMenuDivider(ordinal)}>
+              <Row.Title titleRight={<MoveButtons onMove={move} />}>
+                {i18n('Exteraless.MainMenu.Divider')}
+              </Row.Title>
+              <Row.Subtitle>{i18n('Exteraless.MainMenu.Divider.Remove')}</Row.Subtitle>
+            </Row>
+          );
+        }
+
+        return (
+          <Row>
+            <Row.CheckboxFieldToggle>
+              <CheckboxFieldTsx
+                toggle
+                checked={true}
+                onChange={() => setMenuItemVisible(entry.id, false)}
+              />
+            </Row.CheckboxFieldToggle>
+            <Row.Title titleRight={<MoveButtons onMove={move} />}>
+              {i18n(MENU_ITEM_NAME_KEYS[entry.id])}
+            </Row.Title>
+          </Row>
+        );
+      }}</For>
+      <Row clickable={addMenuDivider}>
+        <Row.Icon icon="add" />
+        <Row.Title>{i18n('Exteraless.MainMenu.AddDivider')}</Row.Title>
+      </Row>
+    </Section>
+  );
+};
+
+const HiddenItemsSection = () => {
+  const ids = createMemo(() => getEditorMainMenuLayout().hidden
+    .filter((id) => WEB_MENU_ITEM_IDS.includes(id) && MENU_ITEM_NAME_KEYS[id]));
+
+  return (
+    <Section name="Exteraless.MainMenu.Hidden">
       <For each={ids()}>{(id) => (
         <Row>
           <Row.CheckboxFieldToggle>
             <CheckboxFieldTsx
               toggle
-              checked={props.visible}
-              onChange={(value) => setMenuItemVisible(id, value)}
+              checked={false}
+              onChange={() => setMenuItemVisible(id, true)}
             />
           </Row.CheckboxFieldToggle>
           <Row.Title>{i18n(MENU_ITEM_NAME_KEYS[id])}</Row.Title>
@@ -71,8 +147,8 @@ const ExteralessMainMenu = () => {
   return (
     <>
       <Section name="Exteraless.MainMenu" caption="Exteraless.MainMenu.Info" />
-      <MenuItemListSection nameKey="Exteraless.MainMenu.Visible" visible={true} />
-      <MenuItemListSection nameKey="Exteraless.MainMenu.Hidden" visible={false} />
+      <VisibleItemsSection />
+      <HiddenItemsSection />
       <Section>
         <Row clickable={() => {
           resetMainMenuLayout();

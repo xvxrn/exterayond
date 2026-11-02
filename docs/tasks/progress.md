@@ -2153,3 +2153,204 @@ Two environment notes from the same pass: `importGraphBudget` was red at
 HEAD on a clean worktree because packet 058's budget fix was still unstaged
 — committing the packet heals it; and an esbuild flake reproduces on Node 26
 independent of the working tree — environmental, not a source regression.
+
+## 059 / LOOK-01 + LOOK-02 — avatar corners completed on forums (2026-11-02)
+
+The first of the "implementation exists, completeness to be verified" entries
+got its audit. Android research (`AppearanceConfig.kt:38,53,58,501,547-562`,
+`OpenExteraAppearanceActivity.java:176-177`): `OEAppearanceAvatarCorners`
+(int 0..28, `AVATAR_CORNERS_MAX = 28`, default 28 = circle) and
+`OEAppearanceSingleCornerRadius` (bool, default false) feed
+`getAvatarCorners(size, cornerType, hasStories)`: `value = size * corners /
+56`, and while `singleCornerRadius()` is false the forum avatars take
+`value * 42/64` (CORNER_TYPE_FORUM) and communities `value * 40/72`
+(CORNER_TYPE_COMMUNITY).
+
+The web already had the slider (`avatarCornersToRadiusPercent` →
+`--oe-avatar-radius` over the `.avatar` choke point) and the
+single-corner class, but forum avatars kept Web K's stock 37% radius
+regardless of the slider while the toggle was off — Android scales them with
+the slider. The port: a new `avatarForumRadiusToCss(corners, singleCorner)`
+(undefined at the default 28 — Web K's own forum radius stays, like every
+stock default; otherwise the normal radius, × 42/64 while single-corner is
+off) written to `--oe-avatar-radius-forum` from the store's hot effect; the
+`.is-forum` rules in `_avatar.scss` and `base.scss` (`.avatar-edit`) read it
+in front of the stock fallback. The community scale (40/72) has no web
+counterpart — Web K renders no separate community avatar class
+(`.is-monoforum` carries its own mask), recorded as the entry's limit.
+`hasStories` (Android subtracts dpf2(2.5) under the stories ring) is
+Android's internal adjustment to its own ring; the web stories circle is its
+own component with its own geometry. The `.extera` backup aliases already
+existed (`avatarCorners` floatToInt 0..28, `singleCornerRadius` bool —
+EtgBackup.java:323,428; my first EtgBackup grep missed them by casing, the
+export names are lowercase).
+
+Tests: `exteralessSettings` (+1: the forum mapping — stock at 28 both ways,
+the 42/64 scale at 14/0, the unified shape, the clamp; 30 total). Typecheck
+passes, oxlint clean on the touched files, both edited SCSS files compile
+with the new variable. Unverified in a browser (no server or browser
+launched): the scaled forum avatars live — runbook step 4.21.
+
+## 060 / LOOK-11 + LOOK-12 — the sections pair audited and tested (2026-11-02)
+
+LOOK-11 (section radius) audited complete, no code change. Android:
+`OEAppearanceSectionRadius` (int 0..28, default 20,
+`RecyclerListView.setSections(dp(12), dp(sectionRadius()), …)` — every
+sectioned list). Web: `sectionRadiusToCss` keeps Web K's own stock radius
+(`$section-rounded-border-radius` = 24px) at the Android default and applies
+other values as `--oe-section-radius` pixels over the single section-card
+choke point `.sidebar-left-section` (`_section.scss:8`) — the Section
+component is used by 138 files across both sidebars and the popups — plus
+the hub's summary/reveal radii (`_leftSidebar.scss`) and the MD3 list-item
+segment radii (`_row.scss`). The deliberate adaptation stands: Android's
+default already styles every list, the web default restyles nothing. The
+`.extera` alias `sectionRadius` (floatToInt 0..28, EtgBackup.java:429)
+round-trips.
+
+LOOK-12 (separate headers) turned out integrated since packet b526a2f but
+untested: the Section component renders the name outside the card
+(`.is-separated`) while on, exactly Android's HeaderCell exclusion
+(`sectionsSeparatedHeaders()` = separateHeaders || dividerStyle == SEGMENTS
+|| m3ListItems; the web gate is `separateHeaders || M3ListItems` because the
+web has no SEGMENTS divider style). Four regression tests added to
+`section.test.tsx` (7 total): off keeps the header inside the card, on floats
+it free as the card's previous sibling, a live toggle moves it both ways,
+M3 list items force separation with the toggle off. The root class
+`oe-separate-headers` that the hot effect also toggles has no CSS consumer —
+the component's reactive gate is the real implementation; the class toggle
+stays (it costs nothing and names the state). The `.extera` alias
+`sectionsSeparatedHeaders` (bool, EtgBackup.java:332) round-trips.
+
+Tests: `section.test.tsx` 3 → 7. Typecheck passes, oxlint clean on the
+touched files. Unverified in a browser: the separated headers and the
+radius slider's visual result — runbook step 4.22.
+
+## 061 / GEN-01 verdict + CHAT-37 completed — the strip reaches native navigation (2026-11-02)
+
+**GEN-01 (translate presentation) — verdict, no code.** Android research
+(`ChatsConfig.kt:212`, `ChatActivity.java:48295,51132`,
+`TranslateAlert2.java:124,324,1314`, `MessageTrans.kt:231-300,470-530`):
+`OEChatsTranslateInSheet` (bool, default false) picks where the Translate
+button's result lands. Off — the fork's own pipeline (`MessageTransKt.
+translateMessages`): the translation renders in place in the message,
+respecting `translatorMode` (with-original off/manual/on), per-message cache,
+hide/restore on a second press. On — the stock Telegram `TranslateAlert2`
+bottom sheet, whose `nekoProviders` flag routes the sheet's translation
+through the fork's provider and titles it with the provider name. The web's
+manual translate has exactly one presentation — the translate popup
+(`openTranslatePopup`), which is the sheet's web analog; the in-place
+pipeline is a whole subsystem (TRANS-05's translator-mode territory). A
+switch with two identical states is not shipped, and Android's EtgBackup
+does not export the key (verified) — nothing to store. The entry keeps its
+catalog verdict in the checklist.
+
+**CHAT-37 (strip tracking on open) — the missing half wired.** The web
+already had the key (default true = Android's), the hub row, the AdGuard
+filter engine and the `openUrl` route. The gap against Android: `Browser.
+openUrl:295` cleans EVERY opened URL, but the web's plain message anchors
+navigate natively — target=_blank with no programmatic path — so message
+links were never stripped. The port, following the Android mechanics
+exactly:
+
+- `cleanLinkSync(url, where)` — the synchronous clean over the loaded
+  instance only; an unloaded filter passes the URL untouched
+  (`LinkCleaner.cleanUrl`'s `getCleaner() ?: url`).
+- `preloadLinkCleaner()` — Android's `preloadIfEnabled`
+  (ApplicationLoader.java:429): with either strip setting on, the filter
+  parses at app boot so the synchronous clean has its instance before the
+  first link.
+- `stripAnchorTracking(anchor)` — rewrites an external http(s) anchor's href
+  with the cleaned URL synchronously, before the browser's default action
+  reads it; the href restores on a timeout so hover and copy still show the
+  original (the same pattern as the autologin rewrite in the same click
+  handler). Download attributes, in-page/tg anchors and composer
+  (contenteditable) links are excluded — the paste path owns those.
+- Wiring: the global click listener strips before the CHAT-32 confirm flow
+  and again inside the confirmed callback (the alert can outlast the restore
+  timer — and Android cleans before its own confirm too, so the alert names
+  the cleaned URL); `onMaskedAnchorAuxClick` strips before the masked
+  decision so middle-click new tabs read the cleaned href.
+
+Rows/tests: new `linkCleanerOpen` (5: the unloaded-filter fallback, the
+preload gate over both settings with the live flip, the in-place rewrite
+with its restore, the untouched classes — clean URLs, tg://, in-page,
+download, contenteditable — and the two no-ops). `linkCleaner` (4) and
+`chatInputEditorPasteTracking` regression green. Typecheck passes, oxlint
+clean on the touched files. CHAT-37 stays UNCHECKED: the click-path behavior
+(native navigation semantics, the restore timing, the alert naming) needs a
+live browser — runbook step 2.16; the entry is annotated
+implemented-but-unreviewed in the checklist.
+
+## 062 / FOLD-10 + FOLD-12 — the menu editor gained reorder and dividers (2026-11-02)
+
+The two annotated menu-layout entries resolved by building their missing
+editor half. Android research (`OpenExteraAppNavigationActivity.java:109-124,
+215-222, 361-370, 403-420`, `MainMenuLayout.java`): the editor's visible
+section is reorderable (`allowReorder(true)` + `listenReorder`, clamped to
+the section), an "Add divider" button appends `MainMenuItem.DIVIDER` to the
+END of the visible layout (`ID_ADD_DIVIDER`), clicking a divider row removes
+it (stable negative ids map a row back to its divider ordinal), dividers live
+in the visible half only, and every save runs `ensureSettingsVisibility`.
+
+The web adaptation in the hub's Main Menu screen: each visible row (backed
+ids and dividers) carries up/down buttons — the desktop stand-in for the
+long-press drag. `moveMenuEntry(entryIndex, direction)` swaps the entry with
+its displayed neighbor inside the STORED visible array: the sequence is
+mapped to `{id, fullIndex}` pairs first, the moved entry is spliced out and
+re-inserted at the neighbor's index, so unbacked ids between two displayed
+neighbors keep their storage slot and drift along invisibly. Dividers move
+like any entry (they are -1 in the array, distinguished by position).
+`addMenuDivider` appends -1 to the visible half; `removeMenuDivider(ordinal)`
+removes the nth divider — the rows are told apart by ordinal exactly like
+Android's stable ids. All three save through `saveMainMenuLayout` (Settings
+keeps its position), and on an uncustomized key the editor read is the stock
+layout, so the first edit customizes instead of collapsing. The screen now
+renders the visible half's real sequence — backed items, divider rows
+("Divider / Tap to remove", click removes), then the add-divider row — while
+unbacked ids stay unrendered (the pill-registry rule); the hidden half keeps
+its plain toggles (Android's hidden section is not reorderable either). The
+menu consumer itself is untouched: dividers render as the existing
+`separatorDown` hairlines. Five lang keys added; the search index
+regenerated (63 sections, 519 entries).
+
+Rows/tests: `exteralessMenuLayout` 15 → 22 (the displayed-entries filter, the
+swap with Settings kept in place, the end clamps and out-of-range no-ops, the
+splice across unbacked ids, the divider move both ways, the append, the
+ordinal removal with no-op ordinals); new `exteralessMainMenuTab` (5, the
+screen render: the stock listing with the add-divider row and ten move
+buttons, a live reorder, a toggle to the hidden half and back, the
+divider's add/remove cycle, an imported layout rendering only backed
+entries). `exteralessTabs`/`exteraBackup` regression green; typecheck and
+oxlint clean on the touched files, the edited SCSS compiles. Limits: the
+reorder is button-based, not drag (a drag handle would be its own
+adaptation); unbacked ids cannot be reordered relative to visible items
+except by drifting — they render nothing, so no visible order changes when
+they drift. Unverified in a browser (no server or browser launched): the
+editor's visual result and the laid-out menu — runbook step 5.20, extended.
+
+## 063 / CHAT-26 — poll results before voting audited complete (2026-11-02)
+
+The last "implementation exists, completeness to be verified" candidate of
+this run. Android: `OEChatsShowResultsBeforeVoting` (ChatsConfig.kt:200, bool,
+default false; EtgBackup.java:367 exports it 1:1) feeds
+`ChatMessageCell.isPollResultsPreviewEnabled()` (ChatMessageCell.java:
+1473-1491): the setting on, results on the message with `total_voters > 0`
+and a non-empty `results` list, the poll not closed, and
+`hide_results_until_close` hiding the preview from everyone except the
+poll's creator. `messageObject.forceShowPollResults` is the author's manual
+"view results / back to vote" interaction state — the stock web poll flow
+has its own preview interactions, not part of the setting's gate.
+
+The web gate (`usePollDerivedProps`) carried the same conditions but inline;
+the audit found no gap, so the only change is structural: the condition moved
+into an exported pure `isPollResultsPreviewEnabled(setting, closed,
+hideResultsUntilClose, isCreator, results)` that the memo calls — the same
+extraction packet 058 used for `verifyReportContext` — and the truth table is
+regression-tested. The hub row (Chats) and the `.extera` alias
+(`showResultsBeforeVoting`, SUPPORTED) already existed.
+
+Tests: new `pollResultsPreview` (5: the on-gate, the off default, the
+results/voters requirements, closed-poll exclusion incl. the creator,
+hide_results_until_close with its creator exception). Typecheck and oxlint
+clean on the touched files. The visible result needs a public poll with
+results on the account — runbook step 5.23.

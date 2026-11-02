@@ -75,6 +75,26 @@ const getWebPageMedia = (media: MessageMedia | InputMedia | undefined): GetWebPa
 };
 
 /**
+ * exteraless showResultsBeforeVoting (CHAT-26), the truth table of Android's
+ * `ChatMessageCell.isPollResultsPreviewEnabled()`: results on the message
+ * (with voters), never for a closed poll, and `hide_results_until_close`
+ * hides them from everyone except the poll's creator.
+ */
+export const isPollResultsPreviewEnabled = (
+  setting: boolean,
+  closed: boolean,
+  hideResultsUntilClose: boolean,
+  isCreator: boolean,
+  results: {total_voters?: number, results?: unknown[]} | undefined
+): boolean =>
+  setting &&
+  !closed &&
+  !(hideResultsUntilClose && !isCreator) &&
+  !!results &&
+  (results.total_voters ?? 0) > 0 &&
+  !!results.results?.length;
+
+/**
  * Returns the various memos derived from the poll props plus helper
  * functions (`getOverridenMessage`, `getResultForOption`, ...).
  */
@@ -107,16 +127,15 @@ export function usePollDerivedProps({props, pollOptions, chosenIndexes, newOptio
   );
 
   // * exteraless showResultsBeforeVoting: results show as a preview before
-  // * voting, exactly `ChatMessageCell.isPollResultsPreviewEnabled()` — needs
-  // * results on the message, hidden only until the poll closes (or for its
-  // * creator), and never for a closed poll
+  // * voting, exactly `ChatMessageCell.isPollResultsPreviewEnabled()`
   const pollResultsPreview = createMemo(() =>
-    exteralessSettings.OEChatsShowResultsBeforeVoting &&
-    !closed() &&
-    !hideResults() &&
-    !!props.results &&
-    props.results.total_voters > 0 &&
-    !!props.results.results?.length
+    isPollResultsPreviewEnabled(
+      exteralessSettings.OEChatsShowResultsBeforeVoting,
+      !!props.poll.pFlags.closed,
+      !!props.poll.pFlags.hide_results_until_close,
+      !!props.poll.pFlags.creator,
+      props.results
+    )
   );
 
   const isShowingResult = createMemo(() =>

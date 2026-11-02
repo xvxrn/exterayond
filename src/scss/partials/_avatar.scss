@@ -139,8 +139,12 @@
   //   fill: white;
   // }
 
+  // * exteraless avatarCorners on forums: with the slider off the stock the
+  // * store writes --oe-avatar-radius-forum (the normal radius scaled by
+  // * Android's CORNER_TYPE_FORUM 42/64); unset at the default, so the stock
+  // * forum radius stays
   &.is-forum {
-    border-radius: var(--avatar-border-radius-forum);
+    border-radius: var(--oe-avatar-radius-forum, var(--avatar-border-radius-forum));
   }
 
   // * exteraless singleCornerRadius: on, forum avatars take the common

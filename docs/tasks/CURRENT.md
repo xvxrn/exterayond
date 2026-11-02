@@ -94,14 +94,38 @@ adds of the parallel session's `src/tests → tests/` move (paths untouched)
 and updated one untracked test file — see the packet 058 disclosure before
 committing the move.
 
-After that, pick unchecked items from the checklist, generally small to large.
-Remaining browser-free candidates are mostly subsystems: MEDIA-10 (compact
-GIFs) needs bubble-layout work. Other mid-size candidates:
-GEN-01 (translate presentation), CHAT-10/11 (double-tap actions), MENU-03..09
-(menu compositions), FOLD-10..13 (side menu layout). Pick from the checklist
-and verify against the Android source per packet. Plugins are deferred until
-the user explicitly asks to resume them. Phone-only hardware features are not
-desktop tasks.
+Packets 059–063 (2026-11-02, this run) worked the annotated
+"implementation exists, completeness to be verified" entries and the
+named candidates: **LOOK-01/02** — the avatarCorners slider now scales
+forum avatars (Android's CORNER_TYPE_FORUM 42/64) with a new
+`--oe-avatar-radius-forum`, the single-corner toggle unifies the shapes;
+**LOOK-11/12** — the section-radius audit stands, separateHeaders gained
+its missing regression tests (the Section component's `.is-separated`
+gate, M3 list items force it); **GEN-01** — verdict recorded (the web's
+translate popup is the sheet analog; the inline pipeline is TRANS-05
+territory, no switch without two states); **CHAT-37** — the strip now
+reaches native navigation: `stripAnchorTracking` rewrites external
+anchors' href before the browser's default action (click and middle
+click, pre-confirm like Android), with boot preload and the unloaded
+fallback — implemented-but-unreviewed, awaiting the user's click-path
+acceptance; **FOLD-10/12** — the hub Main Menu editor gained reorder
+(up/down buttons, the desktop stand-in for Android's drag) and divider
+add/remove/move; **CHAT-26** — poll results before voting audited
+complete, the gate extracted into a tested predicate. The checklist
+count is 73/296 by a literal recount (the running count was understated
+by two — CHAT-36 and GEN-07, integrated since packets 022/014 but never
+counted) plus the user-directed sections.
+
+After that, pick unchecked items from the checklist, generally small to
+large. Remaining browser-free candidates are mostly subsystems: MEDIA-10
+(compact GIFs) needs bubble-layout work. Other mid-size candidates:
+MENU-03..05/07..09 (menu compositions, each a real-handler audit),
+CHAT-12/13 (quick transitions), EMOJI-01 (system emoji), LOOK-04 (title
+text), PLAYER-06/07 and the mini-player rows. LOOK-06 is class 3 (the
+W-7 verdict: no canvas-effect subsystem). Pick from the checklist and
+verify against the Android source per packet. Plugins are deferred until
+the user explicitly asks to resume them. Phone-only hardware features
+are not desktop tasks.
 
 ## Operating constraints
 

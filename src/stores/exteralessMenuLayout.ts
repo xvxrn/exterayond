@@ -175,6 +175,76 @@ export const setMenuItemVisible = (id: number, visible: boolean) => {
 export const resetMainMenuLayout = () => setExteralessSetting('OEAppearanceMainMenuLayout', '');
 
 /**
+ * The editor's displayed entries of the visible half: backed ids and dividers,
+ * in order. Ids without a web backing are never shown (the pill-registry
+ * rule) but keep their place in the stored sequence — a move splices around
+ * them and they drift along, invisible either way.
+ */
+export const getEditorVisibleEntries = (): number[] =>
+  getEditorMainMenuLayout().visible.filter((id) =>
+    id === MAIN_MENU_ITEMS.DIVIDER || WEB_MENU_ITEM_IDS.includes(id)
+  );
+
+/**
+ * Android's editor reorder (`allowReorder` + `onReordered`, clamped to the
+ * section): the displayed entry at `entryIndex` swaps with its displayed
+ * neighbor toward `direction`. The move happens in the stored visible array
+ * (the neighbors may have unbacked ids between them); Settings keeps its own
+ * position through `saveMainMenuLayout`.
+ */
+export const moveMenuEntry = (entryIndex: number, direction: 'up' | 'down') => {
+  const full = getEditorMainMenuLayout().visible;
+  const displayed = full
+    .map((id, fullIndex) => ({id, fullIndex}))
+    .filter(({id}) => id === MAIN_MENU_ITEMS.DIVIDER || WEB_MENU_ITEM_IDS.includes(id));
+
+  const target = direction === 'up' ? entryIndex - 1 : entryIndex + 1;
+  if(entryIndex < 0 || entryIndex >= displayed.length || target < 0 || target >= displayed.length) {
+    return;
+  }
+
+  const moved = displayed[entryIndex];
+  const neighbor = displayed[target];
+  const next = [...full];
+  next.splice(moved.fullIndex, 1);
+  // * after the removal the neighbor sits one slot lower when it was below;
+  // * inserting at its old index lands the moved entry on the neighbor's
+  // * other side in both directions
+  next.splice(neighbor.fullIndex, 0, moved.id);
+  saveMainMenuLayout(next, getEditorMainMenuLayout().hidden);
+};
+
+/**
+ * Android's ID_ADD_DIVIDER: a new divider appends to the END of the visible
+ * half (dividers live in the visible half only — the parser drops them from
+ * the hidden one).
+ */
+export const addMenuDivider = () => {
+  const layout = getEditorMainMenuLayout();
+  saveMainMenuLayout([...layout.visible, MAIN_MENU_ITEMS.DIVIDER], layout.hidden);
+};
+
+/**
+ * Android's editor: clicking a divider row removes it. The rows are told
+ * apart by ordinal (every divider stores the same -1).
+ */
+export const removeMenuDivider = (ordinal: number) => {
+  const layout = getEditorMainMenuLayout();
+  let seen = 0;
+  for(let index = 0; index < layout.visible.length; index++) {
+    if(layout.visible[index] !== MAIN_MENU_ITEMS.DIVIDER) continue;
+    if(seen === ordinal) {
+      const next = [...layout.visible];
+      next.splice(index, 1);
+      saveMainMenuLayout(next, layout.hidden);
+      return;
+    }
+
+    seen++;
+  }
+};
+
+/**
  * Android `EtgBackup.isIdArray`: a JSON array of exact ints, at most 100,
  * duplicates rejected; -1 (the divider) only where allowed.
  */

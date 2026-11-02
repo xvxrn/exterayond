@@ -695,6 +695,24 @@ export const avatarCornersToRadiusPercent = (corners: number) => {
 };
 
 /**
+ * avatarCorners on forum avatars. Android's `getAvatarCorners` scales the
+ * forum radius by 42/64 of the normal one (CORNER_TYPE_FORUM) unless
+ * `singleCornerRadius` unifies the shapes; the community scale (40/72) has no
+ * web counterpart — Web K renders no separate community avatar class.
+ * Undefined at the default 28: Web K's own forum radius
+ * (`--avatar-border-radius-forum`) stays, like every stock default.
+ */
+export const avatarForumRadiusToCss = (corners: number, singleCorner: boolean): string | undefined => {
+  const clamped = clampExteralessSetting('OEAppearanceAvatarCorners', corners);
+  if(clamped >= OE_AVATAR_CORNERS_MAX) {
+    return undefined;
+  }
+
+  const radius = clamped / OE_AVATAR_CORNERS_MAX * 50;
+  return (singleCorner ? radius : radius * 42 / 64) + '%';
+};
+
+/**
  * sectionRadius 0..28dp → the section-card border radius. The Android default
  * keeps Web K's stock radius (no property set, the SCSS fallback applies);
  * every other value applies directly as pixels.
@@ -780,6 +798,15 @@ if(typeof document !== 'undefined') {
 
       // * every property read here is what the effect tracks
       style.setProperty('--oe-avatar-radius', avatarCornersToRadiusPercent(exteralessSettings.OEAppearanceAvatarCorners));
+      const forumRadius = avatarForumRadiusToCss(
+        exteralessSettings.OEAppearanceAvatarCorners,
+        exteralessSettings.OEAppearanceSingleCornerRadius
+      );
+      if(forumRadius === undefined) {
+        style.removeProperty('--oe-avatar-radius-forum');
+      } else {
+        style.setProperty('--oe-avatar-radius-forum', forumRadius);
+      }
       classList.toggle('oe-single-corner-radius', exteralessSettings.OEAppearanceSingleCornerRadius);
       classList.toggle('oe-hide-title-status', exteralessSettings.OEAppearanceHideActionBarStatus);
 

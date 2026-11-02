@@ -470,6 +470,20 @@ describe('exteraless CSS mappings', () => {
     expect(avatarCornersToRadiusPercent(99)).toBe('50%');
   });
 
+  test('forum avatars scale with avatarCorners by the Android CORNER_TYPE_FORUM 42/64', async() => {
+    const {avatarForumRadiusToCss} = await loadStore();
+    // * the default 28 keeps Web K's own forum radius (the variable is unset)
+    expect(avatarForumRadiusToCss(28, false)).toBeUndefined();
+    expect(avatarForumRadiusToCss(28, true)).toBeUndefined();
+    // * Android: value = size * corners / 56, forum = value * 42 / 64
+    expect(avatarForumRadiusToCss(14, false)).toBe(25 * 42 / 64 + '%');
+    expect(avatarForumRadiusToCss(0, false)).toBe('0%');
+    // * singleCornerRadius unifies the shapes: the plain radius
+    expect(avatarForumRadiusToCss(14, true)).toBe('25%');
+    // * out-of-range input clamps like the store would
+    expect(avatarForumRadiusToCss(99, false)).toBeUndefined();
+  });
+
   test('sectionRadius keeps Web K stock at the Android default, applies pixels otherwise', async() => {
     const {sectionRadiusToCss} = await loadStore();
     expect(sectionRadiusToCss(20)).toBeUndefined();

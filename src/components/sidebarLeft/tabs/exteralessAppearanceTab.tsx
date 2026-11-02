@@ -1,13 +1,24 @@
+import {createSignal, onCleanup} from 'solid-js';
 import Row from '@components/rowTsx';
 import Section from '@components/section';
 import RangeSettingSelector from '@components/rangeSettingSelector';
 import CheckboxFieldTsx from '@components/checkboxFieldTsx';
+import type {ColorPickerColor} from '@components/colorPicker';
 import {i18n} from '@lib/langPack';
+import rootScope from '@lib/rootScope';
+import themeController from '@helpers/themeController';
+import {subscribeOn} from '@helpers/solid/subscribeOn';
+import {useSuperTab} from '@components/solidJsTabs/superTabProvider';
+import {hotReloadGuard} from '@lib/solidjs/hotReloadGuardProvider';
+import {accentPresetFromColor, materialWallpaperFromAccent} from '@config/themePresets';
+import type {AccentPreset} from '@config/themePresets';
+import type {WallPaper} from '@layer';
 import {
   OE_AVATAR_CORNERS_MAX,
   OE_PLAYER_COVER_RADIUS_MAX,
   OE_PLAYER_COVER_SIZE_MAX,
   OE_PLAYER_COVER_SIZE_MIN,
+  exteralessSettings,
   getPlayerCoverStyle,
   getMd3StyleCount,
   setAllMd3Styles,
@@ -22,8 +33,159 @@ import {
  * the rows of Android's `PlayerStyleEditor`; the visibility of dependent rows
  * follows its `refreshVisibility`.
  */
+
+// * how long after the last picked color the custom accent commits through
+// * the full applyAccentPreset pipeline (persist + background + transition)
+const ACCENT_COMMIT_DELAY = 800;
+
+/**
+ * V-4 ladder 2 — a per-theme accent color picker. The stock General tab's
+ * picker only offers shipped presets; this one takes any color through the
+ * same pipeline. While the color is being dragged a live preview writes the
+ * accent variables directly (`applyTheme` — no persistence, no view
+ * transition) and the debounced commit goes through `applyAccentPreset`,
+ * which persists the synthetic 'preset:' theme into the app's own theme state
+ * (so the pick survives a reload) without ever touching the stock theme
+ * objects in `SETTINGS_INIT`. Reset sends the current theme back to its
+ * factory entry, the stock picker's "Default" swatch.
+ *
+ * Acceptance round 1 (F-3): while the theme-palette toggle is on, the accent
+ * goes Material-You — the committed preset carries an accent-hued wallpaper
+ * with the shared pattern (the background follows the accent and keeps its
+ * material elements), and the palette tints every surface with the accent's
+ * hue. An explicit background pick (a "Set a color" choice, an upload, a grid
+ * pick) is never replaced.
+ */
+
+/**
+ * Whether the current theme's wallpaper belongs to the user rather than to
+ * the theme/preset pipeline: `pFlags.default` marks the factory record and
+ * the preset pipeline's own builds, everything else — a "Set a color" pick,
+ * an upload, a grid pick — is an explicit user choice that the accent's
+ * material wallpaper must not replace.
+ */
+const isUserOwnedWallpaper = () => {
+  const wallPaper = themeController.getThemeSettings(themeController.getTheme())?.wallpaper as WallPaper.wallPaper | undefined;
+  return !!wallPaper && !wallPaper.pFlags?.default;
+};
+
+const buildCustomAccentPreset = (accentColor: number): AccentPreset => {
+  const base = themeController.getBaseThemeForName(themeController.getTheme().name);
+  const preset = accentPresetFromColor(accentColor, base);
+  if(exteralessSettings.OEAppearanceThemePalette && !isUserOwnedWallpaper()) {
+    preset.wallpaper = materialWallpaperFromAccent(accentColor, base);
+  }
+  return preset;
+};
+
+const AccentColorSection = () => {
+  // * the picker loads when the reveal first opens: the color picker drags
+  // * the custom-emoji renderer's module graph with it, which a settings tab
+  // * has no reason to carry up front
+  let containerEl: HTMLDivElement | undefined;
+  let autoResizeDisposer: (() => void) | undefined;
+  let picker: import('@components/colorPicker').default | undefined;
+  let commitTimer: ReturnType<typeof setTimeout>;
+  let previewed = false;
+
+  // * the applied accent, for the row's swatch; follows every theme change
+  const [appliedHex, setAppliedHex] = createSignal(currentAccentHex());
+  subscribeOn(rootScope)('theme_changed', () => setAppliedHex(currentAccentHex()));
+
+  function currentAccentHex() {
+    const settings = themeController.getThemeSettings(themeController.getTheme());
+    const accent = settings?.accent_color;
+    return accent !== undefined ? '#' + accent.toString(16).padStart(6, '0') : '#8774e1';
+  }
+
+  const preview = (hex: string) => {
+    previewed = true;
+    themeController.applyTheme(themeController.buildAccentPresetTheme(buildCustomAccentPreset(parseInt(hex.slice(1), 16))));
+  };
+
+  const commit = () => {
+    clearTimeout(commitTimer);
+    if(!previewed || !picker) {
+      return;
+    }
+
+    previewed = false;
+    void themeController.applyAccentPreset(buildCustomAccentPreset(parseInt(picker.getCurrentColor().hex.slice(1), 16)));
+  };
+
+  const scheduleCommit = () => {
+    clearTimeout(commitTimer);
+    commitTimer = setTimeout(commit, ACCENT_COMMIT_DELAY);
+  };
+
+  const onColorChange = (color: ColorPickerColor) => {
+    preview(color.hex);
+    scheduleCommit();
+  };
+
+  const loadPicker = async() => {
+    if(picker || !containerEl) {
+      return;
+    }
+
+    const ColorPicker = (await import('@components/colorPicker')).default;
+    if(!containerEl) {
+      return;
+    }
+
+    picker = new ColorPicker();
+    containerEl.append(picker.container);
+    autoResizeDisposer = picker.attachAutoResize();
+    picker.setColor(currentAccentHex());
+    picker.onChange = onColorChange;
+  };
+
+  onCleanup(() => {
+    if(picker) picker.onChange = undefined;
+    autoResizeDisposer?.();
+    // * a close mid-drag still lands the last picked color
+    commit();
+  });
+
+  return (
+    <Section name="Exteraless.AccentColor" caption="Exteraless.AccentColor.Info">
+      <Row>
+        <Row.Title>{i18n('Exteraless.AccentColor')}</Row.Title>
+        <span class="exteraless-accent-swatch" style={{'background-color': appliedHex()}} />
+      </Row>
+      <details
+        class="exterayond-options-reveal"
+        ref={(el) => el.addEventListener('toggle', () => {
+          if((el as HTMLDetailsElement).open) {
+            void loadPicker();
+          }
+        })}
+      >
+        <summary>{i18n('Exteraless.AccentColor.Customize')}</summary>
+        <div
+          class="exteraless-accent-picker"
+          ref={(el) => {
+            containerEl = el;
+            if(el.isConnected) {
+              void loadPicker();
+            }
+          }}
+        />
+        <Row clickable={() => {
+          previewed = false;
+          clearTimeout(commitTimer);
+          void themeController.resetActiveTheme();
+        }}>
+          <Row.Title>{i18n('Exteraless.AccentColor.Reset')}</Row.Title>
+        </Row>
+      </details>
+    </Section>
+  );
+};
+
 const ExteralessAppearance = () => {
   const [exteralessSettings, setExteralessSetting] = useExteralessSettings();
+  const [tab] = useSuperTab();
 
   const md3Styles = [
     ['OEAppearanceNewLoadingStyle', 'Exteraless.Md3.ProgressIndicators'],
@@ -57,6 +219,19 @@ const ExteralessAppearance = () => {
 
   return (
     <>
+      <Section name="Exteraless.ThemePalette" caption="Exteraless.ThemePalette.Info">
+        <Row>
+          <Row.CheckboxFieldToggle>
+            <CheckboxFieldTsx
+              toggle
+              checked={exteralessSettings.OEAppearanceThemePalette}
+              onChange={(value) => setExteralessSetting('OEAppearanceThemePalette', value)}
+            />
+          </Row.CheckboxFieldToggle>
+          <Row.Title>{i18n('Exteraless.ThemePalette')}</Row.Title>
+        </Row>
+      </Section>
+      <AccentColorSection />
       <Section name="Exteraless.Md3" caption="Exteraless.Md3.Info">
         <Row>
           <Row.CheckboxFieldToggle>
@@ -249,6 +424,17 @@ const ExteralessAppearance = () => {
           <Row.Title>{i18n('Exteraless.SenderMiniAvatars')}</Row.Title>
         </Row>
       </Section>
+      <Section caption="Exteraless.BubbleRadius.StockHint">
+        <RangeSettingSelector
+          textLeft={i18n('Exteraless.BubbleRadius')}
+          textRight={(value) => value === 17 ? i18n('Exteraless.BubbleRadius.Stock') : '' + value}
+          step={1}
+          value={exteralessSettings.bubbleRadius}
+          minValue={0}
+          maxValue={17}
+          onChange={(value) => setExteralessSetting('bubbleRadius', value)}
+        />
+      </Section>
       <Section caption="Exteraless.SectionRadius.StockHint">
         <RangeSettingSelector
           textLeft={i18n('Exteraless.SectionRadius')}
@@ -306,6 +492,17 @@ const ExteralessAppearance = () => {
           <Row.CheckboxFieldToggle>
             <CheckboxFieldTsx
               toggle
+              checked={exteralessSettings.OEAppearanceAttachedSidebar}
+              onChange={(value) => setExteralessSetting('OEAppearanceAttachedSidebar', value)}
+            />
+          </Row.CheckboxFieldToggle>
+          <Row.Title>{i18n('Exteraless.AttachedSidebar')}</Row.Title>
+          <Row.Subtitle>{i18n('Exteraless.AttachedSidebar.Info')}</Row.Subtitle>
+        </Row>
+        <Row>
+          <Row.CheckboxFieldToggle>
+            <CheckboxFieldTsx
+              toggle
               checked={exteralessSettings.TypefaceUseDefault}
               onChange={(value) => setExteralessSetting('TypefaceUseDefault', value)}
             />
@@ -334,6 +531,25 @@ const ExteralessAppearance = () => {
           </Row.CheckboxFieldToggle>
           <Row.Title>{i18n('Exteraless.CustomThemes')}</Row.Title>
           <Row.Subtitle>{i18n('Exteraless.CustomThemes.Info')}</Row.Subtitle>
+        </Row>
+        <Row>
+          <Row.CheckboxFieldToggle>
+            <CheckboxFieldTsx
+              toggle
+              checked={exteralessSettings.OEAppearanceWallpaperPattern}
+              onChange={(value) => setExteralessSetting('OEAppearanceWallpaperPattern', value)}
+            />
+          </Row.CheckboxFieldToggle>
+          <Row.Title>{i18n('Exteraless.WallpaperPattern')}</Row.Title>
+          <Row.Subtitle>{i18n('Exteraless.WallpaperPattern.Info')}</Row.Subtitle>
+        </Row>
+        <Row clickable={() => tab.slider.createTab(hotReloadGuard.tabs.AppExteralessPillStackTab).open()}>
+          <Row.Icon icon="data_filled" />
+          <Row.Title>{i18n('Exteraless.PillStack')}</Row.Title>
+        </Row>
+        <Row clickable={() => tab.slider.createTab(hotReloadGuard.tabs.AppExteralessMainMenuTab).open()}>
+          <Row.Icon icon="more" />
+          <Row.Title>{i18n('Exteraless.MainMenu')}</Row.Title>
         </Row>
       </Section>
     </>

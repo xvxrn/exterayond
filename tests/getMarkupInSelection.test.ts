@@ -1,4 +1,4 @@
-import '@/tests/mocks/chatInputEditorEngineUi';
+import '@tests/mocks/chatInputEditorEngineUi';
 import getMarkupInSelection from '@helpers/dom/getMarkupInSelection';
 
 afterEach(() => {

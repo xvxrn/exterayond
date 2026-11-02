@@ -1,6 +1,6 @@
 import {describe, expect, it, vi} from 'vitest';
 import FiltersStorage from '@lib/storages/filters';
-import makeDialogFilter from '@/tests/helpers/dialogFilter';
+import makeDialogFilter from '@tests/helpers/dialogFilter';
 import {fitFolderTags} from '@components/folderTags/layout';
 import {getDialogFolderTags, getFolderTagColor} from '@stores/folderTags';
 import {getSortableDragStep} from '@helpers/dom/sortable';

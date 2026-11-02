@@ -1,4 +1,4 @@
-import {stubBrowserGlobals} from '@/tests/helpers/browserGlobals';
+import {stubBrowserGlobals} from '@tests/helpers/browserGlobals';
 import {setExteralessSetting} from '@stores/exteralessSettings';
 
 vi.mock('@lib/apiManagerProxy', () => ({default: {

@@ -5,7 +5,7 @@ import {test, expect} from '@playwright/test';
 // sends, and the denoised track standing in for the microphone. The fixture's
 // microphone loops a second of noise, then syllables over the same noise.
 test.beforeEach(async({page}) => {
-  await page.goto('/e2e/fixtures/callNoiseSuppression.html');
+  await page.goto('/tests/browser/fixtures/callNoiseSuppression.html');
   await page.waitForFunction(() => !!window.callNoiseSuppression);
   expect(await page.evaluate(() => window.callNoiseSuppression.start())).toEqual({denoised: true});
 });

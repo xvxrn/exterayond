@@ -1,5 +1,5 @@
 import {describe, expect, test} from 'vitest';
-import deepEqual from '../helpers/object/deepEqual';
+import deepEqual from '../src/helpers/object/deepEqual';
 
 describe('deepEqual', () => {
   test('compares flat objects', () => {

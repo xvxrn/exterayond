@@ -2,7 +2,7 @@ import {
   useChatInputEditorHarness,
   TiptapEditorInternals,
   typeTextThroughEditorView
-} from '@/tests/helpers/chatInputEditorHarness';
+} from '@tests/helpers/chatInputEditorHarness';
 import {closeHistory} from '@tiptap/pm/history';
 import {NodeSelection, TextSelection} from '@tiptap/pm/state';
 import {createRichMediaPreviewUrl} from '@components/chat/inputEditor/mediaPreviewUrl';

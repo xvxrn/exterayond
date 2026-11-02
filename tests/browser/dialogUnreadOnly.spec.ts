@@ -15,7 +15,7 @@ import {openChatList} from './chatList.helpers';
  * runs against an authorized preview, and skips rather than reporting a pass it never made:
  *
  *   bash scripts/start-preview.sh --detach    # prints the URL, say http://localhost:9001
- *   PLAYWRIGHT_BASE_URL=http://localhost:9001 pnpm exec playwright test e2e/dialogUnreadOnly.spec.ts
+ *   PLAYWRIGHT_BASE_URL=http://localhost:9001 pnpm exec playwright test tests/browser/dialogUnreadOnly.spec.ts
  */
 
 test.skip(!process.env.PLAYWRIGHT_BASE_URL, 'needs an authorized preview: PLAYWRIGHT_BASE_URL');

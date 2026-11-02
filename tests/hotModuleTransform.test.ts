@@ -4,7 +4,7 @@ import {transformSync} from 'esbuild';
 import {readFileSync} from 'node:fs';
 import {SourceMap} from 'node:module';
 // @ts-ignore a dev server script, plain JavaScript
-import {transformForHot, transformForHotWithMap} from '../../scripts/hot-module-transform.mjs';
+import {transformForHot, transformForHotWithMap} from '../scripts/hot-module-transform.mjs';
 import {beginEvaluation, endStatements, fingerprint, keepClasses, keepExports, keepFunctions, keepImports, keepNamespaces, keepStatement, keepValue, latestImport, setReloadHandler} from '@helpers/hotRegistry';
 
 // what the dev server serves of a TypeScript module, standing in for its compile

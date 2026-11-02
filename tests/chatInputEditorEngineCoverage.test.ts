@@ -1,7 +1,7 @@
 import type {Editor, JSONContent} from '@tiptap/core';
 import {AllSelection, NodeSelection} from '@tiptap/pm/state';
-import '@/tests/mocks/chatInputEditorEngineUi';
-import {mountChatInputEditor} from '@/tests/helpers/chatInputEditor';
+import '@tests/mocks/chatInputEditorEngineUi';
+import {mountChatInputEditor} from '@tests/helpers/chatInputEditor';
 import type {ChatInputEditor} from '@components/chat/inputEditor/types';
 import type {PageBlock, Photo, RichMessage, RichText} from '@layer';
 import canSafelyEditRichMessage from '@components/chat/inputEditor/richMessageEditability';

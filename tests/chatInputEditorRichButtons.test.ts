@@ -1,4 +1,4 @@
-import {useChatInputEditorHarness, tableDocument} from '@/tests/helpers/chatInputEditorHarness';
+import {useChatInputEditorHarness, tableDocument} from '@tests/helpers/chatInputEditorHarness';
 import {richMessageToTiptap, tiptapToRichMessage} from '@components/chat/inputEditor/richMessage';
 import canSafelyEditRichMessage from '@components/chat/inputEditor/richMessageEditability';
 import type {PageBlock, RichMessage, RichText} from '@layer';

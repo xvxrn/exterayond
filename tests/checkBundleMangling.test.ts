@@ -10,7 +10,7 @@ import {build} from 'vite';
 // bundle as built has to pass, and each misbinding written into it has to fail. A rewrite keeps every
 // name's length, so the source map still lines up.
 
-const checker = resolve(__dirname, '../../scripts/check-bundle-mangling.mjs');
+const checker = resolve(__dirname, '../scripts/check-bundle-mangling.mjs');
 
 const SOURCE = `
 const wrap = (text, entities) => ({text, entities});

@@ -1,11 +1,11 @@
-import {useChatInputEditorHarness, TiptapEditorInternals} from '@/tests/helpers/chatInputEditorHarness';
+import {useChatInputEditorHarness, TiptapEditorInternals} from '@tests/helpers/chatInputEditorHarness';
 import {AllSelection, NodeSelection} from '@tiptap/pm/state';
 import slideshowStyles from '@components/slideshow.module.scss';
 import {INSTANT_VIEW_MEDIA_MAX_HEIGHT, instantViewStyles} from '@components/instantViewFormatting';
 import {ALBUM_ITEM_SPACING} from '@components/prepareAlbum';
 import type {Document, PageBlock, Photo} from '@layer';
 import I18n from '@lib/langPack';
-import {resizeObserverInstances} from '@/tests/mocks/resizeObserver';
+import {resizeObserverInstances} from '@tests/mocks/resizeObserver';
 
 describe('Tiptap chat input editor: MediaActions', () => {
   const {mountEditor, openRichMediaMenu, richMediaMenuItem} = useChatInputEditorHarness();

@@ -1,5 +1,5 @@
 import OverlayClickHandler from '@helpers/overlayClickHandler';
-import '@/tests/helpers/a11yLayer';
+import '@tests/helpers/a11yLayer';
 
 // a desktop pointer: overlays close on `click` (a touch device listens to `mousedown`)
 vi.mock('@environment/touchSupport', () => ({default: false}));

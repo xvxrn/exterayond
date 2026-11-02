@@ -1,7 +1,7 @@
 import {afterEach, expect, it, vi} from 'vitest';
 import createFocusTrap, {FOCUS_TRAP_ATTACHED_ATTRIBUTE, getFocusableElements} from '@helpers/dom/focusTrap';
 import {setAppWindow} from '@helpers/appWindow';
-import '@/tests/helpers/a11yLayer';
+import '@tests/helpers/a11yLayer';
 
 // jsdom events are never trusted, so the modality is set by hand
 const modality = vi.hoisted(() => ({pointer: false}));

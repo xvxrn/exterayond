@@ -1,4 +1,4 @@
-import {loadChatBubbles, LOAD_CHAT_BUBBLES_TIMEOUT} from '@/tests/helpers/chatBubbles';
+import {loadChatBubbles, LOAD_CHAT_BUBBLES_TIMEOUT} from '@tests/helpers/chatBubbles';
 import {setExteralessSetting} from '@stores/exteralessSettings';
 
 /**

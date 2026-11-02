@@ -3,8 +3,8 @@ import {resolve} from 'path';
 import {createRequire} from 'module';
 import {describe, expect, it} from 'vitest';
 import generated from '@lib/settingsSearch/generated';
-import lang from '../lang';
-import langSign from '../langSign';
+import lang from '../src/lang';
+import langSign from '../src/langSign';
 
 const require = createRequire(import.meta.url);
 
@@ -35,7 +35,7 @@ describe('settings search index', () => {
   it('is up to date with the settings tabs', () => {
     // The index is derived, not authored — a stale checked-in copy would ship a
     // search that points at rows the tabs no longer have.
-    const {build, emit, OUT_FILE} = require('../scripts/generate_settings_search.js');
+    const {build, emit, OUT_FILE} = require('../src/scripts/generate_settings_search.js');
 
     expect(readFileSync(OUT_FILE, 'utf8')).toBe(emit(build()));
   });
@@ -86,9 +86,9 @@ describe('settings search index', () => {
     // `src/scripts/in/settings-links.csv` is the vocabulary; a path naming no
     // screen of the tree opens through a case in internalLinkProcessor instead,
     // and the generator keeps that list — so a dropped link cannot pass unnoticed.
-    const {PROCESSOR_PATHS: handledByTheProcessor} = require('../scripts/generate_settings_search.js');
+    const {PROCESSOR_PATHS: handledByTheProcessor} = require('../src/scripts/generate_settings_search.js');
 
-    const csv = readFileSync(resolve(__dirname, '../scripts/in/settings-links.csv'), 'utf8');
+    const csv = readFileSync(resolve(__dirname, '../src/scripts/in/settings-links.csv'), 'utf8');
     const paths = csv.split('\n').slice(1).filter(Boolean)
     .map((line) => line.split(',')[0].replace(/^tg:\/\/settings\/?/, '').replace(/\/$/, ''));
 

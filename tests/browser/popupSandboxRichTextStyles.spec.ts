@@ -5,7 +5,7 @@ import {test} from './workerContext';
 
 // Roboto Serif and Merriweather are shipped only with `$serif-fonts` on (src/scss/variables.scss)
 const SERIF_FONTS = /\$serif-fonts:\s*true\b/.test(
-  readFileSync(resolve(__dirname, '..', 'src', 'scss', 'variables.scss'), 'utf8')
+  readFileSync(resolve(__dirname, '../..', 'src', 'scss', 'variables.scss'), 'utf8')
 );
 const SERIF_FAMILIES = ['Roboto Serif', 'Merriweather'];
 
@@ -24,7 +24,7 @@ for(const options of [
   await page.evaluate(() => window.popupSandbox.ready());
   await page.getByRole('button', {name: '◂ Hide', exact: true}).click();
   const selectors = await page.evaluate(async options => {
-    const path = '/e2e/fixtures/richTextStyles.ts';
+    const path = '/tests/browser/fixtures/richTextStyles.ts';
     const {mountRichTextStyles} = await window.e2eImport(path);
     return mountRichTextStyles(options).selectors as Record<string, string>;
   }, options);

@@ -3,7 +3,7 @@ import {readFileSync} from 'fs';
 import {resolve} from 'path';
 
 const HAND_STOP_URL = '/assets/tgs/hand_stop.json';
-const animation = JSON.parse(readFileSync(resolve(__dirname, '..', 'public', 'assets', 'tgs', 'hand_stop.json'), 'utf8'));
+const animation = JSON.parse(readFileSync(resolve(__dirname, '../..', 'public', 'assets', 'tgs', 'hand_stop.json'), 'utf8'));
 const fitz = animation.fitz[2] as Record<'o' | 'f12' | 'f3' | 'f4' | 'f5' | 'f6', number>;
 const FITZ_COLORS = [fitz.o, fitz.f12, fitz.f3, fitz.f4, fitz.f5, fitz.f6].map((color) => [
   (color >> 16) & 255,

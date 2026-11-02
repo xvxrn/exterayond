@@ -1,6 +1,6 @@
 ---
 name: tweb-mtproto-debug
-description: Debug and test the tweb (Telegram Web K) MTProto stack from Node.js using its Vitest harness. Use when investigating dialog/message/unread/forum bugs in tweb, when verifying client-side fixes against the real Telegram server, when reproducing race conditions in apiManager / appMessagesManager / dialogsStorage, or when adding new server-verified e2e tests. Covers the harness in src/tests/api/, single-account synthetic tests, and dual-account end-to-end tests.
+description: Debug and test the tweb (Telegram Web K) MTProto stack from Node.js using its Vitest harness. Use when investigating dialog/message/unread/forum bugs in tweb, when verifying client-side fixes against the real Telegram server, when reproducing race conditions in apiManager / appMessagesManager / dialogsStorage, or when adding new server-verified e2e tests. Covers the harness in tests/api/, single-account synthetic tests, and dual-account end-to-end tests.
 ---
 
 # tweb MTProto debug & test harness
@@ -19,7 +19,7 @@ This skill packages the methodology used to debug and verify MTProto-stack bugs 
 1. **Two seed JSONs in `tmp/`.** Each is the dump of an account’s auth state.
    - `tmp/seed.json` — account A (initiator / chat creator).
    - `tmp/seed-b.json` — account B (receiver / target of mentions).
-   - The format and DevTools dump snippet are in `src/tests/api/README.md`.
+   - The format and DevTools dump snippet are in `tests/api/README.md`.
 2. **Sanity-check the seeds are different users** (don’t assume — file names lie):
    ```bash
    node -e "const a=JSON.parse(require('fs').readFileSync('tmp/seed.json','utf8'));const b=JSON.parse(require('fs').readFileSync('tmp/seed-b.json','utf8'));console.log('A id',a.userId,'dc',a.dcId);console.log('B id',b.userId,'dc',b.dcId);console.log('different users:',a.userId!==b.userId);"
@@ -29,7 +29,7 @@ This skill packages the methodology used to debug and verify MTProto-stack bugs 
 
 ## Test categories
 
-### A. Synthetic (in-memory) — `src/tests/api/unreadRace.test.ts`
+### A. Synthetic (in-memory) — `tests/api/unreadRace.test.ts`
 
 Use when: testing pure client-side state transitions where you control all inputs, don’t need server, want fast feedback, want to isolate a specific code path.
 
@@ -62,15 +62,15 @@ Pattern:
 Run:
 ```bash
 TG_API_TEST=1 TG_API_PROD_DC=1 TG_API_SEED=./tmp/seed.json \
-  pnpm test src/tests/api/unreadRace.test.ts -- --reporter=verbose --silent=false
+  pnpm test tests/api/unreadRace.test.ts -- --reporter=verbose --silent=false
 ```
 
-### B. Server-verified end-to-end — `src/tests/api/serverVerify.test.ts`
+### B. Server-verified end-to-end — `tests/api/serverVerify.test.ts`
 
 Use when: bug involves divergence between local state and server state, fix touches server-call code paths, you need to verify Telegram’s actual behavior (some MTProto methods have non-obvious semantics, see Pitfalls).
 
 Pattern:
-- Bootstrap two clients via `createDualClients({seedA, seedB, testDc: false})` from `src/tests/api/dualHarness.ts`.
+- Bootstrap two clients via `createDualClients({seedA, seedB, testDc: false})` from `tests/api/dualHarness.ts`.
 - **Trace outgoing calls** on the receiver side:
   ```ts
   const realInvokeB = dual.B.apiManager.invokeApi.bind(dual.B.apiManager);
@@ -113,7 +113,7 @@ Run:
 ```bash
 TG_API_E2E=1 TG_API_PROD_DC=1 \
   TG_API_SEED=./tmp/seed.json TG_API_SEED_B=./tmp/seed-b.json \
-  pnpm test src/tests/api/serverVerify.test.ts -- --reporter=verbose --silent=false
+  pnpm test tests/api/serverVerify.test.ts -- --reporter=verbose --silent=false
 ```
 
 ## Critical pitfalls (lessons learned)
@@ -159,7 +159,7 @@ For `isForum` checks: forums are **channels with `pFlags.forum=true`**, while bo
 
 @mira (`bot_forum_view: true`) creates server-side forum topics per user account, but only after meaningful interaction. A *fresh* account that just sent “hi” might see `messages.getForumTopics(peer: inputPeerUser{mira})` return 0 topics — Mira’s replies land in main history without `reply_to`. An account that has used Mira for a while will have many real topics (each topic is server-side: `messages.readDiscussion` against them works, server decrements `unread_count` correctly).
 
-So for botforum-topic e2e, pick the account that already has topics. Confirm with `messages.getForumTopics({peer: inputPeerUser{mira_id, mira_access_hash}, …}).topics.length > 0` before running. The test pattern is in `src/tests/api/serverVerifyBotforum.test.ts`.
+So for botforum-topic e2e, pick the account that already has topics. Confirm with `messages.getForumTopics({peer: inputPeerUser{mira_id, mira_access_hash}, …}).topics.length > 0` before running. The test pattern is in `tests/api/serverVerifyBotforum.test.ts`.
 
 When applying `messages.forumTopics` into local state, pass the forum peerId as the second arg to `dialogsStorage.applyDialogs(result, peerId)` — without it `processTopics` crashes on `peerId.isAnyChat()`.
 
@@ -204,15 +204,15 @@ When debugging a new bug:
 
 ## Files of reference
 
-- `src/tests/api/harness.ts` — single-client bootstrap.
-- `src/tests/api/dualHarness.ts` — two-client bootstrap.
-- `src/tests/api/nodeEnv.ts` — Node polyfills (WebSocket via ws, fake-indexeddb, in-memory localStorage, …).
-- `src/tests/api/inlineCrypto.ts` — registers in-process crypto (no separate worker thread).
-- `src/tests/api/unreadRace.test.ts` — synthetic test catalog (Bug 1–6).
-- `src/tests/api/serverVerify.test.ts` — server-verified e2e (Bug 6 / issue #380).
-- `src/tests/api/serverVerifyBotforum.test.ts` — server-verified e2e (Bug 5, botforum topic read via @mira).
-- `src/tests/api/getDialogs.test.ts` — minimal smoke that the API plumbing works at all.
-- `src/tests/api/README.md` — seed extraction instructions.
+- `tests/api/harness.ts` — single-client bootstrap.
+- `tests/api/dualHarness.ts` — two-client bootstrap.
+- `tests/api/nodeEnv.ts` — Node polyfills (WebSocket via ws, fake-indexeddb, in-memory localStorage, …).
+- `tests/api/inlineCrypto.ts` — registers in-process crypto (no separate worker thread).
+- `tests/api/unreadRace.test.ts` — synthetic test catalog (Bug 1–6).
+- `tests/api/serverVerify.test.ts` — server-verified e2e (Bug 6 / issue #380).
+- `tests/api/serverVerifyBotforum.test.ts` — server-verified e2e (Bug 5, botforum topic read via @mira).
+- `tests/api/getDialogs.test.ts` — minimal smoke that the API plumbing works at all.
+- `tests/api/README.md` — seed extraction instructions.
 - `src/lib/appManagers/appMessagesManager.ts` — primary mutation surface (`onUpdateReadHistory`, `onUpdateNewMessage`, `onUpdateReadMessagesContents`, `readMessages`, `readHistory`, …).
 - `src/lib/storages/dialogs.ts` — `applyDialogs`, `saveDialog`, forum topic storage.
 - `src/lib/appManagers/apiUpdatesManager.ts` — `processUpdate`, `processLocalUpdate`, `saveUpdate`.

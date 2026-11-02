@@ -4,7 +4,7 @@
  * document type — video (`NekoConfig.autoPauseVideo`, default on), voice
  * notes and round videos (`ChatsConfig`, default off) — and never music.
  */
-import {loadChatBubbles, LOAD_CHAT_BUBBLES_TIMEOUT} from '@/tests/helpers/chatBubbles';
+import {loadChatBubbles, LOAD_CHAT_BUBBLES_TIMEOUT} from '@tests/helpers/chatBubbles';
 import {setExteralessSetting} from '@stores/exteralessSettings';
 
 let appMediaPlaybackController: typeof import('@components/appMediaPlaybackController')['default'];

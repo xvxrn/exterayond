@@ -7,9 +7,9 @@
 import {existsSync, readdirSync, readFileSync, statSync} from 'fs';
 import {resolve} from 'path';
 import {normalizePath, type Plugin, type UserConfig} from 'vite';
-import baseConfig from '../vite.config';
+import baseConfig from '../../vite.config';
 
-const ROOT = resolve(__dirname, '..');
+const ROOT = resolve(__dirname, '../..');
 
 // Nothing the server gives out changes during a run (no watcher, no hot reload), so every module can
 // be cached for the run instead of answering `no-cache`: a worker's pages after its first then boot
@@ -30,7 +30,7 @@ export const cacheModulesForTheRun: Plugin = {
 
 /**
  * `window.e2eImport('/src/…')` in the page: the app's own instance of a module, for a test that reaches into one
- * (`rootScope`, a store, a popup to open) or loads a harness of e2e/fixtures into the app.
+ * (`rootScope`, a store, a popup to open) or loads a harness of tests/browser/fixtures into the app.
  *
  * Served module by module, that is a plain `import()` of the URL, from a script of the page: a module's URL is its
  * identity there, and the URL the app imports it by has no query. (From a module Vite serves, `import(path)` would be
@@ -38,17 +38,17 @@ export const cacheModulesForTheRun: Plugin = {
  * (vite.popups-e2e.config.ts), where no module has a URL: there a map of import()s is compiled with the app, so an
  * import from it is the app's own — of a module already run, the live instance, of one not yet, its first.
  *
- * The map holds the modules the specs name, every `'/src/…'` and `'/e2e/fixtures/…'` string in e2e/: a path is
+ * The map holds the modules the specs name, every `'/src/…'` and `'/tests/browser/fixtures/…'` string in tests/browser/: a path is
  * written whole where it is imported. Each import() in it is a point the bundle is split at, and a map of every
  * module split it into ~1650 chunks, which a page then loaded one by one.
  */
 const E2E_IMPORT = 'virtual:e2e-import';
 function namedModules() {
   const named = new Set<string>();
-  const dir = resolve(ROOT, 'e2e');
+  const dir = resolve(ROOT, 'tests/browser');
   for(const file of readdirSync(dir).filter((name) => name.endsWith('.ts'))) {
     const source = readFileSync(resolve(dir, file), 'utf8');
-    for(const [, path] of source.matchAll(/['"`](\/(?:src|e2e\/fixtures)\/[\w./-]+\.(?:tsx?|scss))['"`]/g)) named.add(path);
+    for(const [, path] of source.matchAll(/['"`](\/(?:src|tests\/browser\/fixtures)\/[\w./-]+\.(?:tsx?|scss))['"`]/g)) named.add(path);
   }
   return [...named].filter((path) => existsSync(resolve(ROOT, path.slice(1)))).sort();
 }
@@ -71,7 +71,7 @@ export const e2eImport: Plugin = (() => {
       const modules = namedModules().map((path) => `  ${JSON.stringify(path)}: () => import(${JSON.stringify(path)})`);
       return `const modules = {\n${modules.join(',\n')}\n};
 window.e2eImport = (path) => modules[path] ? modules[path]() :
-  Promise.reject(new Error('e2eImport: ' + path + ' is named nowhere in e2e/ as a whole path, so the bundle has no import of it'));
+  Promise.reject(new Error('e2eImport: ' + path + ' is named nowhere in tests/browser/ as a whole path, so the bundle has no import of it'));
 `;
     },
     transform(code, id) {

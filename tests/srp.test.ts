@@ -1,8 +1,8 @@
 import nodeCrypto from 'crypto';
-import '../lib/crypto/crypto.worker';
+import '../src/lib/crypto/crypto.worker';
 import cryptoWorker from '@lib/crypto/cryptoMessagePort';
 import computeSRP, {makePasswordHash} from '@lib/crypto/srp';
-import {salt1, salt2, p as pBytes, g as gNum} from '../mock/srp';
+import {salt1, salt2, p as pBytes, g as gNum} from '../src/mock/srp';
 import {AccountPassword, InputCheckPasswordSRP} from '@layer';
 import bigInt from 'big-integer';
 import {bigIntFromBytes, bigIntToBytes} from '@helpers/bigInt/bigIntConversion';

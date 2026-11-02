@@ -1,4 +1,4 @@
-import '@/tests/mocks/chatInputIntegrationUi';
+import '@tests/mocks/chatInputIntegrationUi';
 import RichMediaUploads from '@components/richMessageInput/media';
 import editRichMediaItem from '@components/richMessageInput/editMedia';
 import {createImageSource} from '@components/chat/editMessageMedia';

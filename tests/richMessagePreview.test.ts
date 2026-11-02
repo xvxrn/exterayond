@@ -1,6 +1,6 @@
 import type {Message, PageBlock, PageCaption, RichMessage, RichText} from '@layer';
 import I18n from '@lib/langPack';
-import {stubBrowserGlobals} from '@/tests/helpers/browserGlobals';
+import {stubBrowserGlobals} from '@tests/helpers/browserGlobals';
 import getRichMessagePreview, {getRichMessagePreviewMedia} from '@components/wrappers/richMessagePreview';
 
 // wrapRichText's graph starts the app's workers on import, messageForReply's builds the sidebars

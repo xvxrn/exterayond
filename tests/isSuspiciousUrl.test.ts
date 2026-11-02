@@ -1,5 +1,5 @@
 import {describe, expect, test} from 'vitest';
-import isSuspiciousUrl from '../helpers/string/isSuspiciousUrl';
+import isSuspiciousUrl from '../src/helpers/string/isSuspiciousUrl';
 
 // Reference: telegram-tt src/util/browser/url.ts (isMixedScriptUrl), which feeds the
 // raw url through ensureProtocol() before `new URL(...)`. The tweb port dropped that

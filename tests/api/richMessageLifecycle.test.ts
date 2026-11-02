@@ -1,6 +1,6 @@
 import {mkdirSync, writeFileSync} from 'fs';
-import {createDualClients, loadSeed} from '@/tests/api/dualHarness';
-import type {TrueDcSeed} from '@/tests/api/harness';
+import {createDualClients, loadSeed} from '@tests/api/dualHarness';
+import type {TrueDcSeed} from '@tests/api/harness';
 import type {DraftMessage, PageBlock, RichMessage} from '@layer';
 import {richMessageToTiptap, tiptapToRichMessage} from '@components/chat/inputEditor/richMessage';
 

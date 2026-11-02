@@ -1,15 +1,15 @@
-import {IntersectionObserverMock} from '@/tests/mocks/intersectionObserver';
+import {IntersectionObserverMock} from '@tests/mocks/intersectionObserver';
 
 if(typeof(window.IntersectionObserver) !== 'function') {
   vi.stubGlobal('IntersectionObserver', IntersectionObserverMock);
 }
 
 vi.mock('@components/buttonMenu', async() => (
-  import('../../../e2e/fixtures/stubs/buttonMenu')
+  import('../browser/fixtures/stubs/buttonMenu')
 ));
 
 vi.mock('@components/createSubmenuTrigger', async() => (
-  import('../../../e2e/fixtures/stubs/createSubmenuTrigger')
+  import('../browser/fixtures/stubs/createSubmenuTrigger')
 ));
 
 vi.mock('@environment/touchSupport', () => ({default: false}));

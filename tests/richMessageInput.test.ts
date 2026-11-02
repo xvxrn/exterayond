@@ -1,5 +1,5 @@
-import '@/tests/mocks/chatInputIntegrationUi';
-import '@/tests/mocks/chatInputEditorNodes';
+import '@tests/mocks/chatInputIntegrationUi';
+import '@tests/mocks/chatInputEditorNodes';
 import {createRoot} from 'solid-js';
 import RichMessageInput, {type RichMessageInputController, type RichMessageInputOptions} from '@components/richMessageInput';
 import createEditor from '@components/chat/inputEditor';
@@ -59,7 +59,7 @@ function mount(options: RichMessageInputOptions = {}) {
 }
 
 test('field modules do not import the chat host or its application adapter', () => {
-  const directory = resolve(__dirname, '../components/richMessageInput');
+  const directory = resolve(__dirname, '../src/components/richMessageInput');
   for(const file of readdirSync(directory).filter(name => /\.tsx?$/.test(name))) {
     const source = readFileSync(resolve(directory, file), 'utf8');
     expect(source, file).not.toMatch(/from ['"](?:@components\/chat\/input|\.\.\/chat\/input)(?:\.ts)?['"]/);

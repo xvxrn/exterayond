@@ -1,7 +1,7 @@
 import {expect} from '@playwright/test';
 import {test} from './workerContext';
-import Icons from '../src/icons';
-import {createTransactionFixtures} from '../src/components/popupSandbox/transactionFixtures';
+import Icons from '../../src/icons';
+import {createTransactionFixtures} from '../../src/components/popupSandbox/transactionFixtures';
 
 const cases = createTransactionFixtures();
 

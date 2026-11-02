@@ -15,7 +15,7 @@ import {expect, Page, test} from '@playwright/test';
  * made:
  *
  *   bash scripts/start-preview.sh --detach    # prints the URL, say http://localhost:9001
- *   PLAYWRIGHT_BASE_URL=http://localhost:9001 npx playwright test e2e/chatJumpApp.spec.ts
+ *   PLAYWRIGHT_BASE_URL=http://localhost:9001 npx playwright test tests/browser/chatJumpApp.spec.ts
  */
 
 // * how far down the chat list to look for a chat with history

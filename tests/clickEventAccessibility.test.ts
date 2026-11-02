@@ -4,7 +4,7 @@ import ListenerSetter from '@helpers/listenerSetter';
 vi.mock('@environment/touchSupport', () => ({default: true}));
 
 import {attachClickEvent, hasMouseMovedSinceDown} from '@helpers/dom/clickEvent';
-import '@/tests/helpers/a11yLayer';
+import '@tests/helpers/a11yLayer';
 
 afterEach(() => {
   document.body.replaceChildren();

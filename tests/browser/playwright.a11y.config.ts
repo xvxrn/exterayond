@@ -1,7 +1,7 @@
 import {defineConfig, devices} from '@playwright/test';
 import base from './playwright.config';
 import {appServer} from './playwright.popups.config';
-import {playwrightWorkers} from '../scripts/testQueue';
+import {playwrightWorkers} from '../../scripts/testQueue';
 import e2ePort from './ports';
 
 // the app as a bundle, as the popup suites have it (vite.popups-e2e.config.ts), on a port of its own
@@ -19,7 +19,7 @@ export default defineConfig<{freshContext: boolean}>({
   projects: [
     {name: 'chromium', use: {...devices['Desktop Chrome']}},
     {name: 'chromium-touch', testMatch: '**/accessibilityKeyboard.spec.ts', use: {...devices['Desktop Chrome'], hasTouch: true}},
-    // Firefox gets a context per test: sharing one across tests (e2e/workerContext.ts) made its
+    // Firefox gets a context per test: sharing one across tests (tests/browser/workerContext.ts) made its
     // dynamic imports fail now and then, and it gained nothing from the shared cache anyway.
     {name: 'firefox', testMatch: /accessibility(?:Keyboard|Window|Stories)\.spec\.ts/, use: {...devices['Desktop Firefox'], freshContext: true}},
     {name: 'webkit', testMatch: /accessibility(?:Keyboard|Window|Stories)\.spec\.ts/, use: {...devices['Desktop Safari']}}

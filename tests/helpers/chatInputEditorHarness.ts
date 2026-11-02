@@ -1,5 +1,5 @@
-import '@/tests/mocks/chatInputEditorUi';
-import {mountChatInputEditor} from '@/tests/helpers/chatInputEditor';
+import '@tests/mocks/chatInputEditorUi';
+import {mountChatInputEditor} from '@tests/helpers/chatInputEditor';
 import type {Editor, JSONContent} from '@tiptap/core';
 import type {Node as ProseMirrorNode} from '@tiptap/pm/model';
 import {NodeSelection} from '@tiptap/pm/state';

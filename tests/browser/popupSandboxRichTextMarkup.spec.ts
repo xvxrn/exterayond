@@ -24,7 +24,7 @@ async function open(page: Page) {
   await page.evaluate(() => window.popupSandbox.ready());
   await page.getByRole('button', {name: '◂ Hide', exact: true}).click();
   await page.evaluate(async() => {
-    const fixture = '/e2e/fixtures/richMediaComposer.ts';
+    const fixture = '/tests/browser/fixtures/richMediaComposer.ts';
     const testData = '/src/components/chat/inputEditor/testData.ts';
     const [{mountRichMediaComposerHarness}, {createChatInputEditorTestData}] = await Promise.all([
       window.e2eImport(fixture),
@@ -162,7 +162,7 @@ test('the tooltip quotes with the plain icon in a collapsed field and with the b
   await page.evaluate(() => window.popupSandbox.ready());
   await page.getByRole('button', {name: '◂ Hide', exact: true}).click();
   const glyphs = await page.evaluate(async() => {
-    const fixture = '/e2e/fixtures/richMediaComposer.ts';
+    const fixture = '/tests/browser/fixtures/richMediaComposer.ts';
     const iconsPath = '/src/icons.ts';
     const [{mountRichMediaComposerHarness}, {default: icons}] = await Promise.all([
       window.e2eImport(fixture),

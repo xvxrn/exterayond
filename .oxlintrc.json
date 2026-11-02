@@ -41,7 +41,7 @@
     "jsx-a11y"
   ],
   "overrides": [{
-    "files": ["src/tests/**"],
+    "files": ["tests/**"],
     "rules": {"jsx-a11y/control-has-associated-label": "off"}
   }, {
     "files": ["src/**/*.ts", "src/**/*.tsx"],
@@ -62,7 +62,7 @@
     "rules": {"tweb/managers-before-await": ["error", {"allowThis": true}]}
   }, {
     "files": [
-      "src/tests/**",
+      "tests/**",
       "src/index.ts",
       "src/components/popupSandbox/**",
       "src/lib/appManagers/**",

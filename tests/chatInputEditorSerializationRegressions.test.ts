@@ -1,5 +1,5 @@
-import '@/tests/mocks/chatInputEditorEngineUi';
-import {mountChatInputEditor} from '@/tests/helpers/chatInputEditor';
+import '@tests/mocks/chatInputEditorEngineUi';
+import {mountChatInputEditor} from '@tests/helpers/chatInputEditor';
 import {richMessageToTiptap, richTextPlainText, tiptapToRichMessage} from '@components/chat/inputEditor/richMessage';
 import {formatOrderedListMarker} from '@lib/richTextProcessor/orderedList';
 import type {JSONContent} from '@tiptap/core';

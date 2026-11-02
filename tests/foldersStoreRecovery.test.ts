@@ -1,5 +1,5 @@
 import type {MyDialogFilter} from '@lib/storages/filters';
-import makeDialogFilter from '@/tests/helpers/dialogFilter';
+import makeDialogFilter from '@tests/helpers/dialogFilter';
 
 const mocks = vi.hoisted(() => {
   type Listener = (payload: any) => unknown;

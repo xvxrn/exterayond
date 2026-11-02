@@ -9,7 +9,7 @@ import {tmpdir} from 'node:os';
 import path from 'node:path';
 import {afterAll, describe, expect, test} from 'vitest';
 
-const ROOT = path.resolve(__dirname, '../..');
+const ROOT = path.resolve(__dirname, '..');
 const dir = mkdtempSync(path.join(tmpdir(), 'tweb-managers-rule-'));
 afterAll(() => rmSync(dir, {recursive: true, force: true}));
 

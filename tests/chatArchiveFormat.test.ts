@@ -12,7 +12,7 @@ import {
   renderLine,
   renderText,
   renderTranscripts
-} from '@/tests/api/chatArchiveFormat';
+} from '@tests/api/chatArchiveFormat';
 
 function makeContext(): ArchiveContext {
   const self = {key: 'user1', name: 'Me'};

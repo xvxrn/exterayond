@@ -3,7 +3,7 @@
  * host in the app config's `whitelisted_domains`. Such a link is rendered as a plain one.
  */
 
-import {stubBrowserGlobals} from '@/tests/helpers/browserGlobals';
+import {stubBrowserGlobals} from '@tests/helpers/browserGlobals';
 import {MessageEntity} from '@layer';
 import {setAppStateSilent} from '@stores/appState';
 import isWhitelistedUrl from '@lib/richTextProcessor/isWhitelistedUrl';

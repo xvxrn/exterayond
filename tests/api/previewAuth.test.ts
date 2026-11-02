@@ -24,7 +24,7 @@
  *
  * Run (production seed):
  *   TG_API_TEST=1 TG_API_PROD_DC=1 TG_API_SEED=./tmp/seed.json \
- *     pnpm test src/tests/api/previewAuth
+ *     pnpm test tests/api/previewAuth
  */
 
 import {readFileSync, writeFileSync, mkdirSync} from 'fs';

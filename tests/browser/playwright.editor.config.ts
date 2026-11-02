@@ -1,6 +1,6 @@
 import {defineConfig, devices} from '@playwright/test';
 import path from 'path';
-import {playwrightWorkers} from '../scripts/testQueue';
+import {playwrightWorkers} from '../../scripts/testQueue';
 import e2ePort from './ports';
 
 const PORT = e2ePort('editor');
@@ -17,7 +17,7 @@ export default defineConfig<{freshContext: boolean}, {samePage: boolean}>({
   fullyParallel: true,
   workers: playwrightWorkers(process.env.EDITOR_E2E_WORKERS ? Number(process.env.EDITOR_E2E_WORKERS) : '75%'),
   // waits for its turn in the machine-wide queue of heavy test runs (scripts/test-queue.sh)
-  globalSetup: path.join(__dirname, '../scripts/testQueue.ts'),
+  globalSetup: path.join(__dirname, '../../scripts/testQueue.ts'),
   timeout: 30_000,
   reporter: [['list']],
   use: {
@@ -25,7 +25,7 @@ export default defineConfig<{freshContext: boolean}, {samePage: boolean}>({
     headless: true,
     viewport: {width: 800, height: 600},
     // every test opens the fixture by navigating, so a worker keeps one page for all of them
-    // (e2e/workerContext.ts): the fixture then opens in a fraction of the time a new page takes
+    // (tests/browser/workerContext.ts): the fixture then opens in a fraction of the time a new page takes
     samePage: true
   },
   projects: [
@@ -47,8 +47,11 @@ export default defineConfig<{freshContext: boolean}, {samePage: boolean}>({
     ] : [])
   ],
   webServer: {
-    command: `node_modules/.bin/vite --config e2e/vite.editor-e2e.config.ts --host 127.0.0.1 --port ${PORT} --strictPort`,
-    url: `http://127.0.0.1:${PORT}/e2e/fixtures/chatInputEditor.html`,
+    command: `node_modules/.bin/vite --config tests/browser/vite.editor-e2e.config.ts --host 127.0.0.1 --port ${PORT} --strictPort`,
+    // the config's own directory is Playwright's default server cwd; the command
+    // paths are written against the checkout root
+    cwd: path.join(__dirname, '..', '..'),
+    url: `http://127.0.0.1:${PORT}/tests/browser/fixtures/chatInputEditor.html`,
     env: {
       TWEB_E2E: '1',
       TWEB_EDITOR_E2E: '1',

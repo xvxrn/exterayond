@@ -6,8 +6,8 @@ import {
   type Node as ProseMirrorNode
 } from '@tiptap/pm/model';
 import {CellSelection, TableMap} from '@tiptap/pm/tables';
-import '@/tests/mocks/chatInputEditorTableUi';
-import {mountChatInputEditor} from '@/tests/helpers/chatInputEditor';
+import '@tests/mocks/chatInputEditorTableUi';
+import {mountChatInputEditor} from '@tests/helpers/chatInputEditor';
 import {
   buildChatTableClipboardSerializer,
   replaceChatTableClipboardEmojiNodes

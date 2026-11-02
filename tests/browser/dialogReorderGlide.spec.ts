@@ -15,7 +15,7 @@ import {openChatList} from './chatList.helpers';
  * authorized preview, and skips rather than reporting a pass it never made:
  *
  *   bash scripts/start-preview.sh --detach    # prints the URL, say http://localhost:9001
- *   PLAYWRIGHT_BASE_URL=http://localhost:9001 pnpm exec playwright test e2e/dialogReorderGlide.spec.ts
+ *   PLAYWRIGHT_BASE_URL=http://localhost:9001 pnpm exec playwright test tests/browser/dialogReorderGlide.spec.ts
  */
 
 /** where the chat lands: under this many rows of the list, which stay where they are */

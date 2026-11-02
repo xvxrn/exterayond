@@ -22,7 +22,7 @@ const manifests = [
   'site_apple.webmanifest'
 ].map((fileName) => ({
   fileName,
-  manifest: JSON.parse(readFileSync(resolve(__dirname, '../../public', fileName), 'utf8')) as WebManifest
+  manifest: JSON.parse(readFileSync(resolve(__dirname, '../public', fileName), 'utf8')) as WebManifest
 }));
 
 describe('PWA web manifests', () => {

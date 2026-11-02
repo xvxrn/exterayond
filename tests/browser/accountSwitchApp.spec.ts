@@ -9,7 +9,7 @@ import {expect, Page, test} from '@playwright/test';
  * second one, and skips otherwise rather than reporting a pass it never made:
  *
  *   TWEB_SECOND_SEED=seed-b.json bash scripts/start-preview.sh --detach   # say http://localhost:9001
- *   PLAYWRIGHT_BASE_URL=http://localhost:9001 pnpm exec playwright test e2e/accountSwitchApp.spec.ts
+ *   PLAYWRIGHT_BASE_URL=http://localhost:9001 pnpm exec playwright test tests/browser/accountSwitchApp.spec.ts
  */
 // * a call needs a microphone: a fake one, which a switch without a call does not mind
 test.use({launchOptions: {args: ['--use-fake-ui-for-media-stream', '--use-fake-device-for-media-stream', '--autoplay-policy=no-user-gesture-required']}});

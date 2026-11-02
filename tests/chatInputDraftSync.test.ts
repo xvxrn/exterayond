@@ -1,8 +1,8 @@
-import '@/tests/mocks/chatInputIntegrationUi';
+import '@tests/mocks/chatInputIntegrationUi';
 import '@helpers/peerIdPolyfill';
 import ChatInput from '@components/chat/input';
 import {ChatType} from '@components/chat/chatType';
-import {mountChatInputEditor} from '@/tests/helpers/chatInputEditor';
+import {mountChatInputEditor} from '@tests/helpers/chatInputEditor';
 import createChatInputEditor from '@components/chat/inputEditor';
 import reloadChatInputEditor from '@components/chat/inputEditor/reload';
 import type {DraftMessage} from '@layer';

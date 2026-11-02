@@ -34,7 +34,7 @@ async function open(page: Page) {
   await page.evaluate(() => window.popupSandbox.ready());
   await page.getByRole('button', {name: '◂ Hide', exact: true}).click();
   await page.evaluate(async() => {
-    const path = '/e2e/fixtures/richTables.ts';
+    const path = '/tests/browser/fixtures/richTables.ts';
     const {mountRichTables} = await window.e2eImport(path);
     window.richTables = mountRichTables(420);
   });

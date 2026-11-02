@@ -1,5 +1,5 @@
-import '@/tests/mocks/chatInputEditorNodes';
-import {mountChatInputEditor} from '@/tests/helpers/chatInputEditor';
+import '@tests/mocks/chatInputEditorNodes';
+import {mountChatInputEditor} from '@tests/helpers/chatInputEditor';
 import type {ChatInputEditor} from '@components/chat/inputEditor/types';
 import deriveEditorDraftContent from '@components/chat/inputEditor/draftContent';
 import type {PageBlock} from '@layer';

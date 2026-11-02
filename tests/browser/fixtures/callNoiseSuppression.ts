@@ -1,11 +1,11 @@
 /*
- * Browser fixture for e2e/callNoiseSuppression.spec.ts. The microphone is a
+ * Browser fixture for tests/browser/callNoiseSuppression.spec.ts. The microphone is a
  * WebAudio track looping generated syllables over white noise, so the call
  * noise suppressor runs on a known signal in a real browser; the levels of
  * the microphone and of what the call would send are sampled side by side.
  */
 import denoiseMicrophone, {getNoiseSuppressionStatus} from '@lib/calls/noiseSuppression/noiseSuppression';
-import {mixSignals, syntheticSpeech, SYNTHETIC_VOICE_RATE, whiteNoise} from '@/tests/helpers/syntheticVoice';
+import {mixSignals, syntheticSpeech, SYNTHETIC_VOICE_RATE, whiteNoise} from '@tests/helpers/syntheticVoice';
 
 const VOICE_LEVEL_DB = -20;
 const NOISE_LEVEL_DB = -40;

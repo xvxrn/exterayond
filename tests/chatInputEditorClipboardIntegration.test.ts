@@ -3,7 +3,7 @@ import {
   TiptapEditorInternals,
   tableDocument,
   currentTable
-} from '@/tests/helpers/chatInputEditorHarness';
+} from '@tests/helpers/chatInputEditorHarness';
 import type {JSONContent} from '@tiptap/core';
 import {Slice} from '@tiptap/pm/model';
 import {AllSelection, TextSelection} from '@tiptap/pm/state';

@@ -1,6 +1,6 @@
 import fixLocalOffer from '@lib/calls/helpers/fixLocalOffer';
-import data from '../mock/webrtc/data';
-import sdp from '../mock/webrtc/sdp';
+import data from '../src/mock/webrtc/data';
+import sdp from '../src/mock/webrtc/sdp';
 
 const offer: RTCSessionDescriptionInit = {type: 'offer', sdp};
 

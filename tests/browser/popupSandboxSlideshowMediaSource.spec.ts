@@ -23,7 +23,7 @@ async function open(page: Page) {
   await page.evaluate(() => window.popupSandbox.ready());
   await page.getByRole('button', {name: '◂ Hide', exact: true}).click();
   await page.evaluate(async() => {
-    const path = '/e2e/fixtures/slideshowMediaSource.ts';
+    const path = '/tests/browser/fixtures/slideshowMediaSource.ts';
     const {mountSlideshowMediaSource} = await window.e2eImport(path);
     window.slideshowMediaSource = mountSlideshowMediaSource();
   });

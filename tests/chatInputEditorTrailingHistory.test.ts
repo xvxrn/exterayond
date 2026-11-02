@@ -1,5 +1,5 @@
-import '@/tests/mocks/chatInputEditorEngineUi';
-import {mountChatInputEditor} from '@/tests/helpers/chatInputEditor';
+import '@tests/mocks/chatInputEditorEngineUi';
+import {mountChatInputEditor} from '@tests/helpers/chatInputEditor';
 import type {ChatInputEditor} from '@components/chat/inputEditor/types';
 
 const commands: Array<[string, (editor: ChatInputEditor) => boolean]> = [

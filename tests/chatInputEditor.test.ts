@@ -1,4 +1,4 @@
-import {useChatInputEditorHarness, TiptapEditorInternals, findEntity} from '@/tests/helpers/chatInputEditorHarness';
+import {useChatInputEditorHarness, TiptapEditorInternals, findEntity} from '@tests/helpers/chatInputEditorHarness';
 import createChatInputEditor from '@components/chat/inputEditor';
 import reloadChatInputEditor from '@components/chat/inputEditor/reload';
 import {getChatInputEditor} from '@components/chat/inputEditor/registry';

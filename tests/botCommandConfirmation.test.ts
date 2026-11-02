@@ -2,7 +2,7 @@ import ChatBotCommands from '@components/chat/botCommands';
 import CommandsHelper from '@components/chat/commandsHelper';
 import '@helpers/peerIdPolyfill';
 import {setExteralessSetting} from '@stores/exteralessSettings';
-import deferred from '@/tests/helpers/deferred';
+import deferred from '@tests/helpers/deferred';
 
 const mocks = vi.hoisted(() => ({
   confirm: vi.fn(),

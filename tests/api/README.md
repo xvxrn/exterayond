@@ -48,7 +48,7 @@ Save the output as `tmp/seed.json` (gitignored).
 ## Running
 
 ```bash
-TG_API_TEST=1 TG_API_SEED=./tmp/seed.json pnpm test src/tests/api
+TG_API_TEST=1 TG_API_SEED=./tmp/seed.json pnpm test tests/api
 ```
 
 By default the harness flips `Modes.test = true`. To talk to production DCs

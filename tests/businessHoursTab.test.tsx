@@ -57,7 +57,7 @@ vi.mock('@lib/langPack', () => {
 });
 
 import BusinessHoursTab from '@components/sidebarLeft/tabs/businessHours';
-import '@/tests/helpers/a11yLayer';
+import '@tests/helpers/a11yLayer';
 
 const DAY = 24 * 60;
 

@@ -479,6 +479,26 @@ describe('exteraless CSS mappings', () => {
   });
 });
 
+describe('the per-message Report contexts (W-3, ChatActivity:50200)', () => {
+  test('showReport broadens the stock chat gate to any chat peer or a bot, never a human chat', async() => {
+    const {verifyReportContext} = await loadStore();
+    // * the stock gate: the web's own isChannel (channels and supergroups)
+    expect(verifyReportContext(true, false, false, false)).toBe(true);
+    // * with the setting off nothing beyond the stock gate shows
+    expect(verifyReportContext(false, true, false, false)).toBe(false);
+    expect(verifyReportContext(false, false, true, false)).toBe(false);
+
+    // * Android `currentChat != null || currentUser.bot`: any chat peer or a
+    // * bot — a basic group, and a bot conversation — with the setting on
+    expect(verifyReportContext(false, true, false, true)).toBe(true);
+    expect(verifyReportContext(false, false, true, true)).toBe(true);
+    expect(verifyReportContext(true, true, false, true)).toBe(true);
+
+    // * a private conversation with a human is never a Report context
+    expect(verifyReportContext(false, false, false, true)).toBe(false);
+  });
+});
+
 describe('exteraless settings application (jsdom)', () => {
   beforeEach(() => {
     localStorageStub.clear();

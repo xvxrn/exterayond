@@ -1,6 +1,6 @@
 import {defineConfig, devices} from '@playwright/test';
 import path from 'path';
-import {playwrightWorkers} from '../scripts/testQueue';
+import {playwrightWorkers} from '../../scripts/testQueue';
 import e2ePort from './ports';
 
 // Browser tests for lottie sticker rendering.
@@ -10,7 +10,7 @@ import e2ePort from './ports';
 // self-contained worker would be a *dedicated* worker with different commit timing. So these run
 // against the actual dev server in a real browser. Lottie renders without login (the login page
 // itself plays .tgs animations), so a plain HTTP Vite preview is enough - no auth/seed needed.
-// this checkout's own (e2e/ports.ts): the server found on it and taken is never another checkout's
+// this checkout's own (tests/browser/ports.ts): the server found on it and taken is never another checkout's
 const PORT = e2ePort('default');
 
 // A spec that needs a signed-in client cannot use that server: it points at an
@@ -23,7 +23,7 @@ export default defineConfig({
   fullyParallel: false,
   workers: playwrightWorkers(1), // one sticker on screen at a time keeps the screenshot detector unambiguous
   // waits for its turn in the machine-wide queue of heavy test runs (scripts/test-queue.sh)
-  globalSetup: path.join(__dirname, '../scripts/testQueue.ts'),
+  globalSetup: path.join(__dirname, '../../scripts/testQueue.ts'),
   timeout: 60_000,
   reporter: [['list']],
   use: {
@@ -32,9 +32,12 @@ export default defineConfig({
     viewport: {width: 800, height: 600}
   },
   projects: [{name: 'chromium', use: {...devices['Desktop Chrome']}}],
-  // No hot reload (e2e/vite.e2e.config.ts): an edit during a run must not reload the page under a test.
+  // No hot reload (tests/browser/vite.e2e.config.ts): an edit during a run must not reload the page under a test.
   webServer: externalBaseURL ? undefined : {
-    command: `pnpm exec vite --config e2e/vite.e2e.config.ts --port ${PORT} --strictPort`,
+    command: `pnpm exec vite --config tests/browser/vite.e2e.config.ts --port ${PORT} --strictPort`,
+    // the config's own directory is Playwright's default server cwd; the command
+    // paths are written against the checkout root
+    cwd: path.join(__dirname, '..', '..'),
     url: `http://localhost:${PORT}/`,
     env: {TWEB_PREVIEW: '1', TWEB_E2E: '1'},
     reuseExistingServer: !process.env.CI,

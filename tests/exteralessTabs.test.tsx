@@ -224,6 +224,7 @@ describe('the exteraless Appearance tab', () => {
       {name: 'Exteraless.Player.ControlsSize', value: 1, min: 0, max: 2},
       {name: 'Exteraless.TabCounter', value: 1, min: 0, max: 2},
       {name: 'Exteraless.AvatarCorners', value: OE_DEFAULTS.OEAppearanceAvatarCorners, min: 0, max: 28},
+      {name: 'Exteraless.BubbleRadius', value: OE_DEFAULTS.bubbleRadius, min: 0, max: 17},
       {name: 'Exteraless.SectionRadius', value: OE_DEFAULTS.OEAppearanceSectionRadius, min: 0, max: 28}
     ]);
   });
@@ -354,6 +355,9 @@ describe('the exteraless Chats tab', () => {
       'Exteraless.ReplyBackground',
       'Exteraless.ShowResultsBeforeVoting',
       'Exteraless.AlwaysSendInHD',
+      'Exteraless.MenuAddToSaved',
+      'Exteraless.MenuCopyPhoto',
+      'Exteraless.MenuReport',
       'Exteraless.FixLinkPreview',
       'Exteraless.DisableLinkPreviewByDefault',
       'Exteraless.DisableGlobalSearch',

@@ -980,7 +980,7 @@ test('places a mobile touch caret in a centered placeholder and beside custom em
   const context = await browser.newContext({...devices['Pixel 7'], baseURL});
   const page = await context.newPage();
   try {
-    await page.goto('/e2e/fixtures/chatInputEditor.html');
+    await page.goto('/tests/browser/fixtures/chatInputEditor.html');
     await page.waitForFunction(() => (
       document.documentElement.dataset.editorFixtureReady !== undefined
     ));

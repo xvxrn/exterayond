@@ -10,7 +10,7 @@ async function openPlusMenu(page: Page) {
   await page.evaluate(() => window.popupSandbox.ready());
   await page.getByRole('button', {name: '◂ Hide', exact: true}).click();
   await page.evaluate(async() => {
-    const path = '/e2e/fixtures/richMediaComposer.ts';
+    const path = '/tests/browser/fixtures/richMediaComposer.ts';
     const {mountRichMediaComposerHarness} = await window.e2eImport(path);
     mountRichMediaComposerHarness({premiumRequired: true});
   });

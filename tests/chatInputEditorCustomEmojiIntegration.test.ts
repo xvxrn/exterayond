@@ -1,7 +1,7 @@
 import {
   useChatInputEditorHarness,
   TiptapEditorInternals
-} from '@/tests/helpers/chatInputEditorHarness';
+} from '@tests/helpers/chatInputEditorHarness';
 import {AllSelection, NodeSelection, TextSelection} from '@tiptap/pm/state';
 import getRichValueWithCaret from '@helpers/dom/getRichValueWithCaret';
 

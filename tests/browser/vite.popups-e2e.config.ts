@@ -12,7 +12,7 @@ import {resolve} from 'path';
 import type {Plugin, PluginOption, UserConfig} from 'vite';
 import e2eConfig, {cacheModulesForTheRun, optimizeDepsFor} from './vite.e2e.config';
 
-const ROOT = resolve(__dirname, '..');
+const ROOT = resolve(__dirname, '../..');
 
 const bundled = process.env.TWEB_E2E_BUNDLED !== '0';
 // a cache per mode: the two servers of a run start side by side

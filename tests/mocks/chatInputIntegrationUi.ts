@@ -1,4 +1,4 @@
-import '@/tests/mocks/chatInputEditorUi';
+import '@tests/mocks/chatInputEditorUi';
 
 vi.hoisted(() => {
   const matchMedia = () => ({matches: false, addListener() {}, removeListener() {}, addEventListener() {}, removeEventListener() {}});

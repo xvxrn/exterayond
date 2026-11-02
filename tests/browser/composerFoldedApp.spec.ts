@@ -9,7 +9,7 @@ import {expect, Page, test} from '@playwright/test';
  * specs it runs against an authorized preview and skips rather than reporting a pass it never made:
  *
  *   bash scripts/start-preview.sh --detach    # prints the URL, say http://localhost:9001
- *   PLAYWRIGHT_BASE_URL=http://localhost:9001 npx playwright test e2e/composerFoldedApp.spec.ts
+ *   PLAYWRIGHT_BASE_URL=http://localhost:9001 npx playwright test tests/browser/composerFoldedApp.spec.ts
  */
 
 const RICH_DRAFT = {

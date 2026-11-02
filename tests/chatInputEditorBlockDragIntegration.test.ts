@@ -1,4 +1,4 @@
-import {useChatInputEditorHarness, TiptapEditorInternals} from '@/tests/helpers/chatInputEditorHarness';
+import {useChatInputEditorHarness, TiptapEditorInternals} from '@tests/helpers/chatInputEditorHarness';
 import type {Node as ProseMirrorNode} from '@tiptap/pm/model';
 import {TextSelection} from '@tiptap/pm/state';
 import {TOUCH_HOLD_DURATION} from '@helpers/dom/touchHold';

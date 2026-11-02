@@ -1,4 +1,4 @@
-import {useChatInputEditorHarness, TiptapEditorInternals} from '@/tests/helpers/chatInputEditorHarness';
+import {useChatInputEditorHarness, TiptapEditorInternals} from '@tests/helpers/chatInputEditorHarness';
 import type {JSONContent} from '@tiptap/core';
 import {closeHistory} from '@tiptap/pm/history';
 import {NodeSelection, TextSelection} from '@tiptap/pm/state';

@@ -1,4 +1,4 @@
-import '../lib/crypto/crypto.worker';
+import '../src/lib/crypto/crypto.worker';
 import cryptoWorker from '@lib/crypto/cryptoMessagePort';
 import MTPNetworker from '@lib/mtproto/networker';
 import {makeNetworker, makePermAuthKey} from './networkerHarness';

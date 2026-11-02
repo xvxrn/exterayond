@@ -1,4 +1,4 @@
-import '@/tests/mocks/chatInputEditorNodes';
+import '@tests/mocks/chatInputEditorNodes';
 
 vi.hoisted(() => {
   Object.defineProperties(HTMLCanvasElement.prototype, {

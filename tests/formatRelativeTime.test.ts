@@ -1,5 +1,5 @@
 import {describe, expect, test} from 'vitest';
-import formatRelativeTime from '../helpers/date/formatRelativeTime';
+import formatRelativeTime from '../src/helpers/date/formatRelativeTime';
 
 const SECOND = 1000;
 const MINUTE = 60;

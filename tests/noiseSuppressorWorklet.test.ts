@@ -10,7 +10,7 @@ import {resolve} from 'path';
 import {afterEach, beforeAll, describe, expect, it, vi} from 'vitest';
 import RnnoiseDenoiser from '@lib/calls/noiseSuppression/rnnoiseDenoiser';
 import {NoiseSuppressorOptions, NoiseSuppressorReport} from '@lib/calls/noiseSuppression/protocol';
-import {levelDb, mixSignals, syntheticSpeech, whiteNoise} from '@/tests/helpers/syntheticVoice';
+import {levelDb, mixSignals, syntheticSpeech, whiteNoise} from '@tests/helpers/syntheticVoice';
 
 const VENDOR_PATH = resolve(process.cwd(), 'src/vendor/rnnoise');
 const VENDORED = [{

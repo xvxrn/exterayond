@@ -1,5 +1,5 @@
-import '@/tests/mocks/chatInputEditorNodes';
-import {mountChatInputEditor} from '@/tests/helpers/chatInputEditor';
+import '@tests/mocks/chatInputEditorNodes';
+import {mountChatInputEditor} from '@tests/helpers/chatInputEditor';
 import isRTL from '@helpers/string/isRTL';
 
 describe('chat input editor direction', () => {

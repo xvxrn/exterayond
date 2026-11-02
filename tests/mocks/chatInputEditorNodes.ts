@@ -1,4 +1,4 @@
-import '@/tests/mocks/chatInputEditorUi';
+import '@tests/mocks/chatInputEditorUi';
 
 vi.mock('@environment/webpSupport', () => ({default: true}));
 

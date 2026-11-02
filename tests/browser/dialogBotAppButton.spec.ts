@@ -17,7 +17,7 @@ import {openChatList} from './chatList.helpers';
  * reporting a pass it never made:
  *
  *   bash scripts/start-preview.sh --detach    # prints the URL, say http://localhost:9001
- *   PLAYWRIGHT_BASE_URL=http://localhost:9001 pnpm exec playwright test e2e/dialogBotAppButton.spec.ts
+ *   PLAYWRIGHT_BASE_URL=http://localhost:9001 pnpm exec playwright test tests/browser/dialogBotAppButton.spec.ts
  */
 
 const BUTTON = '.dialog-subtitle-badge-bot-app';

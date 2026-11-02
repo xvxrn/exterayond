@@ -7,11 +7,11 @@
  * against a native peer while tweb↔tweb never noticed.
  */
 import {describe, expect, it} from 'vitest';
-import '../lib/crypto/crypto.worker';
+import '../src/lib/crypto/crypto.worker';
 import cryptoWorker from '@lib/crypto/cryptoMessagePort';
 import computeDhKey from '@lib/crypto/computeDhKey';
 import {bigIntFromBytes, bigIntToSigned} from '@helpers/bigInt/bigIntConversion';
-import {p} from '../mock/srp';
+import {p} from '../src/mock/srp';
 
 function fingerprintOf(sha1: Uint8Array): string {
   return bigIntToSigned(bigIntFromBytes(sha1.slice(-8).reverse())).toString(10);

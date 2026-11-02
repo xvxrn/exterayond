@@ -13,7 +13,7 @@ import type {PageBlock, RichText} from '@layer';
 //
 // TG_API_E2E=1 TG_API_PROD_DC=1 TG_API_SEED=./tmp/preview-sessions/account-a.json \
 //   TG_API_SEED_B=./tmp/preview-sessions/account-b.json \
-//   pnpm test src/tests/api/richMessageSafeUrl.test.ts -- --reporter=verbose --silent=false
+//   pnpm test tests/api/richMessageSafeUrl.test.ts -- --reporter=verbose --silent=false
 
 const ENABLED = process.env.TG_API_E2E === '1';
 const seedAPath = process.env.TG_API_SEED || './tmp/seed.json';

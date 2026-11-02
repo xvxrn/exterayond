@@ -1,4 +1,4 @@
-import '@/tests/mocks/chatInputIntegrationUi';
+import '@tests/mocks/chatInputIntegrationUi';
 import {AppImManager} from '@lib/appImManager';
 import Modes from '@config/modes';
 

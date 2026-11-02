@@ -3,47 +3,47 @@ import {resolve} from 'node:path';
 
 describe('formatting MarkupTooltip layout', () => {
   const source = readFileSync(
-    resolve(__dirname, '../components/chat/markupTooltip.ts'),
+    resolve(__dirname, '../src/components/chat/markupTooltip.ts'),
     'utf8'
   );
   const scrollableSource = readFileSync(
-    resolve(__dirname, '../components/chat/markupTooltipScrollable.tsx'),
+    resolve(__dirname, '../src/components/chat/markupTooltipScrollable.tsx'),
     'utf8'
   );
   const editorExtensionsSource = ['media', 'tableView', 'codeBlock'].map((name) => readFileSync(
-    resolve(__dirname, `../components/chat/inputEditor/extensions/${name}.ts`),
+    resolve(__dirname, `../src/components/chat/inputEditor/extensions/${name}.ts`),
     'utf8'
   )).join('\n');
   const mathTooltipSource = readFileSync(
-    resolve(__dirname, '../components/chat/inputEditor/mathTooltip.ts'),
+    resolve(__dirname, '../src/components/chat/inputEditor/mathTooltip.ts'),
     'utf8'
   );
   const aiEditorButtonSource = readFileSync(
-    resolve(__dirname, '../components/richMessageInput/ai.tsx'),
+    resolve(__dirname, '../src/components/richMessageInput/ai.tsx'),
     'utf8'
   );
   const toolbarSource = readFileSync(
-    resolve(__dirname, '../components/richMessageInput/toolbar.ts'),
+    resolve(__dirname, '../src/components/richMessageInput/toolbar.ts'),
     'utf8'
   );
   const aiEditorIconSource = readFileSync(
-    resolve(__dirname, '../components/chat/createAiEditorIcon.ts'),
+    resolve(__dirname, '../src/components/chat/createAiEditorIcon.ts'),
     'utf8'
   );
   const aiLettersPlainSource = readFileSync(
-    resolve(__dirname, '../assets/icons/ai_letters_plain.svg'),
+    resolve(__dirname, '../src/assets/icons/ai_letters_plain.svg'),
     'utf8'
   );
   const popupSource = readFileSync(
-    resolve(__dirname, '../components/popups/indexTsx.tsx'),
+    resolve(__dirname, '../src/components/popups/indexTsx.tsx'),
     'utf8'
   );
   const wrapRichTextSource = readFileSync(
-    resolve(__dirname, '../lib/richTextProcessor/wrapRichText.ts'),
+    resolve(__dirname, '../src/lib/richTextProcessor/wrapRichText.ts'),
     'utf8'
   );
   const styles = readFileSync(
-    resolve(__dirname, '../scss/partials/_chatMarkupTooltip.scss'),
+    resolve(__dirname, '../src/scss/partials/_chatMarkupTooltip.scss'),
     'utf8'
   );
 

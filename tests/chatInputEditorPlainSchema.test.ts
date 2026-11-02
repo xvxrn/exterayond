@@ -1,7 +1,7 @@
-import '@/tests/mocks/chatInputEditorNodes';
+import '@tests/mocks/chatInputEditorNodes';
 import {CHAT_INPUT_EXTENSIONS, PLAIN_MESSAGE_EXTENSIONS, TIPTAP_BASE_EXTENSIONS} from '@components/chat/inputEditor/extensions';
 import {PLAIN_MESSAGE_MARK_NAMES, PLAIN_MESSAGE_NODE_NAMES} from '@components/chat/inputEditor/plainSchema';
-import {mountChatInputEditor} from '@/tests/helpers/chatInputEditor';
+import {mountChatInputEditor} from '@tests/helpers/chatInputEditor';
 
 const names = (type: string) => PLAIN_MESSAGE_EXTENSIONS
 .filter((extension) => extension.type === type)

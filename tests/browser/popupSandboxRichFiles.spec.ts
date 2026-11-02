@@ -20,7 +20,7 @@ async function open(page: Page, {a11y = false, inChat = false} = {}) {
   await page.evaluate(() => window.popupSandbox.ready());
   await page.getByRole('button', {name: '◂ Hide', exact: true}).click();
   await page.evaluate(async(inChat) => {
-    const path = '/e2e/fixtures/richMediaComposer.ts';
+    const path = '/tests/browser/fixtures/richMediaComposer.ts';
     const {mountRichMediaComposerHarness} = await window.e2eImport(path);
     window.richMediaComposerHarness = mountRichMediaComposerHarness({inChat});
   }, inChat);
@@ -323,7 +323,7 @@ test('a file that failed to upload offers to try again or remove it, and keeps o
 test('a file of a rich message draws as a document row with its caption', async({page}) => {
   await open(page);
   await page.evaluate(async(file) => {
-    const path = '/e2e/fixtures/richPage.ts';
+    const path = '/tests/browser/fixtures/richPage.ts';
     const {mountRichPage} = await window.e2eImport(path);
     mountRichPage([
       {_: 'pageBlockParagraph', text: {_: 'textPlain', text: 'Before the file'}},
@@ -349,7 +349,7 @@ test('an audio of a rich message shows its whole name when the line has room for
   await open(page);
   const title = 'Clair de lune.flac';
   await page.evaluate(async(title) => {
-    const path = '/e2e/fixtures/richPage.ts';
+    const path = '/tests/browser/fixtures/richPage.ts';
     const {mountRichPage} = await window.e2eImport(path);
     mountRichPage([
       {_: 'pageBlockAudio', audio_id: '5002', caption: {

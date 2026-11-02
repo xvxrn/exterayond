@@ -1,5 +1,5 @@
-import '@/tests/mocks/chatInputEditorEngineUi';
-import {mountChatInputEditor} from '@/tests/helpers/chatInputEditor';
+import '@tests/mocks/chatInputEditorEngineUi';
+import {mountChatInputEditor} from '@tests/helpers/chatInputEditor';
 
 const paragraph = (text: string) => ({type: 'paragraph', content: [{type: 'text', text}]});
 const list = (type: string, values: string[]) => ({

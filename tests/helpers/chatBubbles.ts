@@ -11,7 +11,7 @@
  * its `vi.mock`s only reach the modules loaded after it.
  */
 
-import {stubBrowserGlobals} from '@/tests/helpers/browserGlobals';
+import {stubBrowserGlobals} from '@tests/helpers/browserGlobals';
 
 const moduleMocks = vi.hoisted(() => {
   const noop = vi.fn();

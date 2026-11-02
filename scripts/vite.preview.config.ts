@@ -118,7 +118,7 @@ function pruneSupersededBuilds() {
   }
 }
 
-// Mirrors seedLocalStorage() from src/tests/api/harness.ts, but for the browser:
+// Mirrors seedLocalStorage() from tests/api/harness.ts, but for the browser:
 // every value is JSON.stringify'd, exactly as LocalStorageController writes it.
 const seedScript = `(function(){
   try {

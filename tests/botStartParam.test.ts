@@ -1,4 +1,4 @@
-import {loadChatBubbles, LOAD_CHAT_BUBBLES_TIMEOUT} from '@/tests/helpers/chatBubbles';
+import {loadChatBubbles, LOAD_CHAT_BUBBLES_TIMEOUT} from '@tests/helpers/chatBubbles';
 import '@helpers/peerIdPolyfill';
 import {BOT_START_PARAM} from '@appManagers/constants';
 import createHistoryStorage from '@appManagers/utils/messages/createHistoryStorage';

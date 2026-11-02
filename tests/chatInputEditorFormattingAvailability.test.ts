@@ -3,7 +3,7 @@ import type {Node as ProseMirrorNode} from '@tiptap/pm/model';
 import {TextSelection} from '@tiptap/pm/state';
 import type {MarkdownType} from '@helpers/dom/getRichElementValue';
 import type {ChatInputEditor, ChatInputFormatting} from '@components/chat/inputEditor/types';
-import {useChatInputEditorHarness, type TiptapEditorInternals} from '@/tests/helpers/chatInputEditorHarness';
+import {useChatInputEditorHarness, type TiptapEditorInternals} from '@tests/helpers/chatInputEditorHarness';
 
 const SELECTED = 'selected';
 const paragraph = (text: string): JSONContent => ({type: 'paragraph', content: [{type: 'text', text}]});
@@ -168,7 +168,7 @@ function mountSelected(mountEditor: ReturnType<typeof useChatInputEditorHarness>
 
 // What a block's style already draws is offered neither by the tooltip nor by a shortcut, even over
 // text that carries the mark (pasted). Which blocks those are is measured in a browser
-// (e2e/popupSandboxRichTextMarkup.spec.ts); this holds the editor's side of it.
+// (tests/browser/popupSandboxRichTextMarkup.spec.ts); this holds the editor's side of it.
 describe('Tiptap chat input editor: a mark a block draws already', () => {
   const {mountEditor} = useChatInputEditorHarness();
   const word = (marks?: JSONContent['marks']): JSONContent[] => [{type: 'text', text: SELECTED, marks}];

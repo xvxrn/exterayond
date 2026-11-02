@@ -1,4 +1,4 @@
-import {useChatInputEditorHarness, TiptapEditorInternals, tableDocument} from '@/tests/helpers/chatInputEditorHarness';
+import {useChatInputEditorHarness, TiptapEditorInternals, tableDocument} from '@tests/helpers/chatInputEditorHarness';
 import createChatInputEditor from '@components/chat/inputEditor';
 
 describe('Tiptap chat input editor: BlockSelection', () => {

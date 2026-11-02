@@ -1,8 +1,8 @@
 import type {Editor} from '@tiptap/core';
 import {Slice} from '@tiptap/pm/model';
 import {NodeSelection} from '@tiptap/pm/state';
-import '@/tests/mocks/chatInputEditorEngineUi';
-import {mountChatInputEditor} from '@/tests/helpers/chatInputEditor';
+import '@tests/mocks/chatInputEditorEngineUi';
+import {mountChatInputEditor} from '@tests/helpers/chatInputEditor';
 import type {ChatInputEditor} from '@components/chat/inputEditor/types';
 import {setExteralessSetting} from '@stores/exteralessSettings';
 

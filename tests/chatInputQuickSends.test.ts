@@ -1,8 +1,8 @@
-import '@/tests/mocks/chatInputIntegrationUi';
+import '@tests/mocks/chatInputIntegrationUi';
 import '@helpers/peerIdPolyfill';
 import ChatInput from '@components/chat/input';
 import {ChatType} from '@components/chat/chatType';
-import {mountChatInputEditor} from '@/tests/helpers/chatInputEditor';
+import {mountChatInputEditor} from '@tests/helpers/chatInputEditor';
 
 vi.mock('@lib/appImManager', () => ({AppImManager: class {}, APP_TABS: {}, default: {}}));
 

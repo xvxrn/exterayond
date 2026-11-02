@@ -1,4 +1,4 @@
-import {isUsernameValid, isWebAppNameValid} from '../lib/richTextProcessor/validators';
+import {isUsernameValid, isWebAppNameValid} from '../src/lib/richTextProcessor/validators';
 
 // Mirrors TDLib's is_valid_username (with tweb's 3-char minimum):
 // https://github.com/tdlib/td/blob/master/td/telegram/misc.cpp is_valid_username

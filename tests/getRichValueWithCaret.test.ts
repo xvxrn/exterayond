@@ -1,4 +1,4 @@
-import '@/tests/mocks/chatInputEditorEngineUi';
+import '@tests/mocks/chatInputEditorEngineUi';
 import getRichValueWithCaret from '@helpers/dom/getRichValueWithCaret';
 
 test.each([

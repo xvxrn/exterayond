@@ -1,6 +1,6 @@
 import {describe, expect, test} from 'vitest';
 
-import {applyPagePreviewRules} from '../lib/linkCleaner/pagePreviewRules';
+import {applyPagePreviewRules} from '../src/lib/linkCleaner/pagePreviewRules';
 
 const BUILT_IN: ReadonlyArray<readonly [from: string, to: string]> = [
   ['x.com', 'fixupx.com'],

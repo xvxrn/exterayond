@@ -1,7 +1,7 @@
 // @vitest-environment node
 import {describe, expect, it} from 'vitest';
 // @ts-ignore — a plain node script
-import {measure, readBudget} from '../../scripts/import-graph.mjs';
+import {measure, readBudget} from '../scripts/import-graph.mjs';
 
 /**
  * A ratchet over the import graph (scripts/import-graph.mjs): the largest import cycle — what makes an edit reach

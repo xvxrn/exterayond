@@ -15,7 +15,7 @@ import {clickVisible, expectNoA11yViolations, trackBrowserErrors} from './access
  * rather than reporting a clean run it never made:
  *
  *   bash scripts/start-preview.sh --detach    # prints the URL, say http://localhost:9001
- *   PLAYWRIGHT_BASE_URL=http://localhost:9001 pnpm exec playwright test e2e/accessibilitySignedIn.spec.ts
+ *   PLAYWRIGHT_BASE_URL=http://localhost:9001 pnpm exec playwright test tests/browser/accessibilitySignedIn.spec.ts
  */
 test.describe('the signed-in client has no detectable accessibility violations', () => {
   test.skip(!process.env.PLAYWRIGHT_BASE_URL, 'needs an authorized preview (PLAYWRIGHT_BASE_URL)');
@@ -107,7 +107,7 @@ test.describe('the signed-in client has no detectable accessibility violations',
     // This used to be unscannable: opening it put the shared-media list into a
     // self-feeding load loop that ate the main thread, and a scan through that
     // was a coin flip rather than a measurement. Fixed on master by
-    // `scrollableRefiller` — see `e2e/profileSidebarIdle.spec.ts`, which holds
+    // `scrollableRefiller` — see `tests/browser/profileSidebarIdle.spec.ts`, which holds
     // the sidebar itself to going idle.
     expect(await clickVisible(page, '.chat-info'), 'there was no chat header to press').toBe(true);
     await page.waitForTimeout(2000);

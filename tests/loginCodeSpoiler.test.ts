@@ -1,5 +1,5 @@
 import type {Message} from '@layer';
-import {stubBrowserGlobals} from '@/tests/helpers/browserGlobals';
+import {stubBrowserGlobals} from '@tests/helpers/browserGlobals';
 import {SERVICE_PEER_ID, VERIFICATION_CODES_BOT_ID} from '@appManagers/constants';
 import getLoginCodeEntity from '@appManagers/utils/messages/getLoginCodeEntity';
 

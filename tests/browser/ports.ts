@@ -16,7 +16,7 @@ const BLOCKS = 1_400;
 const SLOTS = 8;
 const SERVERS = ['default', 'editor', 'popups', 'popupsModules', 'focus', 'a11y'] as const;
 
-const checkout = realpathSync(resolve(__dirname, '..'));
+const checkout = realpathSync(resolve(__dirname, '../..'));
 const block = parseInt(createHash('sha1').update(checkout).digest('hex').slice(0, 8), 16) % BLOCKS;
 
 export default function e2ePort(server: typeof SERVERS[number]) {

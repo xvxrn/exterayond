@@ -1,4 +1,4 @@
-import {useChatInputEditorHarness, TiptapEditorInternals} from '@/tests/helpers/chatInputEditorHarness';
+import {useChatInputEditorHarness, TiptapEditorInternals} from '@tests/helpers/chatInputEditorHarness';
 import createChatInputEditor from '@components/chat/inputEditor';
 import {CHAT_INPUT_PLACEHOLDER_CLASS} from '@components/chat/inputEditor/placeholders';
 import type {ChatInputEditor} from '@components/chat/inputEditor/types';

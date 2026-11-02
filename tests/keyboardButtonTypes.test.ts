@@ -1,5 +1,5 @@
 import '@helpers/peerIdPolyfill';
-import {IntersectionObserverMock} from '@/tests/mocks/intersectionObserver';
+import {IntersectionObserverMock} from '@tests/mocks/intersectionObserver';
 import type {KeyboardButton, KeyboardInlineButton, PageButton, ReplyMarkup} from '@layer';
 import * as mocked1 from '@lib/appImManager';
 import * as mocked2 from '@components/sidebarRight';

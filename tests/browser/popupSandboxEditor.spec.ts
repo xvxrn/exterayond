@@ -198,7 +198,7 @@ test('the selection tooltip stands over the text of a Select All, not over the b
   await page.evaluate(() => window.popupSandbox.ready());
   await page.getByRole('button', {name: '◂ Hide', exact: true}).click();
   await page.evaluate(async() => {
-    const path = '/e2e/fixtures/richMediaComposer.ts';
+    const path = '/tests/browser/fixtures/richMediaComposer.ts';
     const {mountRichMediaComposerHarness} = await window.e2eImport(path);
     const paragraph = (text?: string) => ({type: 'paragraph', content: text ? [{type: 'text', text}] : undefined});
     mountRichMediaComposerHarness().setDocument({type: 'doc', content: [paragraph('hello'), paragraph('world'), paragraph()]});
@@ -237,7 +237,7 @@ const mountFoldedComposer = async(page: Page, sendsRich: boolean) => {
   await page.evaluate(() => window.popupSandbox.ready());
   await page.getByRole('button', {name: '◂ Hide', exact: true}).click();
   await page.evaluate(async(sendsRich) => {
-    const path = '/e2e/fixtures/richMediaComposer.ts';
+    const path = '/tests/browser/fixtures/richMediaComposer.ts';
     const {mountRichMediaComposerHarness} = await window.e2eImport(path);
     const harness = window.richMediaComposerHarness = mountRichMediaComposerHarness({sendsRich});
     await harness.ready();

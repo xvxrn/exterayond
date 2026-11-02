@@ -1,4 +1,4 @@
-import {useChatInputEditorHarness, TiptapEditorInternals, findEntity} from '@/tests/helpers/chatInputEditorHarness';
+import {useChatInputEditorHarness, TiptapEditorInternals, findEntity} from '@tests/helpers/chatInputEditorHarness';
 import {TextSelection} from '@tiptap/pm/state';
 import {instantViewStyles} from '@components/instantViewFormatting';
 

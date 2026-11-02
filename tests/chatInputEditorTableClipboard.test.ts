@@ -1,8 +1,8 @@
 import type {Editor, JSONContent} from '@tiptap/core';
 import {Fragment, Schema, type Node as ProseMirrorNode} from '@tiptap/pm/model';
 import {CellSelection, TableMap} from '@tiptap/pm/tables';
-import '@/tests/mocks/chatInputEditorTableUi';
-import {mountChatInputEditor} from '@/tests/helpers/chatInputEditor';
+import '@tests/mocks/chatInputEditorTableUi';
+import {mountChatInputEditor} from '@tests/helpers/chatInputEditor';
 import {
   buildChatTableClipboardSerializer,
   normalizeChatTableClipboardHTML,

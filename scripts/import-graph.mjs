@@ -147,7 +147,7 @@ const staticOnly = (graph) => new Map([...graph].map(([k, v]) => [k, v.filter((e
 function listTests(dir = '.', out = []) {
   for(const entry of fs.readdirSync(dir, {withFileTypes: true})) {
     if(entry.isDirectory()) {
-      if(TEST_SKIP_DIRS.has(entry.name) || (dir === '.' && entry.name === 'e2e')) continue;
+      if(TEST_SKIP_DIRS.has(entry.name) || (dir === 'tests' && entry.name === 'browser')) continue;
       listTests(path.join(dir, entry.name), out);
     } else if(TEST_FILE.test(entry.name) && !/^(vite|vitest)\.config\./.test(entry.name)) {
       out.push(path.join(dir, entry.name));

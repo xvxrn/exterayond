@@ -3,7 +3,7 @@ import {buildSync} from 'esbuild';
 import {resolve} from 'node:path';
 
 test('rich-message validation and shared format rules have no runtime UI or editor dependency', () => {
-  const root = resolve(__dirname, '../..');
+  const root = resolve(__dirname, '..');
   const {metafile} = buildSync({
     absWorkingDir: root,
     entryPoints: [

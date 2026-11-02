@@ -1,4 +1,4 @@
-import '@/tests/mocks/chatInputEditorUi';
+import '@tests/mocks/chatInputEditorUi';
 import '@helpers/peerIdPolyfill';
 import InputField from '@components/inputField';
 

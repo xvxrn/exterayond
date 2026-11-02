@@ -10,7 +10,7 @@ import {expect, Page, test} from '@playwright/test';
  * it runs against an authorized preview and skips rather than reporting a pass it never made:
  *
  *   bash scripts/start-preview.sh --detach    # prints the URL, say http://localhost:9001
- *   PLAYWRIGHT_BASE_URL=http://localhost:9001 npx playwright test e2e/albumHighlightApp.spec.ts
+ *   PLAYWRIGHT_BASE_URL=http://localhost:9001 npx playwright test tests/browser/albumHighlightApp.spec.ts
  */
 
 // * how far down the chat list to look for an album

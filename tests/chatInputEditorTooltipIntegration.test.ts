@@ -1,4 +1,4 @@
-import {useChatInputEditorHarness, TiptapEditorInternals, currentTable} from '@/tests/helpers/chatInputEditorHarness';
+import {useChatInputEditorHarness, TiptapEditorInternals, currentTable} from '@tests/helpers/chatInputEditorHarness';
 import {TextSelection} from '@tiptap/pm/state';
 import {CellSelection} from '@tiptap/pm/tables';
 import {CHAT_INPUT_EDITOR_SELECTION_UPDATE_EVENT} from '@components/chat/inputEditor/events';

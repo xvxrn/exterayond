@@ -1,4 +1,4 @@
-import {useChatInputEditorHarness, TiptapEditorInternals} from '@/tests/helpers/chatInputEditorHarness';
+import {useChatInputEditorHarness, TiptapEditorInternals} from '@tests/helpers/chatInputEditorHarness';
 import {AllSelection, NodeSelection} from '@tiptap/pm/state';
 import {getIconContent} from '@components/icon';
 import {instantViewStyles} from '@components/instantViewFormatting';

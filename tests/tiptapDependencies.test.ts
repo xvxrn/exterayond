@@ -12,7 +12,7 @@ type PackageManifest = {
   peerDependencies?: Record<string, string>
 };
 
-const root = resolve(__dirname, '../..');
+const root = resolve(__dirname, '..');
 const rootManifestPath = join(root, 'package.json');
 const rootManifest = JSON.parse(readFileSync(rootManifestPath, 'utf8')) as PackageManifest;
 const directDependencies = {

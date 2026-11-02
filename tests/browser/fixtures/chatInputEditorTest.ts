@@ -2,7 +2,7 @@ import {expect, type Page} from '@playwright/test';
 import type {ChatInputEditorBrowserHarness} from './chatInputEditor';
 
 export async function openEditor(page: Page, waitUntil: 'load' | 'domcontentloaded' = 'load') {
-  await page.goto('/e2e/fixtures/chatInputEditor.html', {waitUntil});
+  await page.goto('/tests/browser/fixtures/chatInputEditor.html', {waitUntil});
   await page.waitForFunction(() => document.documentElement.dataset.editorFixtureReady !== undefined);
 }
 

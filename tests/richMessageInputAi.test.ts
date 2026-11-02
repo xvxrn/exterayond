@@ -1,5 +1,5 @@
-import '@/tests/mocks/chatInputIntegrationUi';
-import '@/tests/mocks/chatInputEditorNodes';
+import '@tests/mocks/chatInputIntegrationUi';
+import '@tests/mocks/chatInputEditorNodes';
 import {createRoot} from 'solid-js';
 import RichMessageInput, {type RichMessageInputController} from '@components/richMessageInput';
 import {useAiEditorButton} from '@components/richMessageInput/ai';

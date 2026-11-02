@@ -4,7 +4,7 @@ import {defineConfig, type AliasOptions} from 'vite';
 // page under a test that is half done
 import e2eConfig, {cacheModulesForTheRun, optimizeDepsFor} from './vite.e2e.config';
 
-const ROOT = resolve(__dirname, '..');
+const ROOT = resolve(__dirname, '../..');
 
 const fixtureStubs = [
   ['@components/buttonMenu', 'buttonMenu.ts'],
@@ -24,7 +24,7 @@ function aliasEntries(aliases: AliasOptions = []) {
 
 const base = e2eConfig;
 const baseOptimizeEntries = Array.isArray(base.optimizeDeps?.entries) ? base.optimizeDeps.entries : [];
-const stubDirectory = resolve(ROOT, 'e2e/fixtures/stubs');
+const stubDirectory = resolve(ROOT, 'tests/browser/fixtures/stubs');
 const cacheDir = resolve(ROOT, 'node_modules/.vite-editor-e2e');
 
 export default defineConfig({
@@ -35,12 +35,12 @@ export default defineConfig({
     ...base.server,
     // transformed while the workers launch their browsers, rather than by every worker's first page at
     // once: the app's stylesheet alone is most of a cold load
-    warmup: {clientFiles: ['./e2e/fixtures/chatInputEditor.ts']}
+    warmup: {clientFiles: ['./tests/browser/fixtures/chatInputEditor.ts']}
   },
   optimizeDeps: {
     ...optimizeDepsFor(cacheDir, base.optimizeDeps),
     entries: [
-      'e2e/fixtures/chatInputEditor.html',
+      'tests/browser/fixtures/chatInputEditor.html',
       ...baseOptimizeEntries.filter((entry) => entry !== 'index.html')
     ]
   },

@@ -1,7 +1,7 @@
 import type {Editor, JSONContent} from '@tiptap/core';
 import {NodeSelection} from '@tiptap/pm/state';
-import '@/tests/mocks/chatInputEditorNodes';
-import {mountChatInputEditor} from '@/tests/helpers/chatInputEditor';
+import '@tests/mocks/chatInputEditorNodes';
+import {mountChatInputEditor} from '@tests/helpers/chatInputEditor';
 import type {
   ChatInputEditor,
   ChatInputEditorSelection

@@ -25,6 +25,7 @@ import {
   WEB_MENU_STOCK_ORDER,
   applyMainMenuHalf,
   applyMainMenuLayoutToButtons,
+  getEditorMainMenuLayout,
   isMenuIdArray,
   parseMainMenuLayout,
   resolveMainMenuLayout,
@@ -82,6 +83,33 @@ describe('main menu layout (MainMenuLayout contract)', () => {
     expect(resolveMainMenuLayout()).toEqual({visible: [], hidden: []});
     setExteralessSetting('OEAppearanceMainMenuLayout', '14,6;2,8,11');
     expect(resolveMainMenuLayout().visible.length).toBeGreaterThan(0);
+  });
+
+  it('the editor read lists the stock halves on an uncustomized key (the hub screen)', () => {
+    // * Android's editor shows the current layout when the key is empty
+    // * (parse()'s getDefaultLayout branch) — the hub's Visible/Hidden lists
+    // * must offer the stock items, not two empty sections
+    expect(getEditorMainMenuLayout()).toEqual({
+      visible: [...WEB_MENU_STOCK_ORDER, MAIN_MENU_ITEMS.SETTINGS],
+      hidden: []
+    });
+    setExteralessSetting('OEAppearanceMainMenuLayout', USER_LAYOUT);
+    expect(getEditorMainMenuLayout()).toEqual(resolveMainMenuLayout());
+  });
+
+  it('the first toggle from an uncustomized key saves the stock layout minus the item', () => {
+    // * Android's editor edits the layout it shows and saves the whole thing;
+    // * an empty visible half (the old behavior: ";11") would collapse the
+    // * menu to Settings alone
+    setMenuItemVisible(MAIN_MENU_ITEMS.SAVED, false);
+    expect(exteralessSettings.OEAppearanceMainMenuLayout).toBe('14,6,10,8;11');
+    expect(resolveMainMenuLayout().visible).toEqual([14, 6, 10, MAIN_MENU_ITEMS.SETTINGS]);
+    expect(resolveMainMenuLayout().hidden).toContain(MAIN_MENU_ITEMS.SAVED);
+
+    // * and back: the move rejoins the target half at its end
+    setMenuItemVisible(MAIN_MENU_ITEMS.SAVED, true);
+    expect(resolveMainMenuLayout().visible).toEqual([14, 6, 10, MAIN_MENU_ITEMS.SETTINGS, MAIN_MENU_ITEMS.SAVED]);
+    expect(resolveMainMenuLayout().hidden).not.toContain(MAIN_MENU_ITEMS.SAVED);
   });
 
   it('setMenuItemVisible moves an id between the halves', () => {

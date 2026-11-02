@@ -1,5 +1,5 @@
 import {Editor, JSONContent} from '@tiptap/core';
-import '@/tests/mocks/chatInputEditorNodes';
+import '@tests/mocks/chatInputEditorNodes';
 import {CHAT_INPUT_EXTENSIONS, TIPTAP_BASE_EXTENSIONS} from '@components/chat/inputEditor/extensions';
 import {telegramTextToTiptap, telegramTextToTiptapInlineContent, tiptapToTelegram} from '@components/chat/inputEditor/model';
 import type {MessageEntity} from '@layer';

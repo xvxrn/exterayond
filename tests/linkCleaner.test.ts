@@ -1,5 +1,5 @@
 import {describe, expect, it} from 'vitest';
-import filterText from '../assets/adguard_url_tracking.txt?raw';
+import filterText from '../src/assets/adguard_url_tracking.txt?raw';
 import {UrlCleaner} from '@lib/linkCleaner/urlCleaner';
 import {cleanLinksInText, filterTimeUpdated} from '@lib/linkCleaner';
 

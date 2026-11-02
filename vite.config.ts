@@ -176,6 +176,7 @@ const ADDITIONAL_ALIASES = {
   '@vendor': resolve(rootDir, 'src/vendor'),
   '@layer': resolve(rootDir, 'src/layer'),
   '@types': resolve(rootDir, 'src/types'),
+  '@tests': resolve(rootDir, 'tests'),
   '@': resolve(rootDir, 'src')
 };
 
@@ -252,9 +253,9 @@ export default defineConfig({
       // ...and the pnpm store links straight back into those worktrees
       // (.pnpm-store/v11/projects/<hash> -> ../../../.claude/worktrees/<name>),
       // so the very same files get collected a second time under a path the
-      // `.claude` glob never sees — a foreign branch's tests (and its root
-      // e2e/ Playwright specs, which vitest cannot run at all) then fail this
-      // checkout's `pnpm test`.
+      // `.claude` glob never sees — a foreign branch's tests (and its
+      // tests/browser/ Playwright specs, which vitest cannot run at all) then
+      // fail this checkout's `pnpm test`.
       '**/.pnpm-store/**',
       // read-only reference clones (exteraless android, official tweb) live
       // here with a full copy of the tweb test suite — they resolve this
@@ -267,11 +268,10 @@ export default defineConfig({
       '**/{karma,rollup,webpack,vite,vitest,jest,ava,babel,nyc,cypress,tsup,build}.config.*',
       '**/solid/**',
       // Playwright browser specs live here and must not be run by vitest (jsdom).
-      // Anchored to the ROOT e2e/ dir (playwright.config.ts `testDir: './e2e'`) —
-      // a `**/e2e/**` glob also swallowed src/lib/calls/e2e/tests/, silently
-      // dropping the whole TdE2E suite (blockchain, call, crypto, keys, …) from
-      // `pnpm test`.
-      'e2e/**',
+      // Anchored to the tests/browser/ dir. Don't widen to `**/e2e/**`: that
+      // glob once swallowed src/lib/calls/e2e/tests/, silently dropping the
+      // whole TdE2E suite (blockchain, call, crypto, keys, …) from `pnpm test`.
+      'tests/browser/**',
       // scratch: a test file parked there is no part of the suite, and one
       // that no longer resolves fails `pnpm test --run` and with it the build
       'tmp/**'
@@ -295,7 +295,7 @@ export default defineConfig({
     // a full run waits for its turn in the machine-wide queue of heavy test runs (scripts/test-queue.sh)
     maxWorkers: vitestWorkers(),
     globals: true,
-    setupFiles: ['./src/tests/setup.ts']
+    setupFiles: ['./tests/setup.ts']
   },
   server: serverOptions,
   base: '',

@@ -6,7 +6,7 @@ import pause from '@helpers/schedulers/pause';
 // goes over a temporary key bound to the stored permanent one.
 //
 //   TG_API_PFS=1 TG_API_PROD_DC=1 TG_API_SEED=./tmp/preview-sessions/<id>.json \
-//     pnpm test src/tests/api/pfs.test.ts -- --silent=false
+//     pnpm test tests/api/pfs.test.ts -- --silent=false
 //
 // The seed must not be live anywhere else (see AUTH_KEY_DUPLICATED in the
 // harness notes). The fresh-DC case needs no seed.

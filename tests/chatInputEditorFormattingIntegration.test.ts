@@ -3,7 +3,7 @@ import {
   TiptapEditorInternals,
   findEntity,
   typeTextThroughEditorView
-} from '@/tests/helpers/chatInputEditorHarness';
+} from '@tests/helpers/chatInputEditorHarness';
 import {undoNoScroll} from '@tiptap/pm/history';
 import createChatInputEditor from '@components/chat/inputEditor';
 import {getInstantViewHeadingPresentation, instantViewStyles} from '@components/instantViewFormatting';

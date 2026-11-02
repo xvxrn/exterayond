@@ -23,7 +23,7 @@ const PARTS = Number(process.env.POPUP_STORY_PARTS) || 8;
  *
  * This covers the FIXTURE source only. The panel's other source — the signed-in session's own data,
  * run against the real managers — needs an authorized preview and has no e2e yet; its write guard is
- * covered by `src/tests/popupSandboxLiveManagers.test.ts` instead.
+ * covered by `tests/popupSandboxLiveManagers.test.ts` instead.
  */
 
 /**

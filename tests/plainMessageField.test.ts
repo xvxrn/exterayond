@@ -1,4 +1,4 @@
-import '@/tests/mocks/chatInputEditorNodes';
+import '@tests/mocks/chatInputEditorNodes';
 import attachPlainMessageEditor from '@components/chat/inputEditor/plainField';
 import {isSendShortcutLeft} from '@helpers/dom/isSendShortcutPressed';
 import {setAppSettingsSilent} from '@stores/appSettings';
@@ -10,7 +10,7 @@ import prepareTextWithEntitiesForCopying from '@helpers/prepareTextWithEntitiesF
 import type {DraftMessage, MessageEntity} from '@layer';
 import type {Editor} from '@tiptap/core';
 import {Fragment, Slice} from '@tiptap/pm/model';
-import {typeTextThroughEditorView, useChatInputEditorHarness, type TiptapEditorInternals} from '@/tests/helpers/chatInputEditorHarness';
+import {typeTextThroughEditorView, useChatInputEditorHarness, type TiptapEditorInternals} from '@tests/helpers/chatInputEditorHarness';
 
 vi.mock('@environment/webpSupport', () => ({default: true}));
 vi.mock('@components/toast', () => ({toastNew: vi.fn()}));

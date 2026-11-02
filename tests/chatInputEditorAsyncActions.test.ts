@@ -1,7 +1,7 @@
-import '@/tests/mocks/chatInputIntegrationUi';
+import '@tests/mocks/chatInputIntegrationUi';
 import ChatInput from '@components/chat/input';
 import createChatInputEditor from '@components/chat/inputEditor';
-import {mountChatInputEditor} from '@/tests/helpers/chatInputEditor';
+import {mountChatInputEditor} from '@tests/helpers/chatInputEditor';
 import {setExteralessSetting} from '@stores/exteralessSettings';
 import {openCreateLinkPopupForEditor} from '@components/popups/createLinkForInput';
 import EditorToolbar from '@components/richMessageInput/toolbar';

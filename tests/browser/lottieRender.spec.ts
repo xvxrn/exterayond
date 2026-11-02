@@ -3,7 +3,7 @@ import {readdirSync} from 'fs';
 import {resolve} from 'path';
 import {PNG} from 'pngjs';
 
-const TGS_DIR = resolve(__dirname, '..', 'public', 'assets', 'tgs');
+const TGS_DIR = resolve(__dirname, '../..', 'public', 'assets', 'tgs');
 // ReactionGeneric is the colourless "generic reaction" template: it renders fully transparent
 // until the reactions UI applies a tint, so there's nothing to detect when rendered standalone.
 const SKIP = new Set(['ReactionGeneric.json']);

@@ -136,7 +136,7 @@ describe('SMIL declarations read as keyframes', () => {
  */
 describe('every glyph converts', () => {
   test.each(['playpause', 'pauseplay', 'forward', 'rewind'] as const)('%s', async(name) => {
-    const markup: string = (await import(`../assets/audioIcons/${name}.svg?raw`)).default;
+    const markup: string = (await import(`../src/assets/audioIcons/${name}.svg?raw`)).default;
     const animations = readGlyphAnimations(createElementFromMarkup(markup));
 
     expect(animations.length).toBeGreaterThan(0);

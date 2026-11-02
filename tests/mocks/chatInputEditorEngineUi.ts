@@ -1,4 +1,4 @@
-import '@/tests/mocks/chatInputEditorNodes';
+import '@tests/mocks/chatInputEditorNodes';
 
 vi.mock('@lib/apiManagerProxy', () => ({
   default: {

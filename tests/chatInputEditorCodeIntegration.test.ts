@@ -1,4 +1,4 @@
-import {useChatInputEditorHarness, TiptapEditorInternals} from '@/tests/helpers/chatInputEditorHarness';
+import {useChatInputEditorHarness, TiptapEditorInternals} from '@tests/helpers/chatInputEditorHarness';
 import {TextSelection} from '@tiptap/pm/state';
 import createChatInputEditor from '@components/chat/inputEditor';
 import {isRichMediaInsertSelectionCurrent} from '@components/chat/inputEditor/mediaPaste';

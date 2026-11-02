@@ -2,7 +2,7 @@ import {createRoot, createSignal} from 'solid-js';
 import {afterEach, describe, expect, it, vi} from 'vitest';
 import {getMiddleware} from '@helpers/middleware';
 import attachDialogFolderTags from '@components/folderTags/dialogFolderTags';
-import makeDialogFilter from '@/tests/helpers/dialogFilter';
+import makeDialogFilter from '@tests/helpers/dialogFilter';
 
 const mocks = vi.hoisted(() => ({
   fitFolderTags: vi.fn()

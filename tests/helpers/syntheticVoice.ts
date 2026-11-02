@@ -1,7 +1,7 @@
 /*
  * Deterministic test audio for noise suppression: voiced syllables a speech
  * denoiser keeps, and white noise it removes. Used by the worklet unit test
- * and by the browser fixture of e2e/callNoiseSuppression.spec.ts.
+ * and by the browser fixture of tests/browser/callNoiseSuppression.spec.ts.
  */
 export const SYNTHETIC_VOICE_RATE = 48000;
 const RATE = SYNTHETIC_VOICE_RATE;

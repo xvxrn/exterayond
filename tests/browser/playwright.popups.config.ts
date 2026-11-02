@@ -1,6 +1,6 @@
 import {defineConfig, devices} from '@playwright/test';
 import path from 'path';
-import {playwrightWorkers} from '../scripts/testQueue';
+import {playwrightWorkers} from '../../scripts/testQueue';
 import e2ePort from './ports';
 
 const PORT = e2ePort('popups');
@@ -10,7 +10,10 @@ const MODULES_PORT = e2ePort('popupsModules');
 // The app's server for the sandbox suites (vite.popups-e2e.config.ts): a bundle, ready once it is built, which
 // /__e2e/ready says — or, `bundled` false, the modules as they are
 export const appServer = (port = PORT, bundled = true) => ({
-  command: `node_modules/.bin/vite --config e2e/vite.popups-e2e.config.ts --host 127.0.0.1 --port ${port} --strictPort`,
+  command: `node_modules/.bin/vite --config tests/browser/vite.popups-e2e.config.ts --host 127.0.0.1 --port ${port} --strictPort`,
+  // Playwright spawns the server with the config file's directory as its cwd;
+  // the command's relative paths are written against the checkout root.
+  cwd: path.join(__dirname, '..', '..'),
   url: `http://127.0.0.1:${port}/__e2e/ready`,
   env: {TWEB_PREVIEW: '1', TWEB_E2E: '1', ...(!bundled && {TWEB_E2E_BUNDLED: '0'})},
   reuseExistingServer: false,
@@ -35,7 +38,7 @@ export default defineConfig<{freshContext: boolean, modulesURL: string}>({
   fullyParallel: true,
   workers: playwrightWorkers(process.env.POPUPS_WORKERS ? Number(process.env.POPUPS_WORKERS) : '75%'),
   // waits for its turn in the machine-wide queue of heavy test runs (scripts/test-queue.sh)
-  globalSetup: path.join(__dirname, '../scripts/testQueue.ts'),
+  globalSetup: path.join(__dirname, '../../scripts/testQueue.ts'),
   timeout: 60_000,
   reporter: [['list']],
   use: {

@@ -1,4 +1,4 @@
-import {loadChatBubbles, LOAD_CHAT_BUBBLES_TIMEOUT} from '@/tests/helpers/chatBubbles';
+import {loadChatBubbles, LOAD_CHAT_BUBBLES_TIMEOUT} from '@tests/helpers/chatBubbles';
 import {resetExteralessSettings, setExteralessSetting} from '@stores/exteralessSettings';
 import {ChatType} from '@components/chat/chatType';
 import type {FullMid} from '@components/chat/bubbles';

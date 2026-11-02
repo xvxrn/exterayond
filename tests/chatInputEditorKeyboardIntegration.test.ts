@@ -4,7 +4,7 @@ import {
   tableDocument,
   currentTable,
   typeTextThroughEditorView
-} from '@/tests/helpers/chatInputEditorHarness';
+} from '@tests/helpers/chatInputEditorHarness';
 import {AllSelection, Selection, TextSelection} from '@tiptap/pm/state';
 import {CellSelection} from '@tiptap/pm/tables';
 import createChatInputEditor from '@components/chat/inputEditor';

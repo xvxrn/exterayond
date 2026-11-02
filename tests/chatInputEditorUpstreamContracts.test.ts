@@ -4,8 +4,8 @@ import {canonicalOrderedListType} from '@lib/richTextProcessor/orderedList';
 import type {JSONContent} from '@tiptap/core';
 import {AllSelection, EditorState, NodeSelection, TextSelection} from '@tiptap/pm/state';
 import {CellSelection} from '@tiptap/pm/tables';
-import '@/tests/mocks/chatInputEditorEngineUi';
-import {mountChatInputEditor} from '@/tests/helpers/chatInputEditor';
+import '@tests/mocks/chatInputEditorEngineUi';
+import {mountChatInputEditor} from '@tests/helpers/chatInputEditor';
 import {CHAT_INPUT_PLACEHOLDER_EMPTY_CLASS, chatInputPlaceholdersKey} from '@components/chat/inputEditor/placeholders';
 
 // Behavioral cases adapted to the production schema from Tiptap v3.28.0:

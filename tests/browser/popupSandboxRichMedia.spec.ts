@@ -18,7 +18,7 @@ async function open(page: Page) {
   await page.evaluate(() => window.popupSandbox.ready());
   await page.getByRole('button', {name: '◂ Hide', exact: true}).click();
   await page.evaluate(async() => {
-    const path = '/e2e/fixtures/richMediaComposer.ts';
+    const path = '/tests/browser/fixtures/richMediaComposer.ts';
     const {mountRichMediaComposerHarness} = await window.e2eImport(path);
     window.richMediaComposerHarness = mountRichMediaComposerHarness();
   });
@@ -79,7 +79,7 @@ test('two standalone fields keep independent documents and disposal', async({pag
   await open(page);
   await page.evaluate(async() => {
     window.richMediaComposerHarness.setText('First');
-    const path = '/e2e/fixtures/richMediaComposer.ts';
+    const path = '/tests/browser/fixtures/richMediaComposer.ts';
     const {mountRichMediaComposerHarness} = await window.e2eImport(path);
     window.secondRichMediaComposerHarness = mountRichMediaComposerHarness();
     window.secondRichMediaComposerHarness.setText('Second');

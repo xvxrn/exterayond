@@ -7,7 +7,7 @@ import {createTestClient, AccountSeed} from './harness';
 // the nosound_video flag (it classifies them as GIFs). These tests verify that
 // sendFile/sendGrouped build the correct inputMedia when stars are set.
 // Run: TG_API_TEST=1 TG_API_PROD_DC=1 TG_API_SEED=./tmp/seed.json \
-//   pnpm test src/tests/api/paidMediaGif.test.ts -- --reporter=verbose --silent=false
+//   pnpm test tests/api/paidMediaGif.test.ts -- --reporter=verbose --silent=false
 
 const enabled = process.env.TG_API_TEST === '1';
 

@@ -5,13 +5,15 @@ import {createSearchGroup, SearchGroup} from '@components/searchGroup';
 import DialogsContextMenu from '@components/dialogsContextMenu';
 import Scrollable, {ScrollableX} from '@components/scrollable';
 import InputSearch from '@components/inputSearch';
+import {attachPillStackStrip} from '@components/sidebarLeft/pillStack';
+import {applyMainMenuLayoutToButtons, MAIN_MENU_ITEMS as MainMenuIds} from '@stores/exteralessMenuLayout';
 import SidebarSlider, {SliderSuperTab} from '@components/slider';
 import TransitionSlider from '@components/transition';
 import AppSearchSuper, {SearchSuperMediaType} from '@components/appSearchSuper';
 import {DateData, fillTipDates} from '@helpers/date';
 import {MOUNT_CLASS_TO} from '@config/debug';
 import {AppSettingsTab} from '@components/solidJsTabs';
-import {AppNewChannelTab} from '@components/solidJsTabs/tabs';
+import {AppDataAndStorageTab, AppNewChannelTab} from '@components/solidJsTabs/tabs';
 import {AppContactsTab} from '@components/solidJsTabs/tabs';
 import {AppCallsTab} from '@components/solidJsTabs/tabs';
 import {AppArchivedTab} from '@components/solidJsTabs/tabs';
@@ -200,6 +202,12 @@ export class AppSidebarLeft extends SidebarSlider {
       SolidJSHotReloadGuardProvider,
       mainMiddleware
     );
+
+    // * the pill stack lives in the chat list's search field (PILLS-01);
+    // * the cache pill's click opens the tab that owns the same data
+    attachPillStackStrip(this.inputSearch, mainMiddleware, () => {
+      this.createTab(AppDataAndStorageTab).open();
+    });
 
     // If it has z-index to early, the browser makes it shift a few times before showing it properly in its position (on very large screens)
     // Doesn't solve the blinking, which doesn't seem to appear when the project is built
@@ -716,20 +724,6 @@ export class AppSidebarLeft extends SidebarSlider {
       clb();
     }
 
-    const btnArchive: typeof menuButtons[0] = {
-      icon: 'archive',
-      text: 'ArchivedChats',
-      onClick: () => {
-        this.openArchiveTab();
-      },
-      verify: async() => {
-        const managers = bindManagersToSession(this.managers);
-        const folder = await managers.dialogsStorage.getFolderDialogs(FOLDER_ID_ARCHIVE, false);
-        const hasArchiveStories = await managers.appStoriesManager.hasArchive();
-        return !!folder.length || hasArchiveStories || !(await managers.dialogsStorage.isDialogsLoaded(FOLDER_ID_ARCHIVE));
-      }
-    };
-
     const onContactsClick = () => {
       closeTabsBefore(() => {
         this.createTab(AppContactsTab).open();
@@ -754,7 +748,7 @@ export class AppSidebarLeft extends SidebarSlider {
       createSubmenu: () => this.createNewChatsSubmenu()
     });
 
-    const menuButtons: (ButtonMenuItemOptions & {verify?: () => boolean | Promise<boolean>})[] = [{
+    const menuButtons: (ButtonMenuItemOptions & {verify?: () => boolean | Promise<boolean>, oeMenuId?: number})[] = [{
       icon: 'plus',
       text: 'MultiAccount.AddAccount',
       onClick: this.addAccount,
@@ -763,6 +757,7 @@ export class AppSidebarLeft extends SidebarSlider {
         return totalAccounts < MAX_ACCOUNTS;
       }
     }, newSubmenu, {
+      oeMenuId: MainMenuIds.SAVED,
       icon: 'savedmessages',
       text: 'SavedMessages',
       onClick: () => {
@@ -773,7 +768,20 @@ export class AppSidebarLeft extends SidebarSlider {
         }, 0);
       },
       separator: true
-    }, btnArchive, {
+    }, {
+      oeMenuId: MainMenuIds.ARCHIVE,
+      icon: 'archive',
+      text: 'ArchivedChats',
+      onClick: () => {
+        this.openArchiveTab();
+      },
+      verify: async() => {
+        const managers = bindManagersToSession(this.managers);
+        const folder = await managers.dialogsStorage.getFolderDialogs(FOLDER_ID_ARCHIVE, false);
+        const hasArchiveStories = await managers.appStoriesManager.hasArchive();
+        return !!folder.length || hasArchiveStories || !(await managers.dialogsStorage.isDialogsLoaded(FOLDER_ID_ARCHIVE));
+      }
+    }, {
       icon: 'stories',
       text: 'MyStories.Title',
       onClick: () => {
@@ -783,10 +791,12 @@ export class AppSidebarLeft extends SidebarSlider {
       },
       verify: () => !TEST_NO_STORIES
     }, {
+      oeMenuId: MainMenuIds.CONTACTS,
       icon: 'user',
       text: 'Contacts',
       onClick: onContactsClick
     }, {
+      oeMenuId: MainMenuIds.CALLS,
       icon: 'phone',
       text: 'Calls',
       onClick: () => {
@@ -796,6 +806,7 @@ export class AppSidebarLeft extends SidebarSlider {
       },
       verify: () => IS_CALL_SUPPORTED || IS_CONFERENCE_CALL_SUPPORTED
     }, {
+      oeMenuId: MainMenuIds.SETTINGS,
       id: 'settings',
       icon: 'settings',
       text: 'Settings',
@@ -823,6 +834,13 @@ export class AppSidebarLeft extends SidebarSlider {
           managers.appAttachMenuBotsManager.getAttachMenuBots().catch(() => emptyAttachMenuBots)
         ]);
         const buttons = filteredButtonsSliced.slice();
+        // * the main menu layout (FOLD-10..13): reorder/hide the id-mapped
+        // * items per `OEAppearanceMainMenuLayout`, applied fresh on every
+        // * open; the stock key keeps this a no-op
+        const laidOut = applyMainMenuLayoutToButtons(buttons);
+        if(laidOut !== buttons) {
+          buttons.splice(0, buttons.length, ...laidOut);
+        }
         const attachMenuBotsButtons = attachMenuBots.filter((attachMenuBot) => {
           return attachMenuBot.pFlags.show_in_side_menu;
         }).map((attachMenuBot) => {
@@ -924,7 +942,8 @@ export class AppSidebarLeft extends SidebarSlider {
       onOpen: () => {
         moreSubmenu.onOpen();
         newSubmenu.onOpen();
-        btnArchive.element?.append(this.archivedCount);
+        const btnArchive = filteredButtonsSliced.find((button) => button.oeMenuId === MainMenuIds.ARCHIVE);
+        btnArchive?.element?.append(this.archivedCount);
       },
       onClose: () => {
         moreSubmenu.onClose();

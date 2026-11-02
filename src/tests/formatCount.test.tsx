@@ -132,8 +132,8 @@ describe('Badge with formatCount', () => {
 });
 
 describe('count refresh events', () => {
-  let events: Array<{key: string, value: boolean | number}>;
-  let listener: (event: {key: string, value: boolean | number}) => void;
+  let events: Array<{key: string, value: boolean | number | string}>;
+  let listener: (event: {key: string, value: boolean | number | string}) => void;
 
   beforeEach(() => {
     resetExteralessSettings();

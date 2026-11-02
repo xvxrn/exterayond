@@ -3534,10 +3534,13 @@
 }
 
 .bubble.is-in {
-  --border-start-start-radius: #{$bubble-border-radius-medium};
-  --border-start-end-radius: #{$bubble-border-radius-big};
-  --border-end-end-radius: #{$bubble-border-radius-big};
-  --border-end-start-radius: #{$bubble-border-radius-medium};
+  // * bubbleRadius (W-entry): Android SharedConfig.bubbleRadius maps the far
+  // * corners to the radius and clamps the tail side to min(6, radius); the
+  // * default (17) leaves the stock geometry
+  --border-start-start-radius: var(--oe-bubble-tail-radius, #{$bubble-border-radius-medium});
+  --border-start-end-radius: var(--oe-bubble-radius, #{$bubble-border-radius-big});
+  --border-end-end-radius: var(--oe-bubble-radius, #{$bubble-border-radius-big});
+  --border-end-start-radius: var(--oe-bubble-tail-radius, #{$bubble-border-radius-medium});
 
   .bubble-content {
     &-wrapper {
@@ -3548,7 +3551,7 @@
   }
 
   &.is-group-first, &.is-forced-rounded {
-    --border-start-start-radius: #{$bubble-border-radius-big};
+    --border-start-start-radius: var(--oe-bubble-radius, #{$bubble-border-radius-big});
   }
 
   &.is-group-last, &.is-forced-rounded {
@@ -3632,10 +3635,10 @@
   --peer-color-rgb: var(--message-primary-color-rgb);
   --peer-border-background: var(--message-out-peer-border-background);
   --message-reaction-tag-dot-color: var(--message-out-reaction-tag-dot-color);
-  --border-start-start-radius: #{$bubble-border-radius-big};
-  --border-start-end-radius: #{$bubble-border-radius-medium};
-  --border-end-end-radius: #{$bubble-border-radius-medium};
-  --border-end-start-radius: #{$bubble-border-radius-big};
+  --border-start-start-radius: var(--oe-bubble-radius, #{$bubble-border-radius-big});
+  --border-start-end-radius: var(--oe-bubble-tail-radius, #{$bubble-border-radius-medium});
+  --border-end-end-radius: var(--oe-bubble-tail-radius, #{$bubble-border-radius-medium});
+  --border-end-start-radius: var(--oe-bubble-radius, #{$bubble-border-radius-big});
 
   .bubble-content {
     margin-inline-start: auto;

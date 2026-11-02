@@ -286,6 +286,18 @@ export const AppExteralessAppearanceTab =
     getComponentModule: () => import('../sidebarLeft/tabs/exteralessAppearanceTab')
   });
 
+export const AppExteralessPillStackTab =
+  scaffoldSolidJSTab({
+    title: 'Exteraless.PillStack',
+    getComponentModule: () => import('../sidebarLeft/tabs/exteralessPillStackTab')
+  });
+
+export const AppExteralessMainMenuTab =
+  scaffoldSolidJSTab({
+    title: 'Exteraless.MainMenu',
+    getComponentModule: () => import('../sidebarLeft/tabs/exteralessMainMenuTab')
+  });
+
 export const AppExteralessChatsTab =
   scaffoldSolidJSTab({
     title: 'Exteraless.Chats',

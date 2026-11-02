@@ -22,6 +22,15 @@ $row-border-radius: $border-radius-medium;
     transition: opacity var(--transition-standard-in);
   }
 
+  // * G-2: the hover/press highlight eases in with Material's standard
+  // * timing instead of snapping (the ripple keeps the press feedback); the
+  // * off level changes the background at once
+  &.row-clickable {
+    @include animation-level(1) {
+      transition: opacity var(--transition-standard-in), background-color var(--transition-standard-in);
+    }
+  }
+
   &.is-disabled {
     pointer-events: none !important;
     opacity: var(--disabled-opacity);

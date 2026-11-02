@@ -594,6 +594,35 @@
 		}
 	}
 
+	// * G-3: the attached sidebar never overlays the chat. The stock docked
+	// * centering reserves the collapsed layout width — the popped-out panel
+	// * overlays the chat with a scrim by design — and the stock drawer covers
+	// * the chat with a fixed push. Attached mode re-centers the chat beside
+	// * the panel's VISUAL width in both ranges; the JS clamp
+	// * (helpers/updateColumnWidths.ts) caps --chat-width to the same space.
+	// * The shift rides --reflect, so RTL mirrors it.
+	:root.oe-attached-sidebar & {
+		@include respond-to(no-floating-left-sidebar) {
+			transform: translateX(calc((var(--folders-sidebar-offset) + var(--left-column-visual-width) + var(--page-chats-padding)) / 2 * var(--reflect)));
+
+			body.is-right-column-shown:not(.right-column-floats) & {
+				transform: translateX(calc((var(--folders-sidebar-offset) + var(--left-column-visual-width) - var(--right-column-width)) / 2 * var(--reflect)));
+			}
+		}
+
+		@include respond-to(floating-left-sidebar) {
+			body.is-left-column-shown & {
+				transform: translateX(calc((var(--folders-sidebar-offset) + var(--left-column-visual-width) + var(--page-chats-padding)) / 2 * var(--reflect)));
+				transition: transform var(--transition-standard-out);
+			}
+
+			// * the centring is movement: with reduced animations it lands at once
+			@include animation-level-below(2) {
+				transition: none;
+			}
+		}
+	}
+
 	@include respond-to(floating-left-sidebar) {
 		body.is-left-column-shown & {
 			//transform: translate3d(26.5rem, 0, 0);

@@ -24,6 +24,11 @@ import {fireMessageEffectByBubble, MessageRender} from '@components/chat/message
 import LazyLoadQueue from '@components/lazyLoadQueue';
 import ListenerSetter from '@helpers/listenerSetter';
 import showChatToast from '@components/chat/chatToast';
+import showDeleteMessagesPopup from '@components/popups/deleteMessages';
+import repeatMessages from '@components/chat/repeatMessages';
+import appDownloadManager from '@lib/appDownloadManager';
+import detectLanguageForTranslation from '@helpers/detectLanguageForTranslation';
+import {DOUBLE_TAP_ACTIONS, resolveDoubleTapAction} from '@stores/exteralessSettings';
 import {AudioElement, DeferredMediaElement, isAudioElement} from '@components/audio';
 import {ChannelParticipant, Chat as MTChat, ChatParticipant, Document, Game, Message, MessageEntity,  MessageMedia,  MessageReplyHeader, Photo, PhotoSize, ReactionCount, SponsoredMessage, User, UserFull, WebPage, WebPageAttribute, Reaction, DocumentAttribute, InputStickerSet, TextWithEntities, FactCheck, WebDocument, MessageExtendedMedia, PeerSettings, LangPackString, ForumTopic, MessageAction} from '@layer';
 import {BOT_START_PARAM, NULL_PEER_ID, REPLIES_PEER_ID, SEND_WHEN_ONLINE_TIMESTAMP, STARS_CURRENCY} from '@appManagers/constants';
@@ -1862,8 +1867,7 @@ export default class ChatBubbles {
         if(
           this.chat.type === ChatType.Pinned ||
           this.chat.type === ChatType.Logs ||
-          this.chat.selection.isSelecting ||
-          !this.chat.input.canSendPlain()
+          this.chat.selection.isSelecting
         ) {
           return;
         }
@@ -1896,18 +1900,40 @@ export default class ChatBubbles {
           // cancelSelection();
         }
 
-        if(bubble && !bubble.classList.contains('bubble-first')) {
-          const message = this.chat.getMessage(getBubbleFullMid(bubble));
+        if(!bubble || bubble.classList.contains('bubble-first')) {
+          return;
+        }
+
+        const message = this.chat.getMessage(getBubbleFullMid(bubble));
+        if(!message) {
+          return;
+        }
+
+        // * CHAT-10 — the direction picks the configured action
+        // * (ChatActivity.onDoubleClick's isOutOwner branch). Reply runs the
+        // * stock web path with its own guards, None returns, the rest
+        // * dispatch below; a double click that selected text never reaches
+        // * here (the stock selection guard above).
+        const action = resolveDoubleTapAction(!!message.pFlags.is_outgoing);
+        if(action === DOUBLE_TAP_ACTIONS.NONE) {
+          return;
+        }
+
+        if(action === DOUBLE_TAP_ACTIONS.REPLY) {
           if(
             message.pFlags.is_outgoing ||
             message.peerId !== this.peerId ||
+            !this.chat.input.canSendPlain() ||
             !this.canReplyToBubble(bubble)
           ) {
             return;
           }
 
           this.chat.input.initMessageReply(this.chat.input.getChatInputReplyToFromMessage(message));
+          return;
         }
+
+        this.performDoubleTapAction(bubble, e, message, action);
       });
     } else if(IS_TOUCH_SUPPORTED) {
       const controller = this.createReplySwipeController(container);
@@ -2236,6 +2262,137 @@ export default class ChatBubbles {
 
       idle();
     }, {passive: false, capture: true});
+  }
+
+  // * CHAT-10 — the configured double-tap action (ChatActivity.onDoubleClick's
+  // * switch). Every action rides an existing web handler: the reaction sends
+  // * through the stock quick reaction, show-reactions opens the stock context
+  // * menu, save forwards to the own peer (Android's nkbtn_savemessage), repeat
+  // * and repeat-as-copy are the CHAT-35 forward (the latter without the
+  // * forward header), edit/delete/forward/download are the context menu's own
+  // * handlers. Android-only values (the LLM translate) land here as unknown
+  // * actions and no-op — surfaced as unsupported, never faked.
+  private async performDoubleTapAction(bubble: HTMLElement, e: MouseEvent, message: MyMessage, action: number) {
+    const chat = this.chat;
+
+    switch(action) {
+      case DOUBLE_TAP_ACTIONS.SEND_REACTIONS: {
+        if(
+          message._ !== 'message' ||
+          message.pFlags.local ||
+          message.pFlags.is_scheduled ||
+          isEphemeralMessage(message) ||
+          (message as Message.message).pFlags.welcome_template
+        ) {
+          return;
+        }
+
+        const reaction = await this.managers.appReactionsManager.getQuickReaction();
+        if(!reaction) {
+          return;
+        }
+
+        chat.sendReaction({message, reaction});
+        return;
+      }
+
+      case DOUBLE_TAP_ACTIONS.SHOW_REACTIONS: {
+        // * Android opens the message menu off the double tap
+        // * (createMenu(..., onDoubleTapped)); a synthetic contextmenu on the
+        // * bubble rides the stock open path — the same untrusted contextmenu
+        // * the a11y layer's keyboard path already synthesizes
+        bubble.dispatchEvent(new MouseEvent('contextmenu', {
+          bubbles: true,
+          cancelable: true,
+          clientX: e.clientX,
+          clientY: e.clientY
+        }));
+        return;
+      }
+
+      case DOUBLE_TAP_ACTIONS.TRANSLATE: {
+        if(message._ !== 'message' || !chat.peerTranslation.canTranslate(true)) {
+          return;
+        }
+
+        const detectedLanguage = await detectLanguageForTranslation(message.message);
+        if(!detectedLanguage) {
+          return;
+        }
+
+        const {openTranslatePopup} = await import('@components/popups/translate');
+        openTranslatePopup({
+          peerId: message.peerId,
+          message: message as Message.message,
+          detectedLanguage
+        }, SolidJSHotReloadGuardProvider);
+        return;
+      }
+
+      case DOUBLE_TAP_ACTIONS.SAVE: {
+        const mids = await chat.getMidsByMid(message.peerId, message.mid);
+        void this.managers.appMessagesManager.forwardMessages({
+          peerId: rootScope.myId,
+          fromPeerId: message.peerId,
+          mids
+        });
+        return;
+      }
+
+      case DOUBLE_TAP_ACTIONS.REPEAT: {
+        const mids = await chat.getMidsByMid(message.peerId, message.mid);
+        void repeatMessages(this.managers, message.peerId, mids);
+        return;
+      }
+
+      case DOUBLE_TAP_ACTIONS.REPEAT_AS_COPY: {
+        // * Android repeatMessage(isRepeatAsCopy) → forwardMessages(copy):
+        // * the same messages sent again without the forward header
+        const mids = await chat.getMidsByMid(message.peerId, message.mid);
+        void this.managers.appMessagesManager.forwardMessages({
+          peerId: message.peerId,
+          fromPeerId: message.peerId,
+          mids,
+          dropAuthor: true
+        });
+        return;
+      }
+
+      case DOUBLE_TAP_ACTIONS.EDIT: {
+        if(
+          message._ !== 'message' ||
+          !chat.input.messageInput ||
+          !(await this.managers.appMessagesManager.canEditMessage(message, 'text'))
+        ) {
+          return;
+        }
+
+        chat.input.initMessageEditing(message.mid);
+        return;
+      }
+
+      case DOUBLE_TAP_ACTIONS.DELETE: {
+        const mids = await chat.getMidsByMid(message.peerId, message.mid);
+        showDeleteMessagesPopup(message.peerId, mids, chat.type);
+        return;
+      }
+
+      case DOUBLE_TAP_ACTIONS.FORWARD: {
+        const mids = await chat.getMidsByMid(message.peerId, message.mid);
+        hotReloadGuard.showForwardPopup({[message.peerId]: mids});
+        return;
+      }
+
+      case DOUBLE_TAP_ACTIONS.DOWNLOAD: {
+        const media = getMediaFromMessage(message, true);
+        if(!media) {
+          return;
+        }
+
+        void appDownloadManager.downloadToDisc({media, queueId: this.lazyLoadQueue.queueId});
+        return;
+      }
+    }
   }
 
   private canReplyToBubble(bubble: HTMLElement) {

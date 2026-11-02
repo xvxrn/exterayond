@@ -10,15 +10,28 @@ import {DurationType} from '@helpers/formatDuration';
 import namedPromises from '@helpers/namedPromises';
 import {I18nTsx} from '@helpers/solid/i18n';
 import {wrapAsyncClickHandler} from '@helpers/wrapAsyncClickHandler';
-import {cachedFilesStorageName, cachedVideoChunksStorageNames, HTTPHeaderNames, oneDayInSeconds, oneMonthInSeconds, oneWeekInSeconds, oneYearInSeconds, watchedCachedStorageNames} from '@lib/constants';
-import CacheStorageController from '@lib/files/cacheStorage';
+import {cachedFilesStorageName, cachedVideoChunksStorageNames, oneDayInSeconds, oneMonthInSeconds, oneWeekInSeconds, oneYearInSeconds, watchedCachedStorageNames} from '@lib/constants';
 import type {FormatterArgument, FormatterArguments, LangPackKey} from '@lib/langPack';
 import {useHotReloadGuard} from '@lib/solidjs/hotReloadGuard';
 import {createResource, createSignal, JSX, Match, Resource, Switch} from 'solid-js';
 import styles from './storageQuota.module.scss';
+import {collectCachedFilesSizes, collectCachedVideoStreamChunksSize} from './cachedSizes';
+import type {CollectedCachedFilesSizes} from './cachedSizes';
 
 
 const decimalsForFormatBytes = 1;
+
+function getZeroedCollectedCachedFilesSizes(): CollectedCachedFilesSizes {
+  return {
+    totalSize: 0,
+    collectedSizeByTypes: {
+      images: 0,
+      videos: 0,
+      stickers: 0,
+      other: 0
+    }
+  };
+}
 
 type ConfirmationArgs = {
   titleLangKey: LangPackKey;
@@ -46,81 +59,7 @@ const getClearAllArgs = (): ConfirmationArgs => ({
 const tryFormatBytes = (size: number | null | undefined) => {
   if(typeof size !== 'number') return null;
   return formatBytes(size, decimalsForFormatBytes);
-}
-
-type CollectedCategory = 'images' | 'videos' | 'stickers' | 'other';
-
-async function collectCachedFilesSizes() {
-  const collectedSizeByTypes: Record<CollectedCategory, number> = {
-    images: 0,
-    videos: 0,
-    stickers: 0,
-    other: 0
-  };
-  let totalSize = 0;
-
-  const storage = new CacheStorageController(cachedFilesStorageName);
-
-  await storage.minimalBlockingIterateResponses(({response}) => {
-    const headers = response.headers;
-
-    const contentSize = getContentSizeFromHeaders(headers);
-    if(!contentSize) return;
-
-    const contentType = headers.get('content-type');
-
-    const category: CollectedCategory =
-      contentType?.startsWith('image/') ? 'images' :
-        contentType?.startsWith('video/') ? 'videos' :
-          contentType?.startsWith('application/json') ? 'stickers' : 'other';
-
-    collectedSizeByTypes[category] += contentSize;
-    totalSize += contentSize;
-  }).finally(() => {
-    storage.forget();
-  });
-
-  return {
-    totalSize,
-    collectedSizeByTypes
-  };
 };
-
-function getZeroedCollectedCachedFilesSizes(): Awaited<ReturnType<typeof collectCachedFilesSizes>> {
-  return {
-    totalSize: 0,
-    collectedSizeByTypes: {
-      images: 0,
-      videos: 0,
-      stickers: 0,
-      other: 0
-    }
-  };
-}
-
-async function collectCachedVideoStreamChunksSize() {
-  let totalSize = 0;
-
-  for(const storageName of cachedVideoChunksStorageNames) {
-    const storage = new CacheStorageController(storageName);
-
-    await storage.minimalBlockingIterateResponses(({response}) => {
-      const contentSize = getContentSizeFromHeaders(response.headers);
-      totalSize += contentSize;
-    }).finally(() => {
-      storage.forget();
-    });
-  }
-
-  return totalSize;
-}
-
-function getContentSizeFromHeaders(headers: Headers): number {
-  const contentSize = parseInt(headers.get(HTTPHeaderNames.contentLength) || '0');
-  if(!contentSize) return 0;
-
-  return contentSize;
-}
 
 const SizeWithFallback = (props: {
   resource: Resource<unknown>;

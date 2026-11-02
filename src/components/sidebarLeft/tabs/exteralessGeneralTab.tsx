@@ -40,6 +40,17 @@ const General = () => {
         <Row.CheckboxFieldToggle>
           <CheckboxFieldTsx
             toggle
+            checked={exteralessSettings.SortByUnread}
+            onChange={(value) => setExteralessSetting('SortByUnread', value)}
+          />
+        </Row.CheckboxFieldToggle>
+        <Row.Title>{i18n('Exteraless.SortByUnread')}</Row.Title>
+        <Row.Subtitle>{i18n('Exteraless.SortByUnread.Info')}</Row.Subtitle>
+      </Row>
+      <Row>
+        <Row.CheckboxFieldToggle>
+          <CheckboxFieldTsx
+            toggle
             checked={isArchiveHidden()}
             onChange={setArchiveHidden}
           />

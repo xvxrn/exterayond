@@ -127,11 +127,18 @@ export class AutonomousDialogListBase<T extends PossibleDialog = PossibleDialog>
     this.middlewareHelper = getMiddleware();
     this.appDialogsManager = appDialogsManager;
     this.listenerSetter.add(rootScope)('exteraless_settings_updated', ({key}) => {
-      if(key !== 'DisableNumberRounding') {
+      if(key === 'DisableNumberRounding') {
+        this.sortedList?.getAllDialogElementsMap().forEach((element) => element.refreshUnreadText());
         return;
       }
 
-      this.sortedList?.getAllDialogElementsMap().forEach((element) => element.refreshUnreadText());
+      // * GEN-12 (SortByUnread): the worker re-indexed every dialog under the
+      // * new layout, so the held rows and the pagination cursor are stale
+      // * until the list is built again — the event comes from the storage
+      // * after the pass, never before it
+      if(key === 'SortByUnread' && this.sortedList) {
+        void this.fullReset();
+      }
     });
   }
 

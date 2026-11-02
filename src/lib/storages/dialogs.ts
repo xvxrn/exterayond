@@ -82,6 +82,25 @@ export type ForumTopicsPaginationOffsets = {
 export const GLOBAL_FOLDER_ID: REAL_FOLDER_ID = undefined;
 
 // let spentTime = 0;
+/**
+ * GEN-12 (`SortByUnread`) index layout, active only while the setting is on.
+ *
+ * The stored dialog index is `(date * 0x10000) + tail`, the top of the date
+ * range (`0x7fff0000…`) reserved for the pinned band. Unread-priority dialogs
+ * must sort above every read one but below every pinned one, and today's
+ * dates already fill ~83% of the range below the pinned band — so while the
+ * setting is on every non-pinned date is halved, which frees the top half of
+ * the date range: read dialogs occupy `[0, 2^30)`, unread-priority ones
+ * `[2^30, 0x7fff0000)`, pinned stays above both, like Android's comparator
+ * (pinned first, then the unread priority, then the date). Indexes are
+ * per-session (`setDialogsFromState` deletes them on restore), so the layout
+ * never mixes with the stock one — the flag only flips through
+ * `setSortByUnread`, which re-indexes everything at once.
+ */
+const OE_UNREAD_SORT_PRIORITY_OFFSET = 0x40000000;
+/** The lowest index an unread-priority dialog can get while the setting is on. */
+const OE_UNREAD_SORT_PRIORITY_MIN_INDEX = OE_UNREAD_SORT_PRIORITY_OFFSET * 0x10000;
+
 export default class DialogsStorage extends AppManager {
   private storage: AppStoragesManager['storages']['dialogs'];
 
@@ -120,6 +139,11 @@ export default class DialogsStorage extends AppManager {
   }>;
 
   private savedDialogsPromises: Map<PeerId, Promise<SavedDialog>>;
+
+  /** GEN-12: the exteraless "sort by unread" flag, pushed from the tab (see `setSortByUnread`). */
+  private sortByUnreadEnabled = false;
+  /** Debounced forum-dialog re-sorts after their topics (re)enter the cache. */
+  private sortByUnreadForumTimeouts: Map<PeerId, number>;
 
   constructor() {
     super();
@@ -367,6 +391,8 @@ export default class DialogsStorage extends AppManager {
 
     this.forumTopics = new Map();
     this.savedDialogsPromises = new Map();
+    this.sortByUnreadForumTimeouts = new Map();
+    this.sortByUnreadEnabled = false;
     this.folders = {};
     this.dialogsOffsetDate = {};
     this.dialogsNum = 0;
@@ -634,7 +660,15 @@ export default class DialogsStorage extends AppManager {
       } else if(dialog.pFlags?.pinned || isRealFolder) {
         index = this.generateIndexForDialog(dialog, true, undefined, !isRealFolder);
       } else {
-        index = getDialogIndex(dialog) ?? this.generateIndexForDialog(dialog, true);
+        // * the stored index is reused only when it already encodes the same
+        // * unread-priority state GEN-12 would generate: an index made while
+        // * the dialog was read/unread (or with the setting off) would pin the
+        // * dialog to a stale band
+        const stored = getDialogIndex(dialog);
+        const wantsPriority = this.sortByUnreadEnabled && this.hasUnreadSortPriority(dialog);
+        index = stored !== undefined && this.hasStoredUnreadSortPriority(stored) === wantsPriority ?
+          stored :
+          this.generateIndexForDialog(dialog, true);
       }
     }
 
@@ -818,9 +852,45 @@ export default class DialogsStorage extends AppManager {
       if(wasIndex === -1 && adjustCount) {
         ++folder.count;
       }
+
+      // * GEN-12: a topic (re)entering its forum's folder can flip the forum's
+      // * aggregate dialog between the unread-priority band and the date order
+      // * (the dialog's own fields never see topic unread state) — the parent
+      // * re-indexes itself once the batch settles
+      if(
+        this.sortByUnreadEnabled &&
+        isForumTopic(dialog) &&
+        this.getDialogOnly(dialog.peerId)
+      ) {
+        this.scheduleForumDialogResort(dialog.peerId);
+      }
     }
 
     return true;
+  }
+
+  /**
+   * GEN-12: re-index one dialog in place (its folder arrays re-sort through
+   * `processDialogForFilter`'s insert). Used for the debounced forum-parent
+   * updates, not for user-visible unread events (those keep their own paths).
+   */
+  private resortDialog(dialog: AnyDialog) {
+    this.processDialogForFilters(dialog);
+  }
+
+  private scheduleForumDialogResort(peerId: PeerId) {
+    if(this.sortByUnreadForumTimeouts.has(peerId)) {
+      return;
+    }
+
+    const timeoutId = ctx.setTimeout(() => {
+      this.sortByUnreadForumTimeouts.delete(peerId);
+      const dialog = this.getDialogOnly(peerId);
+      if(dialog) {
+        this.resortDialog(dialog);
+      }
+    }, 0);
+    this.sortByUnreadForumTimeouts.set(peerId, timeoutId as unknown as number);
   }
 
   public prepareDialogUnreadCountModifying(dialog: AnyDialog, toggle?: boolean) {
@@ -995,6 +1065,86 @@ export default class DialogsStorage extends AppManager {
     });
   }
 
+  /**
+   * GEN-12: whether the dialog sorts above every read one while
+   * `SortByUnread` is on. Mirrors Android's `ChatsHelper.isUnreadSortPriority`:
+   * unread mentions, unread reactions, or an unmuted unread counter. A forum's
+   * aggregate dialog reads its cached topics (Android computes the same
+   * aggregate in its topics controller); when no topics are cached yet the
+   * dialog's own fields answer, so a freshly loaded forum stays date-ordered
+   * until its topics arrive (the topic save path re-sorts the parent).
+   */
+  public hasUnreadSortPriority(dialog: AnyDialog): boolean {
+    if(isSavedDialog(dialog)) {
+      return false;
+    }
+
+    if(isForumTopic(dialog)) {
+      const topic = dialog as ForumTopic;
+      return !!(topic.unread_mentions_count || topic.unread_reactions_count ||
+        (topic.unread_count && this.isDialogUnmuted(topic)));
+    }
+
+    const peerId = dialog.peerId;
+    if(
+      this.appPeersManager.isForum(peerId) &&
+      !(dialog as Dialog).pFlags.view_forum_as_messages
+    ) {
+      const cache = this.getForumTopicsCacheIfExists(peerId);
+      if(cache && cache.topics.size) {
+        for(const topic of cache.topics.values()) {
+          if(this.hasUnreadSortPriority(topic)) {
+            return true;
+          }
+        }
+
+        return false;
+      }
+
+      // * fall through: no topics cached yet
+    }
+
+    const unreadCount = (dialog as Dialog).unread_count;
+    return !!((dialog as Dialog).unread_mentions_count ||
+      (dialog as Dialog).unread_reactions_count ||
+      (unreadCount && this.isDialogUnmuted(dialog)));
+  }
+
+  /** Whether a stored index was generated with the unread-priority band. */
+  private hasStoredUnreadSortPriority(index: number): boolean {
+    return index >= OE_UNREAD_SORT_PRIORITY_MIN_INDEX;
+  }
+
+  /**
+   * GEN-12 entry point, called through the managers proxy from the tab: the
+   * flag changes the whole index layout, so every cached dialog and topic is
+   * re-indexed in place (the same pass a filter update runs), which re-sorts
+   * every folder array. The broadcast afterwards tells the tabs' chat lists to
+   * rebuild — their held rows and pagination cursors are laid out by the old
+   * indexes until then (Android answers the same toggle with sortDialogs and
+   * dialogsNeedReload).
+   */
+  public setSortByUnread(enabled: boolean) {
+    if(this.sortByUnreadEnabled === enabled) {
+      return;
+    }
+
+    this.sortByUnreadEnabled = enabled;
+
+    const dialogs = this.getCachedDialogs(false);
+    for(const dialog of dialogs) {
+      this.processDialogForFilters(dialog);
+    }
+
+    for(const cache of this.forumTopics.values()) {
+      for(const topic of cache.topics.values()) {
+        this.processDialogForFilter(topic);
+      }
+    }
+
+    this.rootScope.dispatchEvent('exteraless_settings_updated', {key: 'SortByUnread', value: enabled});
+  }
+
   public generateIndexForDialog(
     dialog: AnyDialog,
     justReturn?: boolean,
@@ -1016,9 +1166,20 @@ export default class DialogsStorage extends AppManager {
       isPinned = true;
     } else {
       topDate = this.getDialogActivityDate(dialog, message);
+      if(this.sortByUnreadEnabled) {
+        // * GEN-12: halve the date and lift unread-priority dialogs into the
+        // * reserved band (see the constants above the class)
+        topDate = (this.hasUnreadSortPriority(dialog) ? OE_UNREAD_SORT_PRIORITY_OFFSET : 0) + Math.floor(topDate / 2);
+      }
     }
 
-    topDate ||= tsNow(true);
+    if(!topDate) {
+      topDate = tsNow(true);
+      if(this.sortByUnreadEnabled && !isPinned) {
+        // * the fallback must live in the same (halved) layout
+        topDate = Math.floor(topDate / 2);
+      }
+    }
 
     const index = this.generateDialogIndex(topDate, isPinned);
     if(justReturn) {

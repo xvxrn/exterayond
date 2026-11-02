@@ -1,7 +1,9 @@
 import {batch, createEffect, createRoot} from 'solid-js';
 import {createStore, unwrap} from 'solid-js/store';
-import {hotEffect} from '@helpers/hotModule';
+import {hotEffect, hotListen} from '@helpers/hotModule';
 import rootScope from '@lib/rootScope';
+import type {LangPackKey} from '@lib/langPack';
+import type {ChatFull, ChatTheme, UserFull, WallPaper} from '@layer';
 
 /**
  * exteraless Preferences — the `OE*` settings store.
@@ -150,6 +152,41 @@ export const OE_DEFAULTS = {
    */
   DisableGlobalSearch: false,
   /**
+   * Android NaConfig.SortByUnread (default false): unread-priority dialogs
+   * (unread, unmuted, with mentions or reactions) sort above read ones in the
+   * chat list, under the pinned ones (MessagesController's dialog comparators,
+   * ChatsHelper.isUnreadSortPriority).
+   */
+  SortByUnread: false,
+  /**
+   * Android's wallpaper pattern control is Telegram's own pattern dimming —
+   * the wallpaper record's `settings.intensity` (0..100, the wallpaper
+   * editor's "Intensity" seekbar, `ThemePreviewActivity`), not an exteraless
+   * config key (`EtgBackup` exports no alias). The web toggle maps onto that
+   * dimension: off is intensity 0 — the background renderer draws the
+   * wallpaper's color/gradient only — and on (the default) keeps the record's
+   * own intensity, the stock rendering.
+   */
+  OEAppearanceWallpaperPattern: true,
+  /**
+   * Web-only adaptation (user-directed look & feel): Android has no floating
+   * panels — its navigation drawer runs the app's full height. Off (the
+   * default) keeps Web K's stock floating sidebar; on attaches the left
+   * panel to the window edges (no page margins, no outer rounding, no
+   * shadow), while the inner section cards keep their radius. No Android key
+   * exists, so `EtgBackup` exports none.
+   */
+  OEAppearanceAttachedSidebar: false,
+  /**
+   * Theme palette (user-directed look & feel, V-4; a single toggle since
+   * acceptance round 1 F-2 — the Stock/Exteraless/AMOLED selector is gone and
+   * AMOLED is removed): off (the default) keeps the theme's own surfaces, on
+   * applies the near-black Material palette to dark themes — with every
+   * surface tinted from the accent color or an explicit background pick
+   * (F-3, Material-You). See `exteralessThemePalette.ts`.
+   */
+  OEAppearanceThemePalette: false,
+  /**
    * Android NekoConfig.hideAllTab (default false): the folder tab bar drops
    * the "All chats" tab while real folders remain (FilterTabsView).
    */
@@ -198,6 +235,15 @@ export const OE_DEFAULTS = {
   OEChatsHideReactionsPrivate: false,
   OEChatsPauseVoice: false,
   OEChatsPauseRound: false,
+  /**
+   * Android NaConfig.DoubleTapAction / DoubleTapActionOut (ints, defaults 1 =
+   * send the quick reaction): the CHAT-10 double-tap action by direction.
+   * The enum is `xyz.nextalone.nagram.helper.DoubleTap`'s (0..12); the values
+   * the web cannot back with a real handler resolve to a no-op, never faked.
+   * Android EtgBackup exports neither key, so no backup alias was invented.
+   */
+  DoubleTapAction: 1,
+  DoubleTapActionOut: 1,
   /** Android NekoConfig.autoPauseVideo: pause video playback when the tab hides. */
   AutoPauseVideo: true,
   OERelativeLastSeen: false,
@@ -205,12 +251,74 @@ export const OE_DEFAULTS = {
   /** Android `NekoConfig.showSeconds`: the persisted name is the contract, so no OE* alias. */
   showSeconds: false,
   /** Android `NekoConfig.hidePhone`: local display only. */
-  HidePhone: true
+  HidePhone: true,
+  /**
+   * Android `PillStackConfig` (PillStackConfig.kt, the exteraGram pill stack
+   * port): the serialized pill layout — comma-separated pill ids, the same
+   * ids exteraGram uses (`PillType.java`). `OEPillActivePills` defaults to
+   * `DEFAULT_ACTIVE` ("5,6" — the pills that need no network: cache, proxy),
+   * `OEPillHiddenPills` starts empty. On the web only the pills the client can
+   * really back render (`exteralessPills.ts`); unregistered ids stay in the
+   * stored strings, exactly Android's dormant-pill behavior.
+   */
+  OEPillActivePills: '5,6',
+  OEPillHiddenPills: '',
+  /** Android `PillStackConfig.infiniteScrolling`: wrap the pill strip around. */
+  OEPillInfiniteScrolling: true,
+  /** Android `PillStackConfig.lastActivePillId`: the pill the strip restores (-1 none). */
+  OEPillLastActiveId: -1,
+  /**
+   * Android `AppearanceConfig.mainMenuLayout` (`MainMenuLayout.java`): the
+   * main menu layout — `"visible;hidden"`, comma-separated `MainMenuItem` ids
+   * (the exteraGram scheme), DIVIDER(-1) in the visible half only; empty =
+   * not customized = the stock menu. The web consumes it over the left
+   * sidebar's tools menu (`exteralessMenuLayout.ts`).
+   */
+  OEAppearanceMainMenuLayout: '',
+  /**
+   * Android NekoConfig.showAddToSavedMessages: the message context menu gains
+   * "Add to Saved Messages" — a direct forward to the own chat (the same
+   * handler the double-tap Save uses), Android's conditions apply (not the
+   * self chat, forwardable).
+   */
+  showAddToSavedMessages: false,
+  /**
+   * Android NaConfig.showCopyPhoto (the persisted name is the contract): the
+   * message context menu gains "Copy Photo" for clipboard-copyable media.
+   */
+  CopyPhoto: false,
+  /**
+   * Android NekoConfig.showReport: the per-message "Report" item also shows
+   * for incoming messages outside channels (where the stock item lives).
+   */
+  showReport: false,
+  /**
+   * Android NekoConfig.showMessageDetails: the web has no message-details
+   * surface — the key is stored and round-trips, an imported true is a
+   * documented no-op (W-entry, packet 055).
+   */
+  showMessageDetails: false,
+  /**
+   * Android NekoConfig.showViewHistory: waits on the edit-history subsystem
+   * (AYU-02) — the key round-trips, an imported true is a documented no-op.
+   */
+  showViewHistory: false,
+  /**
+   * Android `SharedConfig.bubbleRadius` (the mainconfig section, 0..17,
+   * default 17): the message bubble's far corner radius in px; Android's
+   * tail-side corners clamp to min(6, radius). The default keeps Web K's own
+   * bubble geometry (the stock 15px/5px pair ≈ Android's 17/6dp at mdpi).
+   */
+  bubbleRadius: 17
 } as const;
 
 export type ExteralessSettingsKey = keyof typeof OE_DEFAULTS;
-/** The stored kind of a setting: `number` for sliders, `boolean` for switches. */
-export type ExteralessSettings = {[K in ExteralessSettingsKey]: (typeof OE_DEFAULTS)[K] extends boolean ? boolean : number};
+/** The stored kind of a setting: `number` for sliders, `boolean` for switches, `string` for serialized lists. */
+export type ExteralessSettings = {
+  [K in ExteralessSettingsKey]:
+    (typeof OE_DEFAULTS)[K] extends boolean ? boolean :
+    (typeof OE_DEFAULTS)[K] extends number ? number : string
+};
 export type ExteralessSettingValue<K extends ExteralessSettingsKey> = ExteralessSettings[K];
 
 type NumericKey = {
@@ -234,11 +342,17 @@ const NUMERIC_RANGES: {[K in NumericKey]: readonly [min: number, max: number]} =
   OEPlayerCoverRadius: [0, OE_PLAYER_COVER_RADIUS_MAX],
   OEPlayerTitleAlign: [0, 1],
   OEPlayerTitleSize: [0, 2],
-  OEPlayerControlsSize: [0, 2]
+  OEPlayerControlsSize: [0, 2],
+  DoubleTapAction: [0, 12],
+  DoubleTapActionOut: [0, 12],
+  /** The pill ids are 1..15 (`PillType`); -1 is Android's "none" sentinel. */
+  OEPillLastActiveId: [-1, 15],
+  /** Android `SharedConfig.bubbleRadius` (EtgBackup mainconfig KIND_INT 0..17). */
+  bubbleRadius: [0, 17]
 };
 
 /** A value of the wrong type or out of range falls back like an untrusted import. */
-const clampAnySetting = (key: ExteralessSettingsKey, value: unknown): boolean | number => {
+const clampAnySetting = (key: ExteralessSettingsKey, value: unknown): boolean | number | string => {
   const fallback = OE_DEFAULTS[key];
   if(typeof fallback === 'number') {
     const [min, max] = NUMERIC_RANGES[key as NumericKey];
@@ -247,6 +361,10 @@ const clampAnySetting = (key: ExteralessSettingsKey, value: unknown): boolean | 
     }
 
     return Math.max(min, Math.min(max, key === 'stickerSize' ? value : Math.round(value)));
+  }
+
+  if(typeof fallback === 'string') {
+    return typeof value === 'string' ? value : fallback;
   }
 
   return typeof value === 'boolean' ? value : fallback;
@@ -277,7 +395,7 @@ const readPersisted = (): Partial<ExteralessSettings> => {
     return {};
   }
 
-  const out = {} as Record<ExteralessSettingsKey, boolean | number>;
+  const out = {} as Record<ExteralessSettingsKey, boolean | number | string>;
   if(parsed && typeof parsed === 'object') {
     for(const key of Object.keys(OE_DEFAULTS) as ExteralessSettingsKey[]) {
       out[key] = clampAnySetting(key, parsed[key]);
@@ -295,16 +413,39 @@ const persist = (settings: ExteralessSettings) => {
   }
 };
 
+/**
+ * The dialogs storage lives in the worker, where the tab's Solid store does
+ * not exist: the GEN-12 flag reaches it through the managers proxy (a queued
+ * call until the worker answers), once per account session and on every
+ * change. `user_auth` fires when an account's session restores or signs in;
+ * `account_switched` when this tab shows another account whose worker-side
+ * storage has only its own copy.
+ */
+const pushSortByUnread = () => {
+  try {
+    void rootScope.managers?.appMessagesManager.setSortByUnread(exteralessSettings.SortByUnread as boolean);
+  } catch(e) {
+    // * no managers yet (tests, early import): the next auth event pushes it
+  }
+};
+
 const [exteralessSettings, setExteralessSettings] = createStore<ExteralessSettings>({
   ...OE_DEFAULTS,
   ...readPersisted()
 });
 
+if(typeof document !== 'undefined') {
+  // * hotListen keeps a hot re-run of this module from stacking a second
+  // * pair of listeners (scripts/import-graph.mjs)
+  hotListen(import.meta.hot, rootScope, 'user_auth', pushSortByUnread);
+  hotListen(import.meta.hot, rootScope, 'account_switched', pushSortByUnread);
+}
+
 /**
  * The settings whose consumers re-read the store from this event; no new bus,
  * no effect per row or message.
  */
-const LIVE_EVENT_KEYS: ExteralessSettingsKey[] = ['DisableNumberRounding', 'IgnoreUnreadCount', 'HideAllTab'];
+const LIVE_EVENT_KEYS: ExteralessSettingsKey[] = ['DisableNumberRounding', 'IgnoreUnreadCount', 'HideAllTab', 'OEAppearanceWallpaperPattern', 'OEAppearanceThemePalette', 'OEPillActivePills', 'OEPillHiddenPills', 'OEAppearanceMainMenuLayout'];
 
 /** Sets one setting (validated) and writes the whole record back. */
 const setExteralessSetting = <K extends ExteralessSettingsKey>(key: K, value: ExteralessSettingValue<K>) => {
@@ -315,12 +456,15 @@ const setExteralessSetting = <K extends ExteralessSettingsKey>(key: K, value: Ex
   if(LIVE_EVENT_KEYS.includes(key) && previous !== clamped) {
     rootScope.dispatchEventSingle('exteraless_settings_updated', {key, value: clamped});
   }
+  if(key === 'SortByUnread' && previous !== clamped) {
+    pushSortByUnread();
+  }
 };
 
 /** Reset this client's OE preferences; Telegram settings and account data have other records. */
 const resetExteralessSettings = () => {
   const previous = {...exteralessSettings};
-  setExteralessSettings({...OE_DEFAULTS});
+  setExteralessSettings({...OE_DEFAULTS} as Partial<ExteralessSettings>);
   try {
     globalThis.localStorage?.removeItem(STORAGE_KEY);
   } catch(e) {
@@ -333,6 +477,10 @@ const resetExteralessSettings = () => {
       rootScope.dispatchEventSingle('exteraless_settings_updated', {key, value: OE_DEFAULTS[key]});
     }
   }
+
+  if(previous.SortByUnread !== OE_DEFAULTS.SortByUnread) {
+    pushSortByUnread();
+  }
 };
 
 const useExteralessSettings = () => [exteralessSettings, setExteralessSetting] as const;
@@ -341,7 +489,138 @@ const useExteralessSettings = () => [exteralessSettings, setExteralessSetting] a
 export const getStickerTimeMode = (settings: Pick<ExteralessSettings, 'HideTimeForSticker' | 'OEChatsStickerTimeSide'> = exteralessSettings) =>
   settings.HideTimeForSticker ? 2 : settings.OEChatsStickerTimeSide ? 1 : 0;
 
+/**
+ * The double-tap action enum (CHAT-10), `xyz.nextalone.nagram.helper.DoubleTap`
+ * verbatim. The web dispatches what it can back with a real handler;
+ * `TRANSLATE_LLM` has no web translator provider and resolves to a no-op.
+ */
+export const DOUBLE_TAP_ACTIONS = {
+  NONE: 0,
+  SEND_REACTIONS: 1,
+  SHOW_REACTIONS: 2,
+  TRANSLATE: 3,
+  REPLY: 4,
+  SAVE: 5,
+  REPEAT: 6,
+  REPEAT_AS_COPY: 7,
+  EDIT: 8,
+  TRANSLATE_LLM: 9,
+  DELETE: 10,
+  FORWARD: 11,
+  DOWNLOAD: 12
+} as const;
+
+/**
+ * The actions the hub's incoming selector offers, in Android's
+ * `showDoubleTapOptions(false)` order minus `TRANSLATE_LLM` (no web provider).
+ * The outgoing list appends `EDIT`, exactly Android's `if (outgoing)` branch.
+ */
+export const DOUBLE_TAP_INCOMING_OPTIONS: readonly number[] = [
+  DOUBLE_TAP_ACTIONS.NONE,
+  DOUBLE_TAP_ACTIONS.SEND_REACTIONS,
+  DOUBLE_TAP_ACTIONS.SHOW_REACTIONS,
+  DOUBLE_TAP_ACTIONS.TRANSLATE,
+  DOUBLE_TAP_ACTIONS.REPLY,
+  DOUBLE_TAP_ACTIONS.FORWARD,
+  DOUBLE_TAP_ACTIONS.SAVE,
+  DOUBLE_TAP_ACTIONS.DOWNLOAD,
+  DOUBLE_TAP_ACTIONS.REPEAT,
+  DOUBLE_TAP_ACTIONS.REPEAT_AS_COPY,
+  DOUBLE_TAP_ACTIONS.DELETE
+];
+
+export const DOUBLE_TAP_OUTGOING_OPTIONS: readonly number[] = [
+  ...DOUBLE_TAP_INCOMING_OPTIONS.slice(0, DOUBLE_TAP_INCOMING_OPTIONS.indexOf(DOUBLE_TAP_ACTIONS.DELETE)),
+  DOUBLE_TAP_ACTIONS.EDIT,
+  DOUBLE_TAP_ACTIONS.DELETE
+];
+
+/** The lang key of an action's hub label — Android's own titles where they exist. */
+export const doubleTapActionLangKey = (action: number): LangPackKey => {
+  switch(action) {
+    case DOUBLE_TAP_ACTIONS.SEND_REACTIONS:
+      return 'Exteraless.DoubleTap.SendReactions';
+    case DOUBLE_TAP_ACTIONS.SHOW_REACTIONS:
+      return 'Exteraless.DoubleTap.ShowReactions';
+    case DOUBLE_TAP_ACTIONS.TRANSLATE:
+      return 'TranslateMessage';
+    case DOUBLE_TAP_ACTIONS.REPLY:
+      return 'Reply';
+    case DOUBLE_TAP_ACTIONS.SAVE:
+      return 'Exteraless.DoubleTap.Save';
+    case DOUBLE_TAP_ACTIONS.DOWNLOAD:
+      return 'Exteraless.DoubleTap.Download';
+    case DOUBLE_TAP_ACTIONS.REPEAT:
+      return 'Exteraless.MenuRepeat';
+    case DOUBLE_TAP_ACTIONS.REPEAT_AS_COPY:
+      return 'Exteraless.DoubleTap.RepeatAsCopy';
+    case DOUBLE_TAP_ACTIONS.EDIT:
+      return 'Edit';
+    case DOUBLE_TAP_ACTIONS.DELETE:
+      return 'Delete';
+    case DOUBLE_TAP_ACTIONS.FORWARD:
+      return 'Forward';
+    default:
+      return 'Disable';
+  }
+};
+
+/**
+ * The double-tap decision (CHAT-10, ChatActivity.onDoubleClick's
+ * `messageObject.isOutOwner() ? getDoubleTapActionOut() : getDoubleTapAction()`):
+ * the direction picks the key, the stored value passes through — an imported
+ * Android-only value (the LLM translate) resolves to itself and the web
+ * dispatcher no-ops on it, never faked.
+ */
+export const resolveDoubleTapAction = (
+  isOutgoing: boolean,
+  settings: Pick<ExteralessSettings, 'DoubleTapAction' | 'DoubleTapActionOut'> = exteralessSettings
+): number => isOutgoing ? settings.DoubleTapActionOut : settings.DoubleTapAction;
+
 export const getOpenLinkConfirmation = () => exteralessSettings.ConfirmAllLinks ? 1 : exteralessSettings.SkipOpenLinkConfirm ? 2 : 0;
+
+/**
+ * The wallpaper-pattern gate (V-1): whether a wallpaper record contributes a
+ * pattern layer — the record is a pattern (`pFlags.pattern`) and the
+ * exteraless toggle lets it draw. Off means the background renderer falls
+ * back to the wallpaper's color/gradient, Android's intensity 0.
+ */
+export const wallpaperDrawsPattern = (
+  wallPaper: WallPaper | undefined,
+  patternEnabled: boolean = exteralessSettings.OEAppearanceWallpaperPattern
+): boolean => patternEnabled && !!(wallPaper as WallPaper.wallPaper)?.pFlags?.pattern;
+
+/**
+ * The per-chat custom-theme resolution (LOOK-10, Android's
+ * `ChatThemeController.getDialogWallpaper` + `ChatActivity.setupChatTheme`):
+ * with the setting on (the stock Web K default) a chat wears the theme
+ * emoticon and wallpaper that were set for it on another client; with it off
+ * the chat stays in the app's own theme — the peer's theme and wallpaper are
+ * dropped, exactly `setupChatTheme`'s early return. An emoticon whose theme
+ * is not in the account's theme list keeps the wallpaper record (the theme
+ * path wins only when it resolves).
+ */
+export const resolveChatThemeOverride = <T extends {emoticon?: string}>(
+  fullPeer: ChatFull | UserFull | undefined,
+  customThemesEnabled: boolean,
+  getThemeByEmoticon: (emoticon: string) => T | undefined
+): {theme: T | undefined, wallPaper: WallPaper | undefined} => {
+  if(!fullPeer || !customThemesEnabled) {
+    return {theme: undefined, wallPaper: undefined};
+  }
+
+  let wallPaper = unwrap((fullPeer as ChatFull.channelFull).wallpaper);
+  const emoticon = (fullPeer as ChatFull.channelFull).theme_emoticon ||
+    ((fullPeer as UserFull.userFull).theme as ChatTheme.chatTheme)?.emoticon ||
+    (wallPaper && wallPaper.settings?.emoticon);
+
+  const theme = getThemeByEmoticon(emoticon);
+  if(emoticon && theme) {
+    wallPaper = undefined;
+  }
+
+  return {theme, wallPaper};
+};
 
 /**
  * Android's hashtag search default page (`ChatActivity`, per open): a public
@@ -442,7 +721,21 @@ export const playerTitleSizes = (value = exteralessSettings.OEPlayerTitleSize): 
   return clamped === 0 ? [22, 15] : clamped === 2 ? [31, 17] : [26, 16];
 };
 
-/** Android `PlayerStyle.coverStyle()`: card, wide, full, disc. */
+/**
+ * Android `SharedConfig.bubbleRadius` → the bubble corners: the far corners
+ * take the radius in px, the tail-side corners clamp to min(6, radius)
+ * (`MessageDrawable`: `nearRad = min(6, bubbleRadius)`). The default 17
+ * yields undefined — Web K's own bubble geometry stays (the stock 15px far /
+ * 5px tail pair ≈ Android's 17/6dp), so a reset never restyles a bubble.
+ */
+export const bubbleRadiusToCss = (radius: number = exteralessSettings.bubbleRadius): {far: string, tail: string} | undefined => {
+  const clamped = clampExteralessSetting('bubbleRadius', radius);
+  if(clamped === 17) return undefined;
+  return {far: clamped + 'px', tail: Math.min(6, clamped) + 'px'};
+};
+
+/**
+ * Android `PlayerStyle.coverStyle()`: card, wide, full, disc. */
 export const getPlayerCoverStyle = (value = exteralessSettings.OEPlayerCoverStyle) =>
   clampExteralessSetting('OEPlayerCoverStyle', value);
 
@@ -453,8 +746,22 @@ if(typeof document !== 'undefined') {
   // * first run. hotEffect keeps a hot edit of this module from running a
   // * second root
   hotEffect(import.meta.hot, () => createRoot((dispose) => {
+    // * F-6: the attach/detach toggle eases its margins — a one-shot root
+    // * class stands only while the toggle settles, so the folders-rail
+    // * offset and every resize path stay instant
+    let previousAttachedSidebar = exteralessSettings.OEAppearanceAttachedSidebar;
+    let sidebarAnimateTimer: ReturnType<typeof setTimeout>;
+
     createEffect(() => {
       const {classList, style} = document.documentElement;
+
+      if(exteralessSettings.OEAppearanceAttachedSidebar !== previousAttachedSidebar) {
+        previousAttachedSidebar = exteralessSettings.OEAppearanceAttachedSidebar;
+        classList.add('oe-sidebar-layout-animate');
+        clearTimeout(sidebarAnimateTimer);
+        // * --transition-standard-in is .3s at full animation level
+        sidebarAnimateTimer = setTimeout(() => classList.remove('oe-sidebar-layout-animate'), 500);
+      }
 
       // * every property read here is what the effect tracks
       style.setProperty('--oe-avatar-radius', avatarCornersToRadiusPercent(exteralessSettings.OEAppearanceAvatarCorners));
@@ -498,6 +805,7 @@ if(typeof document !== 'undefined') {
       classList.toggle('oe-no-glass-menus', !exteralessSettings.OEAppearanceGlassMessageMenu);
       classList.toggle('oe-center-title', exteralessSettings.OEAppearanceCenterTitle);
       classList.toggle('oe-system-font', exteralessSettings.TypefaceUseDefault);
+      classList.toggle('oe-attached-sidebar', exteralessSettings.OEAppearanceAttachedSidebar);
       classList.toggle('oe-new-chat-header', exteralessSettings.OEAppearanceNewChatHeaderStyle);
       classList.toggle('oe-md3-loading', exteralessSettings.OEAppearanceNewLoadingStyle);
       classList.toggle('oe-md3-sliders', exteralessSettings.SliderStyle === 2);
@@ -508,6 +816,15 @@ if(typeof document !== 'undefined') {
       classList.toggle('oe-no-reply-colors', !exteralessSettings.OEChatsReplyColors);
       classList.toggle('oe-no-reply-emoji', !exteralessSettings.OEChatsReplyEmoji);
       classList.toggle('oe-no-reply-background', !exteralessSettings.OEChatsReplyBackground);
+
+      const bubbleRadius = bubbleRadiusToCss(exteralessSettings.bubbleRadius);
+      if(bubbleRadius === undefined) {
+        style.removeProperty('--oe-bubble-radius');
+        style.removeProperty('--oe-bubble-tail-radius');
+      } else {
+        style.setProperty('--oe-bubble-radius', bubbleRadius.far);
+        style.setProperty('--oe-bubble-tail-radius', bubbleRadius.tail);
+      }
 
       style.setProperty('--oe-sticker-radius', stickerShapeToCss(exteralessSettings.OEChatsStickerShape));
     });

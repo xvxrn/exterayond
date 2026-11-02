@@ -90,6 +90,8 @@ describe('exteraless settings store', () => {
       OEChatsReplyBackground: true,
       OEChatsPauseVoice: false,
       OEChatsPauseRound: false,
+      DoubleTapAction: 1,
+      DoubleTapActionOut: 1,
       AutoPauseVideo: true,
       OEChatsHideReactionsChannels: false,
       OEChatsHideReactionsGroups: false,
@@ -125,12 +127,27 @@ describe('exteraless settings store', () => {
       FixLinkPreview: true,
       DisableLinkPreviewByDefault: false,
       DisableGlobalSearch: false,
+      SortByUnread: false,
+      OEAppearanceWallpaperPattern: true,
+      OEAppearanceAttachedSidebar: false,
+      OEAppearanceThemePalette: false,
       HideAllTab: false,
       OEChatsWideChannelPosts: false,
       OEChatsWideFeedPosts: false,
       HideStoriesFromHeader: true,
       SearchHashtagDefaultPageChat: 0,
-      SearchHashtagDefaultPageChannel: 0
+      SearchHashtagDefaultPageChannel: 0,
+      OEPillActivePills: '5,6',
+      OEPillHiddenPills: '',
+      OEPillInfiniteScrolling: true,
+      OEPillLastActiveId: -1,
+      OEAppearanceMainMenuLayout: '',
+      showAddToSavedMessages: false,
+      CopyPhoto: false,
+      showReport: false,
+      showMessageDetails: false,
+      showViewHistory: false,
+      bubbleRadius: 17
     });
     expect(OE_AVATAR_CORNERS_MAX).toBe(28);
     expect(OE_SECTION_RADIUS_STOCK).toBe(20);
@@ -157,6 +174,11 @@ describe('exteraless settings store', () => {
     expect(clampExteralessSetting('OEPlayerTitleAlign', 2)).toBe(1);
     expect(clampExteralessSetting('OEPlayerTitleSize', 3)).toBe(2);
     expect(clampExteralessSetting('OEPlayerControlsSize', -5)).toBe(0);
+    // * the theme palette is a boolean since acceptance round 1 (F-2): numbers
+    // * and strings fall back like any non-boolean value
+    expect(clampExteralessSetting('OEAppearanceThemePalette', true)).toBe(true);
+    expect(clampExteralessSetting('OEAppearanceThemePalette', 1 as any)).toBe(false);
+    expect(clampExteralessSetting('OEAppearanceThemePalette', 'yes' as any)).toBe(false);
   });
 
   test('the player style mappings follow Android PlayerStyle', async() => {
@@ -212,6 +234,123 @@ describe('exteraless settings store', () => {
     resetExteralessSettings();
     expect(getHashtagSearchType(true)).toBeUndefined();
     expect(getHashtagSearchType(false)).toBeUndefined();
+  });
+
+  test('the wallpaper pattern gate draws only pattern records while enabled', async() => {
+    const {wallpaperDrawsPattern, setExteralessSetting, resetExteralessSettings} = await loadStore();
+    const pattern = {_: 'wallPaper', slug: 'pattern', pFlags: {pattern: true}} as any;
+    const image = {_: 'wallPaper', slug: 'photo1', pFlags: {}} as any;
+
+    // * the default is stock: pattern records draw, everything else never does
+    expect(wallpaperDrawsPattern(pattern)).toBe(true);
+    expect(wallpaperDrawsPattern(image)).toBe(false);
+    expect(wallpaperDrawsPattern(undefined)).toBe(false);
+    // * an explicit override cannot make a non-pattern record draw
+    expect(wallpaperDrawsPattern(image, true)).toBe(false);
+
+    // * off is Android's intensity 0: no pattern layer, the gradient only
+    setExteralessSetting('OEAppearanceWallpaperPattern', false);
+    expect(wallpaperDrawsPattern(pattern)).toBe(false);
+
+    resetExteralessSettings();
+    expect(wallpaperDrawsPattern(pattern)).toBe(true);
+  });
+
+  test('the wallpaper pattern toggle announces itself on the live channel', async() => {
+    const {setExteralessSetting} = await loadStore();
+    const rootScope = (await import('@lib/rootScope')).default;
+    const events: string[] = [];
+    const listener = ({key}: {key: string}) => events.push(key);
+    rootScope.addEventListener('exteraless_settings_updated', listener);
+
+    setExteralessSetting('OEAppearanceWallpaperPattern', false);
+    setExteralessSetting('OEAppearanceWallpaperPattern', false); // * unchanged: no event
+    setExteralessSetting('SortByUnread', true); // * not a live key: no event
+    expect(events).toEqual(['OEAppearanceWallpaperPattern']);
+
+    setExteralessSetting('OEAppearanceWallpaperPattern', true);
+    expect(events).toEqual(['OEAppearanceWallpaperPattern', 'OEAppearanceWallpaperPattern']);
+    rootScope.removeEventListener('exteraless_settings_updated', listener);
+  });
+
+  test('the double-tap action follows the direction and keeps the Android enum (CHAT-10)', async() => {
+    const {
+      resolveDoubleTapAction,
+      DOUBLE_TAP_ACTIONS,
+      DOUBLE_TAP_INCOMING_OPTIONS,
+      DOUBLE_TAP_OUTGOING_OPTIONS,
+      doubleTapActionLangKey,
+      setExteralessSetting
+    } = await loadStore();
+
+    // * the direction picks the key (ChatActivity.onDoubleClick's isOutOwner branch)
+    expect(resolveDoubleTapAction(false, {DoubleTapAction: 4, DoubleTapActionOut: 0} as any)).toBe(4);
+    expect(resolveDoubleTapAction(true, {DoubleTapAction: 4, DoubleTapActionOut: 0} as any)).toBe(0);
+    // * the live store is the default source
+    setExteralessSetting('DoubleTapActionOut', DOUBLE_TAP_ACTIONS.FORWARD);
+    expect(resolveDoubleTapAction(true)).toBe(DOUBLE_TAP_ACTIONS.FORWARD);
+    setExteralessSetting('DoubleTapActionOut', 1);
+
+    // * the enum is Android's DoubleTap.kt verbatim
+    expect(DOUBLE_TAP_ACTIONS).toEqual({
+      NONE: 0,
+      SEND_REACTIONS: 1,
+      SHOW_REACTIONS: 2,
+      TRANSLATE: 3,
+      REPLY: 4,
+      SAVE: 5,
+      REPEAT: 6,
+      REPEAT_AS_COPY: 7,
+      EDIT: 8,
+      TRANSLATE_LLM: 9,
+      DELETE: 10,
+      FORWARD: 11,
+      DOWNLOAD: 12
+    });
+
+    // * the hub lists are Android's showDoubleTapOptions minus the LLM
+    // * translate (no web provider); the outgoing list alone appends Edit
+    expect(DOUBLE_TAP_INCOMING_OPTIONS).not.toContain(DOUBLE_TAP_ACTIONS.TRANSLATE_LLM);
+    expect(DOUBLE_TAP_INCOMING_OPTIONS).not.toContain(DOUBLE_TAP_ACTIONS.EDIT);
+    expect(DOUBLE_TAP_OUTGOING_OPTIONS).toContain(DOUBLE_TAP_ACTIONS.EDIT);
+    expect(DOUBLE_TAP_INCOMING_OPTIONS[0]).toBe(DOUBLE_TAP_ACTIONS.NONE);
+    expect(DOUBLE_TAP_OUTGOING_OPTIONS[DOUBLE_TAP_OUTGOING_OPTIONS.length - 1]).toBe(DOUBLE_TAP_ACTIONS.DELETE);
+
+    // * an imported Android-only value passes through and labels as Disable
+    // * in the selector's fallback, never faked into another action
+    expect(resolveDoubleTapAction(false, {DoubleTapAction: 9, DoubleTapActionOut: 1} as any)).toBe(9);
+    expect(doubleTapActionLangKey(9)).toBe('Disable');
+    expect(doubleTapActionLangKey(DOUBLE_TAP_ACTIONS.SEND_REACTIONS)).toBe('Exteraless.DoubleTap.SendReactions');
+    expect(doubleTapActionLangKey(DOUBLE_TAP_ACTIONS.REPEAT)).toBe('Exteraless.MenuRepeat');
+  });
+
+  test('the custom themes gate drops the peer theme and wallpaper when off', async() => {
+    const {resolveChatThemeOverride} = await loadStore();
+    const wallPaper = {_: 'wallPaper', id: 7, pFlags: {}, settings: {_: 'wallPaperSettings', pFlags: {}}} as any;
+    const theme = {_: 'theme', emoticon: '🎉', settings: []} as any;
+    const getThemeByEmoticon = (emoticon: string) => emoticon === '🎉' ? theme : undefined;
+
+    // * on (the default, stock Web K): a channel theme emoticon replaces the wallpaper
+    const themed = {_: 'channelFull', wallpaper: wallPaper, theme_emoticon: '🎉'} as any;
+    expect(resolveChatThemeOverride(themed, true, getThemeByEmoticon)).toEqual({theme, wallPaper: undefined});
+
+    // * a wallpaper-only chat keeps its wallpaper; a userFull reads its own theme field
+    const plain = {_: 'channelFull', wallpaper: wallPaper} as any;
+    expect(resolveChatThemeOverride(plain, true, getThemeByEmoticon)).toEqual({theme: undefined, wallPaper});
+    const userFull = {_: 'userFull', theme: {_: 'chatTheme', emoticon: '🎉'}} as any;
+    expect(resolveChatThemeOverride(userFull, true, getThemeByEmoticon).theme).toBe(theme);
+
+    // * an emoticon with no account theme keeps the wallpaper record
+    const unknownEmoticon = {_: 'channelFull', wallpaper: wallPaper, theme_emoticon: '🐍'} as any;
+    expect(resolveChatThemeOverride(unknownEmoticon, true, getThemeByEmoticon)).toEqual({theme: undefined, wallPaper});
+
+    // * an emoticon carried by the wallpaper record itself resolves too
+    const recordEmoticon = {_: 'channelFull', wallpaper: {...wallPaper, settings: {_: 'wallPaperSettings', pFlags: {}, emoticon: '🎉'}}} as any;
+    expect(resolveChatThemeOverride(recordEmoticon, true, getThemeByEmoticon).theme).toBe(theme);
+
+    // * off drops both — Android ChatActivity.setupChatTheme's early return
+    expect(resolveChatThemeOverride(themed, false, getThemeByEmoticon)).toEqual({theme: undefined, wallPaper: undefined});
+    expect(resolveChatThemeOverride(undefined, true, getThemeByEmoticon)).toEqual({theme: undefined, wallPaper: undefined});
   });
 
   test('Forced MD3 composes eight Android settings and resets their original defaults', async() => {
@@ -481,6 +620,48 @@ describe('exteraless settings application (jsdom)', () => {
     await flush();
     expect(document.documentElement.classList.contains('oe-hide-send-as')).toBe(false);
     expect(document.documentElement.classList.contains('oe-remove-message-tail')).toBe(true);
+  });
+
+  test('the attached sidebar is a live root class and reset restores the float', async() => {
+    const {setExteralessSetting, resetExteralessSettings} = await loadStore();
+    const root = document.documentElement;
+
+    // * the default is stock: the sidebar floats
+    expect(root.classList.contains('oe-attached-sidebar')).toBe(false);
+
+    setExteralessSetting('OEAppearanceAttachedSidebar', true);
+    await flush();
+    expect(root.classList.contains('oe-attached-sidebar')).toBe(true);
+
+    setExteralessSetting('OEAppearanceAttachedSidebar', false);
+    await flush();
+    expect(root.classList.contains('oe-attached-sidebar')).toBe(false);
+
+    setExteralessSetting('OEAppearanceAttachedSidebar', true);
+    await flush();
+    resetExteralessSettings();
+    await flush();
+    expect(root.classList.contains('oe-attached-sidebar')).toBe(false);
+  });
+
+  test('the attached sidebar toggle raises the one-shot layout animation class', async() => {
+    const {setExteralessSetting} = await loadStore();
+    const root = document.documentElement;
+
+    setExteralessSetting('OEAppearanceAttachedSidebar', true);
+    await flush();
+    expect(root.classList.contains('oe-attached-sidebar')).toBe(true);
+    expect(root.classList.contains('oe-sidebar-layout-animate')).toBe(true);
+
+    // * the class drops once the transition settles (500ms after the flip)
+    await new Promise((resolve) => setTimeout(resolve, 550));
+    expect(root.classList.contains('oe-sidebar-layout-animate')).toBe(false);
+
+    // * effect re-runs without a flip (another setting changed) re-add nothing
+    setExteralessSetting('OEAppearanceAvatarCorners', 7);
+    await flush();
+    expect(root.classList.contains('oe-sidebar-layout-animate')).toBe(false);
+    setExteralessSetting('OEAppearanceAvatarCorners', 28);
   });
 
   test('the channel gift button hiding is off by default, live, and reset clears it', async() => {

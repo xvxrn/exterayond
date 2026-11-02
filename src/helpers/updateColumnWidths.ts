@@ -65,6 +65,7 @@ import rootScope from '@lib/rootScope';
 import clamp from '@helpers/number/clamp';
 import throttle from '@helpers/schedulers/throttle';
 import {getAppWindow} from '@helpers/appWindow';
+import {exteralessSettings} from '@stores/exteralessSettings';
 
 // Default and resize range for the left & right columns.
 export const DEFAULT_COLUMN_WIDTH = 360;
@@ -282,12 +283,18 @@ export default function updateColumnWidths(): void {
   const visualLeftWidth = computeVisualLeftWidth();
   const layoutLeftWidth = computeLayoutLeftWidth();
   const rightWidth = computeRightWidth();
+  // * G-3: the attached sidebar never overlays the chat — the space beside
+  // * it is computed from the panel's VISUAL width, while the stock layout
+  // * math reserves the collapsed width and lets the popped-out panel
+  // * overlay the chat
+  const attachedSidebar = exteralessSettings.OEAppearanceAttachedSidebar === true;
+  const leftColumnSpace = attachedSidebar ? visualLeftWidth : layoutLeftWidth;
   // Whether the right column can dock without overlapping the chat. The
   // threshold is the sum of every horizontal piece currently in the docked
   // layout, so resizing either column (or collapsing the left, or toggling
   // the folders panel) immediately re-evaluates the floats decision.
   const foldersOffset = foldersSidebarShown ? FOLDERS_SIDEBAR_OFFSET : 0;
-  const rightColumnFits = foldersOffset + layoutLeftWidth + rightWidth + CHAT_WIDTH_MAX + PAGE_CHATS_PADDING * 4;
+  const rightColumnFits = foldersOffset + leftColumnSpace + rightWidth + CHAT_WIDTH_MAX + PAGE_CHATS_PADDING * 4;
   // Handheld is a slider — the right column overlays the chat, so it
   // always floats. Without this body.right-column-floats stays off and the
   // `.bubbles-inner { width: calc(100% - var(--right-column-width) ...) }`
@@ -308,9 +315,13 @@ export default function updateColumnWidths(): void {
   // (601-925) and on mobile the left column overlays the chat, which keeps
   // full width.
   const isFloatingLeft = mediaSizes.isLessThanFloatingLeftSidebar && !isMobile;
-  const chatAvailableWidth = (isMobile || isFloatingLeft) ?
+  // * G-3: in the docked range the chat sits in the space beside the sidebar;
+  // * with the sidebar attached it must clear the panel in the drawer range
+  // * too (the stock drawer overlays the chat, the attached panel docks), so
+  // * the clamp subtracts the panel's width there as well
+  const chatAvailableWidth = (isMobile || (isFloatingLeft && !attachedSidebar)) ?
     middleWidth :
-    availableWidth - foldersOffset - layoutLeftWidth - PAGE_CHATS_PADDING * 3;
+    availableWidth - foldersOffset - leftColumnSpace - PAGE_CHATS_PADDING * 3;
   const chatWidth = isMobile ? vw : Math.min(chatAvailableWidth, CHAT_WIDTH_MAX);
   // Viewport threshold at which the right column can dock at default size
   // without overlapping a CHAT_WIDTH_MAX chat. Exposed for any caller that
@@ -384,6 +395,11 @@ export function installColumnWidthsUpdater(): void {
   installed = true;
   mediaSizes.addEventListener('resize', updateColumnWidths);
   rootScope.addEventListener('resizing_left_sidebar', updateColumnWidths);
+  // * G-3: the attached-sidebar toggle reshapes the chat's space (the visual
+  // * width replaces the layout one in the space math)
+  rootScope.addEventListener('exteraless_settings_updated', ({key}) => {
+    if(key === 'OEAppearanceAttachedSidebar') updateColumnWidths();
+  });
   updateColumnWidths();
 }
 

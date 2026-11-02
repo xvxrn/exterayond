@@ -13,6 +13,7 @@
 import {OE_DEFAULTS, clampExteralessSetting, exteralessSettings, setExteralessSetting, getStickerTimeMode, setStickerTimeMode} from '@stores/exteralessSettings';
 import type {ExteralessSettings, ExteralessSettingsKey} from '@stores/exteralessSettings';
 import {isArchiveHidden, setArchiveHidden} from '@stores/exteralessPreferences';
+import {applyMainMenuHalf, resolveMainMenuLayout, isMenuIdArray} from '@stores/exteralessMenuLayout';
 import {PLUGINS_DEVELOPER_MODE_KEY, pluginsManager} from '@plugins/manager';
 import {invisibleEncryptor} from './invisibleEncryptor';
 
@@ -33,11 +34,14 @@ type SupportedEntry = {
   kind: Kind,
   min?: number,
   max?: number,
-  /** HideArchive uses Web K's native setting; StickerTimeMode composes two Android flags. */
-  storeKey: ExteralessSettingsKey | 'HideArchive' | 'StickerTimeMode',
+  /** HideArchive uses Web K's native setting; StickerTimeMode composes two Android flags;
+   *  the two main-menu aliases bridge into the single `OEAppearanceMainMenuLayout` string. */
+  storeKey: ExteralessSettingsKey | 'HideArchive' | 'StickerTimeMode' | 'MainMenuLayoutHalf' | 'MainMenuHiddenHalf',
   /** int keys with different numbering: our value ↔ exteraGram's */
   toEtg?: (ours: number) => number | boolean | null,
-  toOurs?: (etg: number) => number | null
+  toOurs?: (etg: number) => number | null,
+  /** a string entry's own shape check, beyond "is a string" (EtgBackup's Predicates) */
+  validate?: (value: string) => boolean
 };
 
 /** The Android key set the format carries beyond the web's reach: recognized, reported, never applied. */
@@ -51,25 +55,45 @@ export const KNOWN_UNSUPPORTED_KEYS: string[] = [
   'gooeyAvatarAnimation', 'navigationDrawer', 'immersiveDrawerAnimation', 'showFeedTab',
   'hideKeyboardOnScroll', 'inlineMathResult',
   'showOnlineStatus',
-  'showCopyPhotoButton', 'showSaveMessageButton',
-  'showClearButton', 'showHistoryButton', 'showReportButton',
+  // * showCopyPhotoButton / showSaveMessageButton / showReportButton moved to
+  // * SUPPORTED (packet 055)
+  'showClearButton', 'showHistoryButton',
   'showDetailsButton', 'groupMessageMenu', 'extendedFramesPerSecond', 'cameraStabilization',
   'cameraMirrorMode', 'rememberLastUsedCamera', 'startWithWideAngleCamera', 'staticZoom',
   'preferOriginalQuality', 'swipeToPip', 'unmuteWithVolumeButtons',
-  'useSystemIconShape', 'infiniteScrolling', 'useGoogleCrashlytics',
+  'useSystemIconShape', 'useGoogleCrashlytics',
   'inAppVibration', 'titleText', 'downloadSpeedBoost', 'tabletMode', 'glassOutlineStyle',
   'doubleTapSeekDuration', 'cameraType', 'videoMessagesCamera',
   'translationProvider', 'tabIcons', 'doubleTapAction', 'doubleTapActionOutOwner',
   'predictiveBackIntensity', 'flashWarmth', 'flashIntensity',
   'dividerStyle', 'bottomNavigationBarMode',
-  'unlimitedRecentStickers', 'quickAdminShortcuts', 'mainMenuLayout', 'mainMenuHiddenItems',
+  'unlimitedRecentStickers', 'quickAdminShortcuts',
   'targetLang',
   // * the plugin flags with a web target moved to SUPPORTED; the two without
   // * one (compact view, art options) stay recognized-but-unsupported
   'pluginsCompactView', 'pluginsDisableArtOpts',
   // mainconfig (NagramX)
-  'ChatSwipeAction', 'mediaColumnsCount', 'bubbleRadius', 'fons_size'
+  'ChatSwipeAction', 'mediaColumnsCount', 'fons_size'
 ];
+/**
+ * Android `EtgBackup.isPillsLayout`: empty is fine, then comma-separated
+ * positive ints (1..100000), no duplicates, at most 100 of them, 4096 chars.
+ */
+const isPillsLayout = (value: string): boolean => {
+  if(!value) return true;
+  if(value.length > 4096) return false;
+  const seen = new Set<number>();
+  for(const part of value.split(',')) {
+    const id = Number(part.trim());
+    if(!Number.isInteger(id) || id <= 0 || id > 100000 || seen.has(id)) {
+      return false;
+    }
+
+    seen.add(id);
+  }
+
+  return seen.size <= 100;
+};
 
 const SUPPORTED: SupportedEntry[] = [
   {section: SECTION_EXTERA, key: 'disableGreetingSticker', kind: 'bool', storeKey: 'DontSendGreetingSticker'},
@@ -128,6 +152,12 @@ const SUPPORTED: SupportedEntry[] = [
   // * Android maps NekoConfig.autoPauseVideo; the persisted key is the contract
   {section: SECTION_EXTERA, key: 'pauseOnMinimizeVideo', kind: 'bool', storeKey: 'AutoPauseVideo'},
   {section: SECTION_EXTERA, key: 'hideStickerTime', kind: 'bool', storeKey: 'HideTimeForSticker'},
+  // * the message-menu toggles with a web item behind them (packet 055);
+  // * showDetailsButton/showHistoryButton stay unsupported (no details popup,
+  // * and the edit history waits on AYU-02)
+  {section: SECTION_EXTERA, key: 'showSaveMessageButton', kind: 'bool', storeKey: 'showAddToSavedMessages'},
+  {section: SECTION_EXTERA, key: 'showCopyPhotoButton', kind: 'bool', storeKey: 'CopyPhoto'},
+  {section: SECTION_EXTERA, key: 'showReportButton', kind: 'bool', storeKey: 'showReport'},
   {section: SECTION_EXTERA, key: 'stickerSize', kind: 'float', min: 4, max: 20, storeKey: 'stickerSize'},
   {section: SECTION_EXTERA, key: 'stickerTimeMode', kind: 'int', min: 0, max: 2, storeKey: 'StickerTimeMode'},
   {section: SECTION_EXTERA, key: 'bottomButton', kind: 'int', min: 0, max: 2, storeKey: 'OEChatsBottomButton'},
@@ -136,7 +166,21 @@ const SUPPORTED: SupportedEntry[] = [
   {section: SECTION_EXTERA, key: 'tabCounter', kind: 'bool', storeKey: 'IgnoreUnreadCount', toEtg: (value) => value !== 2, toOurs: (value) => value ? 0 : 2},
   {section: SECTION_EXTERA, key: 'stickerShape', kind: 'int', min: 0, max: 2, storeKey: 'OEChatsStickerShape'},
   {section: SECTION_EXTERA, key: 'avatarCorners', kind: 'float', min: 0, max: 28, storeKey: 'OEAppearanceAvatarCorners'},
-  {section: SECTION_EXTERA, key: 'sectionRadius', kind: 'float', min: 0, max: 28, storeKey: 'OEAppearanceSectionRadius'}
+  {section: SECTION_EXTERA, key: 'sectionRadius', kind: 'float', min: 0, max: 28, storeKey: 'OEAppearanceSectionRadius'},
+  // * Android exports SharedConfig.bubbleRadius under the same name in the
+  // * mainconfig section (EtgBackup.addMainConfigEntries, KIND_INT 0..17)
+  {section: SECTION_MAIN, key: 'bubbleRadius', kind: 'int', min: 0, max: 17, storeKey: 'bubbleRadius'},
+  // * Android exports PillStackConfig.infiniteScrolling under this alias (EtgBackup.java:391)
+  {section: SECTION_EXTERA, key: 'infiniteScrolling', kind: 'bool', storeKey: 'OEPillInfiniteScrolling'},
+  // * the pill layout strings, exteraGram's names under the pillstack section
+  // * (EtgBackup.java:444-445), validated by EtgBackup.isPillsLayout
+  {section: SECTION_PILLS, key: 'activePills', kind: 'string', storeKey: 'OEPillActivePills', validate: isPillsLayout},
+  {section: SECTION_PILLS, key: 'hiddenPills', kind: 'string', storeKey: 'OEPillHiddenPills', validate: isPillsLayout},
+  // * Android's drawer halves export as exteraGram JSON arrays
+  // * (EtgBackup.addMainMenuEntries, `isIdArray` validation); both bridge into
+  // * the single `OEAppearanceMainMenuLayout` "visible;hidden" string
+  {section: SECTION_EXTERA, key: 'mainMenuLayout', kind: 'string', storeKey: 'MainMenuLayoutHalf', validate: (value) => isMenuIdArray(value, true)},
+  {section: SECTION_EXTERA, key: 'mainMenuHiddenItems', kind: 'string', storeKey: 'MainMenuHiddenHalf', validate: (value) => isMenuIdArray(value, false)}
 ];
 
 /**
@@ -181,7 +225,8 @@ export type ApplyResult = {
 
 const isExpected = (entry: SupportedEntry, value: unknown): boolean => {
   if(entry.kind === 'bool') return typeof value === 'boolean';
-  if(entry.kind === 'string') return typeof value === 'string' && value.length <= 1024 * 1024;
+  if(entry.kind === 'string') return typeof value === 'string' && value.length <= 1024 * 1024 &&
+    (entry.validate?.(value) ?? true);
 
   // * like the Android reader: ints are exact integers, floats are finite
   // * numbers, both inside the entry's range
@@ -203,7 +248,10 @@ export const etgBackup = {
     const root: Record<string, Record<string, unknown>> = {};
     for(const entry of SUPPORTED) {
       const ours = entry.storeKey === 'HideArchive' ? isArchiveHidden() :
-        entry.storeKey === 'StickerTimeMode' ? getStickerTimeMode(settings) : settings[entry.storeKey];
+        entry.storeKey === 'StickerTimeMode' ? getStickerTimeMode(settings) :
+        entry.storeKey === 'MainMenuLayoutHalf' ? JSON.stringify(resolveMainMenuLayout().visible) :
+        entry.storeKey === 'MainMenuHiddenHalf' ? JSON.stringify(resolveMainMenuLayout().hidden) :
+        settings[entry.storeKey as ExteralessSettingsKey];
       if(ours === undefined) continue;
 
       let value: unknown = ours;
@@ -271,7 +319,7 @@ export const etgBackup = {
   },
 
   /** Applies everything that passed validation; returns the count and the unsupported key names. */
-  applyBackup(root: Record<string, Record<string, unknown>>, apply: (key: ExteralessSettingsKey, value: boolean | number) => void): ApplyResult {
+  applyBackup(root: Record<string, Record<string, unknown>>, apply: (key: ExteralessSettingsKey, value: boolean | number | string) => void): ApplyResult {
     let applied = 0;
     const unsupported: string[] = [];
 
@@ -293,8 +341,20 @@ export const etgBackup = {
         continue;
       }
 
+      if(entry.storeKey === 'MainMenuLayoutHalf' || entry.storeKey === 'MainMenuHiddenHalf') {
+        applyMainMenuHalf(entry.storeKey === 'MainMenuLayoutHalf' ? 'layout' : 'hidden', JSON.parse(value as string) as number[]);
+        applied++;
+        continue;
+      }
+
       if(entry.kind === 'bool') {
         apply(entry.storeKey, entry.toOurs ? entry.toOurs(Number(value)) : value as boolean);
+        applied++;
+        continue;
+      }
+
+      if(entry.kind === 'string') {
+        apply(entry.storeKey, value as string);
         applied++;
         continue;
       }
@@ -348,7 +408,7 @@ export const etgBackup = {
 // * ── the store-connected facade the hub uses ───────────────────────────────
 
 export const buildExteraBackup = (encrypt: boolean): string =>
-  etgBackup.buildBackup(encrypt, exteralessSettings as typeof OE_DEFAULTS & Record<string, boolean | number>);
+  etgBackup.buildBackup(encrypt, exteralessSettings as typeof OE_DEFAULTS & Record<string, boolean | number | string>);
 
 export const applyExteraBackup = (root: Record<string, Record<string, unknown>>): ApplyResult =>
   etgBackup.applyBackup(root, (key, value) => setExteralessSetting(key, value as never));

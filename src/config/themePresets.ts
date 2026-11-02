@@ -279,3 +279,59 @@ export function presetToThemeSettings(preset: AccentPreset, base: BaseTheme['_']
 export function presetThemeId(preset: AccentPreset): string {
   return 'preset:' + preset.id;
 }
+
+/**
+ * The custom accent picked in the exteraless Appearance hub (V-4 ladder 2).
+ * The id sits outside every iOS range (base colors 10..18, curated 101..107)
+ * so it can never collide with a shipped preset; `presetThemeId` still marks
+ * it 'preset:*', which `applyNewTheme` treats as a curated source — the
+ * current wallpaper passes through un-blended and no theme object is touched.
+ */
+export const CUSTOM_ACCENT_PRESET_ID = 0;
+
+/**
+ * Builds a single-color accent preset for the given base: dark bases derive
+ * the outgoing bubble gradient the same way iOS does for a custom accent
+ * (`darkBubbleColors`), light bases take the color as the solid fill — the
+ * exact composition `baseColorPreset` uses for the shipped base colors.
+ */
+export function accentPresetFromColor(accentColor: number, base: BaseTheme['_']): AccentPreset {
+  const isDarkBase = base === 'baseThemeTinted' || base === 'baseThemeNight';
+  return {
+    id: CUSTOM_ACCENT_PRESET_ID,
+    accent_color: accentColor,
+    message_colors: isDarkBase ? darkBubbleColors(accentColor) : [accentColor]
+  };
+}
+
+/**
+ * The Material-You wallpaper a custom accent carries (acceptance round 1,
+ * F-3): a gradient of four accent-hued stops plus the shared pattern, so the
+ * chat background follows the accent and keeps its material elements. Dark
+ * bases follow the iOS `DefaultDarkTintedPresentationTheme.colorWallpaper`
+ * convention (four dark muted stops of the hue, intensity 40, `dark`); light
+ * bases take pastel stops of the hue at the day presets' intensity 50. The
+ * built `wallPaper` reuses slug 'pattern', so the bundled pattern.svg renders
+ * with no download.
+ */
+export function materialWallpaperFromAccent(accentColor: number, base: BaseTheme['_']): AccentPresetWallpaper {
+  const isDarkBase = base === 'baseThemeTinted' || base === 'baseThemeNight';
+  if(isDarkBase) {
+    return {
+      intensity: 40,
+      background_color: withMul(accentColor, 1.0, 0.9, 0.32),
+      second_background_color: withMul(accentColor, 1.02, 0.85, 0.21),
+      third_background_color: withMul(accentColor, 0.98, 0.9, 0.27),
+      fourth_background_color: withMul(accentColor, 1.0, 0.8, 0.17),
+      dark: true
+    };
+  }
+
+  return {
+    intensity: 50,
+    background_color: withMul(accentColor, 1.0, 0.5, 0.86),
+    second_background_color: withMul(accentColor, 1.02, 0.45, 0.72),
+    third_background_color: withMul(accentColor, 0.98, 0.55, 0.8),
+    fourth_background_color: withMul(accentColor, 1.0, 0.4, 0.68)
+  };
+}

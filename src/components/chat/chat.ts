@@ -5,7 +5,7 @@ import type {AppImManager, ChatSetPeerOptions} from '@lib/appImManager';
 import EventListenerBase from '@helpers/eventListenerBase';
 import {logger, LogTypes} from '@lib/logger';
 import rootScope from '@lib/rootScope';
-import {exteralessSettings} from '@stores/exteralessSettings';
+import {exteralessSettings, resolveChatThemeOverride} from '@stores/exteralessSettings';
 import ChatBubbles, {FullMid, splitFullMid} from '@components/chat/bubbles';
 import ChatContextMenu from '@components/chat/contextMenu';
 import ChatInput from '@components/chat/input';
@@ -24,7 +24,7 @@ import AppSharedMediaTab from '@components/sidebarRight/tabs/sharedMediaTab';
 import noop from '@helpers/noop';
 import middlewarePromise from '@helpers/middlewarePromise';
 import indexOfAndSplice from '@helpers/array/indexOfAndSplice';
-import {Message, WallPaper, Chat as MTChat, Reaction, AvailableReaction, ChatFull, MessageEntity, PaymentsPaymentForm, InputPeer, ChatTheme, UserFull, User, StoriesStealthMode} from '@layer';
+import {Message, WallPaper, Chat as MTChat, Reaction, AvailableReaction, MessageEntity, PaymentsPaymentForm, InputPeer, User, StoriesStealthMode} from '@layer';
 import animationIntersector, {AnimationItemGroup} from '@components/animationIntersector';
 import apiManagerProxy from '@lib/apiManagerProxy';
 import deferredPromise, {CancellablePromise, bindPromiseToDeferred} from '@helpers/cancellablePromise';
@@ -41,7 +41,6 @@ import createUnifiedSignal from '@helpers/solid/createUnifiedSignal';
 import liteMode from '@helpers/liteMode';
 import {useFullPeer, type PeerFull} from '@stores/fullPeers';
 import {useAppConfig, useAppState} from '@stores/appState';
-import {unwrap} from 'solid-js/store';
 import callbackify from '@helpers/callbackify';
 import useIsNightTheme from '@hooks/useIsNightTheme';
 import useStars, {setReservedStars} from '@stores/stars';
@@ -567,27 +566,19 @@ export default class Chat extends EventListenerBase<{
 
     const update = () => {
       const _fullPeer = fullPeer();
-      let wallPaper: WallPaper;
-      let theme: Chat['currentTheme'];
+      // * exteraless customThemes (LOOK-10): the resolution lives with the
+      // * other store decision predicates; with it off the chat stays in the
+      // * app's own theme, exactly ChatActivity.setupChatTheme's early return
+      const resolved = resolveChatThemeOverride(
+        _fullPeer,
+        exteralessSettings.OEAppearanceCustomThemes,
+        getThemeByEmoticon
+      );
 
-      // * exteraless customThemes: with it off the chat stays in the app's own
-      // * theme, exactly ChatActivity.setupChatTheme's early return
-      if(_fullPeer && exteralessSettings.OEAppearanceCustomThemes) {
-        wallPaper = unwrap((_fullPeer as ChatFull.channelFull).wallpaper);
-        const emoticon = (_fullPeer as ChatFull.channelFull).theme_emoticon ||
-          ((_fullPeer as UserFull.userFull).theme as ChatTheme.chatTheme)?.emoticon ||
-          (wallPaper && wallPaper.settings?.emoticon);
+      this.currentTheme = resolved.theme;
+      this.currentWallPaper = resolved.wallPaper;
 
-        theme = unwrap(getThemeByEmoticon(emoticon));
-        if(emoticon && theme) {
-          wallPaper = undefined;
-        }
-      }
-
-      this.currentTheme = theme;
-      this.currentWallPaper = wallPaper;
-
-      log('updating', _fullPeer, theme, wallPaper);
+      log('updating', _fullPeer, resolved.theme, resolved.wallPaper);
       publish();
 
       createEffect(on(isNightTheme, update, {defer: true}));

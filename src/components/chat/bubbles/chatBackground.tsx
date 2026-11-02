@@ -35,6 +35,8 @@ import {AppTheme} from '@config/state';
 import {appState} from '@stores/appState';
 import classNames from '@helpers/string/classNames';
 import noop from '@helpers/noop';
+import {wallpaperDrawsPattern} from '@stores/exteralessSettings';
+import {dispatchWallpaperTint} from '@helpers/wallpaperTint';
 
 import styles from '@components/chat/bubbles/chatBackground.module.scss';
 
@@ -187,6 +189,13 @@ function getWallPaperUrl(
     return {urlOrPromise: undefined, isColorOnly};
   }
 
+  // * exteraless wallpaper-pattern gate: a pattern whose drawing the setting
+  // * denies is not fetched at all — the record renders as color/gradient
+  const isPatternRecord = !!(wallPaper as WallPaper.wallPaper)?.pFlags?.pattern;
+  if(isPatternRecord && !wallpaperDrawsPattern(wallPaper)) {
+    return {urlOrPromise: undefined, isColorOnly};
+  }
+
   // Built-in default pattern is bundled — used on auth screens before managers exist.
   if(slug === DEFAULT_BACKGROUND_SLUG) {
     return {urlOrPromise: 'assets/img/pattern.svg', isColorOnly};
@@ -213,7 +222,10 @@ function buildContent(
 ): BuiltContent {
   const {wallPaper} = resolved;
   const colors = getColorsFromWallPaper(wallPaper);
-  const isPattern = !!(wallPaper as WallPaper.wallPaper)?.pFlags?.pattern;
+  // * exteraless wallpaper-pattern gate: off drops the pattern layer, Android's
+  // * intensity 0 — the record renders as its color/gradient only. Image
+  // * wallpapers keep their own dimming path below.
+  const isPattern = wallpaperDrawsPattern(wallPaper);
   const themeName = (resolved.theme as AppTheme)?.name;
   // Two compositing strategies for dark patterns:
   // - Default (mask): pattern canvas painted black with pattern-shape holes, covering most of the gradient.
@@ -263,7 +275,11 @@ function buildContent(
     gradientCanvas.classList.add(styles.CanvasCommon, styles.GradientCanvas);
   }
 
-  if(intensity) {
+  // * the intensity dimming belongs to the layer it adjusts — the image's own
+  // * dimming, or the pattern layer (mask / overlay). With the pattern gated
+  // * off there is no pattern layer, and the gradient keeps its full color,
+  // * Android's intensity 0
+  if(intensity && (image || patternCanvas)) {
     // Mask path applies opacity to the gradient (so the small visible gradient area in pattern shape
     // is dimmed). Overlay path applies opacity to the pattern overlay (gradient stays full).
     const setOpacityTo = image ?? (isDarkPattern && !useOverlayRender ? gradientCanvas : patternCanvas);
@@ -515,6 +531,12 @@ export const ChatBackground: Component<ChatBackgroundProps> = (props) => {
       const hsla = computeHighlightingHsla(built);
       if(hsla) props.onHighlightColor?.(hsla);
 
+      // * G-4: an image wallpaper's dominant color feeds the theme palette's
+      // * wallpaper-derived tint level; a pattern or color record carries its
+      // * colors in the record and clears the level instead. Cached per
+      // * record — theme re-renders of the same wallpaper do not resample.
+      dispatchWallpaperTint(resolved.wallPaper, built.image);
+
       // Staging slot now holds the new bg, off-screen. Two paths:
       //  - deferReveal: hand the reveal to the caller so they can flip the slot synchronously
       //    in the same JS task as the bubbles mount — no intermediate paint where the new bg
@@ -528,9 +550,10 @@ export const ChatBackground: Component<ChatBackgroundProps> = (props) => {
         presentStagingSlot(transition);
         // `isDarkMaskPattern`: dark pattern via the mask path (night) — gradient stays bright while
         // the visible chat is darkened by the mask. Tinted (overlay) and light renders show the
-        // gradient directly, so their mirror needs no extra darkening.
+        // gradient directly, so their mirror needs no extra darkening. With the wallpaper-pattern
+        // gate off there is no mask either (`isPattern` false), so the mirror follows the gradient.
         props.gradientRendererRef?.(built.gradientRenderer, {
-          isDarkMaskPattern: built.isDarkPattern && !built.isTinted
+          isDarkMaskPattern: built.isDarkPattern && !built.isTinted && built.isPattern
         });
       };
       if(props.deferReveal) {
@@ -756,6 +779,28 @@ const appChatBackground = (() => {
     });
   });
 
+  /**
+   * Force a full re-render of the CURRENT background, bypassing the reference-equality
+   * short-circuits. Needed after the whole client moves between documents (Document PiP): the
+   * canvas / gradient renderer does not survive the cross-window move, so the same bg has to be
+   * rebuilt fresh in the now-current document. Cloning the theme yields a new reference so BOTH the
+   * wrapper's `lastAppliedTheme` guard and the inner `on([theme, wallPaper, peerId])` effect re-fire.
+   */
+  const reRender = () => setBackground({
+    theme: backgroundOwnedByChat ? (ownedTheme && {...ownedTheme}) : {...themeControllerSingleton.getTheme()},
+    wallPaper: backgroundOwnedByChat ? ownedWallPaper : undefined,
+    transition: 'instant'
+  });
+
+  // * the exteraless wallpaper-pattern gate re-renders the current background
+  // * live (the cloned theme busts every reference-equality guard); the event
+  // * is the store's shared live channel (exteralessSettings.ts)
+  rootScope.addEventListener('exteraless_settings_updated', ({key}) => {
+    if(key === 'OEAppearanceWallpaperPattern') {
+      reRender();
+    }
+  });
+
   return {
     element,
     attach,
@@ -777,18 +822,7 @@ const appChatBackground = (() => {
     },
     getReadyPromise: () => latestReady,
     resize: () => ChatBackgroundPatternRenderer.resizeInstancesOf(element),
-    /**
-     * Force a full re-render of the CURRENT background, bypassing the reference-equality
-     * short-circuits. Needed after the whole client moves between documents (Document PiP): the
-     * canvas / gradient renderer does not survive the cross-window move, so the same bg has to be
-     * rebuilt fresh in the now-current document. Cloning the theme yields a new reference so BOTH the
-     * wrapper's `lastAppliedTheme` guard and the inner `on([theme, wallPaper, peerId])` effect re-fire.
-     */
-    reRender: () => setBackground({
-      theme: backgroundOwnedByChat ? (ownedTheme && {...ownedTheme}) : {...themeControllerSingleton.getTheme()},
-      wallPaper: backgroundOwnedByChat ? ownedWallPaper : undefined,
-      transition: 'instant'
-    })
+    reRender
   };
 })();
 

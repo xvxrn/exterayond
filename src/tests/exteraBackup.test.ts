@@ -37,6 +37,21 @@ afterEach(() => {
 const FLUSH = () => new Promise((resolve) => setTimeout(resolve, 0));
 
 describe('exteraless .extera backup (EtgBackup contract)', () => {
+  it('the message-menu toggles round-trip under their Android aliases (packet 055)', () => {
+    const root = {exteraconfig: {showSaveMessageButton: true, showCopyPhotoButton: true, showReportButton: true, showDetailsButton: true}};
+    const applied = applyExteraBackup(root);
+    expect(applied.applied).toBe(3);
+    expect(applied.unsupported).toEqual(['showDetailsButton']);
+    expect(exteralessSettings.showAddToSavedMessages).toBe(true);
+    expect(exteralessSettings.CopyPhoto).toBe(true);
+    expect(exteralessSettings.showReport).toBe(true);
+    const exported = JSON.parse(etgBackup.buildBackup(false, exteralessSettings));
+    expect(exported.exteraconfig.showSaveMessageButton).toBe(true);
+    expect(exported.exteraconfig.showCopyPhotoButton).toBe(true);
+    expect(exported.exteraconfig.showReportButton).toBe(true);
+    expect(exported.exteraconfig).not.toHaveProperty('showDetailsButton');
+  });
+
   it('uses the Android boolean aliases for MD3 sliders/switches and rejects non-booleans', () => {
     const root = {exteraconfig: {newSliderStyle: true, newSwitchStyle: true, newLoadingStyle: false, newNavigationBarStyle: true}};
     expect(applyExteraBackup(root).applied).toBe(4);
@@ -111,18 +126,21 @@ describe('exteraless .extera backup (EtgBackup contract)', () => {
         // the NagramX half: recognized, unsupported, not applied
         useSystemIconShape: true
       },
-      // unknown Android-only key: ignored
-      [SECTION_MAIN]: {bubbleRadius: 12}
+      // * bubbleRadius is a supported mainconfig key since packet 056
+      [SECTION_MAIN]: {bubbleRadius: 12, mediaColumnsCount: 5}
     };
 
     const result = applyExteraBackup(root as Record<string, Record<string, unknown>>);
     await FLUSH();
 
-    expect(result.applied).toBe(4);
+    expect(result.applied).toBe(5);
     expect(exteralessSettings.OEAppearanceAvatarCorners).toBe(10);
     expect(exteralessSettings.OEChatsRemoveMessageTail).toBe(false);
     expect(exteralessSettings.OEChatsStickerTimeSide).toBe(true);
     expect(exteralessSettings.AutoPauseVideo).toBe(false);
+    expect(exteralessSettings.bubbleRadius).toBe(12);
+    // unknown Android-only key: ignored
+    expect(result.unsupported).toContain('mediaColumnsCount');
     // untouched
     expect(exteralessSettings.OEChatsBottomButton).toBe(OE_DEFAULTS.OEChatsBottomButton);
     expect(result.unsupported).toContain('useSystemIconShape');

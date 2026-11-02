@@ -6,6 +6,7 @@ import ExteralessAppearance from '@components/sidebarLeft/tabs/exteralessAppeara
 import ExteralessChats from '@components/sidebarLeft/tabs/exteralessChatsTab';
 import ExteralessOther from '@components/sidebarLeft/tabs/exteralessOtherTab';
 import {appSettings, setAppSettingsSilent} from '@stores/appSettings';
+import {SETTINGS_INIT} from '@config/state';
 import rootScope from '@lib/rootScope';
 import {
   OE_DEFAULTS,
@@ -27,7 +28,8 @@ const mocks = vi.hoisted(() => ({
   confirmation: vi.fn(),
   toast: vi.fn(),
   appearanceTabCtor: class AppExteralessAppearanceTab {},
-  chatsTabCtor: class AppExteralessChatsTab {}
+  chatsTabCtor: class AppExteralessChatsTab {},
+  quickReactionTabCtor: class AppQuickReactionTab {}
 }));
 
 vi.mock('@components/confirmationPopup', () => ({default: mocks.confirmation}));
@@ -43,7 +45,8 @@ vi.mock('@lib/solidjs/hotReloadGuardProvider', () => ({
     appImManager: {openUrl: mocks.openUrl},
     tabs: {
       AppExteralessAppearanceTab: mocks.appearanceTabCtor,
-      AppExteralessChatsTab: mocks.chatsTabCtor
+      AppExteralessChatsTab: mocks.chatsTabCtor,
+      AppQuickReactionTab: mocks.quickReactionTabCtor
     }
   }
 }));
@@ -189,6 +192,9 @@ describe('the exteraless Appearance tab', () => {
   let dispose: () => void;
 
   beforeEach(() => {
+    // * the accent swatch reads the active theme the way the app boot always
+    // * has one: the factory set from SETTINGS_INIT
+    setAppSettingsSilent('themes', SETTINGS_INIT.themes);
     dispose = mount(() => <ExteralessAppearance />);
   });
 
@@ -206,10 +212,9 @@ describe('the exteraless Appearance tab', () => {
     }));
 
     expect(sliders).toEqual([
-      // * the player-style rows of Android's PlayerStyleEditor come right after
-      // * the MD3 group; the cover is a card by default, so only its style
-      // * selector shows and the size and radius sliders follow their
-      // * refreshVisibility
+      // * the theme palette (V-4) is a plain toggle since acceptance round 1
+      // * (F-2), not a slider; the player-style rows of Android's
+      // * PlayerStyleEditor open the slider list
       {name: 'Exteraless.Player.Cover.Style', value: 0, min: 0, max: 3},
       {name: 'Exteraless.Player.Cover.Size', value: 100, min: 60, max: 100},
       {name: 'Exteraless.Player.Cover.Radius', value: 28, min: 0, max: 48},
@@ -282,6 +287,16 @@ describe('the exteraless Appearance tab', () => {
     setExteralessSetting('OEAppearanceSingleCornerRadius', OE_DEFAULTS.OEAppearanceSingleCornerRadius);
   });
 
+  it('the theme palette is a single toggle that flips the store', () => {
+    expect(useExteralessSettings()[0].OEAppearanceThemePalette).toBe(false);
+
+    const row = [...document.querySelectorAll<HTMLElement>('.row')].find((row) => row.textContent.includes('Exteraless.ThemePalette'));
+    row.querySelector<HTMLInputElement>('input').click();
+    expect(useExteralessSettings()[0].OEAppearanceThemePalette).toBe(true);
+
+    setExteralessSetting('OEAppearanceThemePalette', OE_DEFAULTS.OEAppearanceThemePalette);
+  });
+
   it('renders the centered title and system font rows of Android\'s appearance group', () => {
     const rowTitles = () => [...document.querySelectorAll<HTMLElement>('.row .row-title')].map((el) => el.textContent);
     expect(rowTitles()).toContain('Exteraless.CenterTitle');
@@ -346,6 +361,7 @@ describe('the exteraless Chats tab', () => {
       'Exteraless.StripTrackingOnPaste',
       'Exteraless.WideChannelPosts',
       'Exteraless.MenuRepeat',
+      'Exteraless.DoubleTapReaction',
       'Exteraless.PauseVideo',
       'Exteraless.PauseVoice',
       'Exteraless.PauseRound',
@@ -363,6 +379,32 @@ describe('the exteraless Chats tab', () => {
     expect(useExteralessSettings()[0].OEChatsHideCallButton).toBe(!OE_DEFAULTS.OEChatsHideCallButton);
 
     setExteralessSetting('OEChatsHideCallButton', OE_DEFAULTS.OEChatsHideCallButton);
+  });
+
+  it('shows the double-tap reaction row only while an action sends one, and opens the quick reaction tab (CHAT-11)', () => {
+    const reactionRow = () => [...document.querySelectorAll<HTMLElement>('.row')]
+      .find((row) => row.querySelector<HTMLElement>('.row-title')?.textContent === 'Exteraless.DoubleTapReaction');
+
+    // * the defaults (send reactions both sides) show the row, Android's
+    // * doubleTapReactionRow condition
+    expect(reactionRow()).toBeDefined();
+
+    // * no SEND_REACTIONS anywhere — the row leaves, live
+    setExteralessSetting('DoubleTapAction', 4); // Reply
+    setExteralessSetting('DoubleTapActionOut', 0); // None
+    expect(reactionRow()).toBeUndefined();
+
+    // * one side back to send reactions — the row returns and opens the stock
+    // * quick-reaction subtab, the web's own reaction chooser
+    setExteralessSetting('DoubleTapActionOut', 1);
+    expect(reactionRow()).toBeDefined();
+    mocks.tab.slider.createTab.mockReturnValueOnce({open: vi.fn()});
+    mocks.tab.slider.createTab.mockClear();
+    reactionRow().click();
+    expect(mocks.tab.slider.createTab).toHaveBeenCalledWith(mocks.quickReactionTabCtor);
+
+    setExteralessSetting('DoubleTapAction', OE_DEFAULTS.DoubleTapAction);
+    setExteralessSetting('DoubleTapActionOut', OE_DEFAULTS.DoubleTapActionOut);
   });
 });
 

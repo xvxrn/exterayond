@@ -39,6 +39,39 @@
   // page padding so the column lands 8px past the folders panel when shown.
   margin-inline-start: calc(var(--page-chats-padding) + var(--folders-sidebar-offset));
 
+  // * exteraless attached sidebar (OEAppearanceAttachedSidebar): the panel
+  // * loses the floating page margins and shadow and runs the app's full
+  // * height, like Android's always-attached drawer. The rounding stays only
+  // * on the content-facing edge (acceptance round 2, G-3): the inline-end
+  // * corners — the right edge of the left sidebar in LTR, mirrored in RTL —
+  // * keep the radius, the window-facing (inline-start) corners square.
+  // * The folders-rail offset stays so the two panels keep sitting side by
+  // * side, and the inner section cards keep their own radius
+  // * (--oe-section-radius). Logical margins and logical radii only — the
+  // * corner mirroring in RTL is the property's own.
+  :root.oe-attached-sidebar & {
+    margin-block: 0;
+    margin-inline-start: var(--folders-sidebar-offset);
+    box-shadow: none;
+    border-start-start-radius: 0;
+    border-end-start-radius: 0;
+  }
+
+  // * F-6 polish: the attach/detach toggle eases its margins, rounding and
+  // * shadow — only while the one-shot `oe-sidebar-layout-animate` root
+  // * class stands (the settings store adds it around the toggle and drops
+  // * it when it settles), so the folders-rail offset and every resize path
+  // * stay instant. Margins and the shadow are growth-in-place and a fade,
+  // * reduced keeps them; the rounding is full-level only.
+  :root.oe-sidebar-layout-animate & {
+    @include animation-level-transition(
+      margin-block var(--transition-standard-in),
+      margin-inline-start var(--transition-standard-in),
+      border-radius var(--transition-standard-in),
+      box-shadow var(--transition-standard-in)
+    );
+  }
+
   // Icon-only search affordance shown when the sidebar is collapsed and
   // there's no room for the full search input. Visibility is owned by JS —
   // sidebarLeft/index.ts toggles `.is-visible` from a Solid effect driven by
@@ -393,6 +426,103 @@
     --offset-top: 0;
     background-color: var(--surface-color);
 
+    // * the pill stack (PILLS-01): a line of widgets at the inline end of the
+    // * search field, Android pillstack/PillStackController — hidden while the
+    // * field holds text
+    .oe-pill-stack {
+      position: absolute;
+      inset-inline-end: 6px;
+      top: 50%;
+      transform: translateY(-50%);
+      z-index: 2; // * over the field, like the selector above
+      display: none;
+      align-items: center;
+
+      &.has-pills:not(.is-hidden) {
+        display: flex;
+      }
+    }
+
+    .oe-pill {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      height: 28px;
+      border: none;
+      border-radius: 14px;
+      padding: 0 10px;
+      font-size: 13px;
+      font-weight: 700;
+      white-space: nowrap;
+      cursor: pointer;
+      background-color: rgba(0, 0, 0, .09); // * Android's light: black text at 9%
+      color: rgba(0, 0, 0, .75);
+
+      &.is-hidden-pill {
+        display: none;
+      }
+
+      // * the switch animation (PILLS-03): a fade at reduced level, the full
+      // * slide at full, instant when animations are off
+      @keyframes oe-pill-slide-up {
+        from {
+          transform: translateY(50%);
+          opacity: 0;
+        }
+
+        to {
+          transform: none;
+          opacity: 1;
+        }
+      }
+
+      @keyframes oe-pill-slide-down {
+        from {
+          transform: translateY(-50%);
+          opacity: 0;
+        }
+
+        to {
+          transform: none;
+          opacity: 1;
+        }
+      }
+
+      &.oe-pill-enter-up {
+        @include animation-level(1) {
+          animation: oe-pill-slide-up .2s forwards ease-in-out;
+        }
+
+        @include animation-level(2) {
+          animation: oe-pill-slide-up .25s forwards cubic-bezier(.22, 1, .36, 1);
+        }
+      }
+
+      &.oe-pill-enter-down {
+        @include animation-level(1) {
+          animation: oe-pill-slide-down .2s forwards ease-in-out;
+        }
+
+        @include animation-level(2) {
+          animation: oe-pill-slide-down .25s forwards cubic-bezier(.22, 1, .36, 1);
+        }
+      }
+
+      .oe-pill-icon {
+        font-size: 16px;
+        line-height: 1;
+      }
+
+      .oe-pill-value {
+        opacity: .85;
+      }
+
+      .night & {
+        background-color: var(--surface-color);
+        color: var(--secondary-text-color);
+      }
+    }
+
     .input-search {
       .selector-user {
         --selector-user-size: 32px;
@@ -581,6 +711,13 @@
     body:has(> #page-chats > #main-columns > #column-left.is-collapsed.has-open-tabs) &:not(.force-hide) {
       opacity: 1;
       pointer-events: initial;
+    }
+
+    // * G-3: attached mode docks the popped-out panel beside the chat
+    // * (the chat re-centers to clear it) — no scrim over the chat
+    :root.oe-attached-sidebar body:has(> #page-chats > #main-columns > #column-left.is-collapsed.has-open-tabs) &:not(.force-hide) {
+      opacity: 0;
+      pointer-events: none;
     }
   }
 }
@@ -1142,10 +1279,89 @@
   }
 }
 
-.exterayond-md3-options summary {
+// * V-3 coverage extension: Android's SliderStyle=2 restyles every
+// * SeekBarView, and the web's other slider family is the chat audio rows'
+// * seek line — it takes the same M3 track and gap handle the settings
+// * sliders wear. Voice rows keep their waveform look (their handle is
+// * hidden by `.audio.is-voice`); the mini player's and the media viewer's
+// * sliders keep their own chrome (the V-3 audit lists them as waiting).
+:root.oe-md3-sliders .audio:not(.is-voice) .progress-line {
+  --height: 8px;
+  --border-radius: 4px;
+  --thumb-size: 3px;
+
+  &__filled:after {
+    height: 24px;
+    top: -8px;
+    border-radius: 2px;
+    outline: 6px solid var(--surface-color);
+    transform: translateX(calc(1.5px * var(--reflect)));
+  }
+}
+
+.exterayond-md3-options summary,
+.exterayond-options-reveal summary {
   padding: 1rem;
   cursor: pointer;
   color: var(--primary-color);
+  // * G-2: a summary is a control — it takes the row hover/press highlight
+  // * (rounded, so it stays inside its section card), easing at the app's
+  // * standard timing
+  border-radius: var(--oe-section-radius, #{$section-rounded-border-radius});
+  @include hover-background-effect();
+
+  @include animation-level(1) {
+    transition: background-color var(--transition-standard-in);
+  }
+}
+
+// * F-6 polish: the hub's <details> reveals (the accent picker, the MD3
+// * customize list) grow open where the platform can animate a keyword size
+// * (`interpolate-size`, Chrome 131+) and open at once where it cannot.
+// * Full animation level only: the collapse direction flips the content
+// * visibility discretely, which at reduced level would shrink an empty
+// * box instead of the content.
+// * G-2: the engine-independent part — the revealed content fades in — runs
+// * from reduced level, so the reveal moves on Firefox/Safari/older Chromium
+// * too (there the size growth below is a no-op and the open is instant).
+.exterayond-md3-options,
+.exterayond-options-reveal {
+  // * inherited, so the ::details-content pseudo reads it too
+  interpolate-size: allow-keywords;
+
+  @include animation-level(1) {
+    &[open] > :not(summary) {
+      animation: fade-in-opacity var(--transition-standard-in);
+    }
+  }
+
+  &::details-content {
+    block-size: 0;
+    overflow: clip;
+
+    // * the transition lives in the base rule so closing animates too
+    @include animation-level(2) {
+      transition: block-size var(--transition-standard-in), content-visibility var(--transition-standard-in) allow-discrete;
+    }
+  }
+
+  &[open]::details-content {
+    block-size: auto;
+  }
+}
+
+// * V-4: the accent picker's swatch beside the row title, and the embedded
+// * picker's side padding (the picker resizes itself to the container width)
+.exteraless-accent-swatch {
+  width: 1.25rem;
+  height: 1.25rem;
+  border-radius: 50%;
+  margin-inline-start: auto;
+  flex: 0 0 auto;
+}
+
+.exteraless-accent-picker {
+  padding: 0 1rem 1rem;
 }
 
 .background-container {

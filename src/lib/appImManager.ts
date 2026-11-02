@@ -2833,7 +2833,9 @@ export class AppImManager extends EventListenerBase<{
       ChatBackgroundStore.setBackgroundUrlToCache({slug, url: backgroundUrl});
     }
 
-    !noSetTheme && themeController.setTheme();
+    // * a wallpaper re-apply, not a theme switch: no view transition (see
+    // * applyThemeFast) — the canvas slot fade carries the visual change
+    !noSetTheme && themeController.applyThemeFast();
 
     return this.setCurrentBackground(
       broadcastEvent === undefined ? !!slug : broadcastEvent,

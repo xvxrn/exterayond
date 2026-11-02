@@ -27,6 +27,9 @@ import '@lib/polyfill';
 // * Dynamic: a static import would put the store into the page's
 // * reload-on-edit set (scripts/import-graph.mjs) for nothing
 void import('@stores/exteralessSettings');
+// * the theme palette rides the same boot contract and owns its own theme
+// * wiring (the store must not import it — see exteralessThemePalette.ts)
+void import('@stores/exteralessThemePalette');
 import '@lib/debug/mountLogExport'; // main-thread-only: wires window.downloadLogs / collectLogs
 import '@lib/debug/memoryReport'; // main-thread-only: wires window.memoryReport
 import '@lib/debug/memoryWatch'; // main-thread-only: wires window.memoryWatch (crash-proof memory series)

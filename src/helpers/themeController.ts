@@ -353,6 +353,26 @@ export class ThemeController {
     _log('end');
   }
 
+  /**
+   * Applies the active theme's colors without the theme-switch view
+   * transition. The wallpaper re-applies (`applyCurrentTheme` — a Chat
+   * Wallpaper grid pick, an upload, a "Set a color" pick) are not theme
+   * switches: the background renderer runs its own slot fade, and a full-page
+   * `startViewTransition` per apply — a color drag re-applies every few ms —
+   * both swallows the change behind a reveal and storms the compositor. The
+   * theme switches keep `setTheme` and its reveal.
+   */
+  public applyThemeFast() {
+    const silent = !this.applied;
+    const wasApplied = this.applied;
+    this.applied = true;
+
+    this._setTheme(silent);
+    if(!wasApplied) {
+      this.setWorkerThemeParams();
+    }
+  }
+
   public setTheme(coordinates?: {x: number, y: number}) {
     const _log = log.bindPrefix('setTheme');
     // off: the theme changes at once; reduced: it crossfades instead of spreading from the click
@@ -361,15 +381,7 @@ export class ThemeController {
     _log(`start, fast=${fast}, coordinates=${JSON.stringify(coordinates)}, animationLevel=${animationLevel}`);
 
     if(fast) {
-      const silent = !this.applied;
-      const wasApplied = this.applied;
-      this.applied = true;
-
-      this._setTheme(silent);
-      if(!wasApplied) {
-        this.setWorkerThemeParams();
-      }
-
+      this.applyThemeFast();
       return;
     }
 
@@ -633,6 +645,16 @@ export class ThemeController {
   // through applyNewTheme so the multi-base settings array, tinted blending, and
   // background-document download all reuse the cloud-theme codepath.
   public applyAccentPreset(preset: AccentPreset) {
+    return this.applyNewTheme(this.buildAccentPresetTheme(preset));
+  }
+
+  /**
+   * The synthetic Theme an accent preset applies: the preset wrapped for the
+   * current base. Public so a live accent preview can run it through
+   * `applyTheme` (pure variable writes, no persistence, no view transition)
+   * before the preset is committed through `applyAccentPreset`.
+   */
+  public buildAccentPresetTheme(preset: AccentPreset): Theme {
     const currentTheme = this.getTheme();
     const baseTheme = this.getBaseThemeForName(currentTheme.name);
     const settings = presetToThemeSettings(preset, baseTheme);
@@ -642,7 +664,7 @@ export class ThemeController {
     if(!settings.wallpaper) {
       settings.wallpaper = this.getThemeSettings(currentTheme)?.wallpaper;
     }
-    const synthetic: Theme = {
+    return {
       _: 'theme',
       id: presetThemeId(preset),
       access_hash: '',
@@ -651,7 +673,6 @@ export class ThemeController {
       pFlags: {},
       settings: [settings]
     };
-    return this.applyNewTheme(synthetic);
   }
 
   // Reset the active AppTheme to its factory defaults (the entry from SETTINGS_INIT).
@@ -720,11 +741,11 @@ export class ThemeController {
     const [, setAppSettings] = useAppSettings();
     await setAppSettings('themes', themes);
     // Don't dispatch 'theme_change' here. setBackgroundDocument's onReady chain already invokes
-    // appImManager.applyCurrentTheme(), which calls themeController.setTheme() — the very thing
-    // the 'theme_change' listener would re-trigger. Re-dispatching ran setTheme() (and therefore
-    // a full view-transition snapshot) twice per accent-preset / cloud-theme apply, which on tweb
-    // surfaced as a multi-second hang on click. The post-event 'theme_changed' is fired inside
-    // _setTheme() so all subscribers (worker theme params, tab pickers, etc.) still get notified.
+    // appImManager.applyCurrentTheme(), which calls themeController.applyThemeFast() — the very
+    // thing the 'theme_change' listener would re-trigger. Re-dispatching ran the apply twice
+    // per accent-preset / cloud-theme apply, which on tweb surfaced as a multi-second hang on
+    // click. The post-event 'theme_changed' is fired inside _setTheme() so all subscribers
+    // (worker theme params, tab pickers, etc.) still get notified.
   }
 
   private isNightTheme(theme: Theme | AppTheme) {

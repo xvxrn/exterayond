@@ -161,7 +161,14 @@ export type BroadcastEvents = {
   'connection_status_change': ConnectionStatusChange,
   'settings_updated': {key: string, value: any, settings: StateSettings},
   /** exteraless Preferences changed (`@stores/exteralessSettings`); imperative count owners re-read the store */
-  'exteraless_settings_updated': {key: string, value: boolean | number},
+  'exteraless_settings_updated': {key: string, value: boolean | number | string},
+  /**
+   * The wallpaper's dominant color landed (`@helpers/wallpaperTint`, G-4):
+   * `hex` is the image wallpaper's dominant chromatic color, or undefined for
+   * a record that carries no image; `key` is the wallpaper record id. The
+   * theme palette re-derives its tint on it.
+   */
+  'exteraless_wallpaper_tint': {hex: string | undefined, key: string},
   'draft_updated': {peerId: PeerId, threadId?: number, monoforumThreadId?: PeerId, draft: MyDraftMessage | undefined, force?: boolean},
 
   'background_change': void,

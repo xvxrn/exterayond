@@ -109,9 +109,10 @@ export const isMainMenuCustomized = (
 ): boolean => !!raw;
 
 /**
- * The web read: an uncustomized key leaves the stock menu; a customized one
- * yields the visible sequence (unbacked ids skipped by the consumer) with
- * Settings forced in — the web always runs "no bottom navigation bar", so
+ * The menu-consumer read: an uncustomized key leaves the stock menu (the
+ * empty halves are the consumer's "stock" marker); a customized one yields
+ * the visible sequence (unbacked ids skipped by the consumer) with Settings
+ * forced in — the web always runs "no bottom navigation bar", so
  * `ensureSettingsVisibility` appends it when the layout hides it and keeps it
  * at its own position when the layout carries one.
  */
@@ -130,6 +131,18 @@ export const resolveMainMenuLayout = (
   return {visible, hidden};
 };
 
+/**
+ * The hub screen's read — Android's editor read (`getLayout()` /
+ * `getHiddenItemsMutable()`): an uncustomized key shows the layout the menu
+ * really runs, so the stock items are listed as visible and the first toggle
+ * edits that layout instead of collapsing it. `resolveMainMenuLayout` keeps
+ * its "empty = byte-for-byte stock" contract for the menu consumer.
+ */
+export const getEditorMainMenuLayout = (): MainMenuLayout =>
+  isMainMenuCustomized() ?
+    resolveMainMenuLayout() :
+    {visible: [...WEB_MENU_STOCK_ORDER, MAIN_MENU_ITEMS.SETTINGS], hidden: []};
+
 const serialize = (visible: number[], hidden: number[]) =>
   `${visible.join(',')};${hidden.join(',')}`;
 
@@ -143,14 +156,19 @@ export const saveMainMenuLayout = (visible: number[], hidden: number[]) => {
   persistMainMenuLayout(nextVisible, hidden.filter((id) => id !== MAIN_MENU_ITEMS.SETTINGS));
 };
 
-/** Android's editor move: an id leaves both halves and joins the target one. */
+/**
+ * Android's editor move: an id leaves both halves and joins the target one.
+ * The move edits the layout the editor shows (`getEditorMainMenuLayout`) and
+ * saves through `saveMainMenuLayout` — an uncustomized key therefore saves
+ * the stock halves minus the toggle, never an empty visible half.
+ */
 export const setMenuItemVisible = (id: number, visible: boolean) => {
   if(id === MAIN_MENU_ITEMS.DIVIDER) return;
-  const layout = resolveMainMenuLayout();
+  const layout = getEditorMainMenuLayout();
   const nextVisible = layout.visible.filter((known) => known !== id);
   const nextHidden = layout.hidden.filter((known) => known !== id);
   (visible ? nextVisible : nextHidden).push(id);
-  persistMainMenuLayout(nextVisible, nextHidden);
+  saveMainMenuLayout(nextVisible, nextHidden);
 };
 
 /** Android `MainMenuLayout.reset`: an empty string means "never customized". */

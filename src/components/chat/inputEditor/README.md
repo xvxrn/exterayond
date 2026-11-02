@@ -212,16 +212,16 @@ from becoming a link while still admitting the relative hrefs upstream allowed;
 
 ## Tests
 
-Unit tests live in `src/tests/chatInputEditor*.test.ts`. Integration suites are
+Unit tests live in `tests/chatInputEditor*.test.ts`. Integration suites are
 grouped by behavior: clipboard, keyboard, quotes, math, tables, uploads, media,
 tooltips and block movement. Their shared setup is
-`src/tests/helpers/chatInputEditorHarness.ts`; the small common mount helper is
-`src/tests/helpers/chatInputEditor.ts`. Table-specific stubs live in
-`src/tests/mocks/chatInputEditorTableUi.ts`, reusing the common node-view stubs
+`tests/helpers/chatInputEditorHarness.ts`; the small common mount helper is
+`tests/helpers/chatInputEditor.ts`. Table-specific stubs live in
+`tests/mocks/chatInputEditorTableUi.ts`, reusing the common node-view stubs
 in `chatInputEditorNodes.ts`. Browser setup and selection settling are shared
 in `e2e/fixtures/chatInputEditorTest.ts`.
 
-`src/tests/richMessageInput.test.ts` covers standalone mounting, independent
+`tests/richMessageInput.test.ts` covers standalone mounting, independent
 instances, submission, engine reload and pending-upload lifetime. The
 `richMessageInputAi` tests exercise AI application and Undo/Redo in the actual
 field; `richMessageModelBoundary` checks the validator's transitive runtime
@@ -232,7 +232,7 @@ dependencies. The
 From the repository root:
 
 ```sh
-pnpm test --run src/tests/chatInputEditor
+pnpm test --run tests/chatInputEditor
 pnpm test --run
 pnpm test:editor:e2e
 pnpm test:popups
@@ -246,7 +246,7 @@ history, table navigation and uploads in Chromium, Firefox and WebKit.
 Popup suites exercise real application components and shared styles.
 Run an authenticated preview with `bash scripts/start-preview.sh`.
 
-The opt-in `src/tests/api/richMessageLifecycle.test.ts` uses real MTProto.
+The opt-in `tests/api/richMessageLifecycle.test.ts` uses real MTProto.
 It requires `TG_RICH_MESSAGE_LIVE=1`, `TG_API_SEED` and `TG_API_SEED_B`
 (independent authorizations of the same account); production also requires
 `TG_API_PROD_DC=1`. Normal unit runs skip these server tests.

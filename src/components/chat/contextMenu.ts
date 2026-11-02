@@ -47,7 +47,7 @@ import {addToProfileMusic, getSavedMusicDocument, removeFromProfileMusic} from '
 import getGroupedText from '@appManagers/utils/messages/getGroupedText';
 import confirmationPopup, {PopupConfirmationOptions} from '@components/confirmationPopup';
 import repeatMessages from '@components/chat/repeatMessages';
-import {exteralessSettings} from '@stores/exteralessSettings';
+import {exteralessSettings, verifyReportContext} from '@stores/exteralessSettings';
 import Icon from '@components/icon';
 import cloneDOMRect from '@helpers/dom/cloneDOMRect';
 import {ChatInputReplyTo} from '@components/chat/input';
@@ -1442,17 +1442,29 @@ export default class ChatContextMenu {
           selectedMids?.size ? () => selection.cancelSelection() : undefined
         );
       },
-      verify: () => !this.message.pFlags.out &&
+      verify: async() => !this.message.pFlags.out &&
         this.message._ === 'message' &&
         !this.message.pFlags.is_outgoing &&
         (
           isEphemeralMessage(this.message) || isAnchoredEphemeralMessage(this.message) ?
             !this.chat.selection.isSelecting :
             // * W-entry / Android NekoConfig.showReport: the per-message
-            // * Report also shows outside channels for incoming messages
-            // * (ChatActivity:50200 — a real incoming message in a chat or bot)
-            this.managers.appPeersManager.isChannel(this.messagePeerId) ||
-            exteralessSettings.showReport
+            // * Report also shows outside the stock contexts — Android's
+            // * `currentChat != null || currentUser.bot` (ChatActivity:50200),
+            // * never a private chat with a human. Every peer-type answer is
+            // * awaited before the decision: a raw `manager call || setting`
+            // * short-circuits on the truthy Promise and the setting would
+            // * never participate (the defect this rewiring fixes).
+            verifyReportContext(
+              await this.managers.appPeersManager.isChannel(this.messagePeerId),
+              exteralessSettings.showReport ?
+                await this.managers.appPeersManager.isAnyChat(this.messagePeerId) :
+                false,
+              exteralessSettings.showReport ?
+                await this.managers.appPeersManager.isBot(this.messagePeerId) :
+                false,
+              exteralessSettings.showReport
+            )
         ),
       notDirect: () => true,
       withSelection: true

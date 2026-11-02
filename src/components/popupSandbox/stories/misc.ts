@@ -91,7 +91,7 @@ defineStories('Composer & bots', [
     title: 'Attach video',
     open: async(ctx) => {
       const {default: showNewMediaPopup} = await import('@components/popups/newMedia');
-      const {default: url} = await import('@/tests/fixtures/ephemeralBot/media/video.mp4?url');
+      const {default: url} = await import('@tests/fixtures/ephemeralBot/media/video.mp4?url');
       const blob = await (await fetch(url)).blob();
       const file = new File([blob], 'sandbox-video.mp4', {type: 'video/mp4'});
       showNewMediaPopup(ctx.chat(), [file], 'media');

@@ -8,6 +8,12 @@ the source of truth for completion counts and pending feature IDs.
 
 ## Priority
 
+**Layout note (2026-11-02):** the unit suite lives at a root `tests/` (moved
+from `src/tests/`) and the Playwright browser suites at `tests/browser/`
+(moved from the root `e2e/`); the `e2e` name now belongs only to the
+end-to-end encryption module `src/lib/calls/e2e/`. See packet 058 in
+[progress.md](progress.md) before grepping for old paths.
+
 As of 31 October 2026, Forced MD3 remains the pending-priority block: its
 eight-part settings group, the base web adaptations and the MD3 player's
 style settings exist, but desktop visual review is blocked (no browser in
@@ -73,6 +79,20 @@ class-3 verdicts with reasons, `localPremium` stays parked (OTHER-04,
 user's call). Defaults always come from the Android source; the private
 export sets priorities only and is never committed. The checklist count is
 64/296 plus the user-directed sections.
+
+Packet 058 (2026-11-02) was a bug-hunt over those surfaces: four proven
+defects fixed with tests — the theme palette's restore-on-clear poisoned
+across theme switches (and the light-theme path), the boot night-class
+observer consumed by the platform classes before the first theme apply, the
+cache pill's unhandled rejection where CacheStorage is unavailable, the main
+menu hub being inert on a fresh client with the first toggle collapsing the
+menu, and the W-3 showReport broadening dead behind a truthy-Promise
+short-circuit. bubbleRadius and the W-1/W-2 verifies audited clean; five
+visual findings await the user's acceptance (progress.md, packet 058). Note:
+this pass edited the worktree content of two `tests/` files that are staged
+adds of the parallel session's `src/tests → tests/` move (paths untouched)
+and updated one untracked test file — see the packet 058 disclosure before
+committing the move.
 
 After that, pick unchecked items from the checklist, generally small to large.
 Remaining browser-free candidates are mostly subsystems: MEDIA-10 (compact

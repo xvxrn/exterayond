@@ -54,6 +54,10 @@ const cachePillRenderer = (button: HTMLButtonElement, valueEl: HTMLElement, name
       // * formatBytes returns a realtime i18n element; the pill's value is its text
       valueEl.textContent = formatBytes(files.totalSize + chunks, 1).textContent;
       button.setAttribute('aria-label', `${I18n.format(nameKey, true)}: ${valueEl.textContent}`);
+    } catch(e) {
+      // * no CacheStorage (Firefox private mode, denied storage): Android's
+      // * CachePill just keeps waiting on its callback — the pill keeps its
+      // * name with an empty value, nothing rejects
     } finally {
       inflight = false;
     }

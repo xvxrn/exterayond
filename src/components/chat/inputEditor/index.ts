@@ -1257,7 +1257,7 @@ function selectionAllowsMark(state: EditorState, name: string) {
  * The marks a block's own style draws on all of its text: a heading, a header cell, a table's title,
  * a details' summary and an author (a quote's, a pullquote's) are bold, a pullquote is italic. There
  * a mark changes nothing the reader sees, so neither the tooltip nor a shortcut offers it. The
- * styles are what decide: e2e/popupSandboxRichTextMarkup.spec.ts measures every text block against
+ * styles are what decide: tests/browser/popupSandboxRichTextMarkup.spec.ts measures every text block against
  * this.
  */
 const BLOCK_DRAWN_MARKS: {[name: string]: readonly string[]} = {

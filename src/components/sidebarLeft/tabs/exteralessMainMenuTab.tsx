@@ -7,9 +7,9 @@ import {i18n, LangPackKey} from '@lib/langPack';
 import {
   MAIN_MENU_ITEMS,
   WEB_MENU_ITEM_IDS,
+  getEditorMainMenuLayout,
   isMainMenuCustomized,
   resetMainMenuLayout,
-  resolveMainMenuLayout,
   setMenuItemVisible
 } from '@stores/exteralessMenuLayout';
 
@@ -33,7 +33,10 @@ const MENU_ITEM_NAME_KEYS: {[id: number]: LangPackKey} = {
 };
 
 const MenuItemListSection = (props: {nameKey: LangPackKey, infoKey?: LangPackKey, visible: boolean}) => {
-  const layout = createMemo(() => resolveMainMenuLayout());
+  // * Android's editor read: an uncustomized key lists the layout the menu
+  // * really runs (the stock halves), so the first toggle edits it instead of
+  // * collapsing the menu to the one toggled item
+  const layout = createMemo(() => getEditorMainMenuLayout());
   const ids = () => {
     const half = props.visible ? layout().visible : layout().hidden;
     return half.filter((id) => WEB_MENU_ITEM_IDS.includes(id) && MENU_ITEM_NAME_KEYS[id]);

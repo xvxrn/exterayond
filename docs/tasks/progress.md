@@ -1917,3 +1917,239 @@ ship client-side premium faking: OTHER-04 stays pending and the decision is
 the user's (a policy call about which local premium affordances are honest
 to surface), not a port. Recorded here and in the checklist so the parked
 state is visible.
+
+Session postscript (2026-11-02, packet 057 wrap-up). Two notes:
+
+1. The import-graph budget ratchet went red mid-session (dirtyPage 1): the
+   palette module's boot class observer had become a top-level statement,
+   which the graph's statefulness model counts as a second-instance risk.
+   The observer moved into a `watchBootThemeClass` helper (its body lives
+   inside a function, the same shape the detector exempts), the stray `;;`
+   after `import.meta.hot.accept()` went with it; behavior is unchanged
+   (the helper keeps the document guard and the self-disconnect).
+2. While this session was wrapping up, another session began moving the
+   test tree from `src/tests/` to a root `tests/` (a large staged rename,
+   not this session's work). My new suites moved with it
+   (`tests/exteralessPills.test.ts`, `tests/exteralessMenuLayout.test.ts`);
+   at the moment of writing they do not load because the vitest setup file
+   still resolves to `src/tests/setup.ts` — the mover's remaining step.
+   Last green state before the move: every touched suite passed
+   (`exteralessSettings` 30, `exteralessPills` 12, `exteralessMenuLayout`
+   13, `exteraBackup` 32, `exteralessTabs` 17, `settingsSearchIndex` 8,
+   `exteralessThemePalette`, `dialogSortByUnread` regression), typecheck
+   and oxlint clean on every touched file, and the ratchet's dirtyPage
+   returned to 0 by the same construction packet 050 used.
+
+## Packet 058 — the test tree consolidated under `tests/` (2026-11-02)
+
+The unit suite moved from `src/tests/` to a root `tests/` (641 files, `git mv`,
+rename history preserved) and the Playwright browser suites moved from the root
+`e2e/` to `tests/browser/` (109 files), so the `e2e` name now belongs only to
+the end-to-end encryption module at `src/lib/calls/e2e/`. That module's own
+`tests/` stay inside it, untouched. Follow-up path fixes the move required:
+
+- static imports: 13 one-level `../` imports into `src/` became `../src/…`
+  (one, `../networkerHarness`, correctly stayed), 2 `../../scripts/*.mjs` became
+  `../scripts/*.mjs`, and the browser-fixture stubs in `tests/mocks/` point at
+  `../browser/fixtures/…`;
+- a new `@tests/*` alias (tsconfig paths + `ADDITIONAL_ALIASES` in vite.config)
+  replaced the 111 `@/tests/…` sibling imports;
+- non-import path uses the first sweep missed: `require()` and `__dirname`
+  strings in `settingsSearchIndex` (the generator lives in `src/scripts/`),
+  `markupTooltipLayout`, `webManifest`, `checkBundleMangling`,
+  `tiptapDependencies`, `richMessageModelBoundary`, `managersBeforeAwaitRule`,
+  `richMessageInput`, `audioPlayGlyph`, and in `tests/browser/` the `ROOT` of
+  all three vite e2e configs, `ports.ts` (the per-checkout port lock) and the
+  lottie/scss fixture reads — all repointed;
+- URL paths: the editor fixture is served at
+  `/tests/browser/fixtures/chatInputEditor.html`, specs request fixtures by the
+  new URL, and the `namedModules()` scan in `vite.e2e.config.ts` (bundle mode)
+  reads `tests/browser` and matches `tests/browser/fixtures` URLs;
+- configs: 17 `package.json` scripts, the vitest `setupFiles` and the
+  `e2e/**` → `tests/browser/**` exclude (still anchored, still documented why),
+  two `.oxlintrc.json` overrides, and the `import-graph.mjs` skip rule.
+
+Verified: `tsc --noEmit` clean, oxlint clean, playwright `--list` discovers
+1130 tests across all five configs, vitest runs green on 32 files (124
+handoff-suite tests plus the files whose imports changed), and `tests/browser`
+is excluded from vitest (`vitest list tests/browser` finds nothing). Two real
+browser runs passed after the move: `popupSandboxPlainFields.spec.ts` (5 tests,
+bundle mode — it built the sandbox bundle through the rewritten
+`namedModules()` and reached into the app through `e2eImport`) and
+`lottieRender.spec.ts` (47 tests against the e2e dev server), the latter
+against a manually started server because the automation shell has no `pnpm`
+on PATH for the config's `pnpm exec vite` webServer command.
+
+Two follow-up fixes the runs surfaced: Playwright 1.61 spawns `webServer`
+with the config file's directory as its cwd, so the relative `vite` commands
+were written against the wrong base — all three webServer definitions now set
+`cwd` to the checkout root explicitly (the old root-`e2e/` layout carried the
+same latent bug); and one stale alias had survived the first sweep in
+`src/components/popupSandbox/stories/misc.ts` (`@/tests/fixtures/…` →
+`@tests/fixtures/…`), which failed the sandbox bundle with an ENOENT until
+repointed.
+
+Two failures met on the way are pre-existing, not the move's: the import-graph
+budget ratchet is red on HEAD (`dirtyPage grew: 1 ≤ 0` in a pristine worktree)
+and its esbuild service crashes with truncated-packet JSON errors under this
+Node (v26.12.1) — reproduced in the untouched worktree too.
+
+## 058 / Bug-hunt pass — the porting run's user-facing surfaces (2026-11-02)
+
+A dedicated bug-hunt over packets 052–057's surfaces (pill stack, main menu
+layout, theme palette chain, bubbleRadius, the W-entries), judged against the
+owning Web K code and the pinned Android source before testing, with a
+failing test per fix. Four proven defects fixed, each with a test; the rest
+of the surfaces audited clean. No commits (housekeeping owns them); typecheck
+(`scss-types` + `tsc --noEmit`) and oxlint on the touched files pass.
+
+**Theme palette — restore-on-clear across theme re-applies (proven, fixed).**
+`applyThemePalette` restored its captured foreign inline values blindly, so
+any theme apply between two palette passes poisoned the capture: with the
+toggle on, a theme switch (or an accent re-apply, or a "Set a color" pick —
+all run the applier before `theme_changed`) was clobbered by the previously
+captured values, the map re-captured the stale pair, and toggling the palette
+off later restored the *previous* theme's surfaces onto the current one. The
+light-theme path was worst: switching night→tinted-day with the palette on
+wrote the captured night surfaces inline onto the day theme, where nothing
+re-applies until the next theme change. Fix: the apply records what it wrote
+(`appliedInline`) and the restore only undoes keys whose current inline value
+still is the palette's — a value the applier rewrote since is already the
+correct restore target, so the capture re-reads it fresh. Byte-exact restore
+asserted over tinted-theme inline values (`--key` and `--key-rgb` pairs,
+`#hex` strings); the palette module's own surface stays untouched otherwise.
+Tests: `exteralessThemePalette` (+3: the byte-exact foreign-stands case, the
+theme-switch-while-on case, the light-theme case; the old 'clearing removes
+only the palette writes' test asserted the wipe defect its own name
+contradicted and was corrected to match its stated intent).
+
+**Theme palette — the boot night-class observer (proven, fixed).**
+`watchBootThemeClass` disconnected after the FIRST class mutation of
+`<html>`, and `setRootClasses()` adds the platform classes (`no-touch`,
+`native-emoji`, …) on DOMContentLoaded — long before the first theme apply,
+which waits on IndexedDB settings. The one-shot observer was therefore always
+consumed by the wrong mutation, and since the first theme apply is silent (no
+`theme_changed`), a dark-theme boot never applied the palette to the login
+screen (no `user_auth` there either). Fix: the watcher follows the `night`
+class itself (compares against the last seen value, fires only on a real
+flip) and disconnects after the first flip — every apply after the first
+rides `theme_changed`. Exported for testing.
+Test: `exteralessThemePalette` (+1: an unrelated class mutation does not
+consume it, the night flip fires once, a later flip does not).
+
+**Pill stack strip — the cache pill's failed collection rejected unhandled
+(proven, fixed).** `cachePillRenderer.refresh` had try/finally without
+catch, and `void refresh()` dropped the rejection: in an environment without
+CacheStorage (Firefox private mode, denied storage) `caches.open` rejects and
+the pill produced an unhandled promise rejection on mount and at every
+3-minute refresh — proven in the test by mocking the collectors to reject
+(vitest reports the unhandled rejection without the fix). Android's
+`CachePill` just keeps waiting on its callback; the web pill now keeps its
+name with an empty value, nothing rejects. New suite
+`exteralessPillStrip` (7 tests): the registered-pills-only mount with the
+roving tabindex/aria states, the hide-while-text rule including the clear
+button's simulated `input` event, the live rebuild on both layout keys, the
+one-pill inert switch (wheel + ArrowDown persist nothing), the teardown, and
+the contained failure.
+
+**Main menu layout — the hub was inert on a fresh client and the first
+toggle collapsed the menu (proven, fixed).** The hub screen read
+`resolveMainMenuLayout`, whose uncustomized contract is empty halves — so on
+a stock key the Visible/Hidden sections both rendered empty and nothing could
+be toggled; Android's editor instead shows the current layout
+(`parse()`'s `getDefaultLayout` branch). Worse, `setMenuItemVisible` started
+from those empty halves and persisted directly, so the first toggle from
+stock wrote `";11"` — a layout whose visible half is empty — collapsing the
+burger menu to Settings alone. Fix: a new `getEditorMainMenuLayout` (the
+editor read: an uncustomized key yields the stock halves —
+`WEB_MENU_STOCK_ORDER` + Settings — exactly what the menu really runs) feeds
+both the hub tab and `setMenuItemVisible`, which now saves through
+`saveMainMenuLayout` (Android's save: Settings forced visible, whole layout
+written). The menu consumer's "empty = byte-for-byte stock" contract is
+untouched. Tests: `exteralessMenuLayout` (+2: the editor read on stock, and
+the first toggle saving `14,6,10,8;11` with the menu keeping the rest —
+verified failing against the old code before the fix).
+
+**W-3 showReport — the broadening never ran (proven, fixed).** The Report
+item's verify appended `|| exteralessSettings.showReport` after
+`this.managers.appPeersManager.isChannel(...)`, but every proxied manager
+call returns a Promise — truthy — so `Promise || boolean` short-circuited and
+the setting never participated: the item behaved exactly as stock. The
+rewired verify awaits the peer-type answers and decides through a new pure
+`verifyReportContext(isChannel, isAnyChat, isBot, showReport)` — Android's
+contexts verbatim (`currentChat != null || currentUser.bot`): the stock
+`isChannel` gate (channels + supergroups), broadened by the setting to any
+chat peer (basic groups included) or a bot, never a private chat with a
+human. The extra peer-type lookups run only when the setting is on and the
+stock gate missed. Test: `exteralessSettings` (+1, the context truth table).
+W-1 (Add to Saved) and W-2 (CopyPhoto) verifies are all-sync and match
+Android's conditions (`!isUserSelf && !noforwards && canForwardMessage`;
+the clipboard-copyable gate) — clean.
+
+**Audited clean, no change.** bubbleRadius: the store range [0,17], the
+17→undefined stock rule and the min(6, r) tail clamp (tested in
+`exteralessPills`), and the SCSS substitution — the four logical corner
+properties in both is-in/is-out blocks with the stock SCSS fallbacks
+($medium 5px / $big 15px byte-identical to the unset state), the
+is-group-first/is-forced-rounded override on the far variable, the drawn
+tail's own rules untouched (Android `MessageDrawable.generatePath` near/far
+correspondence checked at ActionBar/MessageDrawable.java:575-587). The tint
+priority chain stays covered by `exteralessBackgroundPick` (explicit pick >
+accent pick > derived > accent), re-run green against the palette change.
+The strip's SCSS: `inset-inline-end` + vertical-only animations (RTL
+mirrors by itself), `display: none` unless `.has-pills:not(.is-hidden)` so an
+empty strip never intercepts the field, and the clear button never overlaps
+(it shows only while the strip hides). Menu parse semantics match
+`MainMenuLayout.java` line for line (unknown ids dropped, neither-listed →
+hidden, dividers visible-only, Settings forced, save/reset serialize).
+
+**Moved-test-file disclosure (coordinator-approved).** This pass's test
+deltas ride on top of the parallel session's staged `src/tests → tests/`
+move; no rename/add entry was touched and no path changed:
+`exteralessMenuLayout.test.ts` and `exteralessSettings.test.ts` are staged
+adds (`AM`) whose worktree content gained this pass's tests (2 and 1 new
+blocks plus one import line); `exteralessThemePalette.test.ts` is untracked
+entirely (`??` — never part of the staged index), so its content delta — 3
+new tests plus the corrected 'clearing' assertion (the old one encoded the
+wipe-on-clear defect) — is plain worktree content;
+`tests/exteralessPillStrip.test.ts` is a new untracked file.
+
+**Findings for the user's acceptance (visual, no fix guessed).**
+1. A reordered item keeps its stock group hairline: `separator: true` rides
+   the item object, so moving Saved Messages mid-list draws its line above it
+   (Android lays one continuous list; the web menu's stock framing is kept
+   around it). Also, hiding the item that carried the frame line removes that
+   line. Judgment call for a browser check.
+2. A DIVIDER as the first visible entry attaches its hairline to the last
+   web-only composite above the laid-out block (there is no previous laid-out
+   item) — plausible, worth an eye.
+3. The hub's Settings row renders toggleable but bounces back (the web never
+   hides Settings); Android's editor in the same situation offers no hide at
+   all. Consider disabling the row's checkbox.
+4. With one registered pill the wheel over the strip is preventDefault-ed
+   (scroll blocked over a 28 px area) though the switch is inert — Android's
+   strip is a switch surface; acceptable, but noticeable if the strip grows.
+5. The strip overlaps a long search placeholder visually (both live at the
+   field's inline end when the field is empty) — desktop check with a long
+   locale string.
+
+Checks run: `exteralessThemePalette` 17, `exteralessPillStrip` 7 (new),
+`exteralessMenuLayout` 15, `exteralessSettings` 29, `exteralessPills` 12,
+`exteralessBackgroundPick` 5 (palette regression) — all green; typecheck and
+oxlint clean. Runbook: steps 1.23, 5.19, 5.20, 5.21 gained the new checks
+(5.21's Report scope description was corrected — it claimed "any incoming
+message", the Android contexts are narrower).
+
+## The test suite move to tests/ (2026-11-02)
+
+The user's parallel session moved the test suite `src/tests/` → `tests/`
+(~691 staged renames, including the moved-and-edited packet tests) and
+repointed `vite.config.ts`'s `setupFiles` at `./tests/setup.ts`. The move is
+functional — the packet suites load and pass from the new root (the pill
+stack's 12, the import-graph budget). This section documents the move for
+the housekeeping gate; the staged renames commit as their own chore commit.
+
+Two environment notes from the same pass: `importGraphBudget` was red at
+HEAD on a clean worktree because packet 058's budget fix was still unstaged
+— committing the packet heals it; and an esbuild flake reproduces on Node 26
+independent of the working tree — environmental, not a source regression.

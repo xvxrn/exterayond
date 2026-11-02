@@ -118,12 +118,12 @@ Either way every `rootScope.managers` call is answered from
 - `window.popupSandbox` (`ready` / `show` / `hide` / `list` / `open` /
   `closePopups` / `calls` / `unhandled`) drives the same registry from a script;
   `calls` and `unhandled` follow the active data source.
-  `pnpm test:popups` runs the `e2e/popupSandbox*.spec.ts` suites in headless
+  `pnpm test:popups` runs the `tests/browser/popupSandbox*.spec.ts` suites in headless
   Chromium (~50 s): `popupSandbox.spec.ts` opens every story and fails on one
   that throws, never becomes visible or never leaves — twice, with full and
   with reduced animations; the others drive the composer's popups.
   `pnpm test:popups:full` adds Firefox and WebKit (~3 min).
-- `src/tests/popupSandboxCoverage.test.ts` fails when a module under
+- `tests/popupSandboxCoverage.test.ts` fails when a module under
   `components/popups/` can open a popup and no story imports it, so a new popup
   cannot land without one. It also fails when a story builds its popup out of a
   fixture without being marked `fixtureOnly` — that mark is what keeps live mode
@@ -145,7 +145,7 @@ so `performance.memory` alone says little.
   `downloadMemoryWatch()`, or inside `downloadLogs()` in line with the logs.
 - A worker remembers the moment a holder of its sets a record, with what it held
   then (`createPeakRecorder` in `@lib/debug/memoryStats`; the lottie heap uses it).
-- From outside the page, `MemoryProbe` (`e2e/memory.helpers.ts`) reads what the
+- From outside the page, `MemoryProbe` (`tests/browser/memory.helpers.ts`) reads what the
   page cannot: every isolate's heap, the renderer by allocator (a memory-infra
   dump) and the DOM's counters. `test:memory:app` is built on it.
 
@@ -381,7 +381,7 @@ top-level module hands the mock over with `registerHotReloadGuard({...})`. A val
 needs from a top-level module (a constant, a pure function, a small component) moves out into a module of its own
 (`@lib/appColumns`, `@components/dialogElement`, `@components/stars/starsAmount`).
 
-`src/tests/importGraphBudget.test.ts` is the ratchet: it fails when the largest import cycle, the modules whose edit
+`tests/importGraphBudget.test.ts` is the ratchet: it fails when the largest import cycle, the modules whose edit
 reloads the page, or the hot updates that make a second instance of a singleton grow past
 `scripts/import-graph.budget.json`. `node scripts/import-graph.mjs` (`hmr`, `why <file>`, `hazards`, `funnels`,
 `tests`, `cycle` — see its header) shows what an edit reloads and why, and which import closed a cycle; lower the
@@ -415,7 +415,7 @@ code it captured until a reload (but for a dynamic `import()`, which always load
 construction included past the constructor's own code and the methods it calls directly: what those call in turn
 runs at other times too (`ChatBubbles.constructBubbles` reaches `renderMessage`), and an edit of it applies from its
 next call. A module an edit leaves with no importer is dropped, and its `hotEffect`s are undone.
-`e2e/popupSandboxHotRerun.spec.ts` (in `test:popups`) and `test:hot:app` run every module the sandbox, or a signed-in
+`tests/browser/popupSandboxHotRerun.spec.ts` (in `test:popups`) and `test:hot:app` run every module the sandbox, or a signed-in
 boot, loads once more with the same code, as a hot update does, and fail on a reload none of these rules asks for.
 
 What a module *does* at its top level runs again with it, and is left to the module: a listener goes through
@@ -548,7 +548,7 @@ Two things travel with a new setting:
 - **Synonyms are language-pack strings, never build-time text** — add `'<TitleKey>.SearchKeywords'` (comma-separated) to `lang.ts` so every language gets its own from the server.
 - **Deep links** live in `src/scripts/in/settings-links.csv`, the `tg://settings/...` table shared with the other clients. A link points at its control instead of performing the action, the way tdesktop does (`edit/log-out` opens the header menu and flashes the item); where another client's behaviour differs, follow that client. Paths the index cannot address are cases in `internalLinkProcessor`.
 
-`src/tests/settingsSearchIndex.test.ts` fails if the checked-in index is stale, holds anything but identifiers, or drops a link from the table — run it after touching a settings tab.
+`tests/settingsSearchIndex.test.ts` fails if the checked-in index is stale, holds anything but identifiers, or drops a link from the table — run it after touching a settings tab.
 
 ### Imports from `@layer`
 
@@ -613,7 +613,7 @@ import {Message, Chat, User, InputPeer} from '@layer';
   - Measure rather than guess: CDP `Performance.getMetrics` (`LayoutCount`,
     `RecalcStyleCount` and their durations) around the change, with and without
     it, and with many items changing at once. A cost that matters gets a
-    regression check (e.g. `e2e/dialogUnreadCounter.spec.ts` counts the
+    regression check (e.g. `tests/browser/dialogUnreadCounter.spec.ts` counts the
     layouts read while the counts of many rows change).
 - **Every final review also checks the change in RTL** — mirrored, next to
   LTR, as "Right-to-left (RTL)" below describes. A screen that only works
@@ -622,7 +622,7 @@ import {Message, Chat, User, InputPeer} from '@layer';
   continuing work.** A compacted context or summary does not replace the
   canonical instructions in this file.
 - **Heavy test suites belong to the final review only — and only those the
-  change touches.** `test:a11y`, `test:focus`, the Playwright e2e configs and a
+  change touches.** `test:a11y`, `test:focus`, the Playwright browser-test configs and a
   full `vitest run` take a minute or more each — never run them after every
   small change. While iterating, check the change live in the preview, or run
   the one test file that covers it (plus `tsc` when types changed). At the
@@ -809,8 +809,8 @@ client, whose RTL support is incomplete.
   the language to Arabic or Persian in Settings — on the preview's built bundle
   (`?static=1`): the dev server lays the local English strings over the
   server's pack. The direction switch
-  itself is covered by `src/tests/langDirection.test.ts`, and
-  `e2e/popupSandboxRtl.spec.ts` (part of `test:popups`) opens every popup story
+  itself is covered by `tests/langDirection.test.ts`, and
+  `tests/browser/popupSandboxRtl.spec.ts` (part of `test:popups`) opens every popup story
   in both directions and fails on a box that does not stand mirrored, and checks
   that a value slider runs from the right.
 
@@ -835,10 +835,10 @@ client, whose RTL support is incomplete.
 
 ```bash
 pnpm test                  # all tests
-pnpm test src/tests/foo    # specific test file
+pnpm test tests/foo    # specific test file
 ```
 
-Vitest config: `threads: false`, `globals: true`, jsdom environment, setup in `src/tests/setup.ts`.
+Vitest config: `threads: false`, `globals: true`, jsdom environment, setup in `tests/setup.ts`.
 
 Browser suites (Playwright):
 
@@ -874,28 +874,28 @@ tune the split, and `--project=chromium` drops the other engines (~70 s).
 `test:popups` works the same way: parallel, the story sweep split into parts
 (`POPUPS_WORKERS` / `POPUP_STORY_PARTS`), Chromium unless `POPUPS_ALL_ENGINES=1`
 (`test:popups:full`, implied on CI). So does `test:focus`, on the popup suite's
-kind of server (`e2e/playwright.focus.config.ts`): a part per worker but one, which
+kind of server (`tests/browser/playwright.focus.config.ts`): a part per worker but one, which
 the sign-in sweep takes (`FOCUS_WORKERS` / `FOCUS_STORY_PARTS`,
 `FOCUS_STORIES=a,b` picks stories).
 `test:editor:e2e` too: parallel (`EDITOR_E2E_WORKERS`), Chromium unless
 `EDITOR_E2E_ALL_ENGINES=1` (`test:editor:e2e:full`, implied on CI); and since its
 every test opens the fixture by navigating, a Chromium worker keeps one page and
-navigates it again for each test (`samePage` in `e2e/workerContext.ts`) — a new
+navigates it again for each test (`samePage` in `tests/browser/workerContext.ts`) — a new
 document in a warm renderer, three times faster to open than a new page.
-Playwright suites run on `e2e/vite.e2e.config.ts` — the dev server without hot
+Playwright suites run on `tests/browser/vite.e2e.config.ts` — the dev server without hot
 reload, so an edit made while a suite runs no longer reloads the page under it.
-Each suite's server listens on a port of its checkout's own (`e2e/ports.ts`), so
+Each suite's server listens on a port of its checkout's own (`tests/browser/ports.ts`), so
 the suites of different checkouts and worktrees run side by side.
 The sandbox suites (`test:popups`, `test:focus`, `test:a11y`) get the app as a
-bundle instead (`e2e/vite.popups-e2e.config.ts`: Vite's Full Bundle Mode, built
+bundle instead (`tests/browser/vite.popups-e2e.config.ts`: Vite's Full Bundle Mode, built
 once as the server starts, ~25 s). Each of their tests opens the sandbox anew,
 and served module by module that is ~1800 requests a page — ~25 s each with a
 full run's pages at once, against ~7 s bundled. A bundle has no module URLs, so
 a test that reaches into the app — a store, `rootScope`, a popup to open, a
-harness of `e2e/fixtures` — calls `window.e2eImport('/src/…')` in the page,
+harness of `tests/browser/fixtures` — calls `window.e2eImport('/src/…')` in the page,
 never `import('/src/…')`; it gives the app's own instance on either kind of
 server. Write the path whole, as a string in the spec: the bundle can import
-only the modules some spec under `e2e/` names that way (`e2e/vite.e2e.config.ts`
+only the modules some spec under `tests/browser/` names that way (`tests/browser/vite.e2e.config.ts`
 reads them out), and asked for another, `e2eImport` says so.
 `TWEB_E2E_BUNDLED=0` serves the modules as they are (no build, the quicker for
 one spec); `popupSandboxHotRerun.spec.ts`, which runs every module again by its

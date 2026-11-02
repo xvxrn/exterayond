@@ -82,16 +82,16 @@ behavior the tests stubbed out (the fixture gaps are listed per step) — not
 "feature never worked".
 
 - Settings store (defaults, validation/clamping, reset, live root classes):
-  `src/tests/exteralessSettings.test.ts` (21 tests, packet 040).
-- Hub rows, sections and row order: `src/tests/exteralessTabs.test.tsx` (14).
+  `tests/exteralessSettings.test.ts` (21 tests, packet 040).
+- Hub rows, sections and row order: `tests/exteralessTabs.test.tsx` (14).
 - Settings search index (regenerated, 479 entries): `settingsSearchIndex` (8).
 - `.extera` backup round-trips, strict types/ranges, alias mappings
   (`tabCounter` boolean, `hideStories`, `hideAllChats`, `hideCameraTile`,
   `pauseOnMinimizeVideo`, `newSliderStyle`/`newSwitchStyle`):
-  `src/tests/exteraBackup.test.ts` (27).
+  `tests/exteraBackup.test.ts` (27).
 - Pause-on-minimize through the real playback controller's `visibilitychange`
   handler (video default-on, voice/round off-by-default, music never pauses):
-  `src/tests/pauseOnMinimize.test.ts` (packet 030).
+  `tests/pauseOnMinimize.test.ts` (packet 030).
 - Link-preview gate (CHAT-31) over the real composer `processWebPage`:
   `chatInputEditorAsyncActions` (13: suppressed fresh composition, dropping a
   fetched preview, in-flight defusal, edits unaffected, stock restore).
@@ -108,7 +108,7 @@ behavior the tests stubbed out (the fixture gaps are listed per step) — not
   `pagePreviewRules` (5, packet 036).
 - Sort-by-unread index layout and live re-sort (GEN-12) over the real dialogs
   storage: `dialogSortByUnread` (6, packet 044).
-- Exact counters: `src/tests/formatNumber.test.ts` (off state byte-identical)
+- Exact counters: `tests/formatNumber.test.ts` (off state byte-identical)
   plus packet 004's 79 tests across 11 files over 25 counter consumers.
 - Per-feature regression suites accumulated per packet (mini avatars, seconds,
   archive hiding, Zalgo, edited icon, ID/DC, call/command confirmations,
@@ -399,12 +399,16 @@ lyrics, gestures) likewise stays open.
   (never-picked) accent yields to the wallpaper.
 - Look at: the toggle on night and on tinted; a switch to a light theme with
   the toggle on (it must fall away); a theme re-apply with the toggle on (the
-  palette must win over the theme's own writes); the hue following the accent
-  picker; a "Set a color" pick repainting the chat instantly and driving the
-  chrome hue; a photo wallpaper driving the chrome hue and a wallpaper swap
-  re-deriving it live; an accent pick outranking the photo; menus that opt
-  into the `.night` mirror keep the underlying theme's surfaces (a documented
-  limit, not a FAIL).
+  palette must win over the theme's own writes); a theme switch with the
+  toggle on and then off — the surfaces that return are the **new** theme's
+  own, never the previous theme's (packet 058 fixed exactly that); the
+  palette standing already on the login screen when the account's theme is
+  dark (the boot apply follows the first theme paint, packet 058); the hue
+  following the accent picker; a "Set a color" pick repainting the chat
+  instantly and driving the chrome hue; a photo wallpaper driving the chrome
+  hue and a wallpaper swap re-deriving it live; an accent pick outranking the
+  photo; menus that opt into the `.night` mirror keep the underlying theme's
+  surfaces (a documented limit, not a FAIL).
 - Hub motion (G-2, judged here by eye): settings rows answer hover and press
   with an eased highlight (Material's standard easing; with Interface
   Animations off everything snaps); the "Customize" reveals fade their
@@ -1341,7 +1345,10 @@ only prior check was synthetic.
   a toast; `?rtl=1` — the strip sits at the left edge of the field. The
   switch machinery (packet 053) is inert with one pill — it becomes visible
   when a second pill registers: wheel over the strip and ArrowUp/ArrowDown on
-  the pill switch, `OEPillInfiniteScrolling` decides wrap vs. clamp.
+  the pill switch, `OEPillInfiniteScrolling` decides wrap vs. clamp. Where
+  CacheStorage is unavailable (Firefox private mode), the pill keeps its name
+  with an empty value and the console stays clean (packet 058 — the failed
+  collection is contained, nothing rejects).
 - **[no chat data]**
 - PASS/FAIL:
 
@@ -1349,6 +1356,11 @@ only prior check was synthetic.
 
 - Appearance tab → row "Main Menu" opens the screen. The stock key (empty)
   keeps the burger menu byte-for-byte stock — check that first.
+- On a fresh client (stock key) the hub's Visible list shows the five stock
+  items (Saved Messages, Archive, Contacts, Calls, Settings) and Hidden is
+  empty — Android's editor read of the current layout (packet 058). The first
+  toggle edits that layout: unchecking "Saved Messages" hides exactly it and
+  the menu keeps the rest.
 - Set a layout (e.g. import a `.extera` carrying the Android string, or hide
   an item from the hub): the burger menu re-lays its id-mapped items on the
   next open. "Settings" is never hideable (the web always runs without the
@@ -1372,8 +1384,11 @@ only prior check was synthetic.
   item never shows on your own chat or on protected messages. "Copy Photo"
   adds "Copy" on photos and clipboard-copyable documents (toast "Media
   copied" / "Media copy failed"). "Report for incoming messages" extends the
-  per-message "Report" item (stock: channels only) to any incoming message;
-  it opens the stock report popup.
+  per-message "Report" item (stock: channels and supergroups) to any chat
+  peer — basic groups included — and to bot conversations, Android's
+  `currentChat != null || currentUser.bot`; it never appears in a private
+  chat with a human, and it opens the stock report popup (packet 058 fixed
+  the wiring — the setting had no effect at all).
 - Off: no item — byte-for-byte stock.
 - **[no chat data]**
 - PASS/FAIL:

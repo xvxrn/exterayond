@@ -10,7 +10,7 @@ Upstream builds the same sources twice — with and without
 `-C target-feature=simd128`. Both variants are vendored: `lottieLoader` hands the
 SIMD build to browsers that pass `IS_WEB_ASSEMBLY_SIMD_SUPPORTED` and the
 `nosimd` one to the rest (Chrome 75-90, Firefox 79-88, Safari 15-16.3). They
-render frame-identical output, which `src/tests/tlottieWasm.test.ts` asserts
+render frame-identical output, which `tests/tlottieWasm.test.ts` asserts
 across every bundled asset.
 
 Apart from `simd128`, both builds need only bulk-memory, sign-extension and

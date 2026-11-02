@@ -43,7 +43,7 @@ in WebAssembly costs about 0.65 ms per 10 ms frame. The SIMD build swaps those t
 kernels (`cgemv8x4`, `sparse_cgemv8x4`) for `i32x4.dot_i16x8_s` ones that sum
 the same products exactly in integers
 (`scripts/vendor-rnnoise/vec_wasm_simd.h`): about 0.16 ms per frame, with output
-bit-identical to the portable build, which `src/tests/noiseSuppressorWorklet.test.ts`
+bit-identical to the portable build, which `tests/noiseSuppressorWorklet.test.ts`
 asserts. Browsers without WebAssembly SIMD (Chrome < 91, Firefox < 89,
 Safari < 16.4) get the portable build.
 

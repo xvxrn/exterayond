@@ -313,7 +313,7 @@ function groupCallStory(id: string, title: string, options: GroupCallStoryOption
         managers: bindManagersToSession(rootScope.managers),
         // The panel reads its state off the transport and its microphone off the capture track.
         // There is neither, so stand in a connected-looking connection over the silent stream —
-        // the same shape `src/tests/groupCallSelfRow.test.ts` drives the instance with.
+        // the same shape `tests/groupCallSelfRow.test.ts` drives the instance with.
         connections: {
           main: {
             connection: {iceConnectionState: 'connected'},

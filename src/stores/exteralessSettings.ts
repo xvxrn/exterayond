@@ -577,6 +577,21 @@ export const resolveDoubleTapAction = (
   settings: Pick<ExteralessSettings, 'DoubleTapAction' | 'DoubleTapActionOut'> = exteralessSettings
 ): number => isOutgoing ? settings.DoubleTapActionOut : settings.DoubleTapAction;
 
+/**
+ * The per-message Report's contexts (W-entry, Android ChatActivity:50200):
+ * the stock item shows in a chat peer — the web's own stock gate is
+ * `isChannel` (channels and supergroups) — and `showReport` broadens it to
+ * any chat peer or a bot (`currentChat != null || currentUser.bot`), never to
+ * a private conversation with a human. With the setting off the answer is
+ * exactly the stock one.
+ */
+export const verifyReportContext = (
+  isChannel: boolean,
+  isAnyChat: boolean,
+  isBot: boolean,
+  showReport: boolean
+): boolean => isChannel || (showReport && (isAnyChat || isBot));
+
 export const getOpenLinkConfirmation = () => exteralessSettings.ConfirmAllLinks ? 1 : exteralessSettings.SkipOpenLinkConfirm ? 2 : 0;
 
 /**

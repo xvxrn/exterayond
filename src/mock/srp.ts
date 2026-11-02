@@ -3,7 +3,7 @@
 // p and its generator g = 3 — the same p/g verifyDhPrimeAndGenerator fast-
 // accepts. The old A / M1 / srp_B / secure_random / passwordHashed vectors were
 // tied to a fixed `a` and a stale algorithm and have been removed;
-// src/tests/srp.test.ts now generates its own consistent {b, v, B} round-trip.
+// tests/srp.test.ts now generates its own consistent {b, v, B} round-trip.
 
 export const salt1 = new Uint8Array([114, 47, 217, 190, 196, 217, 91, 15, 205, 209, 189, 57, 98, 19, 110, 40, 47, 211, 245, 29, 58, 194, 205, 57, 205, 200, 225, 139, 244, 230, 206, 138, 1, 216, 18, 99, 130, 133, 226, 167]);
 

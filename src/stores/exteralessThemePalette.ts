@@ -105,12 +105,23 @@ export const resolveThemePaletteSurfaces = (
 const foreignInline = new Map<string, {value: string, rgb: string}>();
 
 /**
+ * What the palette itself wrote last, so the restore only undoes its own
+ * writes. The theme applier rewrites the family between palette passes (a
+ * theme switch, an accent re-apply, a "Set a color" pick run
+ * `applyThemeFast`): when the current inline value no longer is the palette's,
+ * the captured foreign pair belongs to the theme that was active before that
+ * rewrite and must not land on the one that is active now.
+ */
+const appliedInline = new Map<string, {value: string, rgb: string}>();
+
+/**
  * Applies (or clears) the palette's surface variables. Only a dark theme
  * (`isDark` — the `.night` class `ThemeController._setTheme` toggles for both
  * night and tinted) carries the palette; on a light theme the override is
  * cleared so the stock surfaces stand. Calling with the toggle off restores
- * exactly the foreign inline values a previous apply captured and leaves
- * every other inline property alone.
+ * exactly the foreign inline values a previous apply captured — only where
+ * the palette's own writes still stand — and leaves every other inline
+ * property alone.
  */
 export const applyThemePalette = (
   enabled: boolean | undefined,
@@ -118,11 +129,23 @@ export const applyThemePalette = (
   tintHex: string | undefined,
   element: HTMLElement = document.documentElement
 ): void => {
-  for(const [key, foreign] of foreignInline) {
-    element.style.setProperty('--' + key, foreign.value);
-    element.style.setProperty('--' + key + '-rgb', foreign.rgb);
+  for(const [key, applied] of appliedInline) {
+    const foreign = foreignInline.get(key);
+    if(!foreign) continue;
+    // * only undo the palette's own writes: a value the theme applier wrote
+    // * since (≠ what the palette wrote) is already the correct restore
+    // * target, and the captured foreign pair is stale for it
+    if(element.style.getPropertyValue('--' + key) === applied.value) {
+      element.style.setProperty('--' + key, foreign.value);
+    }
+
+    if(element.style.getPropertyValue('--' + key + '-rgb') === applied.rgb) {
+      element.style.setProperty('--' + key + '-rgb', foreign.rgb);
+    }
   }
+
   foreignInline.clear();
+  appliedInline.clear();
 
   const values = resolveThemePaletteSurfaces(enabled, isDark, tintHex);
   if(!values) {
@@ -137,8 +160,10 @@ export const applyThemePalette = (
       rgb: element.style.getPropertyValue('--' + key + '-rgb')
     });
     const hex = values[key];
+    const rgb = hexToRgb(hex).join(',');
+    appliedInline.set(key, {value: hex, rgb});
     element.style.setProperty('--' + key, hex);
-    element.style.setProperty('--' + key + '-rgb', hexToRgb(hex).join(','));
+    element.style.setProperty('--' + key + '-rgb', rgb);
   }
 }
 
@@ -235,22 +260,42 @@ if(typeof document !== 'undefined') {
     }
   });
 
-  // * the first theme apply of a page load is silent (`!this.applied` in the
-  // * controller dispatches no theme_changed), and this module's own boot
-  // * apply may run before the theme sets the `night` class — the login
-  // * screen would then keep stock surfaces until user_auth. Watch the class:
-  // * the first theme apply re-applies the palette with the real isDark;
-  // * everything after that rides theme_changed.
-  const bootClassObserver = new MutationObserver(() => {
-    bootClassObserver.disconnect();
-    applyCurrentPalette();
-  });
-  bootClassObserver.observe(document.documentElement, {attributes: true, attributeFilter: ['class']});
-
   applyCurrentPalette();
 }
+
+/**
+ * The first theme apply of a page load is silent (`!this.applied` in the
+ * controller dispatches no theme_changed), and this module's own boot apply
+ * may run before the theme sets the `night` class — the login screen would
+ * then keep stock surfaces until user_auth. Watch the class: the first real
+ * `night` flip re-applies the palette with the real isDark; everything after
+ * that rides theme_changed. The class attribute carries other mutations on
+ * their way (the platform classes of `setRootClasses` land before the theme's
+ * first apply), so the watcher follows the `night` class itself — not the
+ * first mutation it sees — and stops once it has seen a flip; the controller
+ * dispatches theme_changed on every apply after the first one. A helper (not
+ * a top-level statement) so the observer instance lives inside a function —
+ * the import-graph's statefulness model counts only top-level constructions.
+ */
+export const watchBootThemeClass = (onApply: () => void) => {
+  if(typeof document === 'undefined') return;
+  let lastNight = document.documentElement.classList.contains('night');
+  const observer = new MutationObserver(() => {
+    const night = document.documentElement.classList.contains('night');
+    if(night === lastNight) {
+      return;
+    }
+
+    lastNight = night;
+    observer.disconnect();
+    onApply();
+  });
+  observer.observe(document.documentElement, {attributes: true, attributeFilter: ['class']});
+};
+
+watchBootThemeClass(applyCurrentPalette);
 
 // * a self-accepting module, like the store: an edit hot-updates it (the
 // * listeners are replaced through hotListen, the palette re-applies
 // * idempotently) instead of reloading the page (scripts/import-graph.mjs)
-if(import.meta.hot) import.meta.hot.accept();;
+if(import.meta.hot) import.meta.hot.accept();

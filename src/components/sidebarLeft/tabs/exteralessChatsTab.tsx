@@ -4,8 +4,20 @@ import RangeSettingSelector from '@components/rangeSettingSelector';
 import CheckboxFieldTsx from '@components/checkboxFieldTsx';
 import LottieAnimation from '@components/lottieAnimation';
 import {hotReloadGuard} from '@lib/solidjs/hotReloadGuardProvider';
+import {useSuperTab} from '@components/solidJsTabs/superTabProvider';
 import {i18n, LangPackKey} from '@lib/langPack';
-import {useExteralessSettings, getStickerTimeMode, setStickerTimeMode, getStickerScale, getOpenLinkConfirmation, setOpenLinkConfirmation} from '@stores/exteralessSettings';
+import {
+  useExteralessSettings,
+  getStickerTimeMode,
+  setStickerTimeMode,
+  getStickerScale,
+  getOpenLinkConfirmation,
+  setOpenLinkConfirmation,
+  DOUBLE_TAP_ACTIONS,
+  DOUBLE_TAP_INCOMING_OPTIONS,
+  DOUBLE_TAP_OUTGOING_OPTIONS,
+  doubleTapActionLangKey
+} from '@stores/exteralessSettings';
 import type {ExteralessSettingsKey} from '@stores/exteralessSettings';
 
 /**
@@ -41,7 +53,10 @@ const TOGGLES: Array<[key: ExteralessSettingsKey, langKey: LangPackKey, infoKey?
   ['OEChatsReplyEmoji', 'Exteraless.ReplyEmoji'],
   ['OEChatsReplyBackground', 'Exteraless.ReplyBackground'],
   ['OEChatsShowResultsBeforeVoting', 'Exteraless.ShowResultsBeforeVoting', 'Exteraless.ShowResultsBeforeVoting.Info'],
-  ['OEChatsAlwaysSendInHD', 'Exteraless.AlwaysSendInHD']
+  ['OEChatsAlwaysSendInHD', 'Exteraless.AlwaysSendInHD'],
+  ['showAddToSavedMessages', 'Exteraless.MenuAddToSaved'],
+  ['CopyPhoto', 'Exteraless.MenuCopyPhoto'],
+  ['showReport', 'Exteraless.MenuReport']
 ];
 
 const STRIP_TRACKING_TOGGLES: Array<[key: ExteralessSettingsKey, langKey: LangPackKey]> = [
@@ -63,6 +78,7 @@ const REACTION_TOGGLES: Array<[key: ExteralessSettingsKey, langKey: LangPackKey]
 
 const ExteralessChats = () => {
   const [exteralessSettings, setExteralessSetting] = useExteralessSettings();
+  const [tab] = useSuperTab();
 
   const stickerShapeLabel = (value: number) => {
     if(value === 0) {
@@ -73,6 +89,45 @@ const ExteralessChats = () => {
 
     return i18n('Exteraless.StickerShape.AsMessage');
   };
+
+  // * CHAT-10 — the selector steps a filtered option list (Android's
+  // * showDoubleTapOptions minus the values the web cannot back), while the
+  // * store keeps the Android enum verbatim. An imported value outside the
+  // * list displays as Disable until the selector moves it.
+  const doubleTapIndex = (action: number, list: readonly number[]) => Math.max(0, list.indexOf(action));
+
+  const doubleTapSection = (
+    <Section name="Exteraless.DoubleTap" caption="Exteraless.DoubleTap.Info">
+      <RangeSettingSelector
+        textLeft={i18n('Exteraless.DoubleTapIncoming')}
+        textRight={(index) => i18n(doubleTapActionLangKey(DOUBLE_TAP_INCOMING_OPTIONS[index] ?? DOUBLE_TAP_ACTIONS.NONE))}
+        value={doubleTapIndex(exteralessSettings.DoubleTapAction, DOUBLE_TAP_INCOMING_OPTIONS)}
+        minValue={0}
+        maxValue={DOUBLE_TAP_INCOMING_OPTIONS.length - 1}
+        step={1}
+        onChange={(index) => setExteralessSetting('DoubleTapAction', DOUBLE_TAP_INCOMING_OPTIONS[index] ?? DOUBLE_TAP_ACTIONS.NONE)}
+      />
+      <RangeSettingSelector
+        textLeft={i18n('Exteraless.DoubleTapOutgoing')}
+        textRight={(index) => i18n(doubleTapActionLangKey(DOUBLE_TAP_OUTGOING_OPTIONS[index] ?? DOUBLE_TAP_ACTIONS.NONE))}
+        value={doubleTapIndex(exteralessSettings.DoubleTapActionOut, DOUBLE_TAP_OUTGOING_OPTIONS)}
+        minValue={0}
+        maxValue={DOUBLE_TAP_OUTGOING_OPTIONS.length - 1}
+        step={1}
+        onChange={(index) => setExteralessSetting('DoubleTapActionOut', DOUBLE_TAP_OUTGOING_OPTIONS[index] ?? DOUBLE_TAP_ACTIONS.NONE)}
+      />
+      {/* CHAT-11 — the reaction row exists only while an action sends one
+          (OpenExteraChatsActivity's doubleTapReactionRow condition); it opens
+          the stock quick-reaction subtab, the web's own reaction chooser */}
+      {(exteralessSettings.DoubleTapAction === DOUBLE_TAP_ACTIONS.SEND_REACTIONS ||
+        exteralessSettings.DoubleTapActionOut === DOUBLE_TAP_ACTIONS.SEND_REACTIONS) && (
+        <Row clickable={() => tab.slider.createTab(hotReloadGuard.tabs.AppQuickReactionTab).open()}>
+          <Row.Title>{i18n('Exteraless.DoubleTapReaction')}</Row.Title>
+          <Row.Subtitle>{i18n('Exteraless.DoubleTap.ReactionInfo')}</Row.Subtitle>
+        </Row>
+      )}
+    </Section>
+  );
 
   return (
     <>
@@ -206,6 +261,7 @@ const ExteralessChats = () => {
           <Row.Subtitle>{i18n('Exteraless.MenuRepeat.Info')}</Row.Subtitle>
         </Row>
       </Section>
+      {doubleTapSection}
       <Section name="Exteraless.StickerSize" caption="Exteraless.StickerSize.Info">
         <RangeSettingSelector
           textLeft={i18n('Exteraless.StickerSize')}

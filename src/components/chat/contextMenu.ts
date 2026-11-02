@@ -100,7 +100,8 @@ import {pollOptionToLink} from './bubbleParts/pollMessageContent/pollToOptionLin
 import {getPollVoteRestrictionPeerId} from '@appManagers/utils/polls/pollVoteRestriction';
 import {getPollVoteRestrictionText} from './bubbleParts/pollMessageContent/pollVoteRestriction';
 import {canViewPollStatistics as canViewPollStatisticsForMessage} from './bubbleParts/pollMessageContent/pollStatistics';
-import {canCopyMediaToClipboard, CopyableMedia} from '@helpers/copyMediaToClipboard';
+import copyMediaToClipboard, {canCopyMediaToClipboard, CopyableMedia} from '@helpers/copyMediaToClipboard';
+
 import {findRegisteredMediaPeekElement, getRegisteredMediaPeekSource} from '@components/mediaPeek/sources';
 import copyMessageMediaWithFeedback from '@components/copyMessageMediaWithFeedback';
 import isEphemeralMessage from '@appManagers/utils/messages/isEphemeralMessage';
@@ -1383,6 +1384,29 @@ export default class ChatContextMenu {
         this.chat.type !== ChatType.Scheduled &&
         await this.chat.canSend()
     }, {
+      // * W-entry / Android NekoConfig.showAddToSavedMessages: a direct
+      // * forward to the own chat, Android's conditions (ChatActivity:50685 —
+      // * not the self chat, forwardable, real message)
+      icon: 'savedmessages',
+      text: 'Exteraless.MenuAddToSaved',
+      onClick: this.onSaveToSavedClick,
+      verify: () => exteralessSettings.showAddToSavedMessages &&
+        !isAnchoredEphemeralMessage(this.message) &&
+        !this.noForwards &&
+        this.message._ === 'message' &&
+        this.chat.type !== ChatType.Scheduled &&
+        this.messagePeerId !== rootScope.myId
+    }, {
+      // * W-entry / Android NaConfig.showCopyPhoto (CopyPhoto): copies the
+      // * message's media to the clipboard, the media viewer's own copy path
+      icon: 'copy',
+      text: 'MediaViewer.Context.Copy',
+      onClick: this.onCopyPhotoClick,
+      verify: () => exteralessSettings.CopyPhoto &&
+        !this.noForwards &&
+        this.message._ === 'message' &&
+        canCopyMediaToClipboard(getMediaFromMessage(this.message, true) as CopyableMedia)
+    }, {
       icon: 'forward',
       text: 'Message.Context.Selection.Forward',
       onClick: this.onForwardClick,
@@ -1424,7 +1448,11 @@ export default class ChatContextMenu {
         (
           isEphemeralMessage(this.message) || isAnchoredEphemeralMessage(this.message) ?
             !this.chat.selection.isSelecting :
-            this.managers.appPeersManager.isChannel(this.messagePeerId)
+            // * W-entry / Android NekoConfig.showReport: the per-message
+            // * Report also shows outside channels for incoming messages
+            // * (ChatActivity:50200 — a real incoming message in a chat or bot)
+            this.managers.appPeersManager.isChannel(this.messagePeerId) ||
+            exteralessSettings.showReport
         ),
       notDirect: () => true,
       withSelection: true
@@ -2398,6 +2426,31 @@ export default class ChatContextMenu {
     const peerId = this.messagePeerId;
     const mids = this.isTargetAGroupedItem ? [this.mid] : await this.chat.getMidsByMid(peerId, this.mid);
     await repeatMessages(managers, peerId, mids);
+  };
+
+  // * W-entry / Android nkbtn_savemessage: the same direct forward to the own
+  // * chat the double-tap Save uses (bubbles.ts's DOUBLE_TAP_ACTIONS.SAVE)
+  private onSaveToSavedClick = async() => {
+    const peerId = this.messagePeerId;
+    const mids = this.isTargetAGroupedItem ? [this.mid] : await this.chat.getMidsByMid(peerId, this.mid);
+    void this.managers.appMessagesManager.forwardMessages({
+      peerId: rootScope.myId,
+      fromPeerId: peerId,
+      mids
+    });
+  };
+
+  // * W-entry / Android NaConfig.showCopyPhoto: the media viewer's copy path
+  // * (copyMediaToClipboard) with its feedback toasts; the menu item carries
+  // * no loading state, the copy is quick and the toast is the feedback
+  private onCopyPhotoClick = () => {
+    const media = getMediaFromMessage(this.message, true) as CopyableMedia;
+    copyMediaToClipboard(media).then(() => {
+      toastNew({langPackKey: 'MediaCopied'});
+    }).catch((error: unknown) => {
+      console.error('media copy failed', error);
+      toastNew({langPackKey: 'MediaCopyFailed'});
+    });
   };
 
   private onSelectClick = () => {

@@ -6794,6 +6794,15 @@ export class AppMessagesManager extends AppManager {
     return this.dialogsStorage.getDialogOnly(peerId);
   }
 
+  /**
+   * GEN-12 (`SortByUnread`): the tab pushes the exteraless flag in, because
+   * the dialogs storage has no access to the settings store; see
+   * `DialogsStorage.setSortByUnread` for the re-index pass.
+   */
+  public setSortByUnread(enabled: boolean) {
+    this.dialogsStorage.setSortByUnread(enabled);
+  }
+
   public cantForwardDeleteMids(storageKey: MessagesStorageKey, mids: number[]) {
     const storage = this.getMessagesStorage(storageKey);
     let cantForward = !mids.length, cantDelete = !mids.length;

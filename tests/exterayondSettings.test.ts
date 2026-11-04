@@ -72,6 +72,12 @@ describe('exterayond settings store', () => {
       OEPlayerShowSource: true,
       OEPlayerWavy: true,
       OEPlayerControlsSize: 1,
+      OEPlayerMiniCover: 0,
+      OEPlayerMiniShape: 0,
+      OEPlayerMiniProgress: 0,
+      OEPlayerMiniArtist: true,
+      OEPlayerMiniNext: true,
+      OEPlayerMiniClose: true,
       OEChatsRemoveMessageTail: true,
       OEChatsHideCallButton: false,
       OEChatsHideChannelSearchButton: false,
@@ -126,6 +132,16 @@ describe('exterayond settings store', () => {
       AddToFavorites: true,
       ChatMenuItemBoostGroup: true,
       ChatMenuItemLinkedChat: true,
+      MediaViewerMenuItemForward: true,
+      ActionBarButtonForward: true,
+      TextBold: true,
+      TextItalic: true,
+      TextUnderline: true,
+      TextStrikethrough: true,
+      TextQuote: true,
+      TextSpoiler: true,
+      TextLink: true,
+      TextCreateDate: true,
       DisableClickCommandToSend: false,
       DateOfForwardedMsg: false,
       ShowTimeHint: false,
@@ -186,6 +202,38 @@ describe('exterayond settings store', () => {
     }
   });
 
+  test('the newer menu composition gates default to the stock surfaces (075: MENU-06/07/08)', async() => {
+    const {exterayondSettings, setExterayondSetting, resetExterayondSettings} = await loadStore();
+    // * Android's defaults for the wired media-viewer, selection-bar and
+    // * text-style items are all true: a fresh client renders the stock
+    // * viewer menu, selection bar and formatting tooltip
+    const keys = [
+      'MediaViewerMenuItemForward',
+      'ActionBarButtonForward',
+      'TextBold',
+      'TextItalic',
+      'TextUnderline',
+      'TextStrikethrough',
+      'TextQuote',
+      'TextSpoiler',
+      'TextLink',
+      'TextCreateDate'
+    ] as const;
+    for(const key of keys) {
+      expect(exterayondSettings[key]).toBe(true);
+    }
+
+    for(const key of keys) setExterayondSetting(key, false);
+    for(const key of keys) {
+      expect(exterayondSettings[key]).toBe(false);
+    }
+
+    resetExterayondSettings();
+    for(const key of keys) {
+      expect(exterayondSettings[key]).toBe(true);
+    }
+  });
+
   test('clamps out-of-range and non-finite values', async() => {
     const {clampExterayondSetting, OE_DEFAULTS} = await loadStore();
     expect(clampExterayondSetting('OEAppearanceAvatarCorners', 999)).toBe(28);
@@ -204,6 +252,9 @@ describe('exterayond settings store', () => {
     expect(clampExterayondSetting('OEPlayerTitleAlign', 2)).toBe(1);
     expect(clampExterayondSetting('OEPlayerTitleSize', 3)).toBe(2);
     expect(clampExterayondSetting('OEPlayerControlsSize', -5)).toBe(0);
+    expect(clampExterayondSetting('OEPlayerMiniCover', 3)).toBe(2);
+    expect(clampExterayondSetting('OEPlayerMiniShape', -1)).toBe(0);
+    expect(clampExterayondSetting('OEPlayerMiniProgress', 7)).toBe(3);
     // * the theme palette is a boolean since acceptance round 1 (F-2): numbers
     // * and strings fall back like any non-boolean value
     expect(clampExterayondSetting('OEAppearanceThemePalette', true)).toBe(true);
@@ -226,6 +277,45 @@ describe('exterayond settings store', () => {
     expect(playerTitleSizes(2)).toEqual([31, 17]);
     expect(getPlayerCoverStyle(2)).toBe(2);
     expect(getPlayerCoverStyle(9)).toBe(3);
+  });
+
+  test('the mini-player gates default to the stock plate and map PlayerStyle.miniProgress', async() => {
+    const {
+      exterayondSettings, setExterayondSetting, resetExterayondSettings,
+      getPlayerMiniCover, getPlayerMiniShape, miniProgressLineVisible
+    } = await loadStore();
+    // * Android's defaults: the artist, the next-track and the close buttons
+    // * show (the plate is the stock one); the cover and the shape are the
+    // * stock rounded look
+    expect(exterayondSettings.OEPlayerMiniArtist).toBe(true);
+    expect(exterayondSettings.OEPlayerMiniNext).toBe(true);
+    expect(exterayondSettings.OEPlayerMiniClose).toBe(true);
+    expect(exterayondSettings.OEPlayerMiniCover).toBe(0);
+    expect(exterayondSettings.OEPlayerMiniShape).toBe(0);
+    expect(exterayondSettings.OEPlayerMiniProgress).toBe(0);
+
+    // * off hides the row's surface; reset restores the stock plate
+    for(const key of ['OEPlayerMiniArtist', 'OEPlayerMiniNext', 'OEPlayerMiniClose'] as const) {
+      setExterayondSetting(key, false);
+      expect(exterayondSettings[key]).toBe(false);
+    }
+    resetExterayondSettings();
+    expect(exterayondSettings.OEPlayerMiniArtist).toBe(true);
+    expect(exterayondSettings.OEPlayerMiniNext).toBe(true);
+    expect(exterayondSettings.OEPlayerMiniClose).toBe(true);
+
+    // * PlayerStyle.miniProgress: 0 ring, 1 line, 2 none, 3 border — the web
+    // * keeps its line for the ring and the border (no such surface) and
+    // * drops it only for "none"
+    expect(miniProgressLineVisible(0)).toBe(true);
+    expect(miniProgressLineVisible(1)).toBe(true);
+    expect(miniProgressLineVisible(2)).toBe(false);
+    expect(miniProgressLineVisible(3)).toBe(true);
+    expect(miniProgressLineVisible(9)).toBe(true);
+    expect(getPlayerMiniCover(1)).toBe(1);
+    expect(getPlayerMiniCover(5)).toBe(2);
+    expect(getPlayerMiniShape(2)).toBe(2);
+    expect(getPlayerMiniShape(-3)).toBe(0);
   });
 
   test('link modes match the Android two-flag contract and All wins conflicts', async() => {

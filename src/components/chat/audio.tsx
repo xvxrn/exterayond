@@ -1,4 +1,4 @@
-import {createEffect, createSignal, JSX, onCleanup} from 'solid-js';
+import {createEffect, createSignal, JSX, Show, onCleanup} from 'solid-js';
 import appMediaPlaybackController, {AppMediaPlaybackController} from '@components/appMediaPlaybackController';
 import cancelEvent from '@helpers/dom/cancelEvent';
 import {attachClickEvent} from '@helpers/dom/clickEvent';
@@ -29,7 +29,7 @@ import documentFragmentToNodes from '@helpers/dom/documentFragmentToNodes';
 import classNames from '@helpers/string/classNames';
 import {setDirection} from '@helpers/dom/setInnerHTML';
 import {hotReloadGuard} from '@lib/solidjs/hotReloadGuardProvider';
-import {exterayondSettings} from '@stores/exterayondSettings';
+import {exterayondSettings, miniProgressLineVisible} from '@stores/exterayondSettings';
 import wrapPhoto from '@components/wrappers/photo';
 import {IconTsx} from '@components/iconTsx';
 import {getMiddleware} from '@helpers/middleware';
@@ -116,6 +116,7 @@ export default function createChatAudio(
   let prevEl!: HTMLElement;
   let nextEl!: HTMLElement;
   let repeatEl!: HTMLElement;
+  let closeEl!: HTMLElement;
 
   // ───────────────────────── Imperative widgets ─────────────────────────
 
@@ -187,8 +188,13 @@ export default function createChatAudio(
             <TopbarPlate.Title dir="auto">{title()}</TopbarPlate.Title>
             <TopbarPlate.Subtitle>
               <span class="pinned-audio-time">{timeText()}</span>
-              {' • '}
-              {subtitle()}
+              {/* * PLAYER-27 (`OEPlayerMiniArtist`, default true): the artist
+                * leaves the subtitle; a voice message's date is not an artist
+                * and stays like Android's own mini player */}
+              <Show when={!(isMusic() && !exterayondSettings.OEPlayerMiniArtist)}>
+                {' • '}
+                {subtitle()}
+              </Show>
             </TopbarPlate.Subtitle>
           </TopbarPlate.Content>
           <div class="pinned-container-wrapper-utils pinned-audio-wrapper-utils">
@@ -205,16 +211,28 @@ export default function createChatAudio(
               }}
             />
             <TopbarPlate.CloseButton
+              ref={closeEl}
               onClick={() => appMediaPlaybackController.stop(undefined, true)}
             />
           </div>
         </TopbarPlate.Body>
-        <div class="pinned-audio-progress-wrapper" dir="ltr">
-          {progressLine.container}
-        </div>
+        {/* * PLAYER-24 (`OEPlayerMiniProgress`): the web plate's only progress
+          * surface is the bottom line — "none" removes it, the ring and the
+          * border draw along shapes the web does not have and keep the line */}
+        <Show when={miniProgressLineVisible()}>
+          <div class="pinned-audio-progress-wrapper" dir="ltr">
+            {progressLine.container}
+          </div>
+        </Show>
       </>
     )
   });
+
+  // PLAYER-29/30 (`OEPlayerMiniNext`/`OEPlayerMiniClose`, defaults true = the
+  // stock plate): the next-track and close buttons leave with their toggles
+  // off, like Android's `PlayerMiniView.applyStyle` hides its own rows.
+  createEffect(() => nextEl.classList.toggle('hide', !exterayondSettings.OEPlayerMiniNext));
+  createEffect(() => closeEl.classList.toggle('hide', !exterayondSettings.OEPlayerMiniClose));
 
   // Click on the central content (title/subtitle) → open the source chat /
   // saved music tab. Clicks anywhere else on the plate do nothing.

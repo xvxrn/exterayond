@@ -388,6 +388,69 @@ const ExterayondAppearance = () => {
           onChange={(value) => setExterayondSetting('OEPlayerControlsSize', value)}
         />
       </Section>
+      {/* * Android PlayerStyleEditor's mini section (PLAYER-20..30): the rows
+        * whose keys have a real surface over the pinned-audio plate. The
+        * cover/shape repaints ride the `oe-md3-mini-player` root class, so
+        * with the MD3 mini player off they change nothing */}
+      <Section name="Exterayond.Player.Mini" caption="Exterayond.Player.Mini.Info">
+        <RangeSettingSelector
+          textLeft={i18n('Exterayond.Player.Mini.Cover')}
+          textRight={(value) => i18n(value === 0 ? 'Exterayond.Player.Mini.Cover.Rounded' : value === 1 ? 'Exterayond.Player.Mini.Cover.Round' : 'Exterayond.Player.Mini.Cover.Hidden')}
+          step={1}
+          value={exterayondSettings.OEPlayerMiniCover}
+          minValue={0}
+          maxValue={2}
+          onChange={(value) => setExterayondSetting('OEPlayerMiniCover', value)}
+        />
+        <RangeSettingSelector
+          textLeft={i18n('Exterayond.Player.Mini.Shape')}
+          textRight={(value) => i18n(value === 0 ? 'Exterayond.Player.Mini.Shape.Rounded' : value === 1 ? 'Exterayond.Player.Mini.Shape.Pill' : 'Exterayond.Player.Mini.Shape.Square')}
+          step={1}
+          value={exterayondSettings.OEPlayerMiniShape}
+          minValue={0}
+          maxValue={2}
+          onChange={(value) => setExterayondSetting('OEPlayerMiniShape', value)}
+        />
+        <RangeSettingSelector
+          textLeft={i18n('Exterayond.Player.Mini.Progress')}
+          textRight={(value) => i18n(value === 0 ? 'Exterayond.Player.Mini.Progress.Ring' : value === 1 ? 'Exterayond.Player.Mini.Progress.Line' : value === 2 ? 'Exterayond.Player.Mini.Progress.None' : 'Exterayond.Player.Mini.Progress.Border')}
+          step={1}
+          value={exterayondSettings.OEPlayerMiniProgress}
+          minValue={0}
+          maxValue={3}
+          onChange={(value) => setExterayondSetting('OEPlayerMiniProgress', value)}
+        />
+        <Row>
+          <Row.CheckboxFieldToggle>
+            <CheckboxFieldTsx
+              toggle
+              checked={exterayondSettings.OEPlayerMiniArtist}
+              onChange={(value) => setExterayondSetting('OEPlayerMiniArtist', value)}
+            />
+          </Row.CheckboxFieldToggle>
+          <Row.Title>{i18n('Exterayond.Player.Mini.Artist')}</Row.Title>
+        </Row>
+        <Row>
+          <Row.CheckboxFieldToggle>
+            <CheckboxFieldTsx
+              toggle
+              checked={exterayondSettings.OEPlayerMiniNext}
+              onChange={(value) => setExterayondSetting('OEPlayerMiniNext', value)}
+            />
+          </Row.CheckboxFieldToggle>
+          <Row.Title>{i18n('Exterayond.Player.Mini.Next')}</Row.Title>
+        </Row>
+        <Row>
+          <Row.CheckboxFieldToggle>
+            <CheckboxFieldTsx
+              toggle
+              checked={exterayondSettings.OEPlayerMiniClose}
+              onChange={(value) => setExterayondSetting('OEPlayerMiniClose', value)}
+            />
+          </Row.CheckboxFieldToggle>
+          <Row.Title>{i18n('Exterayond.Player.Mini.Close')}</Row.Title>
+        </Row>
+      </Section>
       <Section name="Exterayond.TabCounter" caption="Exterayond.TabCounter.Info">
         <RangeSettingSelector
           textLeft={i18n('Exterayond.TabCounter')}

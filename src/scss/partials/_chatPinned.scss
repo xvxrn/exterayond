@@ -45,6 +45,31 @@
   }
 }
 
+// * PLAYER-23/22 (Android `PlayerStyle.miniShape`/`miniCover`, read by
+// * `PlayerMiniView.applyStyle`): the pill and the square re-shape the card
+// * (Android: half the card's height, dp(10)), a round cover circles the
+// * 36px artwork (half its side), a hidden cover removes it. Each override
+// * rides the root together with `oe-md3-mini-player`, so it out-specifies
+// * the block above regardless of order, and the default 0 keeps the stock
+// * literal radii. The shape only repaints the MD3 card — with the MD3 mini
+// * player off these classes match nothing and the plate stays stock.
+:root.oe-md3-mini-player.oe-md3-mini-shape-pill .pinned-audio.is-music {
+  // * the plate carries `--container-height` itself (`--topbar-audio-height`)
+  border-radius: calc(var(--container-height, 3rem) / 2);
+}
+
+:root.oe-md3-mini-player.oe-md3-mini-shape-square .pinned-audio.is-music {
+  border-radius: 10px;
+}
+
+:root.oe-md3-mini-player.oe-md3-mini-cover-round .pinned-audio.is-music .pinned-audio-cover {
+  border-radius: 18px;
+}
+
+:root.oe-md3-mini-player.oe-md3-mini-cover-hidden .pinned-audio.is-music .pinned-audio-cover {
+  display: none;
+}
+
 .pinned-message {
   --custom-emoji-size: calc(var(--font-size) + 2px) !important;
 

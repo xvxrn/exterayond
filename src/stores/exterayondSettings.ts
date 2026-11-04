@@ -105,6 +105,24 @@ export const OE_DEFAULTS = {
   OEPlayerShowSource: true,
   OEPlayerWavy: true,
   OEPlayerControlsSize: 1,
+  /**
+   * Android `PlayerStyleEditor`'s mini-player rows (`AppearanceConfig.kt`
+   * 335–359), consumed by `PlayerMiniView.applyStyle` over the pinned-audio
+   * plate. Cover: 0 rounded, 1 round, 2 hidden; shape: 0 rounded (the card's
+   * 20px), 1 pill, 2 square (dp(10)); progress: 0 ring, 1 line, 2 none,
+   * 3 border. Android EtgBackup exports none of them. The compact, artist
+   * colors, previous-button and dock-position keys have no web surface and
+   * stay unstored (see the PLAYER-21..30 checklist entries).
+   */
+  OEPlayerMiniCover: 0,
+  OEPlayerMiniShape: 0,
+  OEPlayerMiniProgress: 0,
+  /** Android `OEPlayerMiniArtist` (default true): the plate's artist line. */
+  OEPlayerMiniArtist: true,
+  /** Android `OEPlayerMiniNext` (default true): the plate's next-track button. */
+  OEPlayerMiniNext: true,
+  /** Android `OEPlayerMiniClose` (default true): the plate's close button. */
+  OEPlayerMiniClose: true,
   OEChatsRemoveMessageTail: true,
   OEChatsHideCallButton: false,
   OEChatsHideChannelSearchButton: false,
@@ -170,6 +188,39 @@ export const OE_DEFAULTS = {
    * menu's linked-chat item (the web's own "View Discussion" row).
    */
   ChatMenuItemLinkedChat: true,
+  /**
+   * Android NaConfig.MediaViewerMenuItemForward ("Forward", default true):
+   * the media viewer menu's Forward item (PhotoViewer:6175). The web gates
+   * its own viewer menu's Forward row; the other five MediaViewerMenuItem*
+   * keys have no web menu item and stay unstored.
+   */
+  MediaViewerMenuItemForward: true,
+  /**
+   * Android NaConfig.ActionBarButtonForward ("Forward", default true): the
+   * forward button of the selection action bar (ChatActivity:11327). The
+   * web gates its selection bar's forward button; Reply (default false),
+   * Edit, SelectBetween and Copy have no web bar button and stay unstored.
+   */
+  ActionBarButtonForward: true,
+  /**
+   * Android NaConfig's text-style menu keys (`TextBold`, `TextItalic`,
+   * `TextUnderline`, `TextStrikethrough`, `TextQuote`, `TextSpoiler`,
+   * `TextLink`, `TextCreateDate` — all bool, default true,
+   * ChatActivity:29548+). The web gates the composer formatting tooltip's
+   * buttons of the same names. Android's Translate/Monospace/MonoCode/
+   * CreateMention/Regular have no 1:1 web button (the tooltip's single
+   * monospace button answers two Android entries) and stay unstored, as do
+   * the tooltip-only highlight/subscript/superscript (no Android key);
+   * `TextStyleOrder` — the web tooltip's order is fixed (see the checklist).
+   */
+  TextBold: true,
+  TextItalic: true,
+  TextUnderline: true,
+  TextStrikethrough: true,
+  TextQuote: true,
+  TextSpoiler: true,
+  TextLink: true,
+  TextCreateDate: true,
   DisableClickCommandToSend: false,
   DateOfForwardedMsg: false,
   ShowTimeHint: false,
@@ -392,6 +443,9 @@ const NUMERIC_RANGES: {[K in NumericKey]: readonly [min: number, max: number]} =
   OEPlayerTitleAlign: [0, 1],
   OEPlayerTitleSize: [0, 2],
   OEPlayerControlsSize: [0, 2],
+  OEPlayerMiniCover: [0, 2],
+  OEPlayerMiniShape: [0, 2],
+  OEPlayerMiniProgress: [0, 3],
   DoubleTapAction: [0, 12],
   DoubleTapActionOut: [0, 12],
   /** The pill ids are 1..15 (`PillType`); -1 is Android's "none" sentinel. */
@@ -881,6 +935,41 @@ export const gifMediaBox = (
 export const getPlayerCoverStyle = (value = exterayondSettings.OEPlayerCoverStyle) =>
   clampExterayondSetting('OEPlayerCoverStyle', value);
 
+/** Android `PlayerStyle.miniCover()`: 0 rounded, 1 round, 2 hidden. */
+export const getPlayerMiniCover = (value = exterayondSettings.OEPlayerMiniCover) =>
+  clampExterayondSetting('OEPlayerMiniCover', value);
+
+/** Android `PlayerStyle.miniShape()`: 0 rounded, 1 pill, 2 square. */
+export const getPlayerMiniShape = (value = exterayondSettings.OEPlayerMiniShape) =>
+  clampExterayondSetting('OEPlayerMiniShape', value);
+
+/**
+ * MENU-06: the composer formatting tooltip's buttons and their Android
+ * `Text*` keys (NaConfig, all default true). The tooltip's remaining buttons
+ * — monospace, highlight, subscript, superscript — have no 1:1 Android key
+ * and stay ungated; Android's Translate/Monospace/MonoCode/CreateMention/
+ * Regular have no web button (see the checklist's MENU-06).
+ */
+export const FORMAT_TOOLTIP_TOGGLE_KEYS = {
+  bold: 'TextBold',
+  italic: 'TextItalic',
+  underline: 'TextUnderline',
+  strikethrough: 'TextStrikethrough',
+  quote: 'TextQuote',
+  spoiler: 'TextSpoiler',
+  link: 'TextLink',
+  date: 'TextCreateDate'
+} as const satisfies Record<string, ExterayondSettingsKey>;
+
+/**
+ * Android `PlayerStyle.miniProgress()`: 0 ring, 1 line, 2 none, 3 border. The
+ * web plate's only progress surface is the bottom line (`MediaProgressLine`);
+ * the ring and the border draw along shapes the web does not have, so those
+ * modes keep the line — only "none" removes it.
+ */
+export const miniProgressLineVisible = (value = exterayondSettings.OEPlayerMiniProgress) =>
+  clampExterayondSetting('OEPlayerMiniProgress', value) !== 2;
+
 if(typeof document !== 'undefined') {
   // * one effect owns the custom properties and the root classes: every
   // * consumer reads them in CSS. The store's properties are read directly —
@@ -964,6 +1053,13 @@ if(typeof document !== 'undefined') {
       classList.toggle('oe-md3-navigation', exterayondSettings.OEAppearanceNewNavigationBarStyle);
       classList.toggle('oe-md3-list-items', exterayondSettings.OEAppearanceM3ListItems);
       classList.toggle('oe-md3-mini-player', exterayondSettings.OEAppearanceMd3MiniPlayer);
+      // * the mini-player shape/cover rows (PLAYER-22/23): the classes only
+      // * carry a look inside the `oe-md3-mini-player` block, so with the MD3
+      // * mini player off they change nothing and the plate stays stock
+      classList.toggle('oe-md3-mini-shape-pill', getPlayerMiniShape() === 1);
+      classList.toggle('oe-md3-mini-shape-square', getPlayerMiniShape() === 2);
+      classList.toggle('oe-md3-mini-cover-round', getPlayerMiniCover() === 1);
+      classList.toggle('oe-md3-mini-cover-hidden', getPlayerMiniCover() === 2);
       classList.toggle('oe-md3-dialogs', exterayondSettings.OEAppearanceMd3Dialogs);
       classList.toggle('oe-no-reply-colors', !exterayondSettings.OEChatsReplyColors);
       classList.toggle('oe-no-reply-emoji', !exterayondSettings.OEChatsReplyEmoji);

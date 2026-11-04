@@ -62,7 +62,7 @@ hotListen(import.meta.hot, mediaSizes, 'changeScreen', (from: ScreenSize, to: Sc
 
 let turnedObserverOn = false;
 
-export default async function wrapVideo({doc, altDoc, container, message, boxWidth, boxHeight, fillBox, withTail, isOut, middleware, lazyLoadQueue, noInfo, group, onlyPreview, noPreview, withoutPreloader, loadPromises, noPlayButton, photoSize, videoSize, searchContext, autoDownload, managers = rootScope.managers, noAutoplayAttribute, ignoreStreaming, canAutoplay, useBlur, observer, setShowControlsOn, uploadingFileName, onGlobalMedia, onLoad, withPreview, hlsStreaming, streamablePreloader}: {
+export default async function wrapVideo({doc, altDoc, container, message, boxWidth, boxHeight, fillBox, withTail, isOut, middleware, lazyLoadQueue, noInfo, group, onlyPreview, noPreview, withoutPreloader, loadPromises, noPlayButton, photoSize, videoSize, searchContext, autoDownload, managers = rootScope.managers, noAutoplayAttribute, ignoreStreaming, canAutoplay, useBlur, observer, setShowControlsOn, uploadingFileName, onGlobalMedia, onLoad, withPreview, hlsStreaming, streamablePreloader, noMinSize}: {
   doc: MyDocument,
   altDoc?: MyDocument,
   container?: HTMLElement,
@@ -99,7 +99,10 @@ export default async function wrapVideo({doc, altDoc, container, message, boxWid
   // * stream its quality ladder over HLS instead of the one file, as the media viewer does
   hlsStreaming?: boolean,
   // * a stream shows the media viewer's loader (the ring with a square), not the chat's spinner
-  streamablePreloader?: boolean
+  streamablePreloader?: boolean,
+  // * skips the sizing's minimum-side and text-width expansions (MEDIA-10:
+  // * the compact GIF must stay inside its compact box)
+  noMinSize?: boolean
 }) {
   const supportsStreaming = doc.supportsStreaming && !ignoreStreaming;
   if(!supportsStreaming && altDoc && !onlyPreview && !IS_H265_SUPPORTED) {
@@ -193,7 +196,8 @@ export default async function wrapVideo({doc, altDoc, container, message, boxWid
       size: photoSize,
       managers,
       useBlur,
-      uploadingFileName
+      uploadingFileName,
+      noMinSize
     });
 
     res.thumb = photoRes;
@@ -434,7 +438,10 @@ export default async function wrapVideo({doc, altDoc, container, message, boxWid
       managers,
       useBlur,
       canHaveVideoPlayer: willObserveSound,
-      uploadingFileName
+      uploadingFileName,
+      // * an mp4-type GIF (the common Telegram GIF) sizes through this
+      // * poster call: a caller-set compact box must survive its expansions
+      noMinSize
     });
 
     res.thumb = photoRes;

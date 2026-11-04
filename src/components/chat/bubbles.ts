@@ -83,7 +83,7 @@ import {getAppWindow, onAppWindowChange, onBeforeAppWindowChange} from '@helpers
 import getObjectKeysAndSort from '@helpers/object/getObjectKeysAndSort';
 import forEachReverse from '@helpers/array/forEachReverse';
 import formatCount from '@helpers/number/formatCount';
-import {exterayondSettings, getStickerScale} from '@stores/exterayondSettings';
+import {exterayondSettings, getStickerScale, gifMediaBox} from '@stores/exterayondSettings';
 import getViewportSlice from '@helpers/dom/getViewportSlice';
 import SuperIntersectionObserver, {IntersectionCallback} from '@helpers/dom/superIntersectionObserver';
 import generateFakeIcon from '@components/generateFakeIcon';
@@ -10730,12 +10730,18 @@ export default class ChatBubbles {
               const withTail = !IS_ANDROID && !IS_APPLE && !isRound && context.canHaveTail && !withReplies && USE_MEDIA_TAILS;
               if(withTail) bubble.classList.add('with-media-tail');
 
+              // * MEDIA-10 (ShowSmallGIF): a GIF's media renders inside the
+              // * compact dp(120) box, skipping the sizing's minimum-side
+              // * and text-width expansions; everything else keeps stock
+              const {box: mediaBox, compact: compactGif} = gifMediaBox(doc.type, mediaSizes.active.regular);
+
               const p = wrapVideo({
                 doc,
                 container: context.attachmentDiv,
                 message: message as Message.message,
-                boxWidth: mediaSizes.active.regular.width,
-                boxHeight: mediaSizes.active.regular.height,
+                boxWidth: mediaBox.width,
+                boxHeight: mediaBox.height,
+                noMinSize: compactGif,
                 withTail,
                 isOut,
                 lazyLoadQueue: this.lazyLoadQueue,

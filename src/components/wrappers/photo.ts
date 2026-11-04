@@ -22,7 +22,7 @@ import liteMode from '@helpers/liteMode';
 import isWebFileLocation from '@appManagers/utils/webFiles/isWebFileLocation';
 import apiManagerProxy from '@lib/apiManagerProxy';
 
-export default async function wrapPhoto({photo, message, container, boxWidth, boxHeight, fillBox, withTail, isOut, lazyLoadQueue, middleware, size, withoutPreloader, loadPromises, autoDownloadSize, noBlur, noThumb, noFadeIn, blurAfter, managers = rootScope.managers, processUrl, fadeInElement, onRender, onRenderFinish, useBlur, useRenderCache, canHaveVideoPlayer, uploadingFileName}: {
+export default async function wrapPhoto({photo, message, container, boxWidth, boxHeight, fillBox, withTail, isOut, lazyLoadQueue, middleware, size, withoutPreloader, loadPromises, autoDownloadSize, noBlur, noThumb, noFadeIn, blurAfter, managers = rootScope.managers, processUrl, fadeInElement, onRender, onRenderFinish, useBlur, useRenderCache, canHaveVideoPlayer, uploadingFileName, noMinSize}: {
   photo: MyPhoto | MyDocument | WebDocument | InputWebFileLocation,
   message?: Message.message | Message.messageService,
   container?: HTMLElement,
@@ -49,7 +49,10 @@ export default async function wrapPhoto({photo, message, container, boxWidth, bo
   useBlur?: boolean | number,
   useRenderCache?: boolean,
   canHaveVideoPlayer?: boolean,
-  uploadingFileName?: string
+  uploadingFileName?: string,
+  // * skips the sizing's minimum-side and text-width expansions (MEDIA-10:
+  // * the compact GIF must stay inside its compact box)
+  noMinSize?: boolean
 }) {
   const ret = {
     loadPromises: {
@@ -86,7 +89,8 @@ export default async function wrapPhoto({photo, message, container, boxWidth, bo
         boxWidth,
         boxHeight,
         message: message as Message.message,
-        canHaveVideoPlayer
+        canHaveVideoPlayer,
+        noMinSize
       });
     }
 
@@ -126,7 +130,8 @@ export default async function wrapPhoto({photo, message, container, boxWidth, bo
         size: photo.size,
         type: THUMB_TYPE_FULL
       } : undefined,
-      canHaveVideoPlayer
+      canHaveVideoPlayer,
+      noMinSize
     });
     size = set.photoSize;
     isFit = set.isFit;

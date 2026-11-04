@@ -300,6 +300,18 @@ const ExterayondChats = () => {
           onChange={setStickerTimeMode}
         />
       </Section>
+      <Section caption="Exterayond.ShowSmallGIF.Info">
+        <Row>
+          <Row.CheckboxFieldToggle>
+            <CheckboxFieldTsx
+              toggle
+              checked={exterayondSettings.ShowSmallGIF}
+              onChange={(value) => setExterayondSetting('ShowSmallGIF', value)}
+            />
+          </Row.CheckboxFieldToggle>
+          <Row.Title>{i18n('Exterayond.ShowSmallGIF')}</Row.Title>
+        </Row>
+      </Section>
       <Section name="Exterayond.PauseOnMinimize">
         {PAUSE_TOGGLES.map(([key, langKey]) => (
           <Row>

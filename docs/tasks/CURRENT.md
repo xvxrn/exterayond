@@ -172,11 +172,26 @@ visual acceptance (runbooks 5.26 and 5.27); the player rows stay unchecked
 per the established convention. Checklist count unchanged (74/296).
 
 Pick unchecked items from the checklist and verify against the Android
-source per packet. Remaining mini-player candidates: PLAYER-06/07 (cover
-gesture/extend), PLAYER-13/14 (block order, speed/text/queue — block order
-would reuse the FOLD-10/12 editor pattern). Plugins are deferred until the
-user explicitly asks to resume them. Phone-only hardware features are not
-desktop tasks.
+source per packet. Packets 077–078 (2026-11-05) closed the mini-player
+candidates: **077** wired PLAYER-06 — `OEPlayerCoverSwipe` drives the MD3
+popup's cover drag (the pointer mechanics byte-ported into the tested
+`md3PlayerCoverSwipe.ts`: 8px slop arm with origin reset, dx/dp(40) tilt on
+the non-disc covers, dp(420) fade, the dp(70) release switching next left /
+previous right, spring-back and slide-out at Android's 450/180ms easings;
+reduced motion crossfades, animations-off switches at once; off = the stock
+cover, no touch-action change) with the hub row framed-cover-only like the
+Android editor, runbook 5.28, implemented-but-unreviewed. **078** recorded
+MEDIA-11 as class 3 (Web K has no double-tap seek to re-step — the player's
+desktop dblclick toggles full-screen) and PLAYER-14 as nothing-to-re-locate
+(`OEPlayerShowActions` re-locates Android's speed/lyrics/queue between the
+actions group and the overflow menu; the web popup has neither surface).
+No code in 078. Checklist count unchanged (74/296).
+
+Remaining player candidates: PLAYER-07 (cover extend — visual), PLAYER-13
+(block order — would reuse the FOLD-10/12 editor pattern over the web
+popup's progress/transport blocks, whose actions block does not exist).
+Plugins are deferred until the user explicitly asks to resume them.
+Phone-only hardware features are not desktop tasks.
 
 ## Operating constraints
 

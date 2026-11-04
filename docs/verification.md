@@ -1599,7 +1599,7 @@ only prior check was synthetic.
 - **[AUTH · content: a music track with artwork, a voice message]**
 - PASS/FAIL:
 
-### 5.27 MENU-06 / MENU-07 / MENU-08 — the text-style, media-viewer and selection-bar compositions (packet 075, appended)
+### 5.27 MENU-06 / MENU-07 / MENU-08 — the text-style, media-viewer and selection-bar compositions (packet 075, appended; amended by packet 076)
 
 - Chats tab → **"Text Style"** (`Exterayond.TextStyle`): **Bold, Italic,
   Underline, Strikethrough, Quote, Spoiler, Link, Date** — the eight
@@ -1609,22 +1609,51 @@ only prior check was synthetic.
   tooltip re-reads the toggles on every open.
 - Chats tab → **"Media Viewer Menu"** (`Exterayond.MediaViewerMenu`):
   **"Forward"** (`MediaViewerMenuItemForward`, default on) gates the media
-  viewer's more-menu Forward row. Off removes the row on the next open; the
-  top forward button stays (Android gates the menu item, not its own
-  bottom-bar button — same literal mapping here).
+  viewer's Forward action. On desktop the viewer's Forward is the top
+  button; the more-menu row that carries it on Android is a handheld
+  surface only (the menu's trigger is hidden above the handheld
+  breakpoint), so packet 076 gates both surfaces with the same key. Off
+  removes the top button from the next photo you open (the viewer
+  re-reads the key on every open/step) and the more-menu row on a
+  handheld-width window.
 - Chats tab → **"Action Bar Buttons"** (`Exterayond.ActionBarButtons`):
   **"Forward"** (`ActionBarButtonForward`, default on) gates the selection
-  bar's forward button. Off removes it from the next selection session (the
-  bar is rebuilt each time); scheduled messages' "send now" button is a
-  different action and never hides.
+  bar's forward button. Off hides it in the current selection too — the
+  bar re-reads the key on every selection change, the way Android's
+  `updateActionBar` re-applies its own visibility (packet 076); scheduled
+  messages' "send now" button is a different action and never hides.
 - Look at: select text in the composer and toggle each Text Style item off —
   the button leaves the tooltip and the tooltip keeps its layout; toggle
-  Media Viewer Menu → Forward off, open a photo full-screen and open the
-  more-menu — the Forward row is gone; select two messages and check the
-  selection bar's forward button leaves with its toggle off and returns.
-  Day and night themes.
+  Media Viewer Menu → Forward off, open a photo full-screen — the top
+  forward button is gone (and on a handheld-width window the more-menu's
+  Forward row too), on and the next open brings it back; select two
+  messages, toggle Action Bar Buttons → Forward off with the selection
+  still open — the bar's forward button leaves at once and returns with
+  the toggle on. Day and night themes.
 - **[AUTH · content: any chat for the composer and selection, a photo
   message for the viewer]**
+- PASS/FAIL:
+
+---
+
+### 5.28 PLAYER-06 — the cover swipe of the MD3 music player (packet 077, appended)
+
+- Appearance tab → **"Cover"** section → **"Swipe the cover to switch
+  tracks"** (`OEPlayerCoverSwipe`, default on). The row shows for the card
+  and disc covers only (Android's `refreshVisibility` hides it for wide and
+  full, where the gesture does not exist either).
+- Look at: open the MD3 music player (play a music track with the MD3 Music
+  player style on) and drag the cover horizontally — the cover follows the
+  pointer (sliding and, for the card, tilting, fading slightly); a release
+  under ~70px springs it back, a wider release slides it out and switches to
+  the next track (drag left) or the previous one (drag right), the new cover
+  entering from the opposite side. A vertical drag does nothing. Off: the
+  cover does not drag at all (the stock cover has no gesture) and on/reset
+  restores it. A track with no cover (no artwork) still switches.
+- Reduced-motion check (Settings → Power Saving → Interface Animations off,
+  or `?a11y=1` with motion effects off): the release crossfades instead of
+  sliding; with animations fully off the track switches at once.
+- **[AUTH · content: a chat with two music tracks]**
 - PASS/FAIL:
 
 ---

@@ -69,6 +69,15 @@ export const KNOWN_UNSUPPORTED_KEYS: string[] = [
   'dividerStyle', 'bottomNavigationBarMode',
   'unlimitedRecentStickers', 'quickAdminShortcuts',
   'targetLang',
+  // * the download-save path, the six pill currency targets and the
+  // * back-animation style: real EtgBackup entries (EtgBackup.java:436-443,
+  // * :475) whose Android surfaces do not exist on the web (the browser owns
+  // * downloads, the web pill registry backs no crypto pill, Web K has no
+  // * back-animation style setting)
+  'customSavePath',
+  'gramTargetCurrency', 'btcTargetCurrency', 'usdTargetCurrency',
+  'ethTargetCurrency', 'eurTargetCurrency', 'goldTargetCurrency',
+  'springAnimations',
   // * the plugin flags with a web target moved to SUPPORTED; the two without
   // * one (compact view, art options) stay recognized-but-unsupported
   'pluginsCompactView', 'pluginsDisableArtOpts',
@@ -239,7 +248,27 @@ const isExpected = (entry: SupportedEntry, value: unknown): boolean => {
 
 const sectionOf = (root: Record<string, Record<string, unknown>>, section: string): Record<string, unknown> | undefined => {
   const value = root[section];
-  return value && typeof value === 'object' && !Array.isArray(value) ? value : undefined;
+  if(value && typeof value === 'object' && !Array.isArray(value)) {
+    return value;
+  }
+
+  // * Android EtgBackup.sectionOf: exteraGram names its per-account prefs
+  // * `mainconfig2`, … — when the plain section is missing, the first
+  // * suffixed one answers for mainconfig
+  if(section !== SECTION_MAIN) {
+    return undefined;
+  }
+
+  for(const key of Object.keys(root)) {
+    if(/^mainconfig\d+$/.test(key)) {
+      const suffixed = root[key];
+      if(suffixed && typeof suffixed === 'object' && !Array.isArray(suffixed)) {
+        return suffixed;
+      }
+    }
+  }
+
+  return undefined;
 };
 
 export const etgBackup = {
@@ -306,6 +335,11 @@ export const etgBackup = {
             if(isExpected(entry, section[key])) {
               knownCount++;
             }
+          } else if((PLUGIN_FLAG_KEYS as readonly string[]).includes(key) &&
+            typeof section[key] === 'boolean') {
+            // * the plugin flags are Android entries too (EtgBackup.pluginFlag);
+            // * countKnownKeys counts them, so a flags-only export is a backup
+            knownCount++;
           } else if(KNOWN_UNSUPPORTED_KEYS.includes(key)) {
             unsupportedSet.add(key);
           }

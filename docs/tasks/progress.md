@@ -2872,3 +2872,170 @@ titles (17), settings-search 8, mini-player 4, menu gates 10 — all green;
 Runbook 5.27 appended. Checklist: MENU-06 partial (8/13), MENU-07 partial
 (1/6), MENU-08 partial (1/5), MENU-02 and MENU-09 verdicts — all unchecked,
 count unchanged (74/296). Awaiting the user's walk of runbooks 5.26 and 5.27.
+
+## 076 / bug-hunt over 074–075 — the mini-player rows and the menu compositions (2026-11-05)
+
+The focused break-it pass over packets 074 (mini-player rows over the audio
+plate) and 075 (Text Style / Media Viewer Menu / Action Bar Buttons gates),
+run after the user committed both. Every fix is proven by a test in the same
+pass; the two committed packets were read against their owning Web K
+behavior, not the test summaries.
+
+**Proven and fixed:**
+
+- **MENU-07 had no desktop surface.** The viewer's more menu — the only
+  surface the packet gated — is unreachable where this client runs: its
+  trigger is built `onlyMobile` (`mediaViewer/base.ts setBtnMenuToggle` →
+  `.only-handhelds`, `display: none !important` above the 600px handheld
+  breakpoint), while the desktop viewer surfaces the same action as the
+  topbar forward button, which the gate did not touch. The hub row did
+  nothing on desktop, and runbook 5.27's step was not walkable as written.
+  Fix: `setMessageActionVisibility`'s HTMLElement branch now composes the
+  same key for `this.buttons.forward` (the other topbar buttons have no menu
+  key), keeping the menu item's `verify` composition for handheld widths.
+- **MENU-08 applied on the next selection session only.** Android is live:
+  `updateActionBar` re-applies `setItemVisibility(forward, …
+  getActionBarButtonForward().Bool() …)` on every selection update
+  (ChatActivity:11345+). Fix: the web re-reads the key in `onUpdateContainer`
+  (the hook that already runs per selection change), keeping the build-time
+  hide so the first paint is honest while the managers' answer is in flight.
+  The scheduled send-now button stays untouched.
+- **The hidden mini cover still fetched the artwork.** With
+  `OEPlayerMiniCover` = 2 the plate hid the 36px box but `MusicCover`'s
+  effect still called `wrapPhoto` for every music track — a download with no
+  box to render into (Android's mini view binds no artwork for a hidden
+  cover). Fix: the effect returns before wrapping when the cover is hidden,
+  the store read keeping the wrap live for the rounded/round modes.
+
+**Audited clean (each verified against the owner, not the summary):**
+
+- Mini player: the artist/progress gates re-evaluate on a track change
+  (voice date survives the artist toggle both directions), across
+  stop/reopen, and live on toggle; the next/close effects own the `hide`
+  class exclusively and no stock path (`toggleDisability`,
+  `pinned-audio-no-next`, the repeat gate) writes it; the pill radius reads
+  the plate's own `--container-height` (`--topbar-audio-height` = 3rem →
+  24px of the 48px plate) and the shape/cover overrides out-specify the MD3
+  block; with the MD3 mini player off the pair-selectors match nothing
+  (pinned by test) — only the artist/next/close/progress gates act, which
+  is the packet's declared split (the plate is the web's mini player
+  regardless of the MD3 chrome).
+- Markup tooltip: the composition lives in show()'s hide pass — re-read on
+  every open (the while-visible early return is the stock behavior and the
+  hub sits in another panel); hiding a middle button shrinks the row without
+  moving the anchor (setTooltipPosition centers on the selection, clamped to
+  the input) and the existing delimiter logic consumes the gate's
+  hiddenTypes, so no orphan separator remains when whole groups leave; the
+  bold/italic/underline shortcuts route through `handleMarkdownShortcut` →
+  `applyMarkdown` → the editor, never through the gated buttons (pinned by
+  test), and the ungated monospace/highlight/subscript/superscript buttons
+  stay out of the mapping.
+- Media viewer cadence: `ButtonMenuToggle.onOpen` runs `filterButtonMenuItems`
+  → every item's `verify` on each open, so the menu item's store read is
+  live per open; the topbar gate rides the same per-open/visibility pass.
+- Cross-checks: the three new hub sections' search entries (8+13) match the
+  tabs, the store's defaults/ranges table carries all the new keys, and the
+  counts in the 074/075 journal entries reproduce.
+
+Tests: `tests/exterayondMiniPlayer.test.tsx` grew to 6 (the track
+change/close-reopen lifecycle over the real plate, the MD3-off scoping of
+the shape/cover root classes against the SCSS source, the hidden cover's
+fetch skip with a live re-wrap on the mode's return), and
+`tests/exterayondMenuComposition.test.ts` to 7 (the desktop topbar gate with
+its `onlyMobile` premise pinned against `mediaViewer/base.ts`, the
+selection bar's build + live re-read pair, the shortcut path's independence
+from the gated buttons). Store 40, tabs 17, settings-search 8 — all green;
+`tsc --noEmit` clean, oxlint clean on the touched files.
+
+Runbook 5.27 amended (the media viewer step walks the desktop top button;
+the selection bar step is live mid-session); 5.26 needed no amendment (the
+fetch skip is invisible). Checklist: MENU-07/MENU-08 entries annotated with
+the 076 amendments, all entries stay unchecked per the player convention —
+count unchanged (74/296).
+
+## 077 / PLAYER-06 — the cover swipe of the MD3 music player (2026-11-05)
+
+The one remaining small-and-portable entry after the 074–076 run: Android's
+`OEPlayerCoverSwipe` (bool, default true) is the cover drag of the MD3
+music popup, and the web popup has the owner surface for it.
+
+The pointer mechanics are a byte-port of `PlayerSheet.onCoverTouch` +
+`setCoverDrag` + `finishCoverDrag` (PlayerSheet:1729–1816, re-read from the
+pinned source), extracted into `src/components/popups/md3PlayerCoverSwipe.ts`
+(the CHAT-26 predicate treatment, so the nontrivial logic is testable without
+the popup graph): the drag arms past an 8px slop on a horizontal intent
+(|dx| > |dy|·1.2, like Android's touchSlop check) and resets its origin at
+activation; while armed the cover follows the pointer — translate, the
+non-disc cover rotating by dx/dp(40), the alpha fading to no less than 0.6
+over dp(420); a release under dp(70) springs back over 450ms EMPHASIZED
+(cubic-bezier(.2,0,0,1)), a wider one slides out over 180ms EASE_IN
+(cubic-bezier(.42,0,1,1)), switches the track — next to the left, previous
+to the right, Android's raw-x direction verbatim — and drops the new cover
+at the opposite third (rotation reset) to slide home. The switch goes
+through the playback controller's next/previous — the same path as the
+transport buttons — under the session guard. A cancelled pointer reports
+dx 0, the spring-back release.
+
+Wiring (`md3Player.tsx`): `attachCoverSwipe(coverBox, …)` in onMount; the
+`allowed()` gate mirrors Android's early return — not animating, coverStyle
+card (0) or disc (3) only, `!!exterayondSettings.OEPlayerCoverSwipe` — and
+reads the store at every pointerdown (the 073 live-read lesson). The
+animation levels follow the shared policy: the pointer-follow is the user's
+own doing and runs at every level; at reduced motion the release crossfades
+(opacity only) instead of sliding; with animations off the track switches at
+once. Off = the stock cover byte-for-byte: no handler action (the gate), and
+the `touch-action: pan-y` scoping rides an `is-swipeable` class that exists
+only while the toggle is on. The gesture is physical (Android uses rawX and
+no RTL branch) — not mirrored in RTL, like the tape per the RTL rules. The
+`dblclick` full-screen toggle on the inline player is untouched; a popup
+cover drag does not conflict with it.
+
+Hub: the Appearance tab's "Cover" section gained the toggle after
+"Spin while playing" (the editor's order), visible for the framed covers
+only — Android's `refreshVisibility` hides the row for wide/full, where the
+gesture does not exist either. Lang key `Exterayond.Player.Cover.Swipe` is
+Android's row title verbatim ("Swipe the cover to switch tracks"); the
+settings-search index was regenerated (+1 entry). No EtgBackup alias:
+Android exports none of the player keys (verified against EtgBackup.java).
+
+Tests: new `tests/exterayondCoverSwipe.test.ts` (12) — the real
+`attachCoverSwipe` driven with synthetic pointer events on a plain element
+(arming and origin reset, the vertical abandonment, the cancel release, a
+second pointer ignored, the per-down gate flipping live mid-suite), the
+release threshold and direction, the drag visuals (disc never rotates, the
+fade bottoms at 0.6), and three source contracts pinning the live store
+gate, the controller routing with the Android timings/easings, the
+touch-action scoping and the framed-only hub row. The tabs suite's
+cover-style visibility test gained the swipe row (17). Store defaults table
+row. All green; `tsc --noEmit` clean, oxlint clean on the touched
+files.
+
+Runbook 5.28 appended. Checklist: PLAYER-06 annotated
+implemented-but-unreviewed, unchecked per the player convention — count
+unchanged (74/296). Awaiting the user's walk of runbook 5.28.
+
+## 078 / MEDIA-11, PLAYER-14 — verdicts over the missing and re-locating surfaces (2026-11-05)
+
+Two verdict-only entries, no code, the 071/072 pattern; the Android
+contracts re-read from the pinned source.
+
+- **MEDIA-11 — class 3, the gesture does not exist on the web.**
+  `OEChatsDoubleTapSeekDuration` (ChatsConfig int 0..3, default 1;
+  `SEEK_DURATIONS = [5, 10, 15, 30]`, `seekDurationSeconds()`) re-steps
+  Android's stock double-tap seek (`PhotoViewer.canDoubleTapSeekVideo` /
+  `onDoubleTap` — the screen thirds, the forward-arrow animation). Web K has
+  no double-tap seek in the media viewer or the video player (the player's
+  desktop `dblclick` toggles full-screen, `lib/mediaPlayer/index.ts:435`),
+  so there is nothing to re-step; building the gesture is upstream
+  territory. Key not stored; the EtgBackup alias `doubleTapSeekDuration`
+  (integer 0..3 — EtgBackup.java:410) stays recognized-unsupported.
+- **PLAYER-14 — nothing to re-locate.** `OEPlayerShowActions` (bool,
+  default true) re-locates Android's speed/lyrics/queue actions rather than
+  hiding them: on shows the dedicated actions group (`group.setVisibility`),
+  off collapses the same three entries into the player's overflow menu
+  (`if (!PlayerStyle.showActions())` adds Lyrics/Queue/Speed there,
+  PlayerSheet:1706). The web popup has neither surface — no speed, no
+  lyrics, no queue (the PLAYER-01 pending list) — so neither state maps.
+  Key not stored; no EtgBackup alias.
+
+Checklist: both entries annotated, unchecked — count unchanged (74/296).

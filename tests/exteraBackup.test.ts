@@ -458,6 +458,49 @@ describe('exteraless .extera backup (EtgBackup contract)', () => {
   });
 });
 
+describe('the full Android key-set sweep (packet 079)', () => {
+  it('reports the Android-only keys with no web target as unsupported, including the 079 finds', () => {
+    // * customSavePath, the six pill currency targets and springAnimations are
+    // * real EtgBackup entries (EtgBackup.java:436-443, :475) with no web
+    // * surface: the download path, the crypto pills and the back-animation
+    // * style do not exist here — recognized, reported, never applied
+    const androidOnly = [
+      'customSavePath',
+      'gramTargetCurrency', 'btcTargetCurrency', 'usdTargetCurrency',
+      'ethTargetCurrency', 'eurTargetCurrency', 'goldTargetCurrency',
+      'springAnimations'
+    ];
+    const root = {exteraconfig: Object.fromEntries(androidOnly.map((key) => [key, key.endsWith('TargetCurrency') ? 'USD' : true]))};
+    const read = etgBackup.readBackup(JSON.stringify(root));
+    expect(read).not.toBeNull();
+    const result = applyExteraBackup(root as Record<string, Record<string, unknown>>);
+    expect(result.applied).toBe(0);
+    for(const key of androidOnly) {
+      expect(read!.unsupported).toContain(key);
+      expect(result.unsupported).toContain(key);
+    }
+  });
+
+  it('falls back to the account-suffixed mainconfig sections like EtgBackup.sectionOf', () => {
+    // * exteraGram writes per-account sections (mainconfig2, ...); Android
+    // * reads the first matching one when plain mainconfig is missing
+    const read = etgBackup.readBackup(JSON.stringify({mainconfig2: {bubbleRadius: 8}}));
+    expect(read).not.toBeNull();
+    expect(read!.knownCount).toBe(1);
+    const result = applyExteraBackup({mainconfig2: {bubbleRadius: 8}} as Record<string, Record<string, unknown>>);
+    expect(result.applied).toBe(1);
+    expect(exterayondSettings.bubbleRadius).toBe(8);
+  });
+
+  it('counts the plugin flags it exports as known keys, like countKnownKeys does', () => {
+    // * every build carries pluginsSafeMode/pluginsDevMode; Android's
+    // * countKnownKeys counts them, so a flags-only backup is a backup
+    const read = etgBackup.readBackup(JSON.stringify({exteraconfig: {pluginsSafeMode: true, pluginsDevMode: false}}));
+    expect(read).not.toBeNull();
+    expect(read!.knownCount).toBe(2);
+  });
+});
+
 describe('local own-phone visibility backup', () => {
   it('round-trips the Android hidePhoneNumber alias and rejects non-booleans', () => {
     setExterayondSetting('HidePhone', false);

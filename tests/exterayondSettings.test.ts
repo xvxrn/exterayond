@@ -65,6 +65,7 @@ describe('exterayond settings store', () => {
       OEPlayerCoverSize: 100,
       OEPlayerCoverRadius: 28,
       OEPlayerDiscSpin: true,
+      OEPlayerCoverSwipe: true,
       OEPlayerTitleAlign: 0,
       OEPlayerTitleSize: 1,
       OEPlayerTitleAbove: false,

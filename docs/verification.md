@@ -1741,3 +1741,31 @@ visual review.
 After each session of user verification, record the outcomes: update the
 tally here, and let the maintainer strike through or annotate the matching
 checklist entries and log material findings in `docs/tasks/progress.md`.
+### 6.2 The 079 import-behavior amendments (packet 079, appended)
+
+Three changes to the Batch 6 behavior, each proven by a regression test
+(`tests/exteraBackup.test.ts`, "the full Android key-set sweep"):
+
+- A `.extera` whose only known keys are the **plugin flags** — e.g. a body
+  of `{"exteraconfig":{"pluginsSafeMode":true,"pluginsDevMode":false}}` —
+  imports now (the toast "Applied 2 settings from the backup"); before
+  packet 079 the hub rejected it as "not a compatible backup" although it
+  exports exactly such flags.
+- A backup whose Telegram-level section is **account-suffixed** —
+  `mainconfig2` instead of `mainconfig`, as exteraGram writes per-account —
+  is read: `bubbleRadius` under `mainconfig2` applies (and counts as known).
+- Android-only keys **`customSavePath`, `gramTargetCurrency`,
+  `btcTargetCurrency`, `usdTargetCurrency`, `ethTargetCurrency`,
+  `eurTargetCurrency`, `goldTargetCurrency`, `springAnimations`** are now
+  reported as unsupported (like `tabletMode` in 6.1): they apply nothing and
+  are never counted. Before, they were silently ignored without appearing in
+  the unsupported report.
+
+Walk: craft the three small JSON files, import each through the Other tab,
+check the toasts above; the unsupported keys change no setting (spot-check
+one: `bubbleRadius` after a `mainconfig2` import, Settings → Appearance →
+Bubble Radius).
+- **[no chat data]**
+- PASS/FAIL:
+
+---

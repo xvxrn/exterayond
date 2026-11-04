@@ -3039,3 +3039,100 @@ contracts re-read from the pinned source.
   Key not stored; no EtgBackup alias.
 
 Checklist: both entries annotated, unchecked — count unchanged (74/296).
+
+## 079 / regression hunt over the oldest accepted surfaces — the `.extera` alias table in full, the hub wiring, the root screen (2026-11-05)
+
+The night's final pass re-hunted the three surfaces no pass had revisited
+since their integration: the backup alias table (packets 010–056 built it
+incrementally; only hideAllChats/hideCameraTile/tabCounter had been audited
+against Android), the hub tabs' store wiring, and the root screen's About
+header and links. Method: every claim proven by a test before fixing.
+
+**The alias table, swept line by line against `EtgBackup.java` @8b7ec40.**
+Android's table is 127 entries (85 bools, 12 ints, 7 remapped ints, 5
+floatToInt, 1 decimal, 9 strings, 4 plugin flags, 4 mainconfig). The web
+table's 62 SUPPORTED entries all match their Android entry's section, kind,
+range and mapping direction — including the composites (`newSliderStyle`
+read `==2`/apply 2, `newSwitchStyle` read `>=2`/apply 3, `tabCounter`'s
+EXCLUDE_NONE/ALL pair verified against `NekoConfig` 0/2, `stickerTimeMode`'s
+two-flag composition verified against `ChatsConfig.kt`, `bottomButton`,
+`showIdAndDc`), the floatToInt rounding parity (the store clamp rounds, so a
+fractional `avatarCorners` import lands where Android's `Math.round` puts
+it; `stickerSize` stays fractional on both), and `isMenuIdArray` ≡
+`isIdArray`. Web keys not in Android: none. Three proven gaps, fixed:
+
+- **Eight Android keys were invisible to the import report.**
+  `customSavePath`, the six pill currency targets (`gramTargetCurrency`,
+  `btcTargetCurrency`, `usdTargetCurrency`, `ethTargetCurrency`,
+  `eurTargetCurrency`, `goldTargetCurrency`) and `springAnimations` are real
+  EtgBackup entries (EtgBackup.java:436-443, :475) that the web neither
+  supports nor listed in `KNOWN_UNSUPPORTED_KEYS` — a file carrying them
+  reported no `unsupported` names, against the module's own header contract
+  ("the rest of the Android key set is recognized by name and reported as
+  unsupported") and AGENTS.md's "ignored and shown as unsupported". None has
+  a web target: the browser owns downloads, the web pill registry backs only
+  the cache pill (`PillType`'s GRAM/BTC/USD/GOLD/ETH/EUR stay unregistered
+  by design), and Web K has no back-animation style. Fix: all eight added to
+  `KNOWN_UNSUPPORTED_KEYS`.
+- **The `mainconfig\d+` account-suffix fallback was missing.** Android's
+  `sectionOf` (EtgBackup.java:214-230) answers a missing plain section with
+  the first `mainconfig2`, … — exteraGram writes per-account prefs — so a
+  real exteraGram export could carry `bubbleRadius` where the web saw
+  nothing. Fix: the web `sectionOf` gained the same fallback.
+- **The plugin flags were not counted as known.** `buildBackup` writes
+  `pluginsSafeMode`/`pluginsDevMode` into every export and `applyBackup`
+  applies them, but `readBackup`'s `knownCount` ignored them — Android's
+  `countKnownKeys` counts all 127 entries, so a flags-only export was
+  rejected by the hub as "not a compatible backup" where Android's
+  `isBackup` accepts it. Fix: a boolean plugin flag counts as known.
+
+Final state: 62 supported + 63 recognized-unsupported + 2 plugin flags =
+127, byte-for-byte Android's key set; every key on each side accounted for,
+none invented. Tests: `tests/exteraBackup.test.ts` grew the "full Android
+key-set sweep" describe (3 tests: the eight keys reported unsupported and
+never applied, the `mainconfig2` fallback applying `bubbleRadius`, the
+flags-only backup counting 2 known) — all three failed before their fixes.
+One observation left to the user: the hub's import toast renders only the
+applied count, so the `unsupported` names are reported by the functions but
+not listed in any UI surface (pre-existing for all 63 keys, unchanged here).
+
+**The hub wiring, audited clean.** Every row key is compile-enforced
+(`ExterayondSettingsKey`-typed arrays and the generic `setExterayondSetting`),
+re-verified against `OE_DEFAULTS` (132 keys). The reverse direction: a
+whole-store scan for keys referenced nowhere in the tabs found twelve, each
+accounted for — composed rows (the link-policy pair through
+`setOpenLinkConfirmation`, the sticker-time pair through
+`setStickerTimeMode`, the pill layout through `setPillActive`), documented
+dormant (OEChatsWideFeedPosts, OEChatsHideCameraTile — no UI row by design;
+OEChatsKeepAttachButton — the CHAT-20 ghost), documented stored no-ops
+(showMessageDetails, showViewHistory — W-4/W-5), and internal state
+(OEPillLastActiveId). The sticker-time behavior was confirmed wired (the
+store toggles `oe-sticker-time-side`/`oe-hide-sticker-time` root classes
+consumed by `_chatBubble.scss`). The reset paths: `resetExterayondSettings`
+restores all 132 defaults, clears the persisted record, fires
+`exterayond_settings_updated` for exactly the changed live keys and pushes
+SortByUnread — mirroring the singular setter's semantics; the Other tab's
+reset adds the one native preference (archive) and its caption's promise
+("Your Telegram account, chats and plugin settings will be kept") holds —
+Android's root screen has no reset at all, so the web's is its own feature
+with an honest description. The search index: all 194 exterayond entries
+resolve (8 declared sections, every title/alias/caption lang key exists in
+`lang.ts`, zero `Exteraless.*` leftovers), no orphans after the debrand.
+
+**The root screen, audited clean.** `exterayondTab.tsx` against
+`OpenExteraSettingsActivity`: About header (name + tagline, 'Make the client
+truly yours' verbatim), the five category rows wired to real tabs, Links
+(channel, GitHub source) and Design (designer, studio) with the same four
+targets as Android modulo the two documented debrand substitutions
+(@exterayond per the user's confirmed address, the honestly-signed source
+row, packet 024). Android's extras without a web surface stay recorded: the
+logo-tap updater sheet and the cloud-sync item (CLOUD entries, unchecked
+with reasons), the in-screen search dialog (the web indexes the hub in the
+global settings search instead). The hub section titles, row labels and
+credits match the Android strings.
+
+Checks: `exteraBackup` 34, `exterayondSettings` + `settingsSearchIndex` 48,
+`exterayondTabs` 17 — green; `tsc --noEmit` clean, oxlint clean on the
+touched files. Checklist count unchanged (74/296) — the pass fixed
+compatibility behavior, no feature entries. Runbook 6.2 appended for the
+three import-behavior changes.

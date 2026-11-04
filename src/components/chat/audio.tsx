@@ -29,7 +29,7 @@ import documentFragmentToNodes from '@helpers/dom/documentFragmentToNodes';
 import classNames from '@helpers/string/classNames';
 import {setDirection} from '@helpers/dom/setInnerHTML';
 import {hotReloadGuard} from '@lib/solidjs/hotReloadGuardProvider';
-import {exterayondSettings, miniProgressLineVisible} from '@stores/exterayondSettings';
+import {exterayondSettings, getPlayerMiniCover, miniProgressLineVisible} from '@stores/exterayondSettings';
 import wrapPhoto from '@components/wrappers/photo';
 import {IconTsx} from '@components/iconTsx';
 import {getMiddleware} from '@helpers/middleware';
@@ -73,6 +73,11 @@ export default function createChatAudio(
     createEffect(() => {
       const doc = musicDoc();
       if(!exterayondSettings.OEAppearanceMd3MiniPlayer || !doc?.thumbs?.length) return;
+      // * PLAYER-22: a hidden cover has no box to render into — the artwork
+      // * is not fetched for it (Android's mini view binds no artwork for its
+      // * hidden cover either); the store read keeps the wrap live for the
+      // * rounded/round modes
+      if(getPlayerMiniCover() === 2) return;
       const middleware = getMiddleware();
       const boundManagers = bindManagersToSession(managers);
       void wrapPhoto({

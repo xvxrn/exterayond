@@ -639,11 +639,16 @@ export default class AppMediaViewer extends AppMediaViewerBase<'caption', 'delet
     actions.forEach(([buttons, hide]) => {
       buttons.forEach((button) => {
         if(button instanceof HTMLElement) {
-          button.classList.toggle('hide', hide);
+          // * MENU-07 (`MediaViewerMenuItemForward`, default true): the toggle
+          // * rides every visibility pass. The topbar forward button is the
+          // * desktop surface of Android's viewer Forward row — the more menu
+          // * that carries that row is a handheld surface only (its trigger is
+          // * `onlyMobile`), so without this the toggle would do nothing where
+          // * this client runs. The other topbar buttons have no menu key.
+          button.classList.toggle('hide', hide
+            || (button === this.buttons.forward && !exterayondSettings.MediaViewerMenuItemForward));
         } else {
-          // * MENU-07 (`MediaViewerMenuItemForward`, default true): the
-          // * composition toggle rides every visibility pass, which rewrites
-          // * each menu item's verify — read live on every menu open
+          // * the menu item of the same action, read live on every menu open
           button.verify = () => hide
             || (button === this.btnMenuForward && !exterayondSettings.MediaViewerMenuItemForward);
         }

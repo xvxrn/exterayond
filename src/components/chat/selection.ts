@@ -1312,6 +1312,12 @@ export default class ChatSelection extends AppSelection {
     }
 
     this.selectionSendNowBtn?.toggleAttribute('disabled', cantSend);
+    // * MENU-08: Android re-applies the forward button's visibility on every
+    // * selection update (`updateActionBar` → `setItemVisibility(forward, …
+    // * NaConfig.getActionBarButtonForward().Bool() …)`), so the toggle is
+    // * live mid-session; the build-time hide keeps the first paint honest
+    // * while the managers' answer is in flight
+    this.selectionForwardBtn?.classList.toggle('hide', !exterayondSettings.ActionBarButtonForward);
     this.selectionForwardBtn?.toggleAttribute('disabled', cantForward);
     this.selectionDeleteBtn?.toggleAttribute('disabled', cantDelete);
     this.selectionReportBtn?.toggleAttribute('disabled', !length);

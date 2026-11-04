@@ -2735,3 +2735,140 @@ files. Runbook 5.25 amended (the two escapes, the row order). Checklist
 annotations updated on MENU-05 (MENU-03 needed none — its gates were
 already correct); count unchanged (74/296), entries unchecked. Awaiting the
 user's re-walk of runbook 5.25.
+
+## 074 / PLAYER-20..30 — the mini-player rows over the audio plate (2026-11-05)
+
+The mini section of Android's `PlayerStyleEditor`, read from the pinned
+source: the rows configure `PlayerMiniView` (the floating card over the main
+tabs) through the `AppearanceConfig.kt` 335–359 keys, consumed by
+`PlayerMiniView.applyStyle`. `OEPlayerStyleMini` is the editor's section
+header string, not a config key — the mini "master" the checklist's PLAYER-20
+points at has no key behind it. The web's mini player is the pinned-audio
+plate (`chat/audio.tsx`), already carrying packet 028's artwork path behind
+`OEAppearanceMd3MiniPlayer`. `EtgBackup` exports none of the player keys
+(verified against `EtgBackup.java`), so no aliases were invented.
+
+**Wired (each default = the stock plate, off/reset restores):**
+
+- PLAYER-22 `OEPlayerMiniCover` (int 0..2, default 0): the plate's artwork
+  box — rounded keeps the stock 10px, round circles the 36px artwork (18px),
+  hidden removes the cover. The repaints ride new root classes scoped inside
+  the `oe-md3-mini-player` block, so with the MD3 mini player off (where the
+  cover is stock-hidden anyway) nothing changes.
+- PLAYER-23 `OEPlayerMiniShape` (int 0..2, default 0): the MD3 card's radius —
+  rounded keeps the stock 20px, pill takes half the plate's height (Android's
+  `dp(height)/2`), square takes 10px (Android's dp(10)). Same scoping.
+- PLAYER-24 `OEPlayerMiniProgress` (int 0..3, default 0): stored verbatim;
+  only mode 2 (none) removes the plate's bottom progress line — the ring and
+  the border draw along shapes the web does not have (`RingPlayButton`, the
+  border path) and keep the line, the declared partial.
+- PLAYER-27 `OEPlayerMiniArtist` (bool, default true): off drops the artist
+  from the plate's subtitle — the time stays, and a voice message's date (not
+  an artist) is untouched.
+- PLAYER-29 `OEPlayerMiniNext` (bool, default true) and PLAYER-30
+  `OEPlayerMiniClose` (bool, default true): each hides its plate button.
+
+**Not stored, each with its reason (checklist):** PLAYER-21 `OEPlayerMiniTop`
+(class 3 — the web plate is a top bar permanently, no bottom placement to
+toggle), PLAYER-25 `OEPlayerMiniColors` (class 3 — artwork-seeded colors are
+the PLAYER-18 subsystem the web lacks; default 1 = theme is the plate's
+permanent behavior), PLAYER-26 `OEPlayerMiniCompact` (class 3 — a second
+height state the single-row web plate does not have), PLAYER-28
+`OEPlayerMiniPrevious` (default **false** over a stock web button — a
+default-false gate contradicts off = stock, the MENU-03 Statistics
+treatment).
+
+Hub: the Appearance tab gained the "Mini player" section (Cover / Shape /
+Progress sliders + three toggles) after Layout, with Android's row titles
+("Show artist", "Next track button", "Close button") and a caption stating
+the limits; the settings-search index was regenerated (+7 entries). The
+mode slider labels are Android's segmented values in stored order — Android
+displays Border before None via an index remap; the web row steps the stored
+values directly (documented adaptation).
+
+Tests: new `tests/exterayondMiniPlayer.test.tsx` (4) drives the REAL plate —
+`createChatAudio` mounted with the playback controller, media progress line,
+volume selector and rate button stubbed — emits a play of a music track and
+then a voice one, and toggles each gate: the artist leaves the subtitle and
+returns, the voice date survives the artist toggle, the next/close buttons
+gain and lose `hide`, and only progress mode 2 removes the line. The store
+suite gained the mini gate contract and the helper mappings (39 tests), the
+tabs suite's slider list gained the three Mini rows (17), settings-search 8 —
+all green; `scss-types` + `tsc --noEmit` clean, oxlint clean on the touched
+files.
+
+Runbook 5.26 appended. Checklist: PLAYER-22..24, 27, 29, 30 annotated
+implemented-but-unreviewed, PLAYER-20 partial, PLAYER-21/25/26/28 verdicts —
+all eleven unchecked per the player convention (desktop visual review
+pending); count unchanged (74/296). Awaiting the user's walk of runbook 5.26.
+
+## 075 / MENU-02, 06, 07, 08, 09 — the remaining menu compositions (2026-11-05)
+
+The rest of the unchecked MENU family, per the packet-070 process: wire the
+items whose keys have a real web surface, record verdicts for the rest. All
+the Android contracts re-read from the pinned source.
+
+**Wired (each default true = the stock surface, off hides, reset restores):**
+
+- MENU-06, the composer formatting tooltip (`chat/markupTooltip.ts`):
+  Android's `TextStyleDialog` keys `TextBold`, `TextItalic`, `TextUnderline`,
+  `TextStrikethrough`, `TextQuote`, `TextSpoiler`, `TextLink`,
+  `TextCreateDate` (NaConfig, all default true, `ChatActivity:29548+`) gate
+  the same-named buttons. The gate composes into the tooltip's `show()` pass
+  — the same one that hides buttons the mounted editor cannot apply — so the
+  store is read live on every open, and a toggled-off button's absence feeds
+  the existing hasBasicFormatting/hasDateOrLink logic. The mapping is the
+  store's exported `FORMAT_TOOLTIP_TOGGLE_KEYS`.
+- MENU-07, the media viewer's more menu (`mediaViewer/index.ts`):
+  `MediaViewerMenuItemForward` (PhotoViewer:6175) gates the Forward row.
+  `setMessageActionVisibility` rewrites each menu item's `verify` per message,
+  so the gate lives inside that rewrite and reads the store when the menu
+  opens — the packet-073 live-read lesson.
+- MENU-08, the selection bar (`chat/selection.ts`): `ActionBarButtonForward`
+  (ChatActivity:11327) gates the forward button at its build; the bar is
+  rebuilt per selection session, so the toggle re-reads each time. The
+  scheduled send-now button is a different action and never hides.
+
+**Not stored, each with its reason (checklist):** MENU-02 is a master toggle
+writing the same `Shortcuts*` keys MENU-03 already carries per-key verdicts
+for — no separate key exists, the combined `quickAdminShortcuts` EtgBackup
+alias stays recognized-unsupported. MENU-06's `TextTranslate`
+(fork item), `TextMonospace` + `TextMonoCode` (two Android entries answer the
+web's single monospace button), `TextCreateMention`, `TextRegular` (no web
+button) and `TextStyleOrder` (the web tooltip's order is fixed at build; a
+reorder editor would be the FOLD-10/12-class adaptation) stay unstored; the
+tooltip-only highlight/subscript/superscript have no Android key. MENU-07's
+NoQuoteForward (fork item), CopyFrame/CopyPhoto (the web's copy is a top
+button outside the menu), SetProfilePhoto, ScanQRCode (no web row) stay
+unstored. MENU-08's Reply (default false AND no web bar button), Edit,
+SelectBetween, Copy (no web bar button) stay unstored. MENU-09: the four
+`DefaultDeleteMenu` children (`DeleteBanUsers`, `DeleteReportSpam`,
+`DeleteAll`, `DoActionsInCommonGroups`, all default false) pre-toggle the
+delete sheet's checkboxes (`AlertsCreator:7961` → `toggleDefaultChecks:529`);
+the web delete popup carries only the revoke/delete-for-all family, whose
+preselection is already the ported `DeleteChatForBothSides` key's behavior at
+the same consumption point — a default-false `DeleteAll` gate would run
+opposite the web's stock state (the PLAYER-28 treatment), and ban/report/
+common-groups have no web delete-popup checkbox at all.
+
+Hub: the Chats tab gained "Text Style" (eight toggles, the stock titles the
+tooltip itself uses), "Media Viewer Menu" and "Action Bar Buttons" (one
+Forward row each — two rows titled alike carry distinct title keys, since the
+search index dedupes a tab's entries by title key). Search keywords for the
+three sections; the settings-search index was regenerated (+13 entries).
+`EtgBackup` exports none of the newly wired keys, so no aliases were
+invented.
+
+Tests: new `tests/exterayondMenuComposition.test.ts` (4) — the mapping table
+against the persisted Android names, and the three consumption points pinned
+as source contracts (the mounts being chat/manager-heavy): the tooltip's
+hidden computation reads the mapping and the store live, the viewer's verify
+composition, the selection build's gate (and that send-now stays untouched).
+The store suite gained the defaults table rows and the 075 gate contract
+(40 tests), the tabs suite's exact Chats-tab row list gained the ten new
+titles (17), settings-search 8, mini-player 4, menu gates 10 — all green;
+`scss-types` + `tsc --noEmit` clean, oxlint clean on the touched files.
+
+Runbook 5.27 appended. Checklist: MENU-06 partial (8/13), MENU-07 partial
+(1/6), MENU-08 partial (1/5), MENU-02 and MENU-09 verdicts — all unchecked,
+count unchanged (74/296). Awaiting the user's walk of runbooks 5.26 and 5.27.

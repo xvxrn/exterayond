@@ -1572,6 +1572,61 @@ only prior check was synthetic.
   chat]**
 - PASS/FAIL:
 
+### 5.26 PLAYER-22..24, 27, 29, 30 — the mini-player rows over the audio plate (packet 074, appended)
+
+- Appearance tab → **"Mini player"** (`Exterayond.Player.Mini`), the rows of
+  Android's mini section whose keys have a real surface over the pinned-audio
+  plate: **"Cover"** (`OEPlayerMiniCover`, 0 rounded / 1 round / 2 hidden),
+  **"Shape"** (`OEPlayerMiniShape`, 0 rounded / 1 pill / 2 square),
+  **"Progress"** (`OEPlayerMiniProgress`, 0 ring / 1 line / 2 none /
+  3 border), **"Show artist"** (`OEPlayerMiniArtist`, default on),
+  **"Next track button"** (`OEPlayerMiniNext`, default on), **"Close
+  button"** (`OEPlayerMiniClose`, default on).
+- Play a music track so the audio plate shows (packet 028's artwork path
+  needs **Settings → Appearance → MD3 → Mini player** on — the cover and the
+  shape repaint only the MD3 card; with it off the plate is stock and the
+  two rows do nothing, which is itself a check).
+- Look at: with Mini player on, walk Cover through Rounded → Round (the
+  artwork circles) → Hidden (the cover box leaves, the text follows);
+  walk Shape through Rounded → Pill (the card becomes a capsule) → Square
+  (10px corners); set Progress to None (the bottom line leaves) and back
+  through Ring/Line/Border (the line stays — the ring and the border have no
+  web surface, the declared partial); toggle "Show artist" off (the subtitle
+  keeps the time, loses the artist; a voice message's date stays); toggle
+  "Next track button" and "Close button" off (each button leaves, on and
+  reset bring it back). Day and night themes; the plate keeps its layout
+  with the cover hidden and the buttons gone.
+- **[AUTH · content: a music track with artwork, a voice message]**
+- PASS/FAIL:
+
+### 5.27 MENU-06 / MENU-07 / MENU-08 — the text-style, media-viewer and selection-bar compositions (packet 075, appended)
+
+- Chats tab → **"Text Style"** (`Exterayond.TextStyle`): **Bold, Italic,
+  Underline, Strikethrough, Quote, Spoiler, Link, Date** — the eight
+  formatting buttons the web tooltip carries of Android's `Text*` keys
+  (all default on). Off removes the button from the formatting tooltip that
+  opens over a text selection in the composer; on and reset restore it. The
+  tooltip re-reads the toggles on every open.
+- Chats tab → **"Media Viewer Menu"** (`Exterayond.MediaViewerMenu`):
+  **"Forward"** (`MediaViewerMenuItemForward`, default on) gates the media
+  viewer's more-menu Forward row. Off removes the row on the next open; the
+  top forward button stays (Android gates the menu item, not its own
+  bottom-bar button — same literal mapping here).
+- Chats tab → **"Action Bar Buttons"** (`Exterayond.ActionBarButtons`):
+  **"Forward"** (`ActionBarButtonForward`, default on) gates the selection
+  bar's forward button. Off removes it from the next selection session (the
+  bar is rebuilt each time); scheduled messages' "send now" button is a
+  different action and never hides.
+- Look at: select text in the composer and toggle each Text Style item off —
+  the button leaves the tooltip and the tooltip keeps its layout; toggle
+  Media Viewer Menu → Forward off, open a photo full-screen and open the
+  more-menu — the Forward row is gone; select two messages and check the
+  selection bar's forward button leaves with its toggle off and returns.
+  Day and night themes.
+- **[AUTH · content: any chat for the composer and selection, a photo
+  message for the viewer]**
+- PASS/FAIL:
+
 ---
 
 ## Batch 6 — Settings backup (.extera) round-trip

@@ -150,13 +150,33 @@ hub gained the "Chat menu" section and four "Message menu" rows; runbook
 5.25 appended.
 
 After that, pick unchecked items from the checklist, generally small to
-large. Mid-size candidates: MENU-03..05/07..09 (menu compositions, each
-a real-handler audit), CHAT-12/13 (quick transitions), EMOJI-01 (system
-emoji), LOOK-04 (title text), PLAYER-06/07 and the mini-player rows.
-LOOK-06 is class 3 (the W-7 verdict: no canvas-effect subsystem). Pick
-from the checklist and verify against the Android source per packet.
-Plugins are deferred until the user explicitly asks to resume them.
-Phone-only hardware features are not desktop tasks.
+large. Packets 074–075 (2026-11-05) worked the mini-player and the remaining
+menu compositions: **074** wired the mini-player rows whose Android keys
+have a real surface over the pinned-audio plate (`chat/audio.tsx`) —
+PLAYER-22 `OEPlayerMiniCover` (rounded/round/hidden artwork), PLAYER-23
+`OEPlayerMiniShape` (rounded/pill/square card), PLAYER-24
+`OEPlayerMiniProgress` (only "none" removes the line — ring/border have no
+web surface), PLAYER-27 `OEPlayerMiniArtist`, PLAYER-29 `OEPlayerMiniNext`,
+PLAYER-30 `OEPlayerMiniClose` — with PLAYER-21/25/26 class-3 verdicts and
+PLAYER-28 (default false over a stock web button) unstored; the hub gained
+the Appearance tab's "Mini player" section. **075** wired MENU-06's eight
+`Text*` keys over the composer formatting tooltip (`chat/markupTooltip.ts`,
+`FORMAT_TOOLTIP_TOGGLE_KEYS` in the store), MENU-07's
+`MediaViewerMenuItemForward` over the media viewer's more-menu Forward row,
+and MENU-08's `ActionBarButtonForward` over the selection bar's forward
+button; MENU-02 and MENU-09 are verdicts (no separate key / the delete-sheet
+presets have no web counterpart — `DeleteChatForBothSides` already carries
+the revoke preselection), and the hub's Chats tab gained "Text Style",
+"Media Viewer Menu" and "Action Bar Buttons". All new rows await the user's
+visual acceptance (runbooks 5.26 and 5.27); the player rows stay unchecked
+per the established convention. Checklist count unchanged (74/296).
+
+Pick unchecked items from the checklist and verify against the Android
+source per packet. Remaining mini-player candidates: PLAYER-06/07 (cover
+gesture/extend), PLAYER-13/14 (block order, speed/text/queue — block order
+would reuse the FOLD-10/12 editor pattern). Plugins are deferred until the
+user explicitly asks to resume them. Phone-only hardware features are not
+desktop tasks.
 
 ## Operating constraints
 

@@ -1417,7 +1417,17 @@ $btn-menu-z-index: 4;
 // * backdrop-filter override rides the shared --menu-backdrop-filter
 // * variable, so the menu, its items wrapper and the reactions container all
 // * follow. Color only, direction-neutral.
-:root.oe-md3-dialogs .btn-menu {
+// *
+// * The reactions container is declared directly, not left to inheritance:
+// * `oe-no-glass-menus` writes --menu-background-color on that element itself
+// * (`:root.oe-no-glass-menus .btn-menu-reactions-container`), and a
+// * declaration on the element always beats an inherited value — sheet order
+// * only settles same-element rules. Declaring here too (equal specificity,
+// * later in the sheet) is what makes the documented dual-toggle resolution
+// * real: with both toggles on, the tonal mix wins the container's background
+// * as well.
+:root.oe-md3-dialogs .btn-menu,
+:root.oe-md3-dialogs .btn-menu-reactions-container {
   --menu-background-color: color-mix(in srgb, var(--primary-color) 8%, var(--surface-color));
   --menu-backdrop-filter: none;
 }

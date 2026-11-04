@@ -221,3 +221,15 @@
   --input-search-background-color: color-mix(in srgb, var(--primary-color) 8%, var(--surface-color));
   --input-search-border-color: transparent;
 }
+
+// * a field inside a dialog card takes a surface of its own: the card above
+// * takes the same tonal container, and stock tells the field from the card
+// * only by its border — which the tonal pill drops — so the same mix would
+// * dissolve the field into the card. The pinned reference gives the dialog
+// * search field its own, lighter surface (`dialogSearchBackground` n1_900
+// * against `dialogBackground` n2_800_80 in monet_dark_gram.attheme): the
+// * tonal ladder's next step, scoped to dialogs so the sidebar and settings
+// * fields keep the packet's declared role.
+:root.oe-md3-dialogs .popup-container .input-search {
+  --input-search-background-color: color-mix(in srgb, var(--primary-color) 12%, var(--surface-color));
+}

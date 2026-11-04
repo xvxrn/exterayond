@@ -31,6 +31,7 @@ import tooltipController from '@helpers/tooltipController';
 import captureInputContent from '@components/chat/inputEditor/captureInputContent';
 import {FOCUS_TRAP_ATTACHED_ATTRIBUTE} from '@helpers/dom/focusTrap';
 import getInputFormattingTypes from '@helpers/dom/getInputFormattingTypes';
+import {exterayondSettings, FORMAT_TOOLTIP_TOGGLE_KEYS} from '@stores/exterayondSettings';
 
 export type MarkupTooltipTypes = Extract<
   MarkdownType,
@@ -513,7 +514,12 @@ export default class MarkupTooltip {
     (Object.keys(this.buttons) as MarkupTooltipTypes[]).forEach((type) => {
       // What the mounted schema cannot apply must not be offered: a plain field
       // carries no highlight or script marks.
-      const hidden = formatting !== 'all' && !formatting.has(type) || !editor?.supportsMarkup(type);
+      // * MENU-06 (the Android `Text*` composition keys, all default true):
+      // * the toggled-off formatting buttons leave the tooltip; read live on
+      // * every open, like the menus re-read their composition toggles
+      const formatToggle = FORMAT_TOOLTIP_TOGGLE_KEYS[type as keyof typeof FORMAT_TOOLTIP_TOGGLE_KEYS];
+      const hidden = formatting !== 'all' && !formatting.has(type) || !editor?.supportsMarkup(type)
+        || (!!formatToggle && !exterayondSettings[formatToggle]);
       this.buttons[type].classList.toggle('hide', hidden);
       if(hidden) hiddenTypes.add(type);
     });

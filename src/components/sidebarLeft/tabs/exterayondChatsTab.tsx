@@ -322,6 +322,122 @@ const ExterayondChats = () => {
           <Row.Subtitle>{i18n('Exterayond.MenuAddToFavorites.Info')}</Row.Subtitle>
         </Row>
       </Section>
+      {/* MENU-06 — the text-style composition (Android's textStyleRow and
+          TextStyleDialog): the formatting buttons the web tooltip carries and
+          Android keys; the order editor and the Android-only items are
+          recorded in the checklist */}
+      <Section name="Exterayond.TextStyle" caption="Exterayond.TextStyle.Info">
+        <Row>
+          <Row.CheckboxFieldToggle>
+            <CheckboxFieldTsx
+              toggle
+              checked={exterayondSettings.TextBold as boolean}
+              onChange={(value) => setExterayondSetting('TextBold', value)}
+            />
+          </Row.CheckboxFieldToggle>
+          <Row.Title>{i18n('KeyboardShortcuts.Action.Bold')}</Row.Title>
+        </Row>
+        <Row>
+          <Row.CheckboxFieldToggle>
+            <CheckboxFieldTsx
+              toggle
+              checked={exterayondSettings.TextItalic as boolean}
+              onChange={(value) => setExterayondSetting('TextItalic', value)}
+            />
+          </Row.CheckboxFieldToggle>
+          <Row.Title>{i18n('KeyboardShortcuts.Action.Italic')}</Row.Title>
+        </Row>
+        <Row>
+          <Row.CheckboxFieldToggle>
+            <CheckboxFieldTsx
+              toggle
+              checked={exterayondSettings.TextUnderline as boolean}
+              onChange={(value) => setExterayondSetting('TextUnderline', value)}
+            />
+          </Row.CheckboxFieldToggle>
+          <Row.Title>{i18n('KeyboardShortcuts.Action.Underline')}</Row.Title>
+        </Row>
+        <Row>
+          <Row.CheckboxFieldToggle>
+            <CheckboxFieldTsx
+              toggle
+              checked={exterayondSettings.TextStrikethrough as boolean}
+              onChange={(value) => setExterayondSetting('TextStrikethrough', value)}
+            />
+          </Row.CheckboxFieldToggle>
+          <Row.Title>{i18n('KeyboardShortcuts.Action.Strikethrough')}</Row.Title>
+        </Row>
+        <Row>
+          <Row.CheckboxFieldToggle>
+            <CheckboxFieldTsx
+              toggle
+              checked={exterayondSettings.TextQuote as boolean}
+              onChange={(value) => setExterayondSetting('TextQuote', value)}
+            />
+          </Row.CheckboxFieldToggle>
+          <Row.Title>{i18n('Quote')}</Row.Title>
+        </Row>
+        <Row>
+          <Row.CheckboxFieldToggle>
+            <CheckboxFieldTsx
+              toggle
+              checked={exterayondSettings.TextSpoiler as boolean}
+              onChange={(value) => setExterayondSetting('TextSpoiler', value)}
+            />
+          </Row.CheckboxFieldToggle>
+          <Row.Title>{i18n('KeyboardShortcuts.Action.Spoiler')}</Row.Title>
+        </Row>
+        <Row>
+          <Row.CheckboxFieldToggle>
+            <CheckboxFieldTsx
+              toggle
+              checked={exterayondSettings.TextLink as boolean}
+              onChange={(value) => setExterayondSetting('TextLink', value)}
+            />
+          </Row.CheckboxFieldToggle>
+          <Row.Title>{i18n('KeyboardShortcuts.Action.Link')}</Row.Title>
+        </Row>
+        <Row>
+          <Row.CheckboxFieldToggle>
+            <CheckboxFieldTsx
+              toggle
+              checked={exterayondSettings.TextCreateDate as boolean}
+              onChange={(value) => setExterayondSetting('TextCreateDate', value)}
+            />
+          </Row.CheckboxFieldToggle>
+          <Row.Title>{i18n('AddDate')}</Row.Title>
+        </Row>
+      </Section>
+      {/* MENU-07 — the media viewer menu composition (Android's mediaViewerMenu
+          group): the web viewer menu carries only the Forward row of Android's
+          six; the rest are recorded in the checklist */}
+      <Section name="Exterayond.MediaViewerMenu">
+        <Row>
+          <Row.CheckboxFieldToggle>
+            <CheckboxFieldTsx
+              toggle
+              checked={exterayondSettings.MediaViewerMenuItemForward as boolean}
+              onChange={(value) => setExterayondSetting('MediaViewerMenuItemForward', value)}
+            />
+          </Row.CheckboxFieldToggle>
+          <Row.Title>{i18n('Exterayond.MediaViewerMenu.Forward')}</Row.Title>
+        </Row>
+      </Section>
+      {/* MENU-08 — the selection action bar (Android's actionBarButtons group):
+          the web bar carries only the forward button of Android's five; the
+          rest are recorded in the checklist */}
+      <Section name="Exterayond.ActionBarButtons">
+        <Row>
+          <Row.CheckboxFieldToggle>
+            <CheckboxFieldTsx
+              toggle
+              checked={exterayondSettings.ActionBarButtonForward as boolean}
+              onChange={(value) => setExterayondSetting('ActionBarButtonForward', value)}
+            />
+          </Row.CheckboxFieldToggle>
+          <Row.Title>{i18n('Exterayond.ActionBarButtons.Forward')}</Row.Title>
+        </Row>
+      </Section>
       {doubleTapSection}
       <Section name="Exterayond.StickerSize" caption="Exterayond.StickerSize.Info">
         <RangeSettingSelector

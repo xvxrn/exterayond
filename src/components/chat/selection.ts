@@ -49,6 +49,7 @@ import ChatInputPlate from '@components/chat/controlPlate';
 import isSameMessageSelectionGroup, {getMessageSelectionGroup} from '@components/chat/isSameMessageSelectionGroup';
 import {hotReloadGuard} from '@lib/solidjs/hotReloadGuardProvider';
 import {bindManagersToSession} from '@lib/accounts/bindManagersToAccount';
+import {exterayondSettings} from '@stores/exterayondSettings';
 
 const accumulateMapSet = <T extends {size: number}>(map: Map<any, T>) => {
   return [...map.values()].reduce((acc, v) => acc + v.size, 0);
@@ -1261,6 +1262,11 @@ export default class ChatSelection extends AppSelection {
           }, attachClickOptions);
         } else {
           rightButton = this.selectionForwardBtn = ButtonIcon('forward selection-container-forward', {ariaLabel: 'Forward'});
+          // * MENU-08 (Android `ActionBarButtonForward`, default true): the
+          // * selection bar's forward button leaves with the toggle off; the
+          // * bar is rebuilt per selection session, so the toggle is re-read
+          // * every time
+          this.selectionForwardBtn.classList.toggle('hide', !exterayondSettings.ActionBarButtonForward);
           attachClickEvent(this.selectionForwardBtn, () => {
             const obj: {[fromPeerId: PeerId]: number[]} = {};
             for(const [fromPeerId, mids] of this.selectedMids) {

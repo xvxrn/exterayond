@@ -41,6 +41,7 @@ import apiManagerProxy from '@lib/apiManagerProxy';
 import {batch, createSignal} from 'solid-js';
 import {render} from 'solid-js/web';
 import {bindManagersToSession} from '@lib/accounts/bindManagersToAccount';
+import {exterayondSettings} from '@stores/exterayondSettings';
 
 const isItemIndex = (index: number) => typeof(index) === 'number' && index >= 0;
 
@@ -640,7 +641,11 @@ export default class AppMediaViewer extends AppMediaViewerBase<'caption', 'delet
         if(button instanceof HTMLElement) {
           button.classList.toggle('hide', hide);
         } else {
-          button.verify = () => !hide;
+          // * MENU-07 (`MediaViewerMenuItemForward`, default true): the
+          // * composition toggle rides every visibility pass, which rewrites
+          // * each menu item's verify — read live on every menu open
+          button.verify = () => hide
+            || (button === this.btnMenuForward && !exterayondSettings.MediaViewerMenuItemForward);
         }
       });
     });

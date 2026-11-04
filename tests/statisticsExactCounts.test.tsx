@@ -2,7 +2,7 @@ import {afterEach, describe, expect, it, vi} from 'vitest';
 import {render} from 'solid-js/web';
 import {JSX} from 'solid-js';
 import AppStatisticsTab, {StatisticsOverviewItems, createLoadableList} from '@components/sidebarRight/tabs/statistics';
-import {setExteralessSettings} from '@stores/exteralessSettings';
+import {setExterayondSettings} from '@stores/exterayondSettings';
 
 const mocks = vi.hoisted(() => ({members: vi.fn()}));
 
@@ -70,7 +70,7 @@ const mount = (component: () => JSX.Element) => {
 afterEach(() => {
   disposers.splice(0).forEach((dispose) => dispose());
   document.body.replaceChildren();
-  setExteralessSettings({DisableNumberRounding: false});
+  setExterayondSettings({DisableNumberRounding: false});
 });
 
 describe('statistics exact counts', () => {
@@ -84,11 +84,11 @@ describe('statistics exact counts', () => {
     expect(container.querySelectorAll('.statistics-overview-item')).toHaveLength(2);
     const value = container.querySelector('.statistics-overview-item-value');
     expect(value.textContent).toContain('1.2K +1.1K');
-    setExteralessSettings({DisableNumberRounding: true});
+    setExterayondSettings({DisableNumberRounding: true});
     expect(container.querySelector('.statistics-overview-item-value')).toBe(value);
     expect(value.textContent).toContain('1\u00a0234 +1\u00a0134');
     expect(container.textContent).toContain('0PublicShares');
-    setExteralessSettings({DisableNumberRounding: false});
+    setExterayondSettings({DisableNumberRounding: false});
     expect(value.textContent).toContain('1.2K +1.1K');
   });
 
@@ -102,7 +102,7 @@ describe('statistics exact counts', () => {
     tab.graphDcIds = new Map();
     const peerId = {toChatId: () => 1};
     const loading = tab.renderPeer({_: 'message', peerId, mid: 10, views: 1234});
-    setExteralessSettings({DisableNumberRounding: true});
+    setExterayondSettings({DisableNumberRounding: true});
     finishMembers(document.createElement('span'));
     const loaded = await loading;
     const [forwards] = createLoadableList({rendered: [loaded.container], count: 1});
@@ -110,7 +110,7 @@ describe('statistics exact counts', () => {
     const label = container.querySelector<HTMLElement>('[data-oe-count]');
     expect(label.textContent).toBe('1\u00a0234 Views');
     expect(label.textContent).not.toContain('[object');
-    setExteralessSettings({DisableNumberRounding: false});
+    setExterayondSettings({DisableNumberRounding: false});
     tab.refreshCountLabels(container);
     expect(container.querySelector('[data-oe-count]')).toBe(label);
     expect(label.textContent).toBe('1.2K Views');

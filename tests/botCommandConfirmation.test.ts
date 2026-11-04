@@ -1,7 +1,7 @@
 import ChatBotCommands from '@components/chat/botCommands';
 import CommandsHelper from '@components/chat/commandsHelper';
 import '@helpers/peerIdPolyfill';
-import {setExteralessSetting} from '@stores/exteralessSettings';
+import {setExterayondSetting} from '@stores/exterayondSettings';
 import deferred from '@tests/helpers/deferred';
 
 const mocks = vi.hoisted(() => ({
@@ -26,9 +26,9 @@ vi.mock('@components/chat/autocompletePeerHelper', () => ({default: class {
 
 beforeEach(() => {
   vi.clearAllMocks();
-  setExteralessSetting('DisableClickCommandToSend', true);
+  setExterayondSetting('DisableClickCommandToSend', true);
 });
-afterEach(() => setExteralessSetting('DisableClickCommandToSend', false));
+afterEach(() => setExterayondSetting('DisableClickCommandToSend', false));
 
 function menu() {
   let current = true;
@@ -82,7 +82,7 @@ test('a command cannot send into a chat left while consent was pending', async()
 });
 
 test('disabled confirmation keeps the immediate command path', () => {
-  setExteralessSetting('DisableClickCommandToSend', false);
+  setExterayondSetting('DisableClickCommandToSend', false);
   const m = menu();
   m.select();
   expect(mocks.confirm).not.toHaveBeenCalled();

@@ -1,5 +1,5 @@
 import {stubBrowserGlobals} from '@tests/helpers/browserGlobals';
-import {setExteralessSetting} from '@stores/exteralessSettings';
+import {setExterayondSetting} from '@stores/exterayondSettings';
 
 vi.mock('@lib/apiManagerProxy', () => ({default: {
   addEventListener: () => {},
@@ -14,7 +14,7 @@ beforeAll(async() => {
   handleEnded = (AppMediaPlaybackController.prototype as any).handleEnded;
   cycleRepeatMode = AppMediaPlaybackController.prototype.cycleRepeatMode;
 }, 60000);
-afterEach(() => setExteralessSetting('DontAutoPlayNextVoice', false));
+afterEach(() => setExterayondSetting('DontAutoPlayNextVoice', false));
 
 test('both music players share the existing repeat off / playlist / track cycle', () => {
   const owner = {round: false, loop: false};
@@ -32,7 +32,7 @@ test.each([
   ['audio', true, true],
   ['round', true, true]
 ])('end of %s with preference %s: next=%s', (playingDocType, enabled, advances) => {
-  setExteralessSetting('DontAutoPlayNextVoice', enabled as boolean);
+  setExterayondSetting('DontAutoPlayNextVoice', enabled as boolean);
   const owner = {
     playingDocType,
     round: playingDocType === 'round',

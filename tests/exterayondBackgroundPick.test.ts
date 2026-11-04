@@ -90,7 +90,7 @@ describe('the background color pick repaints live', () => {
 
   test('the pick re-tints the palette chrome through the fast re-apply', async() => {
     const {default: themeController} = await import('@helpers/themeController');
-    const {paletteTintSource} = await import('@stores/exteralessThemePalette');
+    const {paletteTintSource} = await import('@stores/exterayondThemePalette');
 
     document.documentElement.classList.add('night');
     try {
@@ -117,7 +117,7 @@ describe('the background color pick repaints live', () => {
 
 describe('the palette tint priority chain (G-1, G-4)', () => {
   test('an explicit pick wins over everything, an explicit accent pick over the wallpaper', async() => {
-    const {resolvePaletteTintSource} = await import('@stores/exteralessThemePalette');
+    const {resolvePaletteTintSource} = await import('@stores/exterayondThemePalette');
 
     const patternRecord = {
       _: 'wallPaper',
@@ -161,9 +161,9 @@ describe('the palette tint priority chain (G-1, G-4)', () => {
 
   test('the wallpaper-derived tint applies and clears live (G-4)', async() => {
     const {default: themeController} = await import('@helpers/themeController');
-    const {paletteTintSource, tintPaletteSurface} = await import('@stores/exteralessThemePalette');
+    const {paletteTintSource, tintPaletteSurface} = await import('@stores/exterayondThemePalette');
     const {setAppSettingsSilent} = await import('@stores/appSettings');
-    const {setExteralessSetting} = await import('@stores/exteralessSettings');
+    const {setExterayondSetting} = await import('@stores/exterayondSettings');
 
     // * the factory night theme (id '', its accent is not a pick) with an
     // * image wallpaper: the derived level stands between the explicit picks
@@ -176,7 +176,7 @@ describe('the palette tint priority chain (G-1, G-4)', () => {
     setAppSettingsSilent('themes', [night]);
     setAppSettingsSilent('theme', 'night');
     // * the palette (and its tint chain) stands only while the toggle is on
-    setExteralessSetting('OEAppearanceThemePalette', true);
+    setExterayondSetting('OEAppearanceThemePalette', true);
     document.documentElement.classList.add('night');
 
     try {
@@ -211,7 +211,7 @@ describe('the palette tint priority chain (G-1, G-4)', () => {
       expect(secondaryBase()).toBe(accentTinted);
     } finally {
       document.documentElement.classList.remove('night');
-      setExteralessSetting('OEAppearanceThemePalette', false);
+      setExterayondSetting('OEAppearanceThemePalette', false);
     }
   });
 });

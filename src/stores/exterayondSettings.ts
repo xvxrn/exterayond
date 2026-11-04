@@ -183,7 +183,7 @@ export const OE_DEFAULTS = {
    * AMOLED is removed): off (the default) keeps the theme's own surfaces, on
    * applies the near-black Material palette to dark themes — with every
    * surface tinted from the accent color or an explicit background pick
-   * (F-3, Material-You). See `exteralessThemePalette.ts`.
+   * (F-3, Material-You). See `exterayondThemePalette.ts`.
    */
   OEAppearanceThemePalette: false,
   /**
@@ -258,7 +258,7 @@ export const OE_DEFAULTS = {
    * ids exteraGram uses (`PillType.java`). `OEPillActivePills` defaults to
    * `DEFAULT_ACTIVE` ("5,6" — the pills that need no network: cache, proxy),
    * `OEPillHiddenPills` starts empty. On the web only the pills the client can
-   * really back render (`exteralessPills.ts`); unregistered ids stay in the
+   * really back render (`exterayondPills.ts`); unregistered ids stay in the
    * stored strings, exactly Android's dormant-pill behavior.
    */
   OEPillActivePills: '5,6',
@@ -272,7 +272,7 @@ export const OE_DEFAULTS = {
    * main menu layout — `"visible;hidden"`, comma-separated `MainMenuItem` ids
    * (the exteraGram scheme), DIVIDER(-1) in the visible half only; empty =
    * not customized = the stock menu. The web consumes it over the left
-   * sidebar's tools menu (`exteralessMenuLayout.ts`).
+   * sidebar's tools menu (`exterayondMenuLayout.ts`).
    */
   OEAppearanceMainMenuLayout: '',
   /**
@@ -312,18 +312,18 @@ export const OE_DEFAULTS = {
   bubbleRadius: 17
 } as const;
 
-export type ExteralessSettingsKey = keyof typeof OE_DEFAULTS;
+export type ExterayondSettingsKey = keyof typeof OE_DEFAULTS;
 /** The stored kind of a setting: `number` for sliders, `boolean` for switches, `string` for serialized lists. */
-export type ExteralessSettings = {
-  [K in ExteralessSettingsKey]:
+export type ExterayondSettings = {
+  [K in ExterayondSettingsKey]:
     (typeof OE_DEFAULTS)[K] extends boolean ? boolean :
     (typeof OE_DEFAULTS)[K] extends number ? number : string
 };
-export type ExteralessSettingValue<K extends ExteralessSettingsKey> = ExteralessSettings[K];
+export type ExterayondSettingValue<K extends ExterayondSettingsKey> = ExterayondSettings[K];
 
 type NumericKey = {
-  [K in ExteralessSettingsKey]: (typeof OE_DEFAULTS)[K] extends number ? K : never
-}[ExteralessSettingsKey];
+  [K in ExterayondSettingsKey]: (typeof OE_DEFAULTS)[K] extends number ? K : never
+}[ExterayondSettingsKey];
 
 const NUMERIC_RANGES: {[K in NumericKey]: readonly [min: number, max: number]} = {
   OEAppearanceAvatarCorners: [0, OE_AVATAR_CORNERS_MAX],
@@ -352,7 +352,7 @@ const NUMERIC_RANGES: {[K in NumericKey]: readonly [min: number, max: number]} =
 };
 
 /** A value of the wrong type or out of range falls back like an untrusted import. */
-const clampAnySetting = (key: ExteralessSettingsKey, value: unknown): boolean | number | string => {
+const clampAnySetting = (key: ExterayondSettingsKey, value: unknown): boolean | number | string => {
   const fallback = OE_DEFAULTS[key];
   if(typeof fallback === 'number') {
     const [min, max] = NUMERIC_RANGES[key as NumericKey];
@@ -370,16 +370,28 @@ const clampAnySetting = (key: ExteralessSettingsKey, value: unknown): boolean | 
   return typeof value === 'boolean' ? value : fallback;
 };
 
-export const clampExteralessSetting = <K extends ExteralessSettingsKey>(key: K, value: ExteralessSettingValue<K>): ExteralessSettingValue<K> => {
-  return clampAnySetting(key, value) as ExteralessSettingValue<K>;
+export const clampExterayondSetting = <K extends ExterayondSettingsKey>(key: K, value: ExterayondSettingValue<K>): ExterayondSettingValue<K> => {
+  return clampAnySetting(key, value) as ExterayondSettingValue<K>;
 };
 
-const STORAGE_KEY = 'exterayond-exteraless-settings';
+const STORAGE_KEY = 'exterayond-settings';
+/** The pre-rename key; its record migrates to STORAGE_KEY once, on load. */
+const LEGACY_STORAGE_KEY = 'exterayond-exteraless-settings';
 
-const readPersisted = (): Partial<ExteralessSettings> => {
+const readPersisted = (): Partial<ExterayondSettings> => {
   let raw: string;
   try {
-    raw = globalThis.localStorage?.getItem(STORAGE_KEY);
+    raw = globalThis.localStorage?.getItem(STORAGE_KEY) ?? '';
+    // * one-time migration from the pre-rename key: the user's record must
+    // * survive the debrand, so the legacy record is read and re-persisted
+    // * under the new key when the new one has nothing
+    if(!raw) {
+      raw = globalThis.localStorage?.getItem(LEGACY_STORAGE_KEY) ?? '';
+      if(raw) {
+        globalThis.localStorage?.setItem(STORAGE_KEY, raw);
+        globalThis.localStorage?.removeItem(LEGACY_STORAGE_KEY);
+      }
+    }
   } catch(e) {
     return {};
   }
@@ -395,17 +407,17 @@ const readPersisted = (): Partial<ExteralessSettings> => {
     return {};
   }
 
-  const out = {} as Record<ExteralessSettingsKey, boolean | number | string>;
+  const out = {} as Record<ExterayondSettingsKey, boolean | number | string>;
   if(parsed && typeof parsed === 'object') {
-    for(const key of Object.keys(OE_DEFAULTS) as ExteralessSettingsKey[]) {
+    for(const key of Object.keys(OE_DEFAULTS) as ExterayondSettingsKey[]) {
       out[key] = clampAnySetting(key, parsed[key]);
     }
   }
 
-  return out as Partial<ExteralessSettings>;
+  return out as Partial<ExterayondSettings>;
 };
 
-const persist = (settings: ExteralessSettings) => {
+const persist = (settings: ExterayondSettings) => {
   try {
     globalThis.localStorage?.setItem(STORAGE_KEY, JSON.stringify(settings));
   } catch(e) {
@@ -423,13 +435,13 @@ const persist = (settings: ExteralessSettings) => {
  */
 const pushSortByUnread = () => {
   try {
-    void rootScope.managers?.appMessagesManager.setSortByUnread(exteralessSettings.SortByUnread as boolean);
+    void rootScope.managers?.appMessagesManager.setSortByUnread(exterayondSettings.SortByUnread as boolean);
   } catch(e) {
     // * no managers yet (tests, early import): the next auth event pushes it
   }
 };
 
-const [exteralessSettings, setExteralessSettings] = createStore<ExteralessSettings>({
+const [exterayondSettings, setExterayondSettings] = createStore<ExterayondSettings>({
   ...OE_DEFAULTS,
   ...readPersisted()
 });
@@ -445,16 +457,16 @@ if(typeof document !== 'undefined') {
  * The settings whose consumers re-read the store from this event; no new bus,
  * no effect per row or message.
  */
-const LIVE_EVENT_KEYS: ExteralessSettingsKey[] = ['DisableNumberRounding', 'IgnoreUnreadCount', 'HideAllTab', 'OEAppearanceWallpaperPattern', 'OEAppearanceThemePalette', 'OEPillActivePills', 'OEPillHiddenPills', 'OEAppearanceMainMenuLayout'];
+const LIVE_EVENT_KEYS: ExterayondSettingsKey[] = ['DisableNumberRounding', 'IgnoreUnreadCount', 'HideAllTab', 'OEAppearanceWallpaperPattern', 'OEAppearanceThemePalette', 'OEPillActivePills', 'OEPillHiddenPills', 'OEAppearanceMainMenuLayout'];
 
 /** Sets one setting (validated) and writes the whole record back. */
-const setExteralessSetting = <K extends ExteralessSettingsKey>(key: K, value: ExteralessSettingValue<K>) => {
-  const clamped = clampExteralessSetting(key, value);
-  const previous = exteralessSettings[key];
-  setExteralessSettings({[key]: clamped} as Partial<ExteralessSettings>);
-  persist(unwrap(exteralessSettings));
+const setExterayondSetting = <K extends ExterayondSettingsKey>(key: K, value: ExterayondSettingValue<K>) => {
+  const clamped = clampExterayondSetting(key, value);
+  const previous = exterayondSettings[key];
+  setExterayondSettings({[key]: clamped} as Partial<ExterayondSettings>);
+  persist(unwrap(exterayondSettings));
   if(LIVE_EVENT_KEYS.includes(key) && previous !== clamped) {
-    rootScope.dispatchEventSingle('exteraless_settings_updated', {key, value: clamped});
+    rootScope.dispatchEventSingle('exterayond_settings_updated', {key, value: clamped});
   }
   if(key === 'SortByUnread' && previous !== clamped) {
     pushSortByUnread();
@@ -462,19 +474,19 @@ const setExteralessSetting = <K extends ExteralessSettingsKey>(key: K, value: Ex
 };
 
 /** Reset this client's OE preferences; Telegram settings and account data have other records. */
-const resetExteralessSettings = () => {
-  const previous = {...exteralessSettings};
-  setExteralessSettings({...OE_DEFAULTS} as Partial<ExteralessSettings>);
+const resetExterayondSettings = () => {
+  const previous = {...exterayondSettings};
+  setExterayondSettings({...OE_DEFAULTS} as Partial<ExterayondSettings>);
   try {
     globalThis.localStorage?.removeItem(STORAGE_KEY);
   } catch(e) {
     // Some storage implementations refuse removal but still allow replacement.
-    persist(unwrap(exteralessSettings));
+    persist(unwrap(exterayondSettings));
   }
 
   for(const key of LIVE_EVENT_KEYS) {
     if(previous[key] !== OE_DEFAULTS[key]) {
-      rootScope.dispatchEventSingle('exteraless_settings_updated', {key, value: OE_DEFAULTS[key]});
+      rootScope.dispatchEventSingle('exterayond_settings_updated', {key, value: OE_DEFAULTS[key]});
     }
   }
 
@@ -483,10 +495,10 @@ const resetExteralessSettings = () => {
   }
 };
 
-const useExteralessSettings = () => [exteralessSettings, setExteralessSetting] as const;
+const useExterayondSettings = () => [exterayondSettings, setExterayondSetting] as const;
 
 /** Android ChatsConfig composes its side flag with NekoConfig.HideTimeForSticker. */
-export const getStickerTimeMode = (settings: Pick<ExteralessSettings, 'HideTimeForSticker' | 'OEChatsStickerTimeSide'> = exteralessSettings) =>
+export const getStickerTimeMode = (settings: Pick<ExterayondSettings, 'HideTimeForSticker' | 'OEChatsStickerTimeSide'> = exterayondSettings) =>
   settings.HideTimeForSticker ? 2 : settings.OEChatsStickerTimeSide ? 1 : 0;
 
 /**
@@ -539,21 +551,21 @@ export const DOUBLE_TAP_OUTGOING_OPTIONS: readonly number[] = [
 export const doubleTapActionLangKey = (action: number): LangPackKey => {
   switch(action) {
     case DOUBLE_TAP_ACTIONS.SEND_REACTIONS:
-      return 'Exteraless.DoubleTap.SendReactions';
+      return 'Exterayond.DoubleTap.SendReactions';
     case DOUBLE_TAP_ACTIONS.SHOW_REACTIONS:
-      return 'Exteraless.DoubleTap.ShowReactions';
+      return 'Exterayond.DoubleTap.ShowReactions';
     case DOUBLE_TAP_ACTIONS.TRANSLATE:
       return 'TranslateMessage';
     case DOUBLE_TAP_ACTIONS.REPLY:
       return 'Reply';
     case DOUBLE_TAP_ACTIONS.SAVE:
-      return 'Exteraless.DoubleTap.Save';
+      return 'Exterayond.DoubleTap.Save';
     case DOUBLE_TAP_ACTIONS.DOWNLOAD:
-      return 'Exteraless.DoubleTap.Download';
+      return 'Exterayond.DoubleTap.Download';
     case DOUBLE_TAP_ACTIONS.REPEAT:
-      return 'Exteraless.MenuRepeat';
+      return 'Exterayond.MenuRepeat';
     case DOUBLE_TAP_ACTIONS.REPEAT_AS_COPY:
-      return 'Exteraless.DoubleTap.RepeatAsCopy';
+      return 'Exterayond.DoubleTap.RepeatAsCopy';
     case DOUBLE_TAP_ACTIONS.EDIT:
       return 'Edit';
     case DOUBLE_TAP_ACTIONS.DELETE:
@@ -574,7 +586,7 @@ export const doubleTapActionLangKey = (action: number): LangPackKey => {
  */
 export const resolveDoubleTapAction = (
   isOutgoing: boolean,
-  settings: Pick<ExteralessSettings, 'DoubleTapAction' | 'DoubleTapActionOut'> = exteralessSettings
+  settings: Pick<ExterayondSettings, 'DoubleTapAction' | 'DoubleTapActionOut'> = exterayondSettings
 ): number => isOutgoing ? settings.DoubleTapActionOut : settings.DoubleTapAction;
 
 /**
@@ -592,7 +604,7 @@ export const verifyReportContext = (
   showReport: boolean
 ): boolean => isChannel || (showReport && (isAnyChat || isBot));
 
-export const getOpenLinkConfirmation = () => exteralessSettings.ConfirmAllLinks ? 1 : exteralessSettings.SkipOpenLinkConfirm ? 2 : 0;
+export const getOpenLinkConfirmation = () => exterayondSettings.ConfirmAllLinks ? 1 : exterayondSettings.SkipOpenLinkConfirm ? 2 : 0;
 
 /**
  * The wallpaper-pattern gate (V-1): whether a wallpaper record contributes a
@@ -602,7 +614,7 @@ export const getOpenLinkConfirmation = () => exteralessSettings.ConfirmAllLinks 
  */
 export const wallpaperDrawsPattern = (
   wallPaper: WallPaper | undefined,
-  patternEnabled: boolean = exteralessSettings.OEAppearanceWallpaperPattern
+  patternEnabled: boolean = exterayondSettings.OEAppearanceWallpaperPattern
 ): boolean => patternEnabled && !!(wallPaper as WallPaper.wallPaper)?.pFlags?.pattern;
 
 /**
@@ -646,7 +658,7 @@ export const resolveChatThemeOverride = <T extends {emoticon?: string}>(
 export const getHashtagSearchType = (publicChannel: boolean): 'my' | 'public' | undefined => {
   const key: 'SearchHashtagDefaultPageChannel' | 'SearchHashtagDefaultPageChat' =
     publicChannel ? 'SearchHashtagDefaultPageChannel' : 'SearchHashtagDefaultPageChat';
-  const page = clampExteralessSetting(key, exteralessSettings[key]);
+  const page = clampExterayondSetting(key, exterayondSettings[key]);
   return page === 1 ? 'my' : page === 2 ? 'public' : undefined;
 };
 
@@ -656,24 +668,24 @@ const MD3_BOOLEAN_KEYS = [
   'OEAppearanceMd3Player', 'OEAppearanceMd3MiniPlayer'
 ] as const;
 
-export const getMd3StyleCount = () => MD3_BOOLEAN_KEYS.filter((key) => exteralessSettings[key]).length +
-  Number(exteralessSettings.SliderStyle === 2) + Number(exteralessSettings.SwitchStyle >= 2);
+export const getMd3StyleCount = () => MD3_BOOLEAN_KEYS.filter((key) => exterayondSettings[key]).length +
+  Number(exterayondSettings.SliderStyle === 2) + Number(exterayondSettings.SwitchStyle >= 2);
 
 export const setAllMd3Styles = (enabled: boolean) => batch(() => {
-  for(const key of MD3_BOOLEAN_KEYS) setExteralessSetting(key, enabled);
-  setExteralessSetting('SliderStyle', enabled ? 2 : 0);
-  setExteralessSetting('SwitchStyle', enabled ? 3 : 0);
+  for(const key of MD3_BOOLEAN_KEYS) setExterayondSetting(key, enabled);
+  setExterayondSetting('SliderStyle', enabled ? 2 : 0);
+  setExterayondSetting('SwitchStyle', enabled ? 3 : 0);
 });
 
 export const setOpenLinkConfirmation = (mode: number) => {
   if(!Number.isInteger(mode) || mode < 0 || mode > 2) return;
   batch(() => {
-    setExteralessSetting('ConfirmAllLinks', mode === 1);
-    setExteralessSetting('SkipOpenLinkConfirm', mode === 2);
+    setExterayondSetting('ConfirmAllLinks', mode === 1);
+    setExterayondSetting('SkipOpenLinkConfirm', mode === 2);
   });
 };
 
-export const setStickerTimeMode = (mode: number, apply: typeof setExteralessSetting = setExteralessSetting) => {
+export const setStickerTimeMode = (mode: number, apply: typeof setExterayondSetting = setExterayondSetting) => {
   if(!Number.isInteger(mode) || mode < 0 || mode > 2) return;
   batch(() => {
     apply('HideTimeForSticker', mode === 2);
@@ -682,7 +694,7 @@ export const setStickerTimeMode = (mode: number, apply: typeof setExteralessSett
 };
 
 /** Android tablet sizing, normalized to Web K's stock size at the default 14. */
-export const getStickerScale = (value = exteralessSettings.stickerSize) => 1 + (value - 14) / 16;
+export const getStickerScale = (value = exterayondSettings.stickerSize) => 1 + (value - 14) / 16;
 
 /**
  * avatarCorners 0..28 → the avatar border-radius percentage: 28 = the stock
@@ -691,7 +703,7 @@ export const getStickerScale = (value = exteralessSettings.stickerSize) => 1 + (
  * point `.avatar` (scss/partials/_avatar.scss) plays that role on the web.
  */
 export const avatarCornersToRadiusPercent = (corners: number) => {
-  return clampExteralessSetting('OEAppearanceAvatarCorners', corners) / OE_AVATAR_CORNERS_MAX * 50 + '%';
+  return clampExterayondSetting('OEAppearanceAvatarCorners', corners) / OE_AVATAR_CORNERS_MAX * 50 + '%';
 };
 
 /**
@@ -703,7 +715,7 @@ export const avatarCornersToRadiusPercent = (corners: number) => {
  * (`--avatar-border-radius-forum`) stays, like every stock default.
  */
 export const avatarForumRadiusToCss = (corners: number, singleCorner: boolean): string | undefined => {
-  const clamped = clampExteralessSetting('OEAppearanceAvatarCorners', corners);
+  const clamped = clampExterayondSetting('OEAppearanceAvatarCorners', corners);
   if(clamped >= OE_AVATAR_CORNERS_MAX) {
     return undefined;
   }
@@ -718,7 +730,7 @@ export const avatarForumRadiusToCss = (corners: number, singleCorner: boolean): 
  * every other value applies directly as pixels.
  */
 export const sectionRadiusToCss = (radius: number) => {
-  const clamped = clampExteralessSetting('OEAppearanceSectionRadius', radius);
+  const clamped = clampExterayondSetting('OEAppearanceSectionRadius', radius);
   return clamped === OE_SECTION_RADIUS_STOCK ? undefined : clamped + 'px';
 };
 
@@ -727,7 +739,7 @@ export const sectionRadiusToCss = (radius: number) => {
  * (dp(6), `ChatMessageCell`), 2 as the message bubble ($bubble-border-radius-big).
  */
 export const stickerShapeToCss = (shape: number) => {
-  const clamped = clampExteralessSetting('OEChatsStickerShape', shape);
+  const clamped = clampExterayondSetting('OEChatsStickerShape', shape);
   if(clamped === 1) {
     return OE_STICKER_SHAPE_ROUNDED_RADIUS;
   }
@@ -736,12 +748,12 @@ export const stickerShapeToCss = (shape: number) => {
 };
 
 /** Android `PlayerStyle.coverSize()`: a 60..100 percentage as a 0.6..1 fraction. */
-export const playerCoverSizeFraction = (value = exteralessSettings.OEPlayerCoverSize) =>
-  clampExteralessSetting('OEPlayerCoverSize', value) / 100;
+export const playerCoverSizeFraction = (value = exterayondSettings.OEPlayerCoverSize) =>
+  clampExterayondSetting('OEPlayerCoverSize', value) / 100;
 
 /** Android `PlayerStyle.controlsScale()`: 0 compact 0.84, 1 normal 1, 2 large 1.14. */
-export const playerControlsScale = (value = exteralessSettings.OEPlayerControlsSize) => {
-  const clamped = clampExteralessSetting('OEPlayerControlsSize', value);
+export const playerControlsScale = (value = exterayondSettings.OEPlayerControlsSize) => {
+  const clamped = clampExterayondSetting('OEPlayerControlsSize', value);
   return clamped === 0 ? 0.84 : clamped === 2 ? 1.14 : 1;
 };
 
@@ -749,8 +761,8 @@ export const playerControlsScale = (value = exteralessSettings.OEPlayerControlsS
  * Android `PlayerSheet.applyStyle` title sizes: 0 small 22/15, 1 medium 26/16,
  * 2 large 31/17 (title/artist, dp).
  */
-export const playerTitleSizes = (value = exteralessSettings.OEPlayerTitleSize): readonly [title: number, artist: number] => {
-  const clamped = clampExteralessSetting('OEPlayerTitleSize', value);
+export const playerTitleSizes = (value = exterayondSettings.OEPlayerTitleSize): readonly [title: number, artist: number] => {
+  const clamped = clampExterayondSetting('OEPlayerTitleSize', value);
   return clamped === 0 ? [22, 15] : clamped === 2 ? [31, 17] : [26, 16];
 };
 
@@ -761,16 +773,16 @@ export const playerTitleSizes = (value = exteralessSettings.OEPlayerTitleSize): 
  * yields undefined — Web K's own bubble geometry stays (the stock 15px far /
  * 5px tail pair ≈ Android's 17/6dp), so a reset never restyles a bubble.
  */
-export const bubbleRadiusToCss = (radius: number = exteralessSettings.bubbleRadius): {far: string, tail: string} | undefined => {
-  const clamped = clampExteralessSetting('bubbleRadius', radius);
+export const bubbleRadiusToCss = (radius: number = exterayondSettings.bubbleRadius): {far: string, tail: string} | undefined => {
+  const clamped = clampExterayondSetting('bubbleRadius', radius);
   if(clamped === 17) return undefined;
   return {far: clamped + 'px', tail: Math.min(6, clamped) + 'px'};
 };
 
 /**
  * Android `PlayerStyle.coverStyle()`: card, wide, full, disc. */
-export const getPlayerCoverStyle = (value = exteralessSettings.OEPlayerCoverStyle) =>
-  clampExteralessSetting('OEPlayerCoverStyle', value);
+export const getPlayerCoverStyle = (value = exterayondSettings.OEPlayerCoverStyle) =>
+  clampExterayondSetting('OEPlayerCoverStyle', value);
 
 if(typeof document !== 'undefined') {
   // * one effect owns the custom properties and the root classes: every
@@ -782,14 +794,14 @@ if(typeof document !== 'undefined') {
     // * F-6: the attach/detach toggle eases its margins — a one-shot root
     // * class stands only while the toggle settles, so the folders-rail
     // * offset and every resize path stay instant
-    let previousAttachedSidebar = exteralessSettings.OEAppearanceAttachedSidebar;
+    let previousAttachedSidebar = exterayondSettings.OEAppearanceAttachedSidebar;
     let sidebarAnimateTimer: ReturnType<typeof setTimeout>;
 
     createEffect(() => {
       const {classList, style} = document.documentElement;
 
-      if(exteralessSettings.OEAppearanceAttachedSidebar !== previousAttachedSidebar) {
-        previousAttachedSidebar = exteralessSettings.OEAppearanceAttachedSidebar;
+      if(exterayondSettings.OEAppearanceAttachedSidebar !== previousAttachedSidebar) {
+        previousAttachedSidebar = exterayondSettings.OEAppearanceAttachedSidebar;
         classList.add('oe-sidebar-layout-animate');
         clearTimeout(sidebarAnimateTimer);
         // * --transition-standard-in is .3s at full animation level
@@ -797,69 +809,69 @@ if(typeof document !== 'undefined') {
       }
 
       // * every property read here is what the effect tracks
-      style.setProperty('--oe-avatar-radius', avatarCornersToRadiusPercent(exteralessSettings.OEAppearanceAvatarCorners));
+      style.setProperty('--oe-avatar-radius', avatarCornersToRadiusPercent(exterayondSettings.OEAppearanceAvatarCorners));
       const forumRadius = avatarForumRadiusToCss(
-        exteralessSettings.OEAppearanceAvatarCorners,
-        exteralessSettings.OEAppearanceSingleCornerRadius
+        exterayondSettings.OEAppearanceAvatarCorners,
+        exterayondSettings.OEAppearanceSingleCornerRadius
       );
       if(forumRadius === undefined) {
         style.removeProperty('--oe-avatar-radius-forum');
       } else {
         style.setProperty('--oe-avatar-radius-forum', forumRadius);
       }
-      classList.toggle('oe-single-corner-radius', exteralessSettings.OEAppearanceSingleCornerRadius);
-      classList.toggle('oe-hide-title-status', exteralessSettings.OEAppearanceHideActionBarStatus);
+      classList.toggle('oe-single-corner-radius', exterayondSettings.OEAppearanceSingleCornerRadius);
+      classList.toggle('oe-hide-title-status', exterayondSettings.OEAppearanceHideActionBarStatus);
 
-      if(exteralessSettings.OEAppearanceSquareFab) {
+      if(exterayondSettings.OEAppearanceSquareFab) {
         style.setProperty('--oe-fab-radius', OE_FAB_SQUIRCLE_RADIUS);
       } else {
         style.removeProperty('--oe-fab-radius');
       }
 
-      const sectionRadius = sectionRadiusToCss(exteralessSettings.OEAppearanceSectionRadius);
+      const sectionRadius = sectionRadiusToCss(exterayondSettings.OEAppearanceSectionRadius);
       if(sectionRadius === undefined) {
         style.removeProperty('--oe-section-radius');
       } else {
         style.setProperty('--oe-section-radius', sectionRadius);
       }
 
-      classList.toggle('oe-separate-headers', exteralessSettings.OEAppearanceSeparateHeaders);
+      classList.toggle('oe-separate-headers', exterayondSettings.OEAppearanceSeparateHeaders);
 
-      classList.toggle('oe-remove-message-tail', exteralessSettings.OEChatsRemoveMessageTail);
+      classList.toggle('oe-remove-message-tail', exterayondSettings.OEChatsRemoveMessageTail);
 
-      classList.toggle('oe-sticker-time-side', exteralessSettings.OEChatsStickerTimeSide);
-      classList.toggle('oe-hide-sticker-time', exteralessSettings.HideTimeForSticker);
-      classList.toggle('oe-hide-new-chat-button', exteralessSettings.DisableDialogsFloatingButton);
-      classList.toggle('oe-edited-icon', exteralessSettings.UseEditedIcon);
-      classList.toggle('oe-hide-channel-share-button', exteralessSettings.HideShareButtonInChannel);
-      classList.toggle('oe-hide-channel-gift-button', exteralessSettings.HideGiftButtonInChannel);
-      classList.toggle('oe-hide-call-button', exteralessSettings.OEChatsHideCallButton);
-      classList.toggle('oe-hide-send-as', exteralessSettings.hideSendAsChannel);
-      classList.toggle('oe-hide-channel-search-button', exteralessSettings.OEChatsHideChannelSearchButton);
-      classList.toggle('oe-hide-stories', exteralessSettings.HideStoriesFromHeader);
-      classList.toggle('oe-wide-posts', exteralessSettings.OEChatsWideChannelPosts);
-      classList.toggle('oe-hide-reactions-private', exteralessSettings.OEChatsHideReactionsPrivate);
-      classList.toggle('oe-hide-reactions-channels', exteralessSettings.OEChatsHideReactionsChannels);
-      classList.toggle('oe-hide-reactions-groups', exteralessSettings.OEChatsHideReactionsGroups);
+      classList.toggle('oe-sticker-time-side', exterayondSettings.OEChatsStickerTimeSide);
+      classList.toggle('oe-hide-sticker-time', exterayondSettings.HideTimeForSticker);
+      classList.toggle('oe-hide-new-chat-button', exterayondSettings.DisableDialogsFloatingButton);
+      classList.toggle('oe-edited-icon', exterayondSettings.UseEditedIcon);
+      classList.toggle('oe-hide-channel-share-button', exterayondSettings.HideShareButtonInChannel);
+      classList.toggle('oe-hide-channel-gift-button', exterayondSettings.HideGiftButtonInChannel);
+      classList.toggle('oe-hide-call-button', exterayondSettings.OEChatsHideCallButton);
+      classList.toggle('oe-hide-send-as', exterayondSettings.hideSendAsChannel);
+      classList.toggle('oe-hide-channel-search-button', exterayondSettings.OEChatsHideChannelSearchButton);
+      classList.toggle('oe-hide-stories', exterayondSettings.HideStoriesFromHeader);
+      classList.toggle('oe-wide-posts', exterayondSettings.OEChatsWideChannelPosts);
+      classList.toggle('oe-hide-reactions-private', exterayondSettings.OEChatsHideReactionsPrivate);
+      classList.toggle('oe-hide-reactions-channels', exterayondSettings.OEChatsHideReactionsChannels);
+      classList.toggle('oe-hide-reactions-groups', exterayondSettings.OEChatsHideReactionsGroups);
 
       // * the replyColors / replyEmoji / replyBackground trio defaults to true;
       // * the classes mark only the off states, so the default adds nothing
-      classList.toggle('oe-no-glass-menus', !exteralessSettings.OEAppearanceGlassMessageMenu);
-      classList.toggle('oe-center-title', exteralessSettings.OEAppearanceCenterTitle);
-      classList.toggle('oe-system-font', exteralessSettings.TypefaceUseDefault);
-      classList.toggle('oe-attached-sidebar', exteralessSettings.OEAppearanceAttachedSidebar);
-      classList.toggle('oe-new-chat-header', exteralessSettings.OEAppearanceNewChatHeaderStyle);
-      classList.toggle('oe-md3-loading', exteralessSettings.OEAppearanceNewLoadingStyle);
-      classList.toggle('oe-md3-sliders', exteralessSettings.SliderStyle === 2);
-      classList.toggle('oe-md3-switches', exteralessSettings.SwitchStyle >= 2);
-      classList.toggle('oe-md3-navigation', exteralessSettings.OEAppearanceNewNavigationBarStyle);
-      classList.toggle('oe-md3-list-items', exteralessSettings.OEAppearanceM3ListItems);
-      classList.toggle('oe-md3-mini-player', exteralessSettings.OEAppearanceMd3MiniPlayer);
-      classList.toggle('oe-no-reply-colors', !exteralessSettings.OEChatsReplyColors);
-      classList.toggle('oe-no-reply-emoji', !exteralessSettings.OEChatsReplyEmoji);
-      classList.toggle('oe-no-reply-background', !exteralessSettings.OEChatsReplyBackground);
+      classList.toggle('oe-no-glass-menus', !exterayondSettings.OEAppearanceGlassMessageMenu);
+      classList.toggle('oe-center-title', exterayondSettings.OEAppearanceCenterTitle);
+      classList.toggle('oe-system-font', exterayondSettings.TypefaceUseDefault);
+      classList.toggle('oe-attached-sidebar', exterayondSettings.OEAppearanceAttachedSidebar);
+      classList.toggle('oe-new-chat-header', exterayondSettings.OEAppearanceNewChatHeaderStyle);
+      classList.toggle('oe-md3-loading', exterayondSettings.OEAppearanceNewLoadingStyle);
+      classList.toggle('oe-md3-sliders', exterayondSettings.SliderStyle === 2);
+      classList.toggle('oe-md3-switches', exterayondSettings.SwitchStyle >= 2);
+      classList.toggle('oe-md3-navigation', exterayondSettings.OEAppearanceNewNavigationBarStyle);
+      classList.toggle('oe-md3-list-items', exterayondSettings.OEAppearanceM3ListItems);
+      classList.toggle('oe-md3-mini-player', exterayondSettings.OEAppearanceMd3MiniPlayer);
+      classList.toggle('oe-no-reply-colors', !exterayondSettings.OEChatsReplyColors);
+      classList.toggle('oe-no-reply-emoji', !exterayondSettings.OEChatsReplyEmoji);
+      classList.toggle('oe-no-reply-background', !exterayondSettings.OEChatsReplyBackground);
 
-      const bubbleRadius = bubbleRadiusToCss(exteralessSettings.bubbleRadius);
+      const bubbleRadius = bubbleRadiusToCss(exterayondSettings.bubbleRadius);
       if(bubbleRadius === undefined) {
         style.removeProperty('--oe-bubble-radius');
         style.removeProperty('--oe-bubble-tail-radius');
@@ -868,7 +880,7 @@ if(typeof document !== 'undefined') {
         style.setProperty('--oe-bubble-tail-radius', bubbleRadius.tail);
       }
 
-      style.setProperty('--oe-sticker-radius', stickerShapeToCss(exteralessSettings.OEChatsStickerShape));
+      style.setProperty('--oe-sticker-radius', stickerShapeToCss(exterayondSettings.OEChatsStickerShape));
     });
 
     return dispose;
@@ -876,11 +888,11 @@ if(typeof document !== 'undefined') {
 }
 
 export {
-  exteralessSettings,
-  setExteralessSettings,
-  setExteralessSetting,
-  resetExteralessSettings,
-  useExteralessSettings
+  exterayondSettings,
+  setExterayondSettings,
+  setExterayondSetting,
+  resetExterayondSettings,
+  useExterayondSettings
 };
 
 // * a self-accepting module, like the other singletons: an edit hot-updates it

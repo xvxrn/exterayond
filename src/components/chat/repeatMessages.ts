@@ -1,5 +1,5 @@
 import confirmationPopup from '@components/confirmationPopup';
-import {exteralessSettings} from '@stores/exteralessSettings';
+import {exterayondSettings} from '@stores/exterayondSettings';
 import {AppManagers} from '@lib/managers';
 
 /**
@@ -15,11 +15,11 @@ export default async function repeatMessages(managers: AppManagers, peerId: Peer
     return false;
   }
 
-  if(exteralessSettings.repeatConfirm) {
+  if(exterayondSettings.repeatConfirm) {
     try {
       await confirmationPopup({
-        titleLangKey: 'Exteraless.Repeat.Title',
-        descriptionLangKey: 'Exteraless.Repeat.Text',
+        titleLangKey: 'Exterayond.Repeat.Title',
+        descriptionLangKey: 'Exterayond.Repeat.Text',
         button: {langKey: 'OK'}
       });
     } catch(e) {

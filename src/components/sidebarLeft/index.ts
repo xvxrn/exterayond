@@ -6,7 +6,7 @@ import DialogsContextMenu from '@components/dialogsContextMenu';
 import Scrollable, {ScrollableX} from '@components/scrollable';
 import InputSearch from '@components/inputSearch';
 import {attachPillStackStrip} from '@components/sidebarLeft/pillStack';
-import {applyMainMenuLayoutToButtons, MAIN_MENU_ITEMS as MainMenuIds} from '@stores/exteralessMenuLayout';
+import {applyMainMenuLayoutToButtons, MAIN_MENU_ITEMS as MainMenuIds} from '@stores/exterayondMenuLayout';
 import SidebarSlider, {SliderSuperTab} from '@components/slider';
 import TransitionSlider from '@components/transition';
 import AppSearchSuper, {SearchSuperMediaType} from '@components/appSearchSuper';
@@ -99,7 +99,7 @@ import {toastNew} from '@components/toast';
 import DeferredIsUsingPasscode from '@lib/passcode/deferredIsUsingPasscode';
 import createLockButton from '@components/sidebarLeft/lockButton';
 import createSubmenuTrigger, {CreateSubmenuArgs} from '@components/createSubmenuTrigger';
-import {exteralessSettings} from '@stores/exteralessSettings';
+import {exterayondSettings} from '@stores/exterayondSettings';
 import ChatTypeMenu from '@components/chatTypeMenu';
 import {RequestHistoryOptions} from '@appManagers/appMessagesManager';
 import EmptySearchPlaceholder from '@components/emptySearchPlaceholder';
@@ -275,7 +275,7 @@ export class AppSidebarLeft extends SidebarSlider {
         void updateArchivedCount().catch(noop);
       }
     });
-    rootScope.addEventListener('exteraless_settings_updated', ({key}) => {
+    rootScope.addEventListener('exterayond_settings_updated', ({key}) => {
       if(key === 'DisableNumberRounding') {
         void updateArchivedCount().catch(noop);
       }
@@ -742,7 +742,7 @@ export class AppSidebarLeft extends SidebarSlider {
       options: {
         text: 'CreateANew',
         icon: 'edit',
-        verify: () => this.isCollapsed() || exteralessSettings.DisableDialogsFloatingButton,
+        verify: () => this.isCollapsed() || exterayondSettings.DisableDialogsFloatingButton,
         separator: true
       },
       createSubmenu: () => this.createNewChatsSubmenu()

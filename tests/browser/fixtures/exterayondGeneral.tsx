@@ -5,14 +5,14 @@ import {installSandboxEnvironment} from '@components/popupSandbox/environment';
 import {SELF_PEER_ID, CONTACT_PEER_ID, CHANNEL_PEER_ID, selfUser, contactUser, dialogs, makeMessage, GROUP_PEER_ID} from '@components/popupSandbox/fixtures';
 import {render} from 'solid-js/web';
 import {createSignal, onCleanup, Show} from 'solid-js';
-import General from '@components/sidebarLeft/tabs/exteralessGeneralTab';
-import Appearance from '@components/sidebarLeft/tabs/exteralessAppearanceTab';
+import General from '@components/sidebarLeft/tabs/exterayondGeneralTab';
+import Appearance from '@components/sidebarLeft/tabs/exterayondAppearanceTab';
 import generatePremiumIcon from '@components/generatePremiumIcon';
 import getUserStatusString from '@components/wrappers/getUserStatusString';
 import addAnchorListener, {confirmExternalAnchorClick} from '@helpers/addAnchorListener';
-import Preferences from '@components/sidebarLeft/tabs/exteralessTab';
+import Preferences from '@components/sidebarLeft/tabs/exterayondTab';
 import {SuperTabProvider} from '@components/solidJsTabs/superTabProvider';
-import Chats from '@components/sidebarLeft/tabs/exteralessChatsTab';
+import Chats from '@components/sidebarLeft/tabs/exterayondChatsTab';
 import {SettingsHelpSection} from '@components/sidebarLeft/tabs/settings';
 import StickersTipCard from '@components/chatTips/stickersCard';
 import {MessageRender} from '@components/chat/messageRender';
@@ -33,7 +33,7 @@ import HotReloadGuard from '@lib/solidjs/hotReloadGuardProvider';
 import I18n from '@lib/langPack';
 import formatCount from '@helpers/number/formatCount';
 import {EmojiTextTsx} from '@lib/richTextProcessor/wrapEmojiText';
-import {resetExteralessPreferences} from '@stores/exteralessPreferences';
+import {resetExterayondPreferences} from '@stores/exterayondPreferences';
 import '@/scss/style.scss';
 import '@/scss/fonts.scss';
 
@@ -78,7 +78,7 @@ async function boot() {
   seedMirror('peers', String(CONTACT_PEER_ID), {...contactUser, phone: '12025550124', color: {
     _: 'peerColorCollectible', collectible_id: '0', gift_emoji_id: '0', accent_color: 0xcc5049, colors: [0xcc5049, 0xd67722]
   }});
-  resetExteralessPreferences();
+  resetExterayondPreferences();
 
   // Scope this fixture to the real phone component. Other profile surfaces are covered elsewhere.
   for(const key of [
@@ -235,8 +235,8 @@ async function boot() {
           const {default: confirm} = await import('@components/confirmationPopup');
           void confirm({
             peerId: CONTACT_PEER_ID,
-            titleLangKey: 'Exteraless.ConfirmCall.Title',
-            descriptionLangKey: 'Exteraless.ConfirmCall.Video',
+            titleLangKey: 'Exterayond.ConfirmCall.Title',
+            descriptionLangKey: 'Exterayond.ConfirmCall.Video',
             descriptionLangArgs: ['Test user'],
             button: {langKey: 'VideoCall'}
           }).catch(() => {});
@@ -280,7 +280,7 @@ async function boot() {
           const rtl = !I18n.getIsRTL();
           I18n.forceRTL(rtl);
         }}>Switch direction</button>
-        <button type="button" onClick={resetExteralessPreferences}>Reset preferences</button>
+        <button type="button" onClick={resetExterayondPreferences}>Reset preferences</button>
       </section>
     </div>
   </HotReloadGuard>, document.getElementById('fixture-root'));

@@ -1,6 +1,6 @@
 import {listenForMaskedAnchorAuxClicks, confirmExternalAnchorClick} from '@helpers/addAnchorListener';
 import addAnchorListener from '@helpers/addAnchorListener';
-import {setExteralessSetting, setOpenLinkConfirmation} from '@stores/exteralessSettings';
+import {setExterayondSetting, setOpenLinkConfirmation} from '@stores/exterayondSettings';
 
 describe('masked anchor aux click', () => {
   let showMaskedAlert: ReturnType<typeof vi.fn>;
@@ -124,7 +124,7 @@ describe('masked anchor aux click', () => {
   });
 
   test('All does not add a second gate to bot commands or media timestamps', () => {
-    setExteralessSetting('ConfirmAllLinks', true);
+    setExterayondSetting('ConfirmAllLinks', true);
     for(const name of ['execBotCommand', 'setMediaTimestamp'] as const) {
       const execute = vi.fn();
       addAnchorListener({name, callback: execute});

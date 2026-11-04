@@ -65,7 +65,7 @@ import rootScope from '@lib/rootScope';
 import clamp from '@helpers/number/clamp';
 import throttle from '@helpers/schedulers/throttle';
 import {getAppWindow} from '@helpers/appWindow';
-import {exteralessSettings} from '@stores/exteralessSettings';
+import {exterayondSettings} from '@stores/exterayondSettings';
 
 // Default and resize range for the left & right columns.
 export const DEFAULT_COLUMN_WIDTH = 360;
@@ -287,7 +287,7 @@ export default function updateColumnWidths(): void {
   // * it is computed from the panel's VISUAL width, while the stock layout
   // * math reserves the collapsed width and lets the popped-out panel
   // * overlay the chat
-  const attachedSidebar = exteralessSettings.OEAppearanceAttachedSidebar === true;
+  const attachedSidebar = exterayondSettings.OEAppearanceAttachedSidebar === true;
   const leftColumnSpace = attachedSidebar ? visualLeftWidth : layoutLeftWidth;
   // Whether the right column can dock without overlapping the chat. The
   // threshold is the sum of every horizontal piece currently in the docked
@@ -397,7 +397,7 @@ export function installColumnWidthsUpdater(): void {
   rootScope.addEventListener('resizing_left_sidebar', updateColumnWidths);
   // * G-3: the attached-sidebar toggle reshapes the chat's space (the visual
   // * width replaces the layout one in the space math)
-  rootScope.addEventListener('exteraless_settings_updated', ({key}) => {
+  rootScope.addEventListener('exterayond_settings_updated', ({key}) => {
     if(key === 'OEAppearanceAttachedSidebar') updateColumnWidths();
   });
   updateColumnWidths();

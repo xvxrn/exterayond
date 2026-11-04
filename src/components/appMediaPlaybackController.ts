@@ -6,7 +6,7 @@ import {IS_APPLE, IS_SAFARI} from '@environment/userAgent';
 import {MOUNT_CLASS_TO} from '@config/debug';
 import {getAppWindow} from '@helpers/appWindow';
 import {hotListen} from '@helpers/hotModule';
-import {exteralessSettings} from '@stores/exteralessSettings';
+import {exterayondSettings} from '@stores/exterayondSettings';
 import simulateEvent from '@helpers/dom/dispatchEvent';
 import {Document, Message, PhotoSize} from '@layer';
 import getAudioTitles from '@appManagers/utils/docs/getAudioTitles';
@@ -242,10 +242,10 @@ export class AppMediaPlaybackController extends EventListenerBase<{
       }
 
       const shouldPause = this.playingDocType === 'round' ?
-        exteralessSettings.OEChatsPauseRound :
+        exterayondSettings.OEChatsPauseRound :
         this.playingDocType === 'voice' ?
-          exteralessSettings.OEChatsPauseVoice :
-          this.playingDocType === 'video' && exteralessSettings.AutoPauseVideo;
+          exterayondSettings.OEChatsPauseVoice :
+          this.playingDocType === 'video' && exterayondSettings.AutoPauseVideo;
       if(shouldPause) {
         this.pause();
       }
@@ -968,7 +968,7 @@ export class AppMediaPlaybackController extends EventListenerBase<{
     const listLoader = this.listLoader;
     if(
       this.lockedSwitchers ||
-      (this.playingDocType === 'voice' && exteralessSettings.DontAutoPlayNextVoice) ||
+      (this.playingDocType === 'voice' && exterayondSettings.DontAutoPlayNextVoice) ||
       (!this.round && listLoader.current && !listLoader.getNext(false).length) ||
       !listLoader.getNext(true).length ||
       !this.next()

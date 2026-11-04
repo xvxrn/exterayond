@@ -36,7 +36,7 @@ import {moveSelectionToDetailsSummaryOnClose} from '@components/chat/inputEditor
 import {moveSelectedTopLevelBlock, selectedStructuralTopLevelRange} from '@components/chat/inputEditor/extensions/blockStructure';
 import {wrapBareChatInputTables} from '@components/chat/inputEditor/extensions/tableNodes';
 import {markProseMirrorPaste} from '@components/chat/inputEditor/paste';
-import {exteralessSettings} from '@stores/exteralessSettings';
+import {exterayondSettings} from '@stores/exterayondSettings';
 import {startBlockMarkerLine} from '@components/chat/inputEditor/blockMarkers';
 import {
   getChatInputEditor,
@@ -1932,7 +1932,7 @@ class TiptapChatInputEditor implements ChatInputEditor {
           // * only a text that actually carries a link is taken over — a plain
           // * TSV table or a word must keep the normal paste path
           if(
-            exteralessSettings.OEChatsStripTrackingOnPaste &&
+            exterayondSettings.OEChatsStripTrackingOnPaste &&
             plainText &&
             !event.clipboardData?.getData('text/html') &&
             /(?:https?:\/\/|www\.)/.test(plainText)

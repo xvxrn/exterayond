@@ -127,7 +127,7 @@ describe('folders store recovery', () => {
     }));
 
     const useFolders = (await import('@stores/folders')).default;
-    const {setExteralessSetting, exteralessSettings} = (await import('@stores/exteralessSettings'));
+    const {setExterayondSetting, exterayondSettings} = (await import('@stores/exterayondSettings'));
     const store = useFolders();
     store.setOnClick(() => vi.fn());
     await store.hydrateFilters([allChats, folder]);
@@ -136,21 +136,21 @@ describe('folders store recovery', () => {
 
     // * the Android effective default (except muted): the All tab keeps Web
     // * K's stock unmuted count, a folder reads its own full count
-    expect(exteralessSettings.IgnoreUnreadCount).toBe(1);
+    expect(exterayondSettings.IgnoreUnreadCount).toBe(1);
     expect(badge(0)).toBe(3);
     expect(badge(2)).toBe(7);
 
     // * "All chats" counts muted chats on every tab
-    setExteralessSetting('IgnoreUnreadCount', 0);
+    setExterayondSetting('IgnoreUnreadCount', 0);
     await vi.waitFor(() => expect(badge(0)).toBe(7));
     expect(badge(2)).toBe(7);
 
     // * off hides the badges whole
-    setExteralessSetting('IgnoreUnreadCount', 2);
+    setExterayondSetting('IgnoreUnreadCount', 2);
     await vi.waitFor(() => expect(badge(0)).toBe(0));
     expect(badge(2)).toBe(0);
 
-    setExteralessSetting('IgnoreUnreadCount', 1);
+    setExterayondSetting('IgnoreUnreadCount', 1);
     await vi.waitFor(() => expect(badge(0)).toBe(3));
     expect(badge(2)).toBe(7);
   });
@@ -164,7 +164,7 @@ describe('folders store recovery', () => {
     }
 
     const useFolders = (await import('@stores/folders')).default;
-    const {setExteralessSetting, exteralessSettings} = (await import('@stores/exteralessSettings'));
+    const {setExterayondSetting, exterayondSettings} = (await import('@stores/exterayondSettings'));
     const store = useFolders();
     const selectFolder = vi.fn();
     store.setOnClick(() => selectFolder);
@@ -173,18 +173,18 @@ describe('folders store recovery', () => {
     expect(store.folderItems.map(({id}) => id)).toEqual([0, 2, 3]);
 
     // * the stock default: the All tab is there
-    expect(exteralessSettings.HideAllTab).toBe(false);
+    expect(exterayondSettings.HideAllTab).toBe(false);
 
     // * hiding drops the All tab live and moves the selection through the
     // * same click path the tab bar uses
     store.setSelectedFolderId(0);
-    setExteralessSetting('HideAllTab', true);
+    setExterayondSetting('HideAllTab', true);
     await vi.waitFor(() => expect(store.folderItems.map(({id}) => id)).toEqual([2, 3]));
     expect(selectFolder).toHaveBeenCalledWith(0);
 
     // * unhiding rebuilds the list from the filters, All included, in order
     selectFolder.mockClear();
-    setExteralessSetting('HideAllTab', false);
+    setExterayondSetting('HideAllTab', false);
     await vi.waitFor(() => expect(store.folderItems.map(({id}) => id)).toEqual([0, 2, 3]));
     expect(selectFolder).not.toHaveBeenCalled();
   });
@@ -194,14 +194,14 @@ describe('folders store recovery', () => {
     mocks.filters.set(allChats.id, allChats);
 
     const useFolders = (await import('@stores/folders')).default;
-    const {setExteralessSetting} = (await import('@stores/exteralessSettings'));
+    const {setExterayondSetting} = (await import('@stores/exterayondSettings'));
     const store = useFolders();
     store.setOnClick(() => vi.fn());
 
     await store.hydrateFilters([allChats]);
     expect(store.folderItems.map(({id}) => id)).toEqual([0]);
 
-    setExteralessSetting('HideAllTab', true);
+    setExterayondSetting('HideAllTab', true);
     await vi.waitFor(() => expect(store.folderItems.map(({id}) => id)).toEqual([0]));
   });
 });

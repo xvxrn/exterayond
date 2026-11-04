@@ -98,7 +98,7 @@ import wrapSticker from '@components/wrappers/sticker';
 import {unwrap} from 'solid-js/store';
 import {usePeer} from '@stores/peers';
 import {useAppState} from '@stores/appState';
-import {exteralessSettings} from '@stores/exteralessSettings';
+import {exterayondSettings} from '@stores/exterayondSettings';
 import {AutonomousSavedDialogList} from '@components/autonomousDialogList/savedDialogs';
 import SetTransition from '@components/singleTransition';
 import liteMode from '@helpers/liteMode';
@@ -1800,7 +1800,7 @@ export default class AppSearchSuper {
             // * Android's helper dropping `b == 1 && !user.contact`. The user's
             // * own contacts above, the local dialogs below and the sponsored
             // * peers keep their owners.
-            if(!exteralessSettings.DisableGlobalSearch) {
+            if(!exterayondSettings.DisableGlobalSearch) {
               setResults(contacts.results/* .concat(contacts.results, contacts.results, contacts.results) */, this.searchGroups.globalContacts);
 
               this.searchGroups.globalContacts.container.classList.add('is-short');

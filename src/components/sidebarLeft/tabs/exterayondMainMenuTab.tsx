@@ -5,7 +5,7 @@ import Section from '@components/section';
 import {toastNew} from '@components/toast';
 import {For, createMemo} from 'solid-js';
 import {i18n, LangPackKey} from '@lib/langPack';
-import {MAIN_MENU_ITEMS, WEB_MENU_ITEM_IDS, addMenuDivider, getEditorMainMenuLayout, isMainMenuCustomized, moveMenuEntry, removeMenuDivider, resetMainMenuLayout, setMenuItemVisible} from '@stores/exteralessMenuLayout';
+import {MAIN_MENU_ITEMS, WEB_MENU_ITEM_IDS, addMenuDivider, getEditorMainMenuLayout, isMainMenuCustomized, moveMenuEntry, removeMenuDivider, resetMainMenuLayout, setMenuItemVisible} from '@stores/exterayondMenuLayout';
 
 /**
  * The main menu layout screen (FOLD-10..13): which of the tools-menu items
@@ -33,7 +33,7 @@ const MoveButtons = (props: {onMove: (direction: 'up' | 'down') => void}) => (
   <span class="exteraless-menu-move-buttons">
     <button
       class="exteraless-menu-move-button"
-      aria-label={i18n('Exteraless.MainMenu.MoveUp').textContent}
+      aria-label={i18n('Exterayond.MainMenu.MoveUp').textContent}
       onClick={(e) => {
         e.stopPropagation();
         props.onMove('up');
@@ -43,7 +43,7 @@ const MoveButtons = (props: {onMove: (direction: 'up' | 'down') => void}) => (
     </button>
     <button
       class="exteraless-menu-move-button"
-      aria-label={i18n('Exteraless.MainMenu.MoveDown').textContent}
+      aria-label={i18n('Exterayond.MainMenu.MoveDown').textContent}
       onClick={(e) => {
         e.stopPropagation();
         props.onMove('down');
@@ -75,7 +75,7 @@ const VisibleItemsSection = () => {
   });
 
   return (
-    <Section name="Exteraless.MainMenu.Visible">
+    <Section name="Exterayond.MainMenu.Visible">
       <For each={entries()}>{(entry, index) => {
         const move = (direction: 'up' | 'down') => moveMenuEntry(index(), direction);
         if(entry.id === MAIN_MENU_ITEMS.DIVIDER) {
@@ -84,9 +84,9 @@ const VisibleItemsSection = () => {
             // * Android's editor: clicking a divider row removes it
             <Row clickable={() => removeMenuDivider(ordinal)}>
               <Row.Title titleRight={<MoveButtons onMove={move} />}>
-                {i18n('Exteraless.MainMenu.Divider')}
+                {i18n('Exterayond.MainMenu.Divider')}
               </Row.Title>
-              <Row.Subtitle>{i18n('Exteraless.MainMenu.Divider.Remove')}</Row.Subtitle>
+              <Row.Subtitle>{i18n('Exterayond.MainMenu.Divider.Remove')}</Row.Subtitle>
             </Row>
           );
         }
@@ -108,7 +108,7 @@ const VisibleItemsSection = () => {
       }}</For>
       <Row clickable={addMenuDivider}>
         <Row.Icon icon="add" />
-        <Row.Title>{i18n('Exteraless.MainMenu.AddDivider')}</Row.Title>
+        <Row.Title>{i18n('Exterayond.MainMenu.AddDivider')}</Row.Title>
       </Row>
     </Section>
   );
@@ -119,7 +119,7 @@ const HiddenItemsSection = () => {
     .filter((id) => WEB_MENU_ITEM_IDS.includes(id) && MENU_ITEM_NAME_KEYS[id]));
 
   return (
-    <Section name="Exteraless.MainMenu.Hidden">
+    <Section name="Exterayond.MainMenu.Hidden">
       <For each={ids()}>{(id) => (
         <Row>
           <Row.CheckboxFieldToggle>
@@ -134,32 +134,32 @@ const HiddenItemsSection = () => {
       )}</For>
       <For each={ids().length ? [] : [1]}>{() => (
         <Row>
-          <Row.Title>{i18n('Exteraless.PillStack.Empty')}</Row.Title>
+          <Row.Title>{i18n('Exterayond.PillStack.Empty')}</Row.Title>
         </Row>
       )}</For>
     </Section>
   );
 };
 
-const ExteralessMainMenu = () => {
+const ExterayondMainMenu = () => {
   const customized = createMemo(() => isMainMenuCustomized());
 
   return (
     <>
-      <Section name="Exteraless.MainMenu" caption="Exteraless.MainMenu.Info" />
+      <Section name="Exterayond.MainMenu" caption="Exterayond.MainMenu.Info" />
       <VisibleItemsSection />
       <HiddenItemsSection />
       <Section>
         <Row clickable={() => {
           resetMainMenuLayout();
-          toastNew({langPackKey: 'Exteraless.MainMenu.ResetDone'});
+          toastNew({langPackKey: 'Exterayond.MainMenu.ResetDone'});
         }}>
-          <Row.Title>{i18n('Exteraless.MainMenu.ResetToDefault')}</Row.Title>
-          {customized() ? null : <Row.Subtitle>{i18n('Exteraless.MainMenu.NotCustomized')}</Row.Subtitle>}
+          <Row.Title>{i18n('Exterayond.MainMenu.ResetToDefault')}</Row.Title>
+          {customized() ? null : <Row.Subtitle>{i18n('Exterayond.MainMenu.NotCustomized')}</Row.Subtitle>}
         </Row>
       </Section>
     </>
   );
 };
 
-export default ExteralessMainMenu;
+export default ExterayondMainMenu;

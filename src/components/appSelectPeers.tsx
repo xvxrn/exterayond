@@ -237,7 +237,7 @@ export default class AppSelectPeers {
     if(this.exceptSelf) this.excludePeerIds.add(rootScope.myId);
     this.children = [];
 
-    this.listenerSetter.add(rootScope)('exteraless_settings_updated', ({key}) => {
+    this.listenerSetter.add(rootScope)('exterayond_settings_updated', ({key}) => {
       if(key !== 'DisableNumberRounding') {
         return;
       }

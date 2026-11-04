@@ -16,7 +16,7 @@ import {getStickerSetInputById, getStickerSetInputByStickerSet} from '@lib/appMa
 import isStickerSetAdded from '@lib/appManagers/utils/stickers/isStickerSetAdded';
 import {useSuperTab} from '@components/solidJsTabs/superTabProvider';
 import {useHotReloadGuard} from '@lib/solidjs/hotReloadGuard';
-import {exteralessSettings} from '@stores/exteralessSettings';
+import {exterayondSettings} from '@stores/exterayondSettings';
 
 const Stickers: Component = () => {
   const [tab] = useSuperTab();
@@ -118,12 +118,12 @@ const Stickers: Component = () => {
   };
 
   const renderFeatured = () => {
-    if(exteralessSettings.DisableTrending) {
+    if(exterayondSettings.DisableTrending) {
       filterRendered('', []);
       return Promise.resolve();
     }
     return tab.managers.appStickersManager.getFeaturedStickers().then((coveredSets) => {
-      if(inputSearch.value || exteralessSettings.DisableTrending) {
+      if(inputSearch.value || exterayondSettings.DisableTrending) {
         return;
       }
 
@@ -168,7 +168,7 @@ const Stickers: Component = () => {
     setsDiv.classList.add('sticker-sets');
     tab.scrollable.append(setsDiv);
 
-    createEffect(on(() => exteralessSettings.DisableTrending, () => {
+    createEffect(on(() => exterayondSettings.DisableTrending, () => {
       if(!inputSearch.value) void renderFeatured();
     }, {defer: true}));
 

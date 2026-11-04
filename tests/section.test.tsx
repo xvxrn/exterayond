@@ -1,7 +1,7 @@
 import {afterEach, describe, expect, it, vi} from 'vitest';
 import {render} from 'solid-js/web';
 import Section from '@components/section';
-import {OE_DEFAULTS, setExteralessSetting} from '@stores/exteralessSettings';
+import {OE_DEFAULTS, setExterayondSetting} from '@stores/exterayondSettings';
 
 let dispose: () => void;
 
@@ -9,8 +9,8 @@ afterEach(() => {
   dispose?.();
   dispose = undefined;
   document.body.replaceChildren();
-  setExteralessSetting('OEAppearanceSeparateHeaders', OE_DEFAULTS.OEAppearanceSeparateHeaders);
-  setExteralessSetting('OEAppearanceM3ListItems', OE_DEFAULTS.OEAppearanceM3ListItems);
+  setExterayondSetting('OEAppearanceSeparateHeaders', OE_DEFAULTS.OEAppearanceSeparateHeaders);
+  setExterayondSetting('OEAppearanceM3ListItems', OE_DEFAULTS.OEAppearanceM3ListItems);
 });
 
 describe('Section', () => {
@@ -74,13 +74,13 @@ describe('Section separated headers (LOOK-12)', () => {
     const mount = document.createElement('div');
     document.body.append(mount);
     dispose = render(() => (
-      <Section name="Exteraless.General.Info">Content</Section>
+      <Section name="Exterayond.General.Info">Content</Section>
     ), mount);
     return mount;
   };
 
   it('keeps the header inside the card while separateHeaders is off', () => {
-    setExteralessSetting('OEAppearanceSeparateHeaders', false);
+    setExterayondSetting('OEAppearanceSeparateHeaders', false);
     const mount = renderSection();
 
     const card = mount.querySelector('.sidebar-left-section');
@@ -91,7 +91,7 @@ describe('Section separated headers (LOOK-12)', () => {
   });
 
   it('floats the header free of the card while separateHeaders is on', () => {
-    setExteralessSetting('OEAppearanceSeparateHeaders', true);
+    setExterayondSetting('OEAppearanceSeparateHeaders', true);
     const mount = renderSection();
 
     const card = mount.querySelector('.sidebar-left-section');
@@ -103,23 +103,23 @@ describe('Section separated headers (LOOK-12)', () => {
   });
 
   it('follows a live toggle in both directions', () => {
-    setExteralessSetting('OEAppearanceSeparateHeaders', false);
+    setExterayondSetting('OEAppearanceSeparateHeaders', false);
     const mount = renderSection();
 
     expect(mount.querySelector('.is-separated')).toBeNull();
-    setExteralessSetting('OEAppearanceSeparateHeaders', true);
+    setExterayondSetting('OEAppearanceSeparateHeaders', true);
     const name = mount.querySelector('.sidebar-left-section-name.is-separated');
     expect(name).toBeTruthy();
 
-    setExteralessSetting('OEAppearanceSeparateHeaders', false);
+    setExterayondSetting('OEAppearanceSeparateHeaders', false);
     expect(mount.querySelector('.is-separated')).toBeNull();
     // * back inside the content card (a descendant, not the container's child)
     expect(mount.querySelector('.sidebar-left-section-content > .sidebar-left-section-name')).toBeTruthy();
   });
 
   it('stays separated with M3 list items on even when separateHeaders is off', () => {
-    setExteralessSetting('OEAppearanceSeparateHeaders', false);
-    setExteralessSetting('OEAppearanceM3ListItems', true);
+    setExterayondSetting('OEAppearanceSeparateHeaders', false);
+    setExterayondSetting('OEAppearanceM3ListItems', true);
     const mount = renderSection();
 
     expect(mount.querySelector('.sidebar-left-section-name.is-separated')).toBeTruthy();

@@ -1,5 +1,5 @@
 import {loadChatBubbles, LOAD_CHAT_BUBBLES_TIMEOUT} from '@tests/helpers/chatBubbles';
-import {setExteralessSetting, setOpenLinkConfirmation} from '@stores/exteralessSettings';
+import {setExterayondSetting, setOpenLinkConfirmation} from '@stores/exterayondSettings';
 import addAnchorListener from '@helpers/addAnchorListener';
 import '@helpers/peerIdPolyfill';
 
@@ -47,12 +47,12 @@ beforeEach(() => {
   vi.clearAllMocks();
   state.confirm.mockResolvedValue(undefined);
   state.existingCall.mockReturnValue(undefined);
-  setExteralessSetting('AskBeforeCalling', true);
+  setExterayondSetting('AskBeforeCalling', true);
 });
 afterEach(() => {
   setOpenLinkConfirmation(0);
-  setExteralessSetting('AskBeforeCalling', true);
-  setExteralessSetting('DisableClickCommandToSend', false);
+  setExterayondSetting('AskBeforeCalling', true);
+  setExterayondSetting('DisableClickCommandToSend', false);
   appImManager.chats = [];
 });
 
@@ -89,7 +89,7 @@ test('the real link question supports hidden, All and Never without running the 
   popup.mockClear();
   execute.mockClear();
   setOpenLinkConfirmation(1);
-  setExteralessSetting('SkipOpenLinkConfirm', true);
+  setExterayondSetting('SkipOpenLinkConfirm', true);
   anchor.textContent = anchor.href;
   const cancellation = (window as any).showMaskedAlert(anchor, undefined, execute);
   expect(popup).toHaveBeenCalledOnce();
@@ -142,7 +142,7 @@ test('the real MD3 music popup follows media events, delegates controls and clos
   const {default: createMusicPlayerFixture} = await import('@components/popupSandbox/musicPlayerFixture');
   const {default: PopupElement} = await import('@components/popups/indexTsx');
   const {default: I18n} = await import('@lib/langPack');
-  setExteralessSetting('OEAppearanceMd3Player', true);
+  setExterayondSetting('OEAppearanceMd3Player', true);
   const controller = createMusicPlayerFixture({pFlags: {}, peerId: 123, mid: 1} as any);
   const toggle = vi.spyOn(controller, 'toggle');
   const next = vi.spyOn(controller, 'next');
@@ -158,17 +158,17 @@ test('the real MD3 music popup follows media events, delegates controls and clos
   expect(next).toHaveBeenCalledOnce();
   expect(document.body.textContent).toContain('Sandbox Track 2');
   for(const [current, nextMode] of [
-    ['Exteraless.Md3.RepeatOff', 'Exteraless.Md3.RepeatPlaylist'],
-    ['Exteraless.Md3.RepeatPlaylist', 'Exteraless.Md3.RepeatTrack'],
-    ['Exteraless.Md3.RepeatTrack', 'Exteraless.Md3.RepeatOff']
+    ['Exterayond.Md3.RepeatOff', 'Exterayond.Md3.RepeatPlaylist'],
+    ['Exterayond.Md3.RepeatPlaylist', 'Exterayond.Md3.RepeatTrack'],
+    ['Exterayond.Md3.RepeatTrack', 'Exterayond.Md3.RepeatOff']
   ] as const) {
     document.querySelector<HTMLButtonElement>(`button[aria-label="${I18n.format(current, true)}"]`).click();
     expect(document.querySelector(`button[aria-label="${I18n.format(nextMode, true)}"]`)).not.toBeNull();
   }
-  setExteralessSetting('OEAppearanceMd3Player', false);
+  setExterayondSetting('OEAppearanceMd3Player', false);
   await vi.waitFor(() => expect(PopupElement.POPUPS.length).toBe(0));
   controller.stop();
-  setExteralessSetting('OEAppearanceMd3Player', true);
+  setExterayondSetting('OEAppearanceMd3Player', true);
 });
 
 test('the MD3 player style settings reshape the popup live and keep the Android defaults', async() => {
@@ -177,7 +177,7 @@ test('the MD3 player style settings reshape the popup live and keep the Android 
   const {default: PopupElement} = await import('@components/popups/indexTsx');
   const {default: I18n} = await import('@lib/langPack');
   const styles = (await import('@components/popups/md3Player.module.scss')).default;
-  setExteralessSetting('OEAppearanceMd3Player', true);
+  setExterayondSetting('OEAppearanceMd3Player', true);
   const controller = createMusicPlayerFixture({pFlags: {}, peerId: 123, mid: 1} as any);
   showMd3Player(controller);
   await vi.waitFor(() => expect(document.body.textContent).toContain('Sandbox Track'));
@@ -203,38 +203,38 @@ test('the MD3 player style settings reshape the popup live and keep the Android 
   expect(content.querySelector(`.progress-line__wave`)).not.toBeNull();
 
   const nextLabel = I18n.format('KeyboardShortcuts.Action.NextMedia', true);
-  const repeatLabel = I18n.format('Exteraless.Md3.RepeatOff', true);
+  const repeatLabel = I18n.format('Exterayond.Md3.RepeatOff', true);
   expect(content.querySelector(`button[aria-label="${repeatLabel}"]`)).not.toBeNull();
 
   // * PLAYER-15: modes off removes the repeat control, source off hides its row
-  setExteralessSetting('OEPlayerShowModes', false);
+  setExterayondSetting('OEPlayerShowModes', false);
   await vi.waitFor(() => expect(content.querySelector(`button[aria-label="${repeatLabel}"]`)).toBeNull());
-  setExteralessSetting('OEPlayerShowSource', false);
+  setExterayondSetting('OEPlayerShowSource', false);
   await vi.waitFor(() => expect(source.classList.contains(styles.hidden)).toBe(true));
   expect(source.getAttribute('aria-hidden')).toBe('true');
 
   // * PLAYER-02/03/04: the wide cover loses the radius rows' effect, the disc
   // * is a circle; size and radius travel as custom properties
-  setExteralessSetting('OEPlayerCoverStyle', 1);
+  setExterayondSetting('OEPlayerCoverStyle', 1);
   await vi.waitFor(() => expect(content.classList.contains(styles['is-wide'])).toBe(true));
-  setExteralessSetting('OEPlayerCoverSize', 60);
-  setExteralessSetting('OEPlayerControlsSize', 0);
+  setExterayondSetting('OEPlayerCoverSize', 60);
+  setExterayondSetting('OEPlayerControlsSize', 0);
   await vi.waitFor(() => {
     expect(content.style.getPropertyValue('--oe-player-cover-size')).toBe('0.6');
     expect(content.style.getPropertyValue('--oe-player-controls-scale')).toBe('0.84');
   });
 
   // * PLAYER-10: the title moves above the cover only for the framed styles
-  setExteralessSetting('OEPlayerTitleAbove', true);
+  setExterayondSetting('OEPlayerTitleAbove', true);
   expect(cover.compareDocumentPosition(metadata) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-  setExteralessSetting('OEPlayerCoverStyle', 3);
+  setExterayondSetting('OEPlayerCoverStyle', 3);
   await vi.waitFor(() => expect(content.classList.contains(styles['is-disc'])).toBe(true));
   expect(metadata.compareDocumentPosition(cover) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
 
   // * PLAYER-05: the disc spins while playing and the setting turns it off
   controller.toggle();
   await vi.waitFor(() => expect(content.classList.contains(styles['is-spinning'])).toBe(true));
-  setExteralessSetting('OEPlayerDiscSpin', false);
+  setExterayondSetting('OEPlayerDiscSpin', false);
   await vi.waitFor(() => expect(content.classList.contains(styles['is-spinning'])).toBe(false));
 
   // * PLAYER-16: the wave rises with playback and flattens on pause. The test
@@ -284,17 +284,17 @@ test('the MD3 player style settings reshape the popup live and keep the Android 
     rafSpy.mockRestore();
   }
 
-  setExteralessSetting('OEAppearanceMd3Player', false);
+  setExterayondSetting('OEAppearanceMd3Player', false);
   await vi.waitFor(() => expect(PopupElement.POPUPS.length).toBe(0));
   controller.stop();
-  setExteralessSetting('OEAppearanceMd3Player', true);
-  setExteralessSetting('OEPlayerShowModes', true);
-  setExteralessSetting('OEPlayerShowSource', true);
-  setExteralessSetting('OEPlayerCoverStyle', 0);
-  setExteralessSetting('OEPlayerCoverSize', 100);
-  setExteralessSetting('OEPlayerControlsSize', 1);
-  setExteralessSetting('OEPlayerTitleAbove', false);
-  setExteralessSetting('OEPlayerDiscSpin', true);
+  setExterayondSetting('OEAppearanceMd3Player', true);
+  setExterayondSetting('OEPlayerShowModes', true);
+  setExterayondSetting('OEPlayerShowSource', true);
+  setExterayondSetting('OEPlayerCoverStyle', 0);
+  setExterayondSetting('OEPlayerCoverSize', 100);
+  setExterayondSetting('OEPlayerControlsSize', 1);
+  setExterayondSetting('OEPlayerTitleAbove', false);
+  setExterayondSetting('OEPlayerDiscSpin', true);
 });
 
 test.each(['voice', 'video'] as const)('the real %s call method waits for confirmation before leaving or starting a call', async(type) => {
@@ -303,7 +303,7 @@ test.each(['voice', 'video'] as const)('the real %s call method waits for confir
   const h = host();
   const pending = AppImManager.prototype.callUser.call(h, 123, type);
   await vi.waitFor(() => expect(state.confirm).toHaveBeenCalled());
-  expect(state.confirm.mock.lastCall[0].descriptionLangKey).toBe(type === 'voice' ? 'Exteraless.ConfirmCall.Voice' : 'Exteraless.ConfirmCall.Video');
+  expect(state.confirm.mock.lastCall[0].descriptionLangKey).toBe(type === 'voice' ? 'Exterayond.ConfirmCall.Voice' : 'Exterayond.ConfirmCall.Video');
   expect(h.discardCurrentCall).not.toHaveBeenCalled();
   expect(state.startCall).not.toHaveBeenCalled();
   resolve();
@@ -318,7 +318,7 @@ test('cancellation stops a call while disabled confirmation preserves the existi
   await AppImManager.prototype.callUser.call(h, 123, 'voice');
   expect(h.discardCurrentCall).not.toHaveBeenCalled();
   expect(state.startCall).not.toHaveBeenCalled();
-  setExteralessSetting('AskBeforeCalling', false);
+  setExterayondSetting('AskBeforeCalling', false);
   await AppImManager.prototype.callUser.call(h, 123, 'voice');
   expect(state.confirm).toHaveBeenCalledTimes(1);
   expect(state.startCall).toHaveBeenCalledOnce();
@@ -327,7 +327,7 @@ test('cancellation stops a call while disabled confirmation preserves the existi
 test('a clicked command preserves its original sending context and waits for consent', async() => {
   let resolve: () => void;
   state.confirm.mockReturnValue(new Promise<void>((r) => {resolve = r;}));
-  setExteralessSetting('DisableClickCommandToSend', true);
+  setExterayondSetting('DisableClickCommandToSend', true);
   const sendText = vi.fn();
   let current = true;
   appImManager.chats = [{

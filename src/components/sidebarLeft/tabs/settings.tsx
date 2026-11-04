@@ -32,7 +32,7 @@ import {openSettingsSearchItem} from '@lib/settingsSearch/navigate';
 import {ROOT_SECTION_ID} from '@lib/settingsSearch/registry';
 import {bumpRecentSettingsSearch} from '@lib/settingsSearch/recent';
 import {bindManagersToSession} from '@lib/accounts/bindManagersToAccount';
-import {exteralessSettings} from '@stores/exteralessSettings';
+import {exterayondSettings} from '@stores/exterayondSettings';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Helper — wraps a sub-tab declaration. If the tab has a static `getInitArgs`,
@@ -377,10 +377,10 @@ const Settings = () => {
       {peerProfileElement}
       <Section>
         <div class="profile-buttons">
-          <Row clickable={() => tab.slider.createTab(hotReloadGuard.tabs.AppExteralessTab).open()}>
+          <Row clickable={() => tab.slider.createTab(hotReloadGuard.tabs.AppExterayondTab).open()}>
             <Row.Icon icon="star_filled" />
-            <Row.Title>{i18n('Exteraless.Preferences')}</Row.Title>
-            <Row.Subtitle>{i18n('Exteraless.Info')}</Row.Subtitle>
+            <Row.Title>{i18n('Exterayond.Preferences')}</Row.Title>
+            <Row.Subtitle>{i18n('Exterayond.Info')}</Row.Subtitle>
           </Row>
           <For each={subTabConfigs}>
             {(item) => (
@@ -408,7 +408,7 @@ const Settings = () => {
           </Row>
         </div>
       </Section>
-      <Show when={!premiumBlocked() && !exteralessSettings.HidePremiumSection}>
+      <Show when={!premiumBlocked() && !exterayondSettings.HidePremiumSection}>
         <Section>
           <Row clickable={() => hotReloadGuard.showPremiumPopup()}>
             <Row.Icon icon="premium_badge" />
@@ -446,7 +446,7 @@ const Settings = () => {
 };
 
 export const SettingsHelpSection = () => (
-  <Show when={!exteralessSettings.HideHelpSection}>
+  <Show when={!exterayondSettings.HideHelpSection}>
     <Section name="SettingsHelp">
       <Row clickable={() => hotReloadGuard.appImManager.openUrl('https://telegram.org/support')}>
         <Row.Icon icon="help" />

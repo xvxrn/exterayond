@@ -28,9 +28,9 @@ import {pluginsRuntime} from '@plugins/runtime';
  */
 
 const TRUST_LEVEL_NAMES: Record<number, string> = {
-  [PluginTrustLevel.ISOLATED]: 'Exteraless.Plugins.Trust.Isolated',
-  [PluginTrustLevel.GATED]: 'Exteraless.Plugins.Trust.Gated',
-  [PluginTrustLevel.TRUSTED]: 'Exteraless.Plugins.Trust.Trusted'
+  [PluginTrustLevel.ISOLATED]: 'Exterayond.Plugins.Trust.Isolated',
+  [PluginTrustLevel.GATED]: 'Exterayond.Plugins.Trust.Gated',
+  [PluginTrustLevel.TRUSTED]: 'Exterayond.Plugins.Trust.Trusted'
 };
 
 const reloadPlugin = (record: PluginRecord) => {
@@ -49,7 +49,7 @@ const PluginSettingsModels = (props: {record: PluginRecord}) => {
 
   return (
     <Show when={models().length}>
-      <Section name="Exteraless.Plugins.Settings">
+      <Section name="Exterayond.Plugins.Settings">
         {models().filter((model) => !!model && SETTINGS_MODEL_TYPES.has(model.type)).map((model) => {
           if(model.type === 'header') {
             return <Row><Row.Title>{model.text}</Row.Title></Row>;
@@ -168,20 +168,20 @@ const PluginRow = (props: {record: PluginRecord}) => {
           <Row clickable={cycleTrust}>
             <Row.Icon icon="lock" />
             <Row.Title titleRight={I18n.format(TRUST_LEVEL_NAMES[trustLevel.getLevel(record().id)] as LangPackKey, true)} titleRightSecondary>
-              {i18n('Exteraless.Plugins.TrustLevel')}
+              {i18n('Exterayond.Plugins.TrustLevel')}
             </Row.Title>
-            <Row.Subtitle>{i18n('Exteraless.Plugins.TrustLevel.Info')}</Row.Subtitle>
+            <Row.Subtitle>{i18n('Exterayond.Plugins.TrustLevel.Info')}</Row.Subtitle>
           </Row>
           <Row clickable={() => {
-            if(window.confirm(I18n.format('Exteraless.Plugins.Delete', true))) {
+            if(window.confirm(I18n.format('Exterayond.Plugins.Delete', true))) {
               pluginsRuntime.unload(record().id);
               pluginsManager.uninstall(record().id);
-              toastNew({langPackKey: 'Exteraless.Plugins.Deleted'});
+              toastNew({langPackKey: 'Exterayond.Plugins.Deleted'});
               setExpanded(false);
             }
           }}>
             <Row.Icon icon="delete" />
-            <Row.Title class="danger">{i18n('Exteraless.Plugins.Delete')}</Row.Title>
+            <Row.Title class="danger">{i18n('Exterayond.Plugins.Delete')}</Row.Title>
           </Row>
         </Section>
         <PluginSettingsModels record={record()} />
@@ -190,7 +190,7 @@ const PluginRow = (props: {record: PluginRecord}) => {
   );
 };
 
-const ExteralessPlugins = () => {
+const ExterayondPlugins = () => {
   const install = () => {
     const input = document.createElement('input');
     input.type = 'file';
@@ -202,11 +202,11 @@ const ExteralessPlugins = () => {
         reader.onload = () => {
           const result = pluginsManager.install(file.name, String(reader.result ?? ''));
           if(!result.ok) {
-            toastNew({langPackKey: 'Exteraless.Plugins.InstallFailed', langPackArguments: [result.error ?? '']});
+            toastNew({langPackKey: 'Exterayond.Plugins.InstallFailed', langPackArguments: [result.error ?? '']});
             return;
           }
 
-          toastNew({langPackKey: 'Exteraless.Plugins.Installed', langPackArguments: [result.record!.name]});
+          toastNew({langPackKey: 'Exterayond.Plugins.Installed', langPackArguments: [result.record!.name]});
           reloadPlugin(result.record!);
         };
         reader.readAsText(file);
@@ -220,24 +220,24 @@ const ExteralessPlugins = () => {
 
   return (
     <>
-      <Section caption="Exteraless.Plugins.Info">
+      <Section caption="Exterayond.Plugins.Info">
         <Row clickable={install}>
           <Row.Icon icon="add" />
-          <Row.Title>{i18n('Exteraless.Plugins.Install')}</Row.Title>
+          <Row.Title>{i18n('Exterayond.Plugins.Install')}</Row.Title>
         </Row>
       </Section>
       <Show when={records().length} fallback={
         <Section>
           <Row>
-            <Row.Title>{i18n('Exteraless.Plugins.Empty')}</Row.Title>
+            <Row.Title>{i18n('Exterayond.Plugins.Empty')}</Row.Title>
           </Row>
         </Section>
       }>
-        <Section name="Exteraless.Plugins">
+        <Section name="Exterayond.Plugins">
           {records().map((record) => <PluginRow record={record} />)}
         </Section>
       </Show>
-      <Section name="Exteraless.Plugins.SafeMode">
+      <Section name="Exterayond.Plugins.SafeMode">
         <Row>
           <Row.CheckboxFieldToggle>
             <CheckboxFieldTsx
@@ -246,12 +246,12 @@ const ExteralessPlugins = () => {
               onChange={(value) => pluginsManager.setSafeMode(value)}
             />
           </Row.CheckboxFieldToggle>
-          <Row.Title>{i18n('Exteraless.Plugins.SafeMode')}</Row.Title>
-          <Row.Subtitle>{i18n('Exteraless.Plugins.SafeMode.Info')}</Row.Subtitle>
+          <Row.Title>{i18n('Exterayond.Plugins.SafeMode')}</Row.Title>
+          <Row.Subtitle>{i18n('Exterayond.Plugins.SafeMode.Info')}</Row.Subtitle>
         </Row>
       </Section>
     </>
   );
 };
 
-export default ExteralessPlugins;
+export default ExterayondPlugins;

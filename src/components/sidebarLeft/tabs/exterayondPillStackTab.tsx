@@ -4,8 +4,8 @@ import Section from '@components/section';
 import {toastNew} from '@components/toast';
 import {For, createMemo} from 'solid-js';
 import {i18n, LangPackKey} from '@lib/langPack';
-import {getHubPillGroups, getRegisteredPill, resetPillLayout, setPillActive} from '@stores/exteralessPills';
-import {useExteralessSettings} from '@stores/exteralessSettings';
+import {getHubPillGroups, getRegisteredPill, resetPillLayout, setPillActive} from '@stores/exterayondPills';
+import {useExterayondSettings} from '@stores/exterayondSettings';
 
 /**
  * The Pill Stack screen of the exteraless Preferences hub, ported from
@@ -13,7 +13,7 @@ import {useExteralessSettings} from '@stores/exteralessSettings';
  * search-field strip shows, in which order (the stored layout strings), and
  * the strip's one behavior switch so far — infinite scrolling. A pill moves
  * between the lists on click, exactly Android's `onItemClick`; the lists show
- * only the pills the web registry can really back (`@stores/exteralessPills`),
+ * only the pills the web registry can really back (`@stores/exterayondPills`),
  * the same set the strip renders.
  */
 
@@ -25,47 +25,47 @@ const PillListSection = (props: {nameKey: LangPackKey, activate: boolean}) => {
     <Section name={props.nameKey}>
       <For each={pills()}>{(id) => (
         <Row clickable={() => setPillActive(id, props.activate)}>
-          <Row.Title>{i18n(getRegisteredPill(id)?.nameKey ?? 'Exteraless.PillStack.CacheName')}</Row.Title>
+          <Row.Title>{i18n(getRegisteredPill(id)?.nameKey ?? 'Exterayond.PillStack.CacheName')}</Row.Title>
         </Row>
       )}</For>
       <For each={pills().length ? [] : [1]}>{() => (
         <Row>
-          <Row.Title>{i18n('Exteraless.PillStack.Empty')}</Row.Title>
+          <Row.Title>{i18n('Exterayond.PillStack.Empty')}</Row.Title>
         </Row>
       )}</For>
     </Section>
   );
 };
 
-const ExteralessPillStack = () => {
-  const [exteralessSettings, setExteralessSetting] = useExteralessSettings();
+const ExterayondPillStack = () => {
+  const [exterayondSettings, setExterayondSetting] = useExterayondSettings();
 
   return (
     <>
-      <Section name="Exteraless.PillStack" caption="Exteraless.PillStack.Info">
+      <Section name="Exterayond.PillStack" caption="Exterayond.PillStack.Info">
         <Row>
           <Row.CheckboxFieldToggle>
             <CheckboxFieldTsx
               toggle
-              checked={exteralessSettings.OEPillInfiniteScrolling}
-              onChange={(value) => setExteralessSetting('OEPillInfiniteScrolling', value)}
+              checked={exterayondSettings.OEPillInfiniteScrolling}
+              onChange={(value) => setExterayondSetting('OEPillInfiniteScrolling', value)}
             />
           </Row.CheckboxFieldToggle>
-          <Row.Title>{i18n('Exteraless.PillStack.InfiniteScrolling')}</Row.Title>
+          <Row.Title>{i18n('Exterayond.PillStack.InfiniteScrolling')}</Row.Title>
         </Row>
       </Section>
-      <PillListSection nameKey="Exteraless.PillStack.ActivePills" activate={false} />
-      <PillListSection nameKey="Exteraless.PillStack.HiddenPills" activate={true} />
+      <PillListSection nameKey="Exterayond.PillStack.ActivePills" activate={false} />
+      <PillListSection nameKey="Exterayond.PillStack.HiddenPills" activate={true} />
       <Section>
         <Row clickable={() => {
           resetPillLayout();
-          toastNew({langPackKey: 'Exteraless.PillStack.ResetDone'});
+          toastNew({langPackKey: 'Exterayond.PillStack.ResetDone'});
         }}>
-          <Row.Title>{i18n('Exteraless.PillStack.ResetToDefault')}</Row.Title>
+          <Row.Title>{i18n('Exterayond.PillStack.ResetToDefault')}</Row.Title>
         </Row>
       </Section>
     </>
   );
 };
 
-export default ExteralessPillStack;
+export default ExterayondPillStack;

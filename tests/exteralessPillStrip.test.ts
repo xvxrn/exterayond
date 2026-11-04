@@ -55,7 +55,7 @@ import type {MiddlewareHelper} from '@helpers/middleware';
 import type InputSearch from '@components/inputSearch';
 import {attachPillStackStrip} from '@components/sidebarLeft/pillStack';
 import type {PillStackStrip} from '@components/sidebarLeft/pillStack';
-import {OE_DEFAULTS, exteralessSettings, setExteralessSetting} from '@stores/exteralessSettings';
+import {OE_DEFAULTS, exterayondSettings, setExterayondSetting} from '@stores/exterayondSettings';
 
 const originalManagers = rootScope.managers;
 let middlewareHelper: MiddlewareHelper;
@@ -77,7 +77,7 @@ const attachStrip = (inputSearch = makeInputSearch()): {strip: PillStackStrip, i
 const RESET_STORAGE = () => {
   (localStorage as unknown as {_data: Map<string, string>})._data.clear();
   for(const key of Object.keys(OE_DEFAULTS) as Array<keyof typeof OE_DEFAULTS>) {
-    setExteralessSetting(key, OE_DEFAULTS[key]);
+    setExterayondSetting(key, OE_DEFAULTS[key]);
   }
 };
 
@@ -110,7 +110,7 @@ describe('the pill strip mount (PillStackController.attach)', () => {
     expect(strip.container.classList.contains('is-hidden')).toBe(false);
     expect(pills[0].tabIndex).toBe(0);
     expect(pills[0].getAttribute('aria-hidden')).toBe('false');
-    expect(pills[0].getAttribute('aria-label')).toBe('Exteraless.PillStack.CacheName');
+    expect(pills[0].getAttribute('aria-label')).toBe('Exterayond.PillStack.CacheName');
     // * the collectors ran once for the initial value
     await flush();
     expect(collectors.files).toHaveBeenCalledTimes(1);
@@ -133,13 +133,13 @@ describe('the pill strip mount (PillStackController.attach)', () => {
   it('a layout change through the store rebuilds the strip live', () => {
     const {strip} = attachStrip();
     // * the cache pill moves to the hidden list (the hub's click move)
-    setExteralessSetting('OEPillActivePills', '');
-    setExteralessSetting('OEPillHiddenPills', '5');
+    setExterayondSetting('OEPillActivePills', '');
+    setExterayondSetting('OEPillHiddenPills', '5');
     expect(strip.container.querySelectorAll('.oe-pill')).toHaveLength(0);
     expect(strip.container.classList.contains('has-pills')).toBe(false);
 
-    setExteralessSetting('OEPillActivePills', '5');
-    setExteralessSetting('OEPillHiddenPills', '');
+    setExterayondSetting('OEPillActivePills', '5');
+    setExterayondSetting('OEPillHiddenPills', '');
     const pills = [...strip.container.querySelectorAll('.oe-pill')] as HTMLButtonElement[];
     expect(pills).toHaveLength(1);
     expect(pills[0].classList.contains('is-hidden-pill')).toBe(false);
@@ -147,7 +147,7 @@ describe('the pill strip mount (PillStackController.attach)', () => {
 
   it('the one-pill switch is inert and persists nothing (PILLS-03 at count 1)', () => {
     const {strip, input} = attachStrip();
-    const before = exteralessSettings.OEPillLastActiveId;
+    const before = exterayondSettings.OEPillLastActiveId;
 
     // * a wheel notch over the strip
     strip.container.dispatchEvent(new WheelEvent('wheel', {deltaY: 100, cancelable: true}));
@@ -155,19 +155,19 @@ describe('the pill strip mount (PillStackController.attach)', () => {
     const pill = strip.container.querySelector('.oe-pill') as HTMLButtonElement;
     pill.dispatchEvent(new KeyboardEvent('keydown', {key: 'ArrowDown', bubbles: true, cancelable: true}));
 
-    expect(exteralessSettings.OEPillLastActiveId).toBe(before);
+    expect(exterayondSettings.OEPillLastActiveId).toBe(before);
     expect(pill.classList.contains('is-hidden-pill')).toBe(false);
     expect(input.value).toBe('');
   });
 
   it('the switch persists the new pill id when the layout carries more than one', () => {
     // * a dormant second registration is not possible today — the switch is
-    // * driven through nextPillIndex, covered in exteralessPills.test.ts;
+    // * driven through nextPillIndex, covered in exterayondPills.test.ts;
     // * here the wheel path must at least not throw and must not persist
     const {strip} = attachStrip();
     const wheel = new WheelEvent('wheel', {deltaY: -100, cancelable: true});
     strip.container.dispatchEvent(wheel);
-    expect(exteralessSettings.OEPillLastActiveId).toBe(-1);
+    expect(exterayondSettings.OEPillLastActiveId).toBe(-1);
   });
 });
 
@@ -181,7 +181,7 @@ describe('the cache pill value (PILLS-06, CachePill.onUpdateData)', () => {
     const pill = strip.container.querySelector('.oe-pill') as HTMLButtonElement;
     const valueEl = pill.querySelector('.oe-pill-value') as HTMLElement;
     expect(valueEl.textContent).toBe('FileSize.KB');
-    expect(pill.getAttribute('aria-label')).toBe('Exteraless.PillStack.CacheName: FileSize.KB');
+    expect(pill.getAttribute('aria-label')).toBe('Exterayond.PillStack.CacheName: FileSize.KB');
 
     // * Firefox private mode (or denied storage) rejects the collectors; the
     // * rebuild a layout change triggers refreshes again. Without a catch in
@@ -204,7 +204,7 @@ describe('the strip teardown (middleware.onClean)', () => {
     expect(strip.container.classList.contains('is-hidden')).toBe(false);
 
     // * the store listener is gone too: a layout change rebuilds nothing
-    setExteralessSetting('OEPillActivePills', '');
+    setExterayondSetting('OEPillActivePills', '');
     expect(strip.container.querySelectorAll('.oe-pill')).toHaveLength(1);
   });
 });

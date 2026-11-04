@@ -29,7 +29,7 @@ import wrapPeerTitle from '@components/wrappers/peerTitle';
 import getParticipantPeerId from '@appManagers/utils/chats/getParticipantPeerId';
 import {avatarNew} from '@components/avatarNew';
 import getPeerActiveUsernames from '@appManagers/utils/peers/getPeerActiveUsernames';
-import {getHashtagSearchType} from '@stores/exteralessSettings';
+import {getHashtagSearchType} from '@stores/exterayondSettings';
 import cancelEvent from '@helpers/dom/cancelEvent';
 import {attachClickEvent} from '@helpers/dom/clickEvent';
 import attachTabList from '@helpers/dom/tabList';

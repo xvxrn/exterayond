@@ -38,7 +38,7 @@ const loadModules = () => {
   vi.resetModules();
   return (async() => {
     const cleanerModule = await import('@lib/linkCleaner');
-    const store = await import('@stores/exteralessSettings');
+    const store = await import('@stores/exterayondSettings');
     return {cleanerModule, store};
   })();
 };
@@ -57,18 +57,18 @@ describe('stripTrackingOnOpen — the synchronous clean (Browser.openUrl analog)
 
   test('preload follows both strip settings, then the sync clean works', async() => {
     const {cleanerModule, store} = await loadModules();
-    store.setExteralessSetting('OEChatsStripTrackingOnOpen', false);
-    store.setExteralessSetting('OEChatsStripTrackingOnPaste', false);
+    store.setExterayondSetting('OEChatsStripTrackingOnOpen', false);
+    store.setExterayondSetting('OEChatsStripTrackingOnPaste', false);
     expect(cleanerModule.preloadLinkCleaner()).toBeUndefined();
     expect(cleanerModule.cleanLinkSync(TRACKED, 'open')).toBe(TRACKED);
 
-    store.setExteralessSetting('OEChatsStripTrackingOnOpen', true);
+    store.setExterayondSetting('OEChatsStripTrackingOnOpen', true);
     await cleanerModule.preloadLinkCleaner();
     expect(cleanerModule.cleanLinkSync(TRACKED, 'open')).toBe(CLEANED);
     // * the open path only: the paste setting gates its own, the shared
     // * instance is loaded either way
-    store.setExteralessSetting('OEChatsStripTrackingOnOpen', false);
-    store.setExteralessSetting('OEChatsStripTrackingOnPaste', true);
+    store.setExterayondSetting('OEChatsStripTrackingOnOpen', false);
+    store.setExterayondSetting('OEChatsStripTrackingOnPaste', true);
     expect(cleanerModule.preloadLinkCleaner()).toBeDefined();
     expect(cleanerModule.cleanLinkSync(TRACKED, 'open')).toBe(TRACKED);
     expect(cleanerModule.cleanLinkSync(TRACKED, 'paste')).toBe(CLEANED);
@@ -96,7 +96,7 @@ describe('stripAnchorTracking — the native-navigation anchor rewrite', () => {
   test('rewrites a tracked href in place and restores it after the navigation window', async() => {
     const {cleanerModule, store} = await loadModules();
     await cleanerModule.preloadLinkCleaner();
-    expect(store.exteralessSettings.OEChatsStripTrackingOnOpen).toBe(true);
+    expect(store.exterayondSettings.OEChatsStripTrackingOnOpen).toBe(true);
 
     const anchor = makeAnchor(TRACKED);
     cleanerModule.stripAnchorTracking(anchor);
@@ -144,7 +144,7 @@ describe('stripAnchorTracking — the native-navigation anchor rewrite', () => {
     // * loaded filter, setting off: the store decides
     const {cleanerModule, store} = await loadModules();
     await cleanerModule.preloadLinkCleaner();
-    store.setExteralessSetting('OEChatsStripTrackingOnOpen', false);
+    store.setExterayondSetting('OEChatsStripTrackingOnOpen', false);
     cleanerModule.stripAnchorTracking(anchor);
     expect(anchor.getAttribute('href')).toBe(TRACKED);
   });

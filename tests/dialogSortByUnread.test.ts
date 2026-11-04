@@ -193,7 +193,7 @@ describe('dialog sort by unread (GEN-12)', () => {
     ]);
 
     // * the tabs' chat lists are told to rebuild only after the pass
-    expect(storage.rootScope.dispatchEvent).toHaveBeenCalledWith('exteraless_settings_updated', {
+    expect(storage.rootScope.dispatchEvent).toHaveBeenCalledWith('exterayond_settings_updated', {
       key: 'SortByUnread',
       value: false
     });

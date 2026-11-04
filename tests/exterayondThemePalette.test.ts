@@ -12,14 +12,14 @@ import {
   THEME_PALETTE_SURFACE_KEYS,
   tintPaletteSurface,
   watchBootThemeClass
-} from '@stores/exteralessThemePalette';
+} from '@stores/exterayondThemePalette';
 import {
   accentPresetFromColor,
   CUSTOM_ACCENT_PRESET_ID,
   materialWallpaperFromAccent,
   presetThemeId
 } from '@config/themePresets';
-import {exteralessSettings, resetExteralessSettings, setExteralessSetting} from '@stores/exteralessSettings';
+import {exterayondSettings, resetExterayondSettings, setExterayondSetting} from '@stores/exterayondSettings';
 
 describe('theme palette resolution', () => {
   test('off and light themes resolve nothing, on resolves the fixed surfaces', () => {
@@ -192,23 +192,23 @@ describe('theme palette wiring', () => {
     try {
       // * no theme state in the test environment: the fixed near-black family
       expect(root.style.getPropertyValue('--surface-color')).toBe('');
-      setExteralessSetting('OEAppearanceThemePalette', true);
+      setExterayondSetting('OEAppearanceThemePalette', true);
       await flush();
-      expect(exteralessSettings.OEAppearanceThemePalette).toBe(true);
+      expect(exterayondSettings.OEAppearanceThemePalette).toBe(true);
       expect(root.style.getPropertyValue('--surface-color')).toBe('#141414');
       expect(root.style.getPropertyValue('--background-color')).toBe('#0d0d0d');
       expect(root.style.getPropertyValue('--surface-color-rgb')).toBe('20,20,20');
 
       // * off clears exactly the family it wrote
-      setExteralessSetting('OEAppearanceThemePalette', false);
+      setExterayondSetting('OEAppearanceThemePalette', false);
       await flush();
       expect(root.style.getPropertyValue('--surface-color')).toBe('');
       expect(root.style.getPropertyValue('--background-color')).toBe('');
 
       // * reset restores the off default and clears a left-over apply
-      setExteralessSetting('OEAppearanceThemePalette', true);
+      setExterayondSetting('OEAppearanceThemePalette', true);
       await flush();
-      resetExteralessSettings();
+      resetExterayondSettings();
       await flush();
       expect(root.style.getPropertyValue('--surface-color')).toBe('');
     } finally {

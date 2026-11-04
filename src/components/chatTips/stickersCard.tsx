@@ -16,7 +16,7 @@ import TipCard, {openSettingsTab, TipCardButton, useTipReady} from '@components/
 import styles from '@components/chatTips/chatTips.module.scss';
 import A11yButton from '@components/a11yButton';
 import {hotReloadGuard} from '@lib/solidjs/hotReloadGuardProvider';
-import {exteralessSettings} from '@stores/exteralessSettings';
+import {exterayondSettings} from '@stores/exterayondSettings';
 
 /** macOS shows three featured packs side by side in the content slot. */
 const SETS_LIMIT = 3;
@@ -40,14 +40,14 @@ export default function StickersTipCard() {
   const {appSidebarLeft, rootScope} = useHotReloadGuard();
   const [appSettings, setAppSettings] = useAppSettings();
 
-  const [featured] = createResource(() => !exteralessSettings.DisableTrending, async() => {
+  const [featured] = createResource(() => !exterayondSettings.DisableTrending, async() => {
     const sets = await rootScope.managers.appStickersManager.getFeaturedStickers();
     return sets.slice(0, SETS_LIMIT).map(({set}) => set);
   });
 
   const markReady = useTipReady();
   createEffect(() => {
-    if(exteralessSettings.DisableTrending || featured()) markReady();
+    if(exterayondSettings.DisableTrending || featured()) markReady();
   });
 
   const buttons = (): TipCardButton[] => MODES.map(([value, icon, langKey]) => ({
@@ -61,12 +61,12 @@ export default function StickersTipCard() {
     <TipCard
       title={i18n('Stickers.SuggestStickers')}
       buttons={buttons()}
-      contentTitle={!exteralessSettings.DisableTrending && i18n('Stickers.Trending')}
-      description={exteralessSettings.DisableTrending ? i18n('Exteraless.DisableTrending.Info') : i18n('ChatTips.Stickers.Description', [
+      contentTitle={!exterayondSettings.DisableTrending && i18n('Stickers.Trending')}
+      description={exterayondSettings.DisableTrending ? i18n('Exterayond.DisableTrending.Info') : i18n('ChatTips.Stickers.Description', [
         anchorCallback(() => openSettingsTab(appSidebarLeft, hotReloadGuard.tabs.AppStickersTab))
       ])}
     >
-      <Show when={!exteralessSettings.DisableTrending}>
+      <Show when={!exterayondSettings.DisableTrending}>
         <div class={styles.stickerSets}>
           <For each={featured()}>{(set) => <TrendingStickerSet set={set} />}</For>
         </div>

@@ -25,7 +25,7 @@ import getServerMessageId from '@appManagers/utils/messageId/getServerMessageId'
 import getPeerActiveUsernames from '@appManagers/utils/peers/getPeerActiveUsernames';
 import isCollectibleUsername from '@appManagers/utils/peers/isCollectibleUsername';
 import {appState, useAppConfig} from '@stores/appState';
-import {exteralessSettings} from '@stores/exteralessSettings';
+import {exterayondSettings} from '@stores/exterayondSettings';
 import {useCommunity, useCommunityFull} from '@stores/communities';
 import detectLanguageForTranslation from '@helpers/detectLanguageForTranslation';
 import usePeerTranslation from '@hooks/usePeerTranslation';
@@ -730,7 +730,7 @@ PeerProfile.Phone = () => {
       return;
     }
 
-    if(context.peerId === rootScope.myId && exteralessSettings.HidePhone) {
+    if(context.peerId === rootScope.myId && exterayondSettings.HidePhone) {
       return;
     }
 
@@ -794,7 +794,7 @@ PeerProfile.IdAndDc = () => {
   const {i18n, rootScope, toastNew} = useHotReloadGuard();
   const managers = bindManagersToSession(rootScope.managers);
   const [selfDc] = createResource(
-    () => context.peerId === rootScope.myId && exteralessSettings.IdDcType !== 0,
+    () => context.peerId === rootScope.myId && exterayondSettings.IdDcType !== 0,
     async() => {
       try {
         return await managers.apiManager.getBaseDcId();
@@ -805,8 +805,8 @@ PeerProfile.IdAndDc = () => {
   );
   const id = createMemo(() => {
     const peer = context.peer as User.user | Chat;
-    if(!exteralessSettings.IdDcType || peer?.id === undefined) return;
-    if(exteralessSettings.IdDcType === 2 && context.peerId.isAnyChat()) {
+    if(!exterayondSettings.IdDcType || peer?.id === undefined) return;
+    if(exterayondSettings.IdDcType === 2 && context.peerId.isAnyChat()) {
       const offset = BigInt(peer._ === 'channel' || peer._ === 'channelForbidden' ? '1000000000000' : 0);
       return (-offset - BigInt(peer.id)).toString();
     }
@@ -826,7 +826,7 @@ PeerProfile.IdAndDc = () => {
     <Row clickable={copy} contextMenu={{buttons: [{icon: 'copy', text: 'Copy', onClick: copy}]}}>
       <Row.Icon icon="info" />
       <Row.Title><span dir="ltr">{id()}</span></Row.Title>
-      <Row.Subtitle>{dc() ? i18n('Exteraless.ProfileId.Dc', [dc()]) : i18n('Exteraless.ProfileId.DcUnknown')}</Row.Subtitle>
+      <Row.Subtitle>{dc() ? i18n('Exterayond.ProfileId.Dc', [dc()]) : i18n('Exterayond.ProfileId.DcUnknown')}</Row.Subtitle>
     </Row>
   </Show>;
 };

@@ -1,7 +1,7 @@
 import '@helpers/peerIdPolyfill';
 import ListenerSetter from '@helpers/listenerSetter';
 import GroupSetController from '@components/emoticonsDropdown/groupSet';
-import {setExteralessSetting} from '@stores/exteralessSettings';
+import {setExterayondSetting} from '@stores/exterayondSettings';
 
 vi.mock('@lib/rootScope', () => ({default: {addEventListener: vi.fn(), removeEventListener: vi.fn()}}));
 
@@ -29,22 +29,22 @@ const makeController = (isEmoji = false) => {
   return {controller, getChatFull, render, remove};
 };
 
-beforeEach(() => setExteralessSetting('hideGroupSticker', false));
+beforeEach(() => setExterayondSetting('hideGroupSticker', false));
 afterEach(() => {
   listeners.splice(0).forEach((listener) => listener.removeAll());
-  setExteralessSetting('hideGroupSticker', false);
+  setExterayondSetting('hideGroupSticker', false);
 });
 
 test('hides even the admin group section without fetching and restores it on the next panel open', async() => {
   const h = makeController();
   await h.controller.update();
   expect(h.render).toHaveBeenCalledOnce();
-  setExteralessSetting('hideGroupSticker', true);
+  setExterayondSetting('hideGroupSticker', true);
   await h.controller.update();
   expect(h.remove).toHaveBeenCalledOnce();
   expect(h.getChatFull).toHaveBeenCalledOnce();
   expect(h.controller.getCurrentSet()).toBeUndefined();
-  setExteralessSetting('hideGroupSticker', false);
+  setExterayondSetting('hideGroupSticker', false);
   await h.controller.update();
   expect(h.render).toHaveBeenCalledTimes(2);
 });
@@ -52,13 +52,13 @@ test('hides even the admin group section without fetching and restores it on the
 test('does not bring back a pending group set after hiding is enabled', async() => {
   const h = makeController();
   const pending = h.controller.update();
-  setExteralessSetting('hideGroupSticker', true);
+  setExterayondSetting('hideGroupSticker', true);
   await pending;
   expect(h.render).not.toHaveBeenCalled();
 });
 
 test('keeps the group emoji pack available', async() => {
-  setExteralessSetting('hideGroupSticker', true);
+  setExterayondSetting('hideGroupSticker', true);
   const h = makeController(true);
   await h.controller.update();
   expect(h.render).toHaveBeenCalledWith({set, canEdit: true, hidden: false});

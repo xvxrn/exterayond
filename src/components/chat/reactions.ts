@@ -90,7 +90,7 @@ hotListen(import.meta.hot, rootScope, 'saved_tags', ({savedPeerId, tags}) => {
   });
 });
 
-hotListen(import.meta.hot, rootScope, 'exteraless_settings_updated', ({key}) => {
+hotListen(import.meta.hot, rootScope, 'exterayond_settings_updated', ({key}) => {
   if(key !== 'DisableNumberRounding') {
     return;
   }

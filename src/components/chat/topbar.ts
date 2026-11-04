@@ -9,7 +9,7 @@ import ButtonMenuToggle from '@components/buttonMenuToggle';
 import createChatPinnedMessage, {ChatPinnedMessageController} from '@components/chat/pinnedMessage';
 import getPinnedMessagesKey from '@appManagers/utils/messages/getPinnedMessagesKey';
 import ListenerSetter from '@helpers/listenerSetter';
-import {exteralessSettings} from '@stores/exteralessSettings';
+import {exterayondSettings} from '@stores/exterayondSettings';
 import showDeleteDialogPopup from '@components/popups/deleteDialog';
 import {showPeerReport} from '@components/popups/reportAd';
 import appNavigationController from '@components/appNavigationController';
@@ -404,7 +404,7 @@ export default class ChatTopbar {
 
   private verifyCallButton = async(type?: CallType, ignorePreference = false) => {
     // * exteraless hideCallButton: off both the topbar and the profile menu
-    if(!ignorePreference && exteralessSettings.OEChatsHideCallButton) return false;
+    if(!ignorePreference && exterayondSettings.OEChatsHideCallButton) return false;
     if(!IS_CALL_SUPPORTED || !this.peerId.isUser() || this.chat.type !== ChatType.Chat) return false;
     const userId = this.peerId.toUserId();
     const userFull = await this.managers.appProfileManager.getCachedFullUser(userId);
@@ -996,7 +996,7 @@ export default class ChatTopbar {
       // this.btnBack.classList.add(size ? 'tgico-previous' : 'tgico-left');
     });
 
-    this.listenerSetter.add(rootScope)('exteraless_settings_updated', ({key}) => {
+    this.listenerSetter.add(rootScope)('exterayond_settings_updated', ({key}) => {
       if(key === 'DisableNumberRounding' && this.btnBackBadge) {
         setBadgeCount(this.btnBackBadge, this.backBadgeSize, formatCount(this.backBadgeSize, 1), mediaSizes.isMobile);
       }

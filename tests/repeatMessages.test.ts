@@ -11,7 +11,7 @@ const confirmationMock = vi.hoisted(() => vi.fn());
 vi.mock('@components/confirmationPopup', () => ({default: confirmationMock}));
 
 import repeatMessages from '@components/chat/repeatMessages';
-import {setExteralessSetting} from '@stores/exteralessSettings';
+import {setExterayondSetting} from '@stores/exterayondSettings';
 
 const makeManagers = () => {
   const forwardMessages = vi.fn(async() => undefined);
@@ -22,8 +22,8 @@ describe('repeatMessages', () => {
   beforeEach(() => {
     confirmationMock.mockReset();
     confirmationMock.mockResolvedValue(undefined);
-    setExteralessSetting('repeatConfirm', true);
-    setExteralessSetting('showRepeat', false);
+    setExterayondSetting('repeatConfirm', true);
+    setExterayondSetting('showRepeat', false);
   });
 
   test('asks and forwards into the same chat while the confirmation is on', async() => {
@@ -41,7 +41,7 @@ describe('repeatMessages', () => {
   });
 
   test('the default confirmation-off sends without asking', async() => {
-    setExteralessSetting('repeatConfirm', false);
+    setExterayondSetting('repeatConfirm', false);
     const {managers, forwardMessages} = makeManagers();
     await expect(repeatMessages(managers, 100 as PeerId, [21])).resolves.toBe(true);
     expect(confirmationMock).not.toHaveBeenCalled();

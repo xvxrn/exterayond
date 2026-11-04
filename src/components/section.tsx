@@ -2,7 +2,7 @@ import {JSX, ParentComponent, Ref, Show, splitProps} from 'solid-js';
 import {LangPackKey, FormatterArguments, i18n} from '@lib/langPack';
 import classNames from '@helpers/string/classNames';
 import {generateDelimiter} from '@components/generateDelimiter';
-import {useExteralessSettings} from '@stores/exteralessSettings';
+import {useExterayondSettings} from '@stores/exterayondSettings';
 
 export type SectionOptions = {
   name?: LangPackKey | HTMLElement | DocumentFragment | JSX.Element,
@@ -85,8 +85,8 @@ const Section: ParentComponent<SectionProps> = (props) => {
   // * exteraless separateHeaders: the header floats free of the card, the way
   // * Android's RecyclerListView excludes the HeaderCell from the section
   // * background (`sectionsSeparatedHeaders()`)
-  const [exteralessSettings] = useExteralessSettings();
-  const separateName = () => !!props.name && (exteralessSettings.OEAppearanceSeparateHeaders || exteralessSettings.OEAppearanceM3ListItems);
+  const [exterayondSettings] = useExterayondSettings();
+  const separateName = () => !!props.name && (exterayondSettings.OEAppearanceSeparateHeaders || exterayondSettings.OEAppearanceM3ListItems);
   return (
     <div
       class={classNames(className + '-container', props.noMarginBottom && 'no-margin-bottom', props.class)}

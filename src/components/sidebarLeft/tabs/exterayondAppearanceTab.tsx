@@ -18,17 +18,17 @@ import {
   OE_PLAYER_COVER_RADIUS_MAX,
   OE_PLAYER_COVER_SIZE_MAX,
   OE_PLAYER_COVER_SIZE_MIN,
-  exteralessSettings,
+  exterayondSettings,
   getPlayerCoverStyle,
   getMd3StyleCount,
   setAllMd3Styles,
-  useExteralessSettings
-} from '@stores/exteralessSettings';
+  useExterayondSettings
+} from '@stores/exterayondSettings';
 
 /**
  * The Appearance category of the exteraless Preferences hub. Every control is
  * a ported Android setting with its behavior wired into Web K (the CSS choke
- * points named in src/stores/exteralessSettings.ts); ranges, defaults and
+ * points named in src/stores/exterayondSettings.ts); ranges, defaults and
  * labels follow `OpenExteraAppearanceActivity`. The player-style group ports
  * the rows of Android's `PlayerStyleEditor`; the visibility of dependent rows
  * follows its `refreshVisibility`.
@@ -72,7 +72,7 @@ const isUserOwnedWallpaper = () => {
 const buildCustomAccentPreset = (accentColor: number): AccentPreset => {
   const base = themeController.getBaseThemeForName(themeController.getTheme().name);
   const preset = accentPresetFromColor(accentColor, base);
-  if(exteralessSettings.OEAppearanceThemePalette && !isUserOwnedWallpaper()) {
+  if(exterayondSettings.OEAppearanceThemePalette && !isUserOwnedWallpaper()) {
     preset.wallpaper = materialWallpaperFromAccent(accentColor, base);
   }
   return preset;
@@ -148,9 +148,9 @@ const AccentColorSection = () => {
   });
 
   return (
-    <Section name="Exteraless.AccentColor" caption="Exteraless.AccentColor.Info">
+    <Section name="Exterayond.AccentColor" caption="Exterayond.AccentColor.Info">
       <Row>
-        <Row.Title>{i18n('Exteraless.AccentColor')}</Row.Title>
+        <Row.Title>{i18n('Exterayond.AccentColor')}</Row.Title>
         <span class="exteraless-accent-swatch" style={{'background-color': appliedHex()}} />
       </Row>
       <details
@@ -161,7 +161,7 @@ const AccentColorSection = () => {
           }
         })}
       >
-        <summary>{i18n('Exteraless.AccentColor.Customize')}</summary>
+        <summary>{i18n('Exterayond.AccentColor.Customize')}</summary>
         <div
           class="exteraless-accent-picker"
           ref={(el) => {
@@ -176,26 +176,26 @@ const AccentColorSection = () => {
           clearTimeout(commitTimer);
           void themeController.resetActiveTheme();
         }}>
-          <Row.Title>{i18n('Exteraless.AccentColor.Reset')}</Row.Title>
+          <Row.Title>{i18n('Exterayond.AccentColor.Reset')}</Row.Title>
         </Row>
       </details>
     </Section>
   );
 };
 
-const ExteralessAppearance = () => {
-  const [exteralessSettings, setExteralessSetting] = useExteralessSettings();
+const ExterayondAppearance = () => {
+  const [exterayondSettings, setExterayondSetting] = useExterayondSettings();
   const [tab] = useSuperTab();
 
   const md3Styles = [
-    ['OEAppearanceNewLoadingStyle', 'Exteraless.Md3.ProgressIndicators'],
-    ['SliderStyle', 'Exteraless.Md3.Sliders'],
-    ['SwitchStyle', 'Exteraless.Md3.Switches'],
-    ['OEAppearanceNewChatHeaderStyle', 'Exteraless.NewChatHeaderStyle'],
-    ['OEAppearanceNewNavigationBarStyle', 'Exteraless.Md3.Navigation'],
-    ['OEAppearanceM3ListItems', 'Exteraless.Md3.ListItems'],
-    ['OEAppearanceMd3Player', 'Exteraless.Md3.Player'],
-    ['OEAppearanceMd3MiniPlayer', 'Exteraless.Md3.MiniPlayer']
+    ['OEAppearanceNewLoadingStyle', 'Exterayond.Md3.ProgressIndicators'],
+    ['SliderStyle', 'Exterayond.Md3.Sliders'],
+    ['SwitchStyle', 'Exterayond.Md3.Switches'],
+    ['OEAppearanceNewChatHeaderStyle', 'Exterayond.NewChatHeaderStyle'],
+    ['OEAppearanceNewNavigationBarStyle', 'Exterayond.Md3.Navigation'],
+    ['OEAppearanceM3ListItems', 'Exterayond.Md3.ListItems'],
+    ['OEAppearanceMd3Player', 'Exterayond.Md3.Player'],
+    ['OEAppearanceMd3MiniPlayer', 'Exterayond.Md3.MiniPlayer']
   ] as const;
 
   // * Android PlayerStyleEditor.refreshVisibility: size for the framed covers,
@@ -209,9 +209,9 @@ const ExteralessAppearance = () => {
 
   const avatarCornersLabel = (value: number) => {
     if(value === OE_AVATAR_CORNERS_MAX) {
-      return i18n('Exteraless.AvatarCorners.Circle');
+      return i18n('Exterayond.AvatarCorners.Circle');
     } else if(value === 0) {
-      return i18n('Exteraless.AvatarCorners.Square');
+      return i18n('Exterayond.AvatarCorners.Square');
     }
 
     return '' + value;
@@ -219,38 +219,38 @@ const ExteralessAppearance = () => {
 
   return (
     <>
-      <Section name="Exteraless.ThemePalette" caption="Exteraless.ThemePalette.Info">
+      <Section name="Exterayond.ThemePalette" caption="Exterayond.ThemePalette.Info">
         <Row>
           <Row.CheckboxFieldToggle>
             <CheckboxFieldTsx
               toggle
-              checked={exteralessSettings.OEAppearanceThemePalette}
-              onChange={(value) => setExteralessSetting('OEAppearanceThemePalette', value)}
+              checked={exterayondSettings.OEAppearanceThemePalette}
+              onChange={(value) => setExterayondSetting('OEAppearanceThemePalette', value)}
             />
           </Row.CheckboxFieldToggle>
-          <Row.Title>{i18n('Exteraless.ThemePalette')}</Row.Title>
+          <Row.Title>{i18n('Exterayond.ThemePalette')}</Row.Title>
         </Row>
       </Section>
       <AccentColorSection />
-      <Section name="Exteraless.Md3" caption="Exteraless.Md3.Info">
+      <Section name="Exterayond.Md3" caption="Exterayond.Md3.Info">
         <Row>
           <Row.CheckboxFieldToggle>
             <CheckboxFieldTsx toggle checked={getMd3StyleCount() > 0} onChange={setAllMd3Styles} />
           </Row.CheckboxFieldToggle>
-          <Row.Title>{i18n('Exteraless.Md3')}</Row.Title>
+          <Row.Title>{i18n('Exterayond.Md3')}</Row.Title>
           <Row.Subtitle>{getMd3StyleCount()}/8</Row.Subtitle>
         </Row>
         <details class="exterayond-md3-options">
-          <summary>{i18n('Exteraless.Md3.Customize')}</summary>
+          <summary>{i18n('Exterayond.Md3.Customize')}</summary>
           {md3Styles.map(([key, label]) => (
             <Row>
               <Row.CheckboxFieldToggle>
                 <CheckboxFieldTsx
                   toggle
-                  checked={key === 'SliderStyle' ? exteralessSettings[key] === 2 : key === 'SwitchStyle' ? exteralessSettings[key] >= 2 : exteralessSettings[key]}
+                  checked={key === 'SliderStyle' ? exterayondSettings[key] === 2 : key === 'SwitchStyle' ? exterayondSettings[key] >= 2 : exterayondSettings[key]}
                   onChange={(enabled) => {
-                    if(key === 'SliderStyle' || key === 'SwitchStyle') setExteralessSetting(key, enabled ? key === 'SwitchStyle' ? 3 : 2 : 0);
-                    else setExteralessSetting(key, enabled);
+                    if(key === 'SliderStyle' || key === 'SwitchStyle') setExterayondSetting(key, enabled ? key === 'SwitchStyle' ? 3 : 2 : 0);
+                    else setExterayondSetting(key, enabled);
                   }}
                 />
               </Row.CheckboxFieldToggle>
@@ -259,36 +259,36 @@ const ExteralessAppearance = () => {
           ))}
         </details>
       </Section>
-      <Section name="Exteraless.Player.Cover" caption="Exteraless.Player.StyleInfo">
+      <Section name="Exterayond.Player.Cover" caption="Exterayond.Player.StyleInfo">
         <RangeSettingSelector
-          textLeft={i18n('Exteraless.Player.Cover.Style')}
-          textRight={(value) => i18n(value === 0 ? 'Exteraless.Player.Cover.Card' : value === 1 ? 'Exteraless.Player.Cover.Wide' : value === 2 ? 'Exteraless.Player.Cover.Full' : 'Exteraless.Player.Cover.Disc')}
+          textLeft={i18n('Exterayond.Player.Cover.Style')}
+          textRight={(value) => i18n(value === 0 ? 'Exterayond.Player.Cover.Card' : value === 1 ? 'Exterayond.Player.Cover.Wide' : value === 2 ? 'Exterayond.Player.Cover.Full' : 'Exterayond.Player.Cover.Disc')}
           step={1}
-          value={exteralessSettings.OEPlayerCoverStyle}
+          value={exterayondSettings.OEPlayerCoverStyle}
           minValue={0}
           maxValue={3}
-          onChange={(value) => setExteralessSetting('OEPlayerCoverStyle', value)}
+          onChange={(value) => setExterayondSetting('OEPlayerCoverStyle', value)}
         />
         {framedCover() && (
           <RangeSettingSelector
-            textLeft={i18n('Exteraless.Player.Cover.Size')}
+            textLeft={i18n('Exterayond.Player.Cover.Size')}
             textRight={(value) => value + '%'}
             step={5}
-            value={exteralessSettings.OEPlayerCoverSize}
+            value={exterayondSettings.OEPlayerCoverSize}
             minValue={OE_PLAYER_COVER_SIZE_MIN}
             maxValue={OE_PLAYER_COVER_SIZE_MAX}
-            onChange={(value) => setExteralessSetting('OEPlayerCoverSize', value)}
+            onChange={(value) => setExterayondSetting('OEPlayerCoverSize', value)}
           />
         )}
         {coverStyle() === 0 && (
           <RangeSettingSelector
-            textLeft={i18n('Exteraless.Player.Cover.Radius')}
+            textLeft={i18n('Exterayond.Player.Cover.Radius')}
             textRight={(value) => '' + value}
             step={2}
-            value={exteralessSettings.OEPlayerCoverRadius}
+            value={exterayondSettings.OEPlayerCoverRadius}
             minValue={0}
             maxValue={OE_PLAYER_COVER_RADIUS_MAX}
-            onChange={(value) => setExteralessSetting('OEPlayerCoverRadius', value)}
+            onChange={(value) => setExterayondSetting('OEPlayerCoverRadius', value)}
           />
         )}
         {coverStyle() === 3 && (
@@ -296,174 +296,174 @@ const ExteralessAppearance = () => {
             <Row.CheckboxFieldToggle>
               <CheckboxFieldTsx
                 toggle
-                checked={exteralessSettings.OEPlayerDiscSpin}
-                onChange={(value) => setExteralessSetting('OEPlayerDiscSpin', value)}
+                checked={exterayondSettings.OEPlayerDiscSpin}
+                onChange={(value) => setExterayondSetting('OEPlayerDiscSpin', value)}
               />
             </Row.CheckboxFieldToggle>
-            <Row.Title>{i18n('Exteraless.Player.DiscSpin')}</Row.Title>
+            <Row.Title>{i18n('Exterayond.Player.DiscSpin')}</Row.Title>
           </Row>
         )}
       </Section>
-      <Section name="Exteraless.Player.Title">
+      <Section name="Exterayond.Player.Title">
         <RangeSettingSelector
-          textLeft={i18n('Exteraless.Player.TitleAlign')}
-          textRight={(value) => i18n(value === 0 ? 'Exteraless.Player.Align.Start' : 'Exteraless.Player.Align.Center')}
+          textLeft={i18n('Exterayond.Player.TitleAlign')}
+          textRight={(value) => i18n(value === 0 ? 'Exterayond.Player.Align.Start' : 'Exterayond.Player.Align.Center')}
           step={1}
-          value={exteralessSettings.OEPlayerTitleAlign}
+          value={exterayondSettings.OEPlayerTitleAlign}
           minValue={0}
           maxValue={1}
-          onChange={(value) => setExteralessSetting('OEPlayerTitleAlign', value)}
+          onChange={(value) => setExterayondSetting('OEPlayerTitleAlign', value)}
         />
         <RangeSettingSelector
-          textLeft={i18n('Exteraless.Player.TitleSize')}
-          textRight={(value) => i18n(value === 0 ? 'Exteraless.Player.Size.Small' : value === 1 ? 'Exteraless.Player.Size.Medium' : 'Exteraless.Player.Size.Large')}
+          textLeft={i18n('Exterayond.Player.TitleSize')}
+          textRight={(value) => i18n(value === 0 ? 'Exterayond.Player.Size.Small' : value === 1 ? 'Exterayond.Player.Size.Medium' : 'Exterayond.Player.Size.Large')}
           step={1}
-          value={exteralessSettings.OEPlayerTitleSize}
+          value={exterayondSettings.OEPlayerTitleSize}
           minValue={0}
           maxValue={2}
-          onChange={(value) => setExteralessSetting('OEPlayerTitleSize', value)}
+          onChange={(value) => setExterayondSetting('OEPlayerTitleSize', value)}
         />
         {framedCover() && (
           <RangeSettingSelector
-            textLeft={i18n('Exteraless.Player.TitlePosition')}
-            textRight={(value) => i18n(value === 0 ? 'Exteraless.Player.Title.Below' : 'Exteraless.Player.Title.Above')}
+            textLeft={i18n('Exterayond.Player.TitlePosition')}
+            textRight={(value) => i18n(value === 0 ? 'Exterayond.Player.Title.Below' : 'Exterayond.Player.Title.Above')}
             step={1}
-            value={exteralessSettings.OEPlayerTitleAbove ? 1 : 0}
+            value={exterayondSettings.OEPlayerTitleAbove ? 1 : 0}
             minValue={0}
             maxValue={1}
-            onChange={(value) => setExteralessSetting('OEPlayerTitleAbove', value === 1)}
+            onChange={(value) => setExterayondSetting('OEPlayerTitleAbove', value === 1)}
           />
         )}
         <Row>
           <Row.CheckboxFieldToggle>
             <CheckboxFieldTsx
               toggle
-              checked={exteralessSettings.OEPlayerShowSource}
-              onChange={(value) => setExteralessSetting('OEPlayerShowSource', value)}
+              checked={exterayondSettings.OEPlayerShowSource}
+              onChange={(value) => setExterayondSetting('OEPlayerShowSource', value)}
             />
           </Row.CheckboxFieldToggle>
-          <Row.Title>{i18n('Exteraless.Player.ShowSource')}</Row.Title>
+          <Row.Title>{i18n('Exterayond.Player.ShowSource')}</Row.Title>
         </Row>
       </Section>
-      <Section name="Exteraless.Player.Layout" caption="Exteraless.Player.LayoutInfo">
+      <Section name="Exterayond.Player.Layout" caption="Exterayond.Player.LayoutInfo">
         <Row>
           <Row.CheckboxFieldToggle>
             <CheckboxFieldTsx
               toggle
-              checked={exteralessSettings.OEPlayerShowModes}
-              onChange={(value) => setExteralessSetting('OEPlayerShowModes', value)}
+              checked={exterayondSettings.OEPlayerShowModes}
+              onChange={(value) => setExterayondSetting('OEPlayerShowModes', value)}
             />
           </Row.CheckboxFieldToggle>
-          <Row.Title>{i18n('Exteraless.Player.ShowModes')}</Row.Title>
+          <Row.Title>{i18n('Exterayond.Player.ShowModes')}</Row.Title>
         </Row>
         <Row>
           <Row.CheckboxFieldToggle>
             <CheckboxFieldTsx
               toggle
-              checked={exteralessSettings.OEPlayerWavy}
-              onChange={(value) => setExteralessSetting('OEPlayerWavy', value)}
+              checked={exterayondSettings.OEPlayerWavy}
+              onChange={(value) => setExterayondSetting('OEPlayerWavy', value)}
             />
           </Row.CheckboxFieldToggle>
-          <Row.Title>{i18n('Exteraless.Player.ShowWave')}</Row.Title>
+          <Row.Title>{i18n('Exterayond.Player.ShowWave')}</Row.Title>
         </Row>
         <RangeSettingSelector
-          textLeft={i18n('Exteraless.Player.ControlsSize')}
-          textRight={(value) => i18n(value === 0 ? 'Exteraless.Player.Controls.Compact' : value === 1 ? 'Exteraless.Player.Controls.Normal' : 'Exteraless.Player.Controls.Large')}
+          textLeft={i18n('Exterayond.Player.ControlsSize')}
+          textRight={(value) => i18n(value === 0 ? 'Exterayond.Player.Controls.Compact' : value === 1 ? 'Exterayond.Player.Controls.Normal' : 'Exterayond.Player.Controls.Large')}
           step={1}
-          value={exteralessSettings.OEPlayerControlsSize}
+          value={exterayondSettings.OEPlayerControlsSize}
           minValue={0}
           maxValue={2}
-          onChange={(value) => setExteralessSetting('OEPlayerControlsSize', value)}
+          onChange={(value) => setExterayondSetting('OEPlayerControlsSize', value)}
         />
       </Section>
-      <Section name="Exteraless.TabCounter" caption="Exteraless.TabCounter.Info">
+      <Section name="Exterayond.TabCounter" caption="Exterayond.TabCounter.Info">
         <RangeSettingSelector
-          textLeft={i18n('Exteraless.TabCounter')}
-          textRight={(value) => i18n(value === 0 ? 'Exteraless.TabCounter.All' : value === 1 ? 'Exteraless.TabCounter.Unmuted' : 'Exteraless.TabCounter.Off')}
+          textLeft={i18n('Exterayond.TabCounter')}
+          textRight={(value) => i18n(value === 0 ? 'Exterayond.TabCounter.All' : value === 1 ? 'Exterayond.TabCounter.Unmuted' : 'Exterayond.TabCounter.Off')}
           step={1}
-          value={exteralessSettings.IgnoreUnreadCount}
+          value={exterayondSettings.IgnoreUnreadCount}
           minValue={0}
           maxValue={2}
-          onChange={(value) => setExteralessSetting('IgnoreUnreadCount', value)}
+          onChange={(value) => setExterayondSetting('IgnoreUnreadCount', value)}
         />
       </Section>
-      <Section name="Exteraless.AvatarCorners">
+      <Section name="Exterayond.AvatarCorners">
         <div class="exteraless-avatar-preview">
           <div class="avatar avatar-gradient" data-color="red" />
           <div class="avatar avatar-gradient" data-color="green" />
           <div class="avatar avatar-gradient" data-color="blue" />
         </div>
         <RangeSettingSelector
-          textLeft={i18n('Exteraless.AvatarCorners')}
+          textLeft={i18n('Exterayond.AvatarCorners')}
           textRight={avatarCornersLabel}
           step={1}
-          value={exteralessSettings.OEAppearanceAvatarCorners}
+          value={exterayondSettings.OEAppearanceAvatarCorners}
           minValue={0}
           maxValue={OE_AVATAR_CORNERS_MAX}
-          onChange={(value) => setExteralessSetting('OEAppearanceAvatarCorners', value)}
+          onChange={(value) => setExterayondSetting('OEAppearanceAvatarCorners', value)}
         />
         <Row>
           <Row.CheckboxFieldToggle>
             <CheckboxFieldTsx
               toggle
-              checked={exteralessSettings.OEAppearanceSingleCornerRadius}
-              onChange={(value) => setExteralessSetting('OEAppearanceSingleCornerRadius', value)}
+              checked={exterayondSettings.OEAppearanceSingleCornerRadius}
+              onChange={(value) => setExterayondSetting('OEAppearanceSingleCornerRadius', value)}
             />
           </Row.CheckboxFieldToggle>
-          <Row.Title>{i18n('Exteraless.SingleCornerRadius')}</Row.Title>
-          <Row.Subtitle>{i18n('Exteraless.SingleCornerRadius.Info')}</Row.Subtitle>
+          <Row.Title>{i18n('Exterayond.SingleCornerRadius')}</Row.Title>
+          <Row.Subtitle>{i18n('Exterayond.SingleCornerRadius.Info')}</Row.Subtitle>
         </Row>
         <Row>
           <Row.CheckboxFieldToggle>
             <CheckboxFieldTsx
               toggle
-              checked={exteralessSettings.OEAppearanceSenderMiniAvatars}
-              onChange={(value) => setExteralessSetting('OEAppearanceSenderMiniAvatars', value)}
+              checked={exterayondSettings.OEAppearanceSenderMiniAvatars}
+              onChange={(value) => setExterayondSetting('OEAppearanceSenderMiniAvatars', value)}
             />
           </Row.CheckboxFieldToggle>
-          <Row.Title>{i18n('Exteraless.SenderMiniAvatars')}</Row.Title>
+          <Row.Title>{i18n('Exterayond.SenderMiniAvatars')}</Row.Title>
         </Row>
       </Section>
-      <Section caption="Exteraless.BubbleRadius.StockHint">
+      <Section caption="Exterayond.BubbleRadius.StockHint">
         <RangeSettingSelector
-          textLeft={i18n('Exteraless.BubbleRadius')}
-          textRight={(value) => value === 17 ? i18n('Exteraless.BubbleRadius.Stock') : '' + value}
+          textLeft={i18n('Exterayond.BubbleRadius')}
+          textRight={(value) => value === 17 ? i18n('Exterayond.BubbleRadius.Stock') : '' + value}
           step={1}
-          value={exteralessSettings.bubbleRadius}
+          value={exterayondSettings.bubbleRadius}
           minValue={0}
           maxValue={17}
-          onChange={(value) => setExteralessSetting('bubbleRadius', value)}
+          onChange={(value) => setExterayondSetting('bubbleRadius', value)}
         />
       </Section>
-      <Section caption="Exteraless.SectionRadius.StockHint">
+      <Section caption="Exterayond.SectionRadius.StockHint">
         <RangeSettingSelector
-          textLeft={i18n('Exteraless.SectionRadius')}
-          textRight={(value) => value === 0 ? i18n('Exteraless.SectionRadius.Off') : value === OE_AVATAR_CORNERS_MAX ? i18n('Exteraless.SectionRadius.Max') : '' + value}
+          textLeft={i18n('Exterayond.SectionRadius')}
+          textRight={(value) => value === 0 ? i18n('Exterayond.SectionRadius.Off') : value === OE_AVATAR_CORNERS_MAX ? i18n('Exterayond.SectionRadius.Max') : '' + value}
           step={1}
-          value={exteralessSettings.OEAppearanceSectionRadius}
+          value={exterayondSettings.OEAppearanceSectionRadius}
           minValue={0}
           maxValue={OE_AVATAR_CORNERS_MAX}
-          onChange={(value) => setExteralessSetting('OEAppearanceSectionRadius', value)}
+          onChange={(value) => setExterayondSetting('OEAppearanceSectionRadius', value)}
         />
         <Row>
           <Row.CheckboxFieldToggle>
             <CheckboxFieldTsx
               toggle
-              checked={exteralessSettings.OEAppearanceSeparateHeaders}
-              onChange={(value) => setExteralessSetting('OEAppearanceSeparateHeaders', value)}
+              checked={exterayondSettings.OEAppearanceSeparateHeaders}
+              onChange={(value) => setExterayondSetting('OEAppearanceSeparateHeaders', value)}
             />
           </Row.CheckboxFieldToggle>
-          <Row.Title>{i18n('Exteraless.SeparateHeaders')}</Row.Title>
+          <Row.Title>{i18n('Exterayond.SeparateHeaders')}</Row.Title>
         </Row>
         <Row>
           <Row.CheckboxFieldToggle>
             <CheckboxFieldTsx
               toggle
-              checked={exteralessSettings.OEAppearanceGlassMessageMenu}
-              onChange={(value) => setExteralessSetting('OEAppearanceGlassMessageMenu', value)}
+              checked={exterayondSettings.OEAppearanceGlassMessageMenu}
+              onChange={(value) => setExterayondSetting('OEAppearanceGlassMessageMenu', value)}
             />
           </Row.CheckboxFieldToggle>
-          <Row.Title>{i18n('Exteraless.GlassMessageMenu')}</Row.Title>
+          <Row.Title>{i18n('Exterayond.GlassMessageMenu')}</Row.Title>
         </Row>
       </Section>
       <Section>
@@ -471,89 +471,89 @@ const ExteralessAppearance = () => {
           <Row.CheckboxFieldToggle>
             <CheckboxFieldTsx
               toggle
-              checked={exteralessSettings.OEAppearanceSquareFab}
-              onChange={(value) => setExteralessSetting('OEAppearanceSquareFab', value)}
+              checked={exterayondSettings.OEAppearanceSquareFab}
+              onChange={(value) => setExterayondSetting('OEAppearanceSquareFab', value)}
             />
           </Row.CheckboxFieldToggle>
-          <Row.Title>{i18n('Exteraless.SquareFab')}</Row.Title>
-          <Row.Subtitle>{i18n('Exteraless.SquareFab.Info')}</Row.Subtitle>
+          <Row.Title>{i18n('Exterayond.SquareFab')}</Row.Title>
+          <Row.Subtitle>{i18n('Exterayond.SquareFab.Info')}</Row.Subtitle>
         </Row>
         <Row>
           <Row.CheckboxFieldToggle>
             <CheckboxFieldTsx
               toggle
-              checked={exteralessSettings.OEAppearanceCenterTitle}
-              onChange={(value) => setExteralessSetting('OEAppearanceCenterTitle', value)}
+              checked={exterayondSettings.OEAppearanceCenterTitle}
+              onChange={(value) => setExterayondSetting('OEAppearanceCenterTitle', value)}
             />
           </Row.CheckboxFieldToggle>
-          <Row.Title>{i18n('Exteraless.CenterTitle')}</Row.Title>
+          <Row.Title>{i18n('Exterayond.CenterTitle')}</Row.Title>
         </Row>
         <Row>
           <Row.CheckboxFieldToggle>
             <CheckboxFieldTsx
               toggle
-              checked={exteralessSettings.OEAppearanceAttachedSidebar}
-              onChange={(value) => setExteralessSetting('OEAppearanceAttachedSidebar', value)}
+              checked={exterayondSettings.OEAppearanceAttachedSidebar}
+              onChange={(value) => setExterayondSetting('OEAppearanceAttachedSidebar', value)}
             />
           </Row.CheckboxFieldToggle>
-          <Row.Title>{i18n('Exteraless.AttachedSidebar')}</Row.Title>
-          <Row.Subtitle>{i18n('Exteraless.AttachedSidebar.Info')}</Row.Subtitle>
+          <Row.Title>{i18n('Exterayond.AttachedSidebar')}</Row.Title>
+          <Row.Subtitle>{i18n('Exterayond.AttachedSidebar.Info')}</Row.Subtitle>
         </Row>
         <Row>
           <Row.CheckboxFieldToggle>
             <CheckboxFieldTsx
               toggle
-              checked={exteralessSettings.TypefaceUseDefault}
-              onChange={(value) => setExteralessSetting('TypefaceUseDefault', value)}
+              checked={exterayondSettings.TypefaceUseDefault}
+              onChange={(value) => setExterayondSetting('TypefaceUseDefault', value)}
             />
           </Row.CheckboxFieldToggle>
-          <Row.Title>{i18n('Exteraless.UseSystemFonts')}</Row.Title>
-          <Row.Subtitle>{i18n('Exteraless.UseSystemFonts.Info')}</Row.Subtitle>
+          <Row.Title>{i18n('Exterayond.UseSystemFonts')}</Row.Title>
+          <Row.Subtitle>{i18n('Exterayond.UseSystemFonts.Info')}</Row.Subtitle>
         </Row>
         <Row>
           <Row.CheckboxFieldToggle>
             <CheckboxFieldTsx
               toggle
-              checked={exteralessSettings.OEAppearanceHideActionBarStatus}
-              onChange={(value) => setExteralessSetting('OEAppearanceHideActionBarStatus', value)}
+              checked={exterayondSettings.OEAppearanceHideActionBarStatus}
+              onChange={(value) => setExterayondSetting('OEAppearanceHideActionBarStatus', value)}
             />
           </Row.CheckboxFieldToggle>
-          <Row.Title>{i18n('Exteraless.HideActionBarStatus')}</Row.Title>
-          <Row.Subtitle>{i18n('Exteraless.HideActionBarStatus.Info')}</Row.Subtitle>
+          <Row.Title>{i18n('Exterayond.HideActionBarStatus')}</Row.Title>
+          <Row.Subtitle>{i18n('Exterayond.HideActionBarStatus.Info')}</Row.Subtitle>
         </Row>
         <Row>
           <Row.CheckboxFieldToggle>
             <CheckboxFieldTsx
               toggle
-              checked={exteralessSettings.OEAppearanceCustomThemes}
-              onChange={(value) => setExteralessSetting('OEAppearanceCustomThemes', value)}
+              checked={exterayondSettings.OEAppearanceCustomThemes}
+              onChange={(value) => setExterayondSetting('OEAppearanceCustomThemes', value)}
             />
           </Row.CheckboxFieldToggle>
-          <Row.Title>{i18n('Exteraless.CustomThemes')}</Row.Title>
-          <Row.Subtitle>{i18n('Exteraless.CustomThemes.Info')}</Row.Subtitle>
+          <Row.Title>{i18n('Exterayond.CustomThemes')}</Row.Title>
+          <Row.Subtitle>{i18n('Exterayond.CustomThemes.Info')}</Row.Subtitle>
         </Row>
         <Row>
           <Row.CheckboxFieldToggle>
             <CheckboxFieldTsx
               toggle
-              checked={exteralessSettings.OEAppearanceWallpaperPattern}
-              onChange={(value) => setExteralessSetting('OEAppearanceWallpaperPattern', value)}
+              checked={exterayondSettings.OEAppearanceWallpaperPattern}
+              onChange={(value) => setExterayondSetting('OEAppearanceWallpaperPattern', value)}
             />
           </Row.CheckboxFieldToggle>
-          <Row.Title>{i18n('Exteraless.WallpaperPattern')}</Row.Title>
-          <Row.Subtitle>{i18n('Exteraless.WallpaperPattern.Info')}</Row.Subtitle>
+          <Row.Title>{i18n('Exterayond.WallpaperPattern')}</Row.Title>
+          <Row.Subtitle>{i18n('Exterayond.WallpaperPattern.Info')}</Row.Subtitle>
         </Row>
-        <Row clickable={() => tab.slider.createTab(hotReloadGuard.tabs.AppExteralessPillStackTab).open()}>
+        <Row clickable={() => tab.slider.createTab(hotReloadGuard.tabs.AppExterayondPillStackTab).open()}>
           <Row.Icon icon="data_filled" />
-          <Row.Title>{i18n('Exteraless.PillStack')}</Row.Title>
+          <Row.Title>{i18n('Exterayond.PillStack')}</Row.Title>
         </Row>
-        <Row clickable={() => tab.slider.createTab(hotReloadGuard.tabs.AppExteralessMainMenuTab).open()}>
+        <Row clickable={() => tab.slider.createTab(hotReloadGuard.tabs.AppExterayondMainMenuTab).open()}>
           <Row.Icon icon="more" />
-          <Row.Title>{i18n('Exteraless.MainMenu')}</Row.Title>
+          <Row.Title>{i18n('Exterayond.MainMenu')}</Row.Title>
         </Row>
       </Section>
     </>
   );
 };
 
-export default ExteralessAppearance;
+export default ExterayondAppearance;

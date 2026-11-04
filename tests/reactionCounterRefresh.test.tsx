@@ -20,7 +20,7 @@ const state = vi.hoisted(() => ({
   stickerRenders: vi.fn().mockResolvedValue({render: undefined})
 }));
 
-vi.mock('@stores/exteralessSettings', () => ({exteralessSettings: state.settings}));
+vi.mock('@stores/exterayondSettings', () => ({exterayondSettings: state.settings}));
 vi.mock('@lib/rootScope', () => ({default: {
   myId: 999,
   managers: state.managers,
@@ -113,7 +113,7 @@ function middleware() {
 }
 function toggle(exact: boolean, key = 'DisableNumberRounding') {
   state.settings.DisableNumberRounding = exact;
-  state.listeners.get('exteraless_settings_updated')?.forEach((callback) => callback({key}));
+  state.listeners.get('exterayond_settings_updated')?.forEach((callback) => callback({key}));
 }
 function count(value = 1000): ReactionCount {
   return {_: 'reactionCount', reaction: {_: 'reactionEmoji', emoticon: '🔥'}, count: value};
@@ -246,7 +246,7 @@ describe('reaction counter setting refresh', () => {
     state.managers.appMessagesManager.canViewMessageReadParticipants.mockResolvedValue(true);
     state.managers.appMessagesManager.getMessageReadParticipants.mockResolvedValue(Array.from({length: 1000}, (_, index) => index + 1));
     state.managers.appReactionsManager.canDeleteParticipantReactions.mockResolvedValue(false);
-    const baseline = state.listeners.get('exteraless_settings_updated').size;
+    const baseline = state.listeners.get('exterayond_settings_updated').size;
     await showReactedListPopup(message());
     const strip = document.querySelector('reactions-element') as ReactionsElement;
     const tabs = [...strip.children].filter((child) => child instanceof ReactionElement) as ReactionElement[];
@@ -260,10 +260,10 @@ describe('reaction counter setting refresh', () => {
     toggle(false);
     expect(values()).toEqual(['1K', '1K', '1K']);
     expect(tabs[0].className).toBe(selected);
-    expect(state.listeners.get('exteraless_settings_updated').size).toBe(baseline + 1);
+    expect(state.listeners.get('exterayond_settings_updated').size).toBe(baseline + 1);
     state.disposePopup();
     state.disposePopup = undefined;
-    expect(state.listeners.get('exteraless_settings_updated').size).toBe(baseline);
+    expect(state.listeners.get('exterayond_settings_updated').size).toBe(baseline);
     toggle(true);
     expect(values()).toEqual(['1K', '1K', '1K']);
   });

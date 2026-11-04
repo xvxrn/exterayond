@@ -1,6 +1,6 @@
 import {render} from 'solid-js/web';
 import {appSettings, setAppSettings, setAppSettingsSilent} from '@stores/appSettings';
-import {isArchiveHidden, setArchiveHidden, resetExteralessPreferences} from '@stores/exteralessPreferences';
+import {isArchiveHidden, setArchiveHidden, resetExterayondPreferences} from '@stores/exterayondPreferences';
 import {applyExteraBackup, buildExteraBackup, etgBackup} from '@lib/exteraBackup/etgBackup';
 import {joinDeepPath} from '@helpers/object/setDeepProperty';
 
@@ -60,11 +60,11 @@ test('backup uses exactly the Android alias and strict boolean validation', asyn
 test('reset restores the Android default without resetting unrelated native settings', async() => {
   await setArchiveHidden(true);
   write.mockClear();
-  resetExteralessPreferences();
+  resetExterayondPreferences();
   expect(isArchiveHidden()).toBe(false);
   expect(appSettings.cacheTTL).toBe(123);
   expect(write.mock.calls).toEqual([[joinDeepPath('settings', 'showArchiveInChatList'), true]]);
   write.mockClear();
-  resetExteralessPreferences();
+  resetExterayondPreferences();
   expect(write).not.toHaveBeenCalled();
 });

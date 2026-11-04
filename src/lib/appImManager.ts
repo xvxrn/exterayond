@@ -90,7 +90,7 @@ import conferenceInvitesController from '@lib/calls/conferenceInvitesController'
 import GROUP_CALL_STATE from '@lib/calls/groupCallState';
 import callsController from '@lib/calls/callsController';
 import {preloadNoiseSuppression} from '@lib/calls/noiseSuppression/noiseSuppression';
-import {exteralessSettings} from '@stores/exteralessSettings';
+import {exterayondSettings} from '@stores/exterayondSettings';
 import {confirmExternalAnchorClick} from '@helpers/addAnchorListener';
 import {preloadLinkCleaner, stripAnchorTracking} from '@lib/linkCleaner';
 import getConferenceInviteErrorLangKey from '@lib/calls/conferenceInviteError';
@@ -2364,15 +2364,15 @@ export class AppImManager extends EventListenerBase<{
         return;
       }
 
-      if(exteralessSettings.AskBeforeCalling) {
+      if(exterayondSettings.AskBeforeCalling) {
         const peerId = userId.toPeerId();
         const title = await getPeerTitle({peerId, managers: account.managers, useManagers: true});
         try {
           await confirmationPopup({
             peerId,
             accountNumber: account.accountNumber,
-            titleLangKey: 'Exteraless.ConfirmCall.Title',
-            descriptionLangKey: type === 'video' ? 'Exteraless.ConfirmCall.Video' : 'Exteraless.ConfirmCall.Voice',
+            titleLangKey: 'Exterayond.ConfirmCall.Title',
+            descriptionLangKey: type === 'video' ? 'Exterayond.ConfirmCall.Video' : 'Exterayond.ConfirmCall.Voice',
             descriptionLangArgs: [title],
             button: {langKey: type === 'video' ? 'VideoCall' : 'Call'}
           });

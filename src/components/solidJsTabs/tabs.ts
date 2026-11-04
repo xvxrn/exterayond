@@ -256,52 +256,52 @@ export const AppGeneralSettingsTab =
 
 // ── exteraless Preferences (the hub ported from OpenExteraSettingsActivity) ───
 
-export const AppExteralessTab =
+export const AppExterayondTab =
   scaffoldSolidJSTab({
-    title: 'Exteraless',
-    getComponentModule: () => import('../sidebarLeft/tabs/exteralessTab')
+    title: 'Exterayond',
+    getComponentModule: () => import('../sidebarLeft/tabs/exterayondTab')
   });
 
-export const AppExteralessGeneralTab =
+export const AppExterayondGeneralTab =
   scaffoldSolidJSTab({
-    title: 'Exteraless.General',
-    getComponentModule: () => import('../sidebarLeft/tabs/exteralessGeneralTab')
+    title: 'Exterayond.General',
+    getComponentModule: () => import('../sidebarLeft/tabs/exterayondGeneralTab')
   });
 
-export const AppExteralessPluginsTab =
+export const AppExterayondPluginsTab =
   scaffoldSolidJSTab({
-    title: 'Exteraless.Plugins',
-    getComponentModule: () => import('../sidebarLeft/tabs/exteralessPluginsTab')
+    title: 'Exterayond.Plugins',
+    getComponentModule: () => import('../sidebarLeft/tabs/exterayondPluginsTab')
   });
 
-export const AppExteralessOtherTab =
+export const AppExterayondOtherTab =
   scaffoldSolidJSTab({
-    title: 'Exteraless.Other',
-    getComponentModule: () => import('../sidebarLeft/tabs/exteralessOtherTab')
+    title: 'Exterayond.Other',
+    getComponentModule: () => import('../sidebarLeft/tabs/exterayondOtherTab')
   });
 
-export const AppExteralessAppearanceTab =
+export const AppExterayondAppearanceTab =
   scaffoldSolidJSTab({
-    title: 'Exteraless.Appearance',
-    getComponentModule: () => import('../sidebarLeft/tabs/exteralessAppearanceTab')
+    title: 'Exterayond.Appearance',
+    getComponentModule: () => import('../sidebarLeft/tabs/exterayondAppearanceTab')
   });
 
-export const AppExteralessPillStackTab =
+export const AppExterayondPillStackTab =
   scaffoldSolidJSTab({
-    title: 'Exteraless.PillStack',
-    getComponentModule: () => import('../sidebarLeft/tabs/exteralessPillStackTab')
+    title: 'Exterayond.PillStack',
+    getComponentModule: () => import('../sidebarLeft/tabs/exterayondPillStackTab')
   });
 
-export const AppExteralessMainMenuTab =
+export const AppExterayondMainMenuTab =
   scaffoldSolidJSTab({
-    title: 'Exteraless.MainMenu',
-    getComponentModule: () => import('../sidebarLeft/tabs/exteralessMainMenuTab')
+    title: 'Exterayond.MainMenu',
+    getComponentModule: () => import('../sidebarLeft/tabs/exterayondMainMenuTab')
   });
 
-export const AppExteralessChatsTab =
+export const AppExterayondChatsTab =
   scaffoldSolidJSTab({
-    title: 'Exteraless.Chats',
-    getComponentModule: () => import('../sidebarLeft/tabs/exteralessChatsTab')
+    title: 'Exterayond.Chats',
+    getComponentModule: () => import('../sidebarLeft/tabs/exterayondChatsTab')
   });
 
 

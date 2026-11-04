@@ -1,5 +1,5 @@
-import {exteralessSettings, setExteralessSetting} from '@stores/exteralessSettings';
-import type {ExteralessSettings} from '@stores/exteralessSettings';
+import {exterayondSettings, setExterayondSetting} from '@stores/exterayondSettings';
+import type {ExterayondSettings} from '@stores/exterayondSettings';
 
 /**
  * The main menu layout (FOLD-10..13) — Android `app/exteraless/drawer/
@@ -105,7 +105,7 @@ export const parseMainMenuLayout = (raw: string | undefined): MainMenuLayout => 
 };
 
 export const isMainMenuCustomized = (
-  raw: string = exteralessSettings.OEAppearanceMainMenuLayout
+  raw: string = exterayondSettings.OEAppearanceMainMenuLayout
 ): boolean => !!raw;
 
 /**
@@ -117,7 +117,7 @@ export const isMainMenuCustomized = (
  * at its own position when the layout carries one.
  */
 export const resolveMainMenuLayout = (
-  raw: string = exteralessSettings.OEAppearanceMainMenuLayout
+  raw: string = exterayondSettings.OEAppearanceMainMenuLayout
 ): MainMenuLayout => {
   if(!isMainMenuCustomized(raw)) {
     return {visible: [], hidden: []};
@@ -147,7 +147,7 @@ const serialize = (visible: number[], hidden: number[]) =>
   `${visible.join(',')};${hidden.join(',')}`;
 
 const persistMainMenuLayout = (visible: number[], hidden: number[]) => {
-  setExteralessSetting('OEAppearanceMainMenuLayout', serialize([...visible], [...hidden]));
+  setExterayondSetting('OEAppearanceMainMenuLayout', serialize([...visible], [...hidden]));
 };
 
 /** Android `MainMenuLayout.save`: writes both halves; Settings stays visible. */
@@ -172,7 +172,7 @@ export const setMenuItemVisible = (id: number, visible: boolean) => {
 };
 
 /** Android `MainMenuLayout.reset`: an empty string means "never customized". */
-export const resetMainMenuLayout = () => setExteralessSetting('OEAppearanceMainMenuLayout', '');
+export const resetMainMenuLayout = () => setExterayondSetting('OEAppearanceMainMenuLayout', '');
 
 /**
  * The editor's displayed entries of the visible half: backed ids and dividers,
@@ -282,7 +282,7 @@ export const isMenuIdArray = (value: string, allowDivider: boolean): boolean => 
 
 /** The `.extera` bridge: an exteraGram half replaces its own half of the key. */
 export const applyMainMenuHalf = (half: 'layout' | 'hidden', ids: number[]) => {
-  const current = parseMainMenuLayout(exteralessSettings.OEAppearanceMainMenuLayout);
+  const current = parseMainMenuLayout(exterayondSettings.OEAppearanceMainMenuLayout);
   if(half === 'layout') {
     persistMainMenuLayout(ids, current.hidden);
     return;
@@ -314,7 +314,7 @@ export const WEB_MENU_STOCK_ORDER: readonly number[] = [
  */
 export const applyMainMenuLayoutToButtons = <T extends {oeMenuId?: number, separatorDown?: boolean}>(
   buttons: readonly T[],
-  raw: string = exteralessSettings.OEAppearanceMainMenuLayout
+  raw: string = exterayondSettings.OEAppearanceMainMenuLayout
 ): T[] => {
   if(!isMainMenuCustomized(raw)) {
     return [...buttons];
@@ -359,4 +359,4 @@ export const applyMainMenuLayoutToButtons = <T extends {oeMenuId?: number, separ
 };
 
 /** The type helper for the store's pick. */
-export type MainMenuLayoutSettings = Pick<ExteralessSettings, 'OEAppearanceMainMenuLayout'>;
+export type MainMenuLayoutSettings = Pick<ExterayondSettings, 'OEAppearanceMainMenuLayout'>;

@@ -6,9 +6,9 @@ import formatBytes from '@helpers/formatBytes';
 import {i18n, I18n} from '@lib/langPack';
 import type {LangPackKey} from '@lib/langPack';
 import rootScope from '@lib/rootScope';
-import {getVisiblePillIds, getRegisteredPill, nextPillIndex, PILL_IDS} from '@stores/exteralessPills';
-import type {WebPillKind} from '@stores/exteralessPills';
-import {exteralessSettings, setExteralessSetting} from '@stores/exteralessSettings';
+import {getVisiblePillIds, getRegisteredPill, nextPillIndex, PILL_IDS} from '@stores/exterayondPills';
+import type {WebPillKind} from '@stores/exterayondPills';
+import {exterayondSettings, setExterayondSetting} from '@stores/exterayondSettings';
 
 /**
  * The pill stack strip (PILLS-01..04), ported from Android
@@ -30,7 +30,7 @@ const CACHE_REFRESH_INTERVAL = 3 * 60 * 1000;
 /** One wheel notch = one switch; a trackpad burst is collapsed. */
 const WHEEL_SWITCH_COOLDOWN = 300;
 
-const CACHE_NAME_KEY: LangPackKey = 'Exteraless.PillStack.CacheName';
+const CACHE_NAME_KEY: LangPackKey = 'Exterayond.PillStack.CacheName';
 
 type PillRenderer = {
   dispose?: () => void
@@ -131,10 +131,10 @@ export const attachPillStackStrip = (
   /** Android `PillStackView.animateToNextPill`, the index decision + persistence. */
   const switchPill = (direction: 1 | -1) => {
     if(pills.length < 2) return;
-    const next = nextPillIndex(currentIndex, pills.length, direction, exteralessSettings.OEPillInfiniteScrolling);
+    const next = nextPillIndex(currentIndex, pills.length, direction, exterayondSettings.OEPillInfiniteScrolling);
     if(next === currentIndex) return;
     showPill(next, direction);
-    setExteralessSetting('OEPillLastActiveId', getVisiblePillIds()[next] ?? -1);
+    setExterayondSetting('OEPillLastActiveId', getVisiblePillIds()[next] ?? -1);
   };
 
   let lastWheelSwitch = 0;
@@ -202,7 +202,7 @@ export const attachPillStackStrip = (
     }
 
     // * Android restores the last active pill on rebuild (rebuildContents)
-    const lastId = exteralessSettings.OEPillLastActiveId;
+    const lastId = exterayondSettings.OEPillLastActiveId;
     const restored = ids.indexOf(lastId);
     showPill(restored >= 0 ? restored : 0);
 
@@ -216,10 +216,10 @@ export const attachPillStackStrip = (
   };
 
   input.addEventListener('input', updateVisibility);
-  rootScope.addEventListener('exteraless_settings_updated', onSettingsUpdated);
+  rootScope.addEventListener('exterayond_settings_updated', onSettingsUpdated);
   middleware.onClean(() => {
     input.removeEventListener('input', updateVisibility);
-    rootScope.removeEventListener('exteraless_settings_updated', onSettingsUpdated);
+    rootScope.removeEventListener('exterayond_settings_updated', onSettingsUpdated);
     for(const renderer of pillRenderers) {
       renderer.dispose?.();
     }

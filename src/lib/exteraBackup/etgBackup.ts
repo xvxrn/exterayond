@@ -10,10 +10,10 @@
  * store; the rest of the Android key set is recognized by name and reported as
  * unsupported — never applied, never faked.
  */
-import {OE_DEFAULTS, clampExteralessSetting, exteralessSettings, setExteralessSetting, getStickerTimeMode, setStickerTimeMode} from '@stores/exteralessSettings';
-import type {ExteralessSettings, ExteralessSettingsKey} from '@stores/exteralessSettings';
-import {isArchiveHidden, setArchiveHidden} from '@stores/exteralessPreferences';
-import {applyMainMenuHalf, resolveMainMenuLayout, isMenuIdArray} from '@stores/exteralessMenuLayout';
+import {OE_DEFAULTS, clampExterayondSetting, exterayondSettings, setExterayondSetting, getStickerTimeMode, setStickerTimeMode} from '@stores/exterayondSettings';
+import type {ExterayondSettings, ExterayondSettingsKey} from '@stores/exterayondSettings';
+import {isArchiveHidden, setArchiveHidden} from '@stores/exterayondPreferences';
+import {applyMainMenuHalf, resolveMainMenuLayout, isMenuIdArray} from '@stores/exterayondMenuLayout';
 import {PLUGINS_DEVELOPER_MODE_KEY, pluginsManager} from '@plugins/manager';
 import {invisibleEncryptor} from './invisibleEncryptor';
 
@@ -36,7 +36,7 @@ type SupportedEntry = {
   max?: number,
   /** HideArchive uses Web K's native setting; StickerTimeMode composes two Android flags;
    *  the two main-menu aliases bridge into the single `OEAppearanceMainMenuLayout` string. */
-  storeKey: ExteralessSettingsKey | 'HideArchive' | 'StickerTimeMode' | 'MainMenuLayoutHalf' | 'MainMenuHiddenHalf',
+  storeKey: ExterayondSettingsKey | 'HideArchive' | 'StickerTimeMode' | 'MainMenuLayoutHalf' | 'MainMenuHiddenHalf',
   /** int keys with different numbering: our value ↔ exteraGram's */
   toEtg?: (ours: number) => number | boolean | null,
   toOurs?: (etg: number) => number | null,
@@ -244,14 +244,14 @@ const sectionOf = (root: Record<string, Record<string, unknown>>, section: strin
 
 export const etgBackup = {
   /** Builds a backup in the exteraGram format; `encrypt` wraps it in invisible characters. */
-  buildBackup(encrypt: boolean, settings: ExteralessSettings): string {
+  buildBackup(encrypt: boolean, settings: ExterayondSettings): string {
     const root: Record<string, Record<string, unknown>> = {};
     for(const entry of SUPPORTED) {
       const ours = entry.storeKey === 'HideArchive' ? isArchiveHidden() :
         entry.storeKey === 'StickerTimeMode' ? getStickerTimeMode(settings) :
         entry.storeKey === 'MainMenuLayoutHalf' ? JSON.stringify(resolveMainMenuLayout().visible) :
         entry.storeKey === 'MainMenuHiddenHalf' ? JSON.stringify(resolveMainMenuLayout().hidden) :
-        settings[entry.storeKey as ExteralessSettingsKey];
+        settings[entry.storeKey as ExterayondSettingsKey];
       if(ours === undefined) continue;
 
       let value: unknown = ours;
@@ -319,7 +319,7 @@ export const etgBackup = {
   },
 
   /** Applies everything that passed validation; returns the count and the unsupported key names. */
-  applyBackup(root: Record<string, Record<string, unknown>>, apply: (key: ExteralessSettingsKey, value: boolean | number | string) => void): ApplyResult {
+  applyBackup(root: Record<string, Record<string, unknown>>, apply: (key: ExterayondSettingsKey, value: boolean | number | string) => void): ApplyResult {
     let applied = 0;
     const unsupported: string[] = [];
 
@@ -374,7 +374,7 @@ export const etgBackup = {
       if(typeof OE_DEFAULTS[entry.storeKey] === 'boolean') {
         apply(entry.storeKey, numeric !== 0);
       } else {
-        apply(entry.storeKey, clampExteralessSetting(entry.storeKey, numeric));
+        apply(entry.storeKey, clampExterayondSetting(entry.storeKey, numeric));
       }
 
       applied++;
@@ -408,7 +408,7 @@ export const etgBackup = {
 // * ── the store-connected facade the hub uses ───────────────────────────────
 
 export const buildExteraBackup = (encrypt: boolean): string =>
-  etgBackup.buildBackup(encrypt, exteralessSettings as typeof OE_DEFAULTS & Record<string, boolean | number | string>);
+  etgBackup.buildBackup(encrypt, exterayondSettings as typeof OE_DEFAULTS & Record<string, boolean | number | string>);
 
 export const applyExteraBackup = (root: Record<string, Record<string, unknown>>): ApplyResult =>
-  etgBackup.applyBackup(root, (key, value) => setExteralessSetting(key, value as never));
+  etgBackup.applyBackup(root, (key, value) => setExterayondSetting(key, value as never));

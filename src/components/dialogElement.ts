@@ -558,7 +558,7 @@ export class DialogElement {
     this.dom.subtitleEl.append(button);
   }
 
-  /** Re-reads the count with the current `formatCount` (see `exteraless_settings_updated`). */
+  /** Re-reads the count with the current `formatCount` (see `exterayond_settings_updated`). */
   public refreshUnreadText() {
     const options = this.lastBadgeOptions;
     if(!options?.unread) {

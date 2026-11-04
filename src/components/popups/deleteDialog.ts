@@ -4,7 +4,7 @@ import rootScope from '@lib/rootScope';
 import wrapPeerTitle from '@components/wrappers/peerTitle';
 import showPeerPopup, {PopupPeerButtonCallbackCheckboxes, PopupPeerOptions} from '@components/popups/peer';
 import {bindManagersToSession} from '@lib/accounts/bindManagersToAccount';
-import {exteralessSettings} from '@stores/exteralessSettings';
+import {exterayondSettings} from '@stores/exterayondSettings';
 
 /**
  * Leaves a group or a channel, and with `flush` clears what is left of it here as well: a basic
@@ -156,7 +156,7 @@ export default async function showDeleteDialogPopup(
 
       checkboxes = [{
         text: 'DeleteMessagesOptionAlso',
-        checked: exteralessSettings.DeleteChatForBothSides,
+        checked: exterayondSettings.DeleteChatForBothSides,
         textArgs: [
           await wrapPeerTitle({peerId})
         ]

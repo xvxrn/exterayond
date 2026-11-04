@@ -6,7 +6,7 @@ import {FOLDER_ID_ALL, FOLDER_ID_ARCHIVE, REAL_FOLDERS} from '@appManagers/const
 import type {MyDialogFilter} from '@lib/storages/filters';
 import type {ReadingManagers} from '@lib/managers';
 import {bindManagersToSession} from '@lib/accounts/bindManagersToAccount';
-import {clampExteralessSetting, exteralessSettings} from '@stores/exteralessSettings';
+import {clampExterayondSetting, exterayondSettings} from '@stores/exterayondSettings';
 
 export type StoredFolder = {
   id: number,
@@ -31,7 +31,7 @@ async function getNotificationCountForFilter(filterId: number, managers: Reading
   // * count; "All chats" (0) counts muted chats too, "except muted" (1, the
   // * effective default) is the stock behavior — the All tab keeps Web K's
   // * unmuted count.
-  const mode = clampExteralessSetting('IgnoreUnreadCount', exteralessSettings.IgnoreUnreadCount);
+  const mode = clampExterayondSetting('IgnoreUnreadCount', exterayondSettings.IgnoreUnreadCount);
   if(mode === 2) {
     return {count: 0, muted: false};
   }
@@ -63,7 +63,7 @@ async function getFolderItemsInOrder(folderItems: StoredFolder[], managers: Read
   });
 }
 
-const isAllTabHidden = () => clampExteralessSetting('HideAllTab', exteralessSettings.HideAllTab) === true;
+const isAllTabHidden = () => clampExterayondSetting('HideAllTab', exterayondSettings.HideAllTab) === true;
 
 /**
  * exteraless HideAllTab (Android NekoConfig.hideAllTab): the tab bar drops the
@@ -224,7 +224,7 @@ const useFoldersStore = createRoot(() => {
     // * the counter mode is Android's restart-hint setting; the badges here
     // * recompute live instead. updateAllFolderNotifications skips the All
     // * folder's falsy id, so this refreshes every real folder itself
-    rootScope.addEventListener('exteraless_settings_updated', ({key}) => {
+    rootScope.addEventListener('exterayond_settings_updated', ({key}) => {
       if(key === 'IgnoreUnreadCount') {
         for(const folderItem of folderItems) {
           if(folderItem.id === undefined) continue;

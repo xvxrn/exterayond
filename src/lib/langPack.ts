@@ -17,7 +17,7 @@ import {setDirection} from '@helpers/dom/setInnerHTML';
 import setBlankToAnchor from '@lib/richTextProcessor/setBlankToAnchor';
 import {createEffect, createRoot, createSignal} from 'solid-js';
 import commonStateStorage from '@lib/commonStateStorage';
-import {exteralessSettings} from '@stores/exteralessSettings';
+import {exterayondSettings} from '@stores/exterayondSettings';
 import {hotEffect} from '@helpers/hotModule';
 import Icon from '@components/icon';
 import currencyStarIcon from '@components/currencyStarIcon';
@@ -357,7 +357,7 @@ namespace I18n {
       if(!module) continue;
       for(const string of formatLocalStrings(module.default)) {
         const key = string.key as LangPackKey;
-        if(!strings.has(key) || key === 'Exteraless' || key.startsWith('Exteraless.')) {
+        if(!strings.has(key) || key === 'Exterayond' || key.startsWith('Exterayond.')) {
           (string as LocalLangPackString).local = true;
           strings.set(key, string);
         }
@@ -846,7 +846,7 @@ namespace I18n {
 
       // * the date's own options are never mutated: a marked timestamp only adds
       // * the seconds on top, so switching off gives the stock string back
-      const optionsToFormat: Intl.DateTimeFormatOptions = this.messageTime && exteralessSettings.showSeconds ?
+      const optionsToFormat: Intl.DateTimeFormatOptions = this.messageTime && exterayondSettings.showSeconds ?
         {...this.options, hour: '2-digit', minute: '2-digit', second: '2-digit'} :
         this.options;
 
@@ -883,7 +883,7 @@ namespace I18n {
     hotEffect(import.meta.hot, () => createRoot((dispose) => {
       createEffect(() => {
         // * every time element is mounted before this switch is flipped
-        void exteralessSettings.showSeconds;
+        void exterayondSettings.showSeconds;
         updateMountedMessageTimes();
       });
 

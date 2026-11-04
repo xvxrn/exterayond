@@ -4,7 +4,7 @@ import {NodeSelection} from '@tiptap/pm/state';
 import '@tests/mocks/chatInputEditorEngineUi';
 import {mountChatInputEditor} from '@tests/helpers/chatInputEditor';
 import type {ChatInputEditor} from '@components/chat/inputEditor/types';
-import {setExteralessSetting} from '@stores/exteralessSettings';
+import {setExterayondSetting} from '@stores/exterayondSettings';
 
 const cleanerState = vi.hoisted(() => ({
   calls: 0,
@@ -69,7 +69,7 @@ describe('chat input paste: strip tracking on paste', () => {
 
   afterEach(() => {
     editors.splice(0).forEach((editor) => editor.destroy());
-    setExteralessSetting('OEChatsStripTrackingOnPaste', true);
+    setExterayondSetting('OEChatsStripTrackingOnPaste', true);
   });
 
   test('inserts a link without tracking once instead of swallowing the paste', async() => {
@@ -112,7 +112,7 @@ describe('chat input paste: strip tracking on paste', () => {
   });
 
   test('is stock when the setting is off', () => {
-    setExteralessSetting('OEChatsStripTrackingOnPaste', false);
+    setExterayondSetting('OEChatsStripTrackingOnPaste', false);
     const {editor} = mountEditor();
     const tiptap = (editor as TiptapEditorInternals).editor;
     editor.setTextWithEntities('beforeafter');

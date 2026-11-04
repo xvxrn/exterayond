@@ -3,7 +3,7 @@ import '@components/popupSandbox/bootstrapState';
 import {installSandboxEnvironment} from '@components/popupSandbox/environment';
 import {contactUser, premiumUser, makeMessage, NOW, GROUP_PEER_ID, CONTACT_PEER_ID, PREMIUM_PEER_ID} from '@components/popupSandbox/fixtures';
 import {DialogElement} from '@components/dialogElement';
-import {setExteralessSetting} from '@stores/exteralessSettings';
+import {setExterayondSetting} from '@stores/exterayondSettings';
 import I18n from '@lib/langPack';
 import '@/scss/style.scss';
 
@@ -121,7 +121,7 @@ const run = async(action: () => Promise<void>) => {
 };
 
 toggle.addEventListener('change', () => void run(async() => {
-  setExteralessSetting('OEAppearanceSenderMiniAvatars', toggle.checked);
+  setExterayondSetting('OEAppearanceSenderMiniAvatars', toggle.checked);
   await report(expected());
 }));
 
@@ -169,7 +169,7 @@ const boot = async() => {
     // The registry is imported only after the sandbox environment is installed.
     await import('@lib/solidjs/hotReloadGuardValue');
     manager = (await import('@lib/appDialogsManager')).default;
-    setExteralessSetting('OEAppearanceSenderMiniAvatars', toggle.checked);
+    setExterayondSetting('OEAppearanceSenderMiniAvatars', toggle.checked);
     await createRow();
     await report(expected());
     setControlsDisabled(false);

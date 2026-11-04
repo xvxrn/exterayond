@@ -4,7 +4,7 @@
  * adaptation, and the toggles that move an id between the halves. Row/Section
  * render as lightweight DOM fakes — the real Row pulls the app's
  * animation-intersection machinery, which jsdom cannot host; the store
- * contract itself is covered by `exteralessMenuLayout`.
+ * contract itself is covered by `exterayondMenuLayout`.
  */
 
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest';
@@ -71,14 +71,14 @@ vi.mock('@components/section', async() => {
   };
 });
 
-import ExteralessMainMenu from '@components/sidebarLeft/tabs/exteralessMainMenuTab';
-import {OE_DEFAULTS, exteralessSettings, setExteralessSetting} from '@stores/exteralessSettings';
-import {MAIN_MENU_ITEMS, getEditorVisibleEntries} from '@stores/exteralessMenuLayout';
+import ExterayondMainMenu from '@components/sidebarLeft/tabs/exterayondMainMenuTab';
+import {OE_DEFAULTS, exterayondSettings, setExterayondSetting} from '@stores/exterayondSettings';
+import {MAIN_MENU_ITEMS, getEditorVisibleEntries} from '@stores/exterayondMenuLayout';
 
 const RESET_STORAGE = () => {
   localStorage.clear();
   for(const key of Object.keys(OE_DEFAULTS) as Array<keyof typeof OE_DEFAULTS>) {
-    setExteralessSetting(key, OE_DEFAULTS[key]);
+    setExterayondSetting(key, OE_DEFAULTS[key]);
   }
 };
 
@@ -95,12 +95,12 @@ afterEach(() => {
 const renderTab = () => {
   const mount = document.createElement('div');
   document.body.append(mount);
-  dispose = render(() => <ExteralessMainMenu />, mount);
+  dispose = render(() => <ExterayondMainMenu />, mount);
   return mount;
 };
 
 const visibleRows = (mount: Element) =>
-  [...(mount.querySelector('section[data-name="Exteraless.MainMenu.Visible"]')?.querySelectorAll('.row') ?? [])] as HTMLElement[];
+  [...(mount.querySelector('section[data-name="Exterayond.MainMenu.Visible"]')?.querySelectorAll('.row') ?? [])] as HTMLElement[];
 
 const visibleTitles = (mount: Element) =>
   visibleRows(mount).map((row) => row.querySelector('.row-title-text')?.textContent);
@@ -115,7 +115,7 @@ describe('the Main Menu editor screen', () => {
       'Contacts',
       'Calls',
       'Settings',
-      'Exteraless.MainMenu.AddDivider'
+      'Exterayond.MainMenu.AddDivider'
     ]);
     // * every item row carries the two reorder buttons
     expect(mount.querySelectorAll('.exteraless-menu-move-button').length).toBe(10);
@@ -128,7 +128,7 @@ describe('the Main Menu editor screen', () => {
     const secondRow = visibleRows(mount)[1];
     secondRow.querySelector<HTMLButtonElement>('.exteraless-menu-move-button')!.click();
     expect(visibleTitles(mount).slice(0, 5)).toEqual(['ArchivedChats', 'SavedMessages', 'Contacts', 'Calls', 'Settings']);
-    expect(exteralessSettings.OEAppearanceMainMenuLayout.split(';')[0]).toBe('14,11,6,10,8');
+    expect(exterayondSettings.OEAppearanceMainMenuLayout.split(';')[0]).toBe('14,11,6,10,8');
   });
 
   it('a row toggle moves the item to the hidden half and back', () => {
@@ -136,7 +136,7 @@ describe('the Main Menu editor screen', () => {
 
     // * hide the first row (Saved Messages)
     visibleRows(mount)[0].querySelector<HTMLButtonElement>('.checkbox-field')!.click();
-    expect(exteralessSettings.OEAppearanceMainMenuLayout.split(';')[0]).toBe('14,6,10,8');
+    expect(exterayondSettings.OEAppearanceMainMenuLayout.split(';')[0]).toBe('14,6,10,8');
     expect(getEditorVisibleEntries()).toEqual([14, 6, 10, 8]);
 
     // * the hidden section lists it; toggling restores at the end
@@ -155,21 +155,21 @@ describe('the Main Menu editor screen', () => {
     // * clicking it removes the divider
     const rows = visibleRows(mount);
     const dividerRow = rows[rows.length - 2];
-    expect(dividerRow.querySelector('.row-title-text')?.textContent).toBe('Exteraless.MainMenu.Divider');
+    expect(dividerRow.querySelector('.row-title-text')?.textContent).toBe('Exterayond.MainMenu.Divider');
     dividerRow.click();
     expect(getEditorVisibleEntries()).toEqual([11, 14, 6, 10, 8]);
   });
 
   it('an imported layout with unbacked ids and dividers renders only the backed entries', () => {
-    setExteralessSetting('OEAppearanceMainMenuLayout', '14,18,-1,8,17,106;2,6,11');
+    setExterayondSetting('OEAppearanceMainMenuLayout', '14,18,-1,8,17,106;2,6,11');
     const mount = renderTab();
 
     // * 18/17/106 (Profile, QR, Feed) have no web backing — never rendered
     expect(visibleTitles(mount)).toEqual([
       'ArchivedChats',
-      'Exteraless.MainMenu.Divider',
+      'Exterayond.MainMenu.Divider',
       'Settings',
-      'Exteraless.MainMenu.AddDivider'
+      'Exterayond.MainMenu.AddDivider'
     ]);
   });
 });

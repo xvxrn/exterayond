@@ -14,12 +14,12 @@ import {getAccountSession, isSessionLeaving} from '@lib/accounts/getCurrentAccou
 import {bindManagersToSession} from '@lib/accounts/bindManagersToAccount';
 import rootScope from '@lib/rootScope';
 import {
-  exteralessSettings,
+  exterayondSettings,
   getPlayerCoverStyle,
   playerControlsScale,
   playerCoverSizeFraction,
   playerTitleSizes
-} from '@stores/exteralessSettings';
+} from '@stores/exterayondSettings';
 import styles from '@components/popups/md3Player.module.scss';
 
 /** Android `PlayerStyle.COVER_DISC` spin: one turn per 16 seconds while playing. */
@@ -32,7 +32,7 @@ const COVER_STYLE_CLASSES = ['is-wide', 'is-full', 'is-disc'] as const;
 
 export default function showMd3Player(controller: AppMediaPlaybackController) {
   const initial = controller.getPlayingDetails();
-  if(!exteralessSettings.OEAppearanceMd3Player || !initial || initial.doc.type !== 'audio') return;
+  if(!exterayondSettings.OEAppearanceMd3Player || !initial || initial.doc.type !== 'audio') return;
   const session = getAccountSession();
   if(isSessionLeaving(session)) return;
   const managers = bindManagersToSession(rootScope.managers);
@@ -95,27 +95,27 @@ export default function showMd3Player(controller: AppMediaPlaybackController) {
       coverCleanup?.();
     });
     createEffect(() => {
-      if(!exteralessSettings.OEAppearanceMd3Player) context.hide();
+      if(!exterayondSettings.OEAppearanceMd3Player) context.hide();
     });
     // * Android `WavySeekBar.setMaxAmplitude`: the setting feeds the amplitude,
     // * zero keeps the flat bar
-    createEffect(() => progress.setMaxAmplitude(exteralessSettings.OEPlayerWavy ? WAVE_AMPLITUDE : 0));
+    createEffect(() => progress.setMaxAmplitude(exterayondSettings.OEPlayerWavy ? WAVE_AMPLITUDE : 0));
 
     const coverStyle = () => getPlayerCoverStyle();
     const framed = () => coverStyle() === 0 || coverStyle() === 3;
-    const titleAbove = () => framed() && exteralessSettings.OEPlayerTitleAbove;
+    const titleAbove = () => framed() && exterayondSettings.OEPlayerTitleAbove;
     const contentClass = () => [
       styles.content,
       coverStyle() && styles[COVER_STYLE_CLASSES[coverStyle() - 1]],
-      exteralessSettings.OEPlayerTitleAlign === 1 && styles['is-title-center'],
-      playing() && coverStyle() === 3 && exteralessSettings.OEPlayerDiscSpin && styles['is-spinning']
+      exterayondSettings.OEPlayerTitleAlign === 1 && styles['is-title-center'],
+      playing() && coverStyle() === 3 && exterayondSettings.OEPlayerDiscSpin && styles['is-spinning']
     ].filter(Boolean).join(' ');
 
     // * Android `PlayerSheet.applyStyle`: sizes and the controls scale as
     // * custom properties, so the stylesheet keeps the layout ownership
     const styleVars = () => ({
       '--oe-player-cover-size': '' + playerCoverSizeFraction(),
-      '--oe-player-cover-radius': exteralessSettings.OEPlayerCoverRadius + 'px',
+      '--oe-player-cover-radius': exterayondSettings.OEPlayerCoverRadius + 'px',
       '--oe-player-title-size': playerTitleSizes()[0] + 'px',
       '--oe-player-artist-size': playerTitleSizes()[1] + 'px',
       '--oe-player-controls-scale': '' + playerControlsScale(),
@@ -133,10 +133,10 @@ export default function showMd3Player(controller: AppMediaPlaybackController) {
       <div class={contentClass()} style={styleVars()}>
         <div
           class={styles.source}
-          classList={{[styles.hidden]: !exteralessSettings.OEPlayerShowSource}}
-          aria-hidden={!exteralessSettings.OEPlayerShowSource}
+          classList={{[styles.hidden]: !exterayondSettings.OEPlayerShowSource}}
+          aria-hidden={!exterayondSettings.OEPlayerShowSource}
         >
-          <span>{i18n(details().isSavedMusic ? 'Exteraless.Player.FromProfile' : 'Exteraless.Player.FromChat')}</span>
+          <span>{i18n(details().isSavedMusic ? 'Exterayond.Player.FromProfile' : 'Exterayond.Player.FromChat')}</span>
           <PeerTitleTsx peerId={details().message.peerId} meAsNotes={details().isSavedMusic} />
         </div>
         <Show when={titleAbove()}>{metadata()}</Show>
@@ -154,11 +154,11 @@ export default function showMd3Player(controller: AppMediaPlaybackController) {
           <Button.Icon class={styles.play} icon={playing() ? 'pause_filled' : 'play_filled'} aria-label={I18n.format(playing() ? 'Pause' : 'Play', true)} onClick={() => run(() => controller.toggle())} />
           <Button.Icon icon="next" disabled={details().isSlotted} aria-label={I18n.format('KeyboardShortcuts.Action.NextMedia', true)} onClick={() => run(() => controller.next())} />
         </div>
-        <Show when={!details().isSlotted && exteralessSettings.OEPlayerShowModes}>
+        <Show when={!details().isSlotted && exterayondSettings.OEPlayerShowModes}>
           <Button.Icon
             icon={params().loop ? 'audio_repeat_single' : 'audio_repeat'}
             class={params().round || params().loop ? styles.active : undefined}
-            aria-label={I18n.format(params().loop ? 'Exteraless.Md3.RepeatTrack' : params().round ? 'Exteraless.Md3.RepeatPlaylist' : 'Exteraless.Md3.RepeatOff', true)}
+            aria-label={I18n.format(params().loop ? 'Exterayond.Md3.RepeatTrack' : params().round ? 'Exterayond.Md3.RepeatPlaylist' : 'Exterayond.Md3.RepeatOff', true)}
             onClick={() => run(() => controller.cycleRepeatMode())}
           />
         </Show>
@@ -168,7 +168,7 @@ export default function showMd3Player(controller: AppMediaPlaybackController) {
 
   createPopup(() => (
     <PopupElement class={styles.popup} managers={managers} closable>
-      <PopupElement.Header><PopupElement.Title title="Exteraless.Md3.Player" /></PopupElement.Header>
+      <PopupElement.Header><PopupElement.Title title="Exterayond.Md3.Player" /></PopupElement.Header>
       <Content />
     </PopupElement>
   ));

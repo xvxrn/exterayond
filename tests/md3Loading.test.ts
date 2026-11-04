@@ -1,6 +1,6 @@
 import PreloaderRing from '@components/preloaderRing';
 import ProgressivePreloader from '@components/preloader';
-import {setExteralessSetting} from '@stores/exteralessSettings';
+import {setExterayondSetting} from '@stores/exterayondSettings';
 
 vi.mock('@helpers/liteMode', () => ({default: {
   isAvailable: () => false,
@@ -8,7 +8,7 @@ vi.mock('@helpers/liteMode', () => ({default: {
 }}));
 
 afterEach(() => {
-  setExteralessSetting('OEAppearanceNewLoadingStyle', true);
+  setExterayondSetting('OEAppearanceNewLoadingStyle', true);
   document.body.replaceChildren();
 });
 
@@ -26,7 +26,7 @@ test('MD3 downloads retain byte progress across a reset and a style change', () 
   ring.setTarget(0);
   expect(md3.getAttribute('opacity')).toBe('0');
   ring.setManual(false, false);
-  setExteralessSetting('OEAppearanceNewLoadingStyle', false);
+  setExterayondSetting('OEAppearanceNewLoadingStyle', false);
   ring.setTarget(.75);
   expect(parseFloat(legacy.getAttribute('stroke-dasharray'))).toBeCloseTo(89.54, 1);
   container.remove();

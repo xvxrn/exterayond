@@ -29,7 +29,7 @@ import documentFragmentToNodes from '@helpers/dom/documentFragmentToNodes';
 import classNames from '@helpers/string/classNames';
 import {setDirection} from '@helpers/dom/setInnerHTML';
 import {hotReloadGuard} from '@lib/solidjs/hotReloadGuardProvider';
-import {exteralessSettings} from '@stores/exteralessSettings';
+import {exterayondSettings} from '@stores/exterayondSettings';
 import wrapPhoto from '@components/wrappers/photo';
 import {IconTsx} from '@components/iconTsx';
 import {getMiddleware} from '@helpers/middleware';
@@ -72,7 +72,7 @@ export default function createChatAudio(
     let cover: HTMLDivElement;
     createEffect(() => {
       const doc = musicDoc();
-      if(!exteralessSettings.OEAppearanceMd3MiniPlayer || !doc?.thumbs?.length) return;
+      if(!exterayondSettings.OEAppearanceMd3MiniPlayer || !doc?.thumbs?.length) return;
       const middleware = getMiddleware();
       const boundManagers = bindManagersToSession(managers);
       void wrapPhoto({
@@ -109,7 +109,7 @@ export default function createChatAudio(
   // A track picked in the music search popup plays off a message that only ever existed inside that
   // popup — there is nothing to open, so the plate's content stops being a button altogether.
   const [sourceInert, setInert] = createSignal(false);
-  const inert = () => sourceInert() && !(isMusic() && exteralessSettings.OEAppearanceMd3Player);
+  const inert = () => sourceInert() && !(isMusic() && exterayondSettings.OEAppearanceMd3Player);
 
   // Refs to JSX-rendered buttons that need imperative classList toggles or
   // disability state changes after the initial render.
@@ -223,7 +223,7 @@ export default function createChatAudio(
       return;
     }
 
-    if(isMusic() && exteralessSettings.OEAppearanceMd3Player) {
+    if(isMusic() && exterayondSettings.OEAppearanceMd3Player) {
       hotReloadGuard.showMd3Player(appMediaPlaybackController);
       return;
     }

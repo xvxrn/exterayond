@@ -3,7 +3,7 @@ import {MessageEntity} from '@layer';
 import {getMiddleware} from '@helpers/middleware';
 import wrapRichText from '@lib/richTextProcessor/wrapRichText';
 import wrapEmojiText from '@lib/richTextProcessor/wrapEmojiText';
-import {setExteralessSetting} from '@stores/exteralessSettings';
+import {setExterayondSetting} from '@stores/exterayondSettings';
 
 vi.mock('@lib/apiManagerProxy', () => ({default: {addEventListener: () => {}, getState: () => Promise.resolve({})}}));
 
@@ -120,14 +120,14 @@ describe('wrapRichText blockquote line boundaries', () => {
 
 describe('Zalgo display filter', () => {
   const marks = '\u0301\u0302\u0303\u0304';
-  beforeEach(() => setExteralessSetting('ZalgoFilter', true));
-  afterEach(() => setExteralessSetting('ZalgoFilter', false));
+  beforeEach(() => setExterayondSetting('ZalgoFilter', true));
+  afterEach(() => setExterayondSetting('ZalgoFilter', false));
 
   test('keeps stock text when off and follows Android trigger/length limits when on', () => {
     const text = 'A' + marks + ' e\u0301';
-    setExteralessSetting('ZalgoFilter', false);
+    setExterayondSetting('ZalgoFilter', false);
     expect(wrapRichText(text, {entities: []}).textContent).toBe(text);
-    setExteralessSetting('ZalgoFilter', true);
+    setExterayondSetting('ZalgoFilter', true);
     expect(wrapRichText(text, {entities: []}).textContent).toBe('A e');
     for(const untouched of ['e\u0301', 'A\u0301\u0302\u0303', 'x'.repeat(2045) + marks]) {
       expect(wrapRichText(untouched, {entities: []}).textContent).toBe(untouched);

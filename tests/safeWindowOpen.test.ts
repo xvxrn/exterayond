@@ -1,5 +1,5 @@
 import safeWindowOpen from '@helpers/dom/safeWindowOpen';
-import {setOpenLinkConfirmation} from '@stores/exteralessSettings';
+import {setOpenLinkConfirmation} from '@stores/exterayondSettings';
 
 describe('safeWindowOpen', () => {
   let open: ReturnType<typeof vi.spyOn>;

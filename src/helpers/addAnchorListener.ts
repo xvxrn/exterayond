@@ -2,7 +2,7 @@ import wrapUrl from '@lib/richTextProcessor/wrapUrl';
 import matchTelegramUrlHost from '@lib/richTextProcessor/matchTelegramUrlHost';
 import cancelEvent from '@helpers/dom/cancelEvent';
 import parseUriParams from '@helpers/string/parseUriParams';
-import {exteralessSettings} from '@stores/exteralessSettings';
+import {exterayondSettings} from '@stores/exterayondSettings';
 import {stripAnchorTracking} from '@lib/linkCleaner';
 
 const LOCAL_ACTIONS = new Set(['showMaskedAlert', 'execBotCommand', 'searchByHashtag', 'setMediaTimestamp']);
@@ -94,7 +94,7 @@ export default function addAnchorListener<
       onConfirmed
     });
 
-    if(exteralessSettings.ConfirmAllLinks && !LOCAL_ACTIONS.has(options.name) && (window as any).showMaskedAlert) {
+    if(exterayondSettings.ConfirmAllLinks && !LOCAL_ACTIONS.has(options.name) && (window as any).showMaskedAlert) {
       return (window as any).showMaskedAlert(element, e, execute);
     }
 
@@ -146,7 +146,7 @@ function onMaskedAnchorAuxClick(e: MouseEvent) {
 
   const callback = getAnchorCallbackName(anchor);
   const masked = callback === 'showMaskedAlert';
-  if(!masked && (!exteralessSettings.ConfirmAllLinks || LOCAL_ACTIONS.has(callback))) return false;
+  if(!masked && (!exterayondSettings.ConfirmAllLinks || LOCAL_ACTIONS.has(callback))) return false;
   if(anchor.hasAttribute('download') || /^(blob:|data:)/i.test(anchor.href)) return false;
   if(anchor.getAttribute('href')?.startsWith('#') || anchor.closest('[contenteditable="true"]')) return false;
 
@@ -166,7 +166,7 @@ function onMaskedAnchorAuxClick(e: MouseEvent) {
 
 /** The app's existing document click owner supplies its auth/sponsored processing after consent. */
 export function confirmExternalAnchorClick(event: Event, anchor: HTMLAnchorElement, onConfirmed: (anchor: HTMLAnchorElement) => void) {
-  if(!exteralessSettings.ConfirmAllLinks || event.defaultPrevented || !anchor?.href ||
+  if(!exterayondSettings.ConfirmAllLinks || event.defaultPrevented || !anchor?.href ||
     anchor.onclick || getAnchorCallbackName(anchor) || anchor.hasAttribute('download') ||
     anchor.getAttribute('href')?.startsWith('#') || anchor.closest('[contenteditable="true"]') ||
     !/^(https?:|mailto:|tel:)/i.test(anchor.href)) return false;

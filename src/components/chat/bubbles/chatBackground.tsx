@@ -35,7 +35,7 @@ import {AppTheme} from '@config/state';
 import {appState} from '@stores/appState';
 import classNames from '@helpers/string/classNames';
 import noop from '@helpers/noop';
-import {wallpaperDrawsPattern} from '@stores/exteralessSettings';
+import {wallpaperDrawsPattern} from '@stores/exterayondSettings';
 import {dispatchWallpaperTint} from '@helpers/wallpaperTint';
 
 import styles from '@components/chat/bubbles/chatBackground.module.scss';
@@ -794,8 +794,8 @@ const appChatBackground = (() => {
 
   // * the exteraless wallpaper-pattern gate re-renders the current background
   // * live (the cloned theme busts every reference-equality guard); the event
-  // * is the store's shared live channel (exteralessSettings.ts)
-  rootScope.addEventListener('exteraless_settings_updated', ({key}) => {
+  // * is the store's shared live channel (exterayondSettings.ts)
+  rootScope.addEventListener('exterayond_settings_updated', ({key}) => {
     if(key === 'OEAppearanceWallpaperPattern') {
       reRender();
     }

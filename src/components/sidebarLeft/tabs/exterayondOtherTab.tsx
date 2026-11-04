@@ -5,7 +5,7 @@ import {toastNew} from '@components/toast';
 import confirmationPopup from '@components/confirmationPopup';
 import {useSuperTab} from '@components/solidJsTabs/superTabProvider';
 import noop from '@helpers/noop';
-import {resetExteralessPreferences} from '@stores/exteralessPreferences';
+import {resetExterayondPreferences} from '@stores/exterayondPreferences';
 import {
   EXTENSION,
   applyExteraBackup,
@@ -17,16 +17,16 @@ import {
  * The Other category of the exteraless Preferences hub: the `.extera`
  * settings backup, byte-compatible with exteraGram (`EtgBackup`).
  */
-const ExteralessOther = () => {
+const ExterayondOther = () => {
   const [tab] = useSuperTab();
   const resetSettings = () => confirmationPopup({
     managers: tab.managers,
-    titleLangKey: 'Exteraless.Reset.Title',
-    descriptionLangKey: 'Exteraless.Reset.Description',
+    titleLangKey: 'Exterayond.Reset.Title',
+    descriptionLangKey: 'Exterayond.Reset.Description',
     button: {langKey: 'Reset', isDanger: true}
   }).then(() => {
-    resetExteralessPreferences();
-    toastNew({langPackKey: 'Exteraless.Reset.Done'});
+    resetExterayondPreferences();
+    toastNew({langPackKey: 'Exterayond.Reset.Done'});
   }).catch(noop);
 
   const importBackup = () => {
@@ -42,13 +42,13 @@ const ExteralessOther = () => {
         const content = String(reader.result ?? '');
         const read = etgBackup.readBackup(content);
         if(!read || read.knownCount <= 0) {
-          toastNew({langPackKey: 'Exteraless.Backup.NotABackup'});
+          toastNew({langPackKey: 'Exterayond.Backup.NotABackup'});
           return;
         }
 
         const result = applyExteraBackup(read.root);
         toastNew({
-          langPackKey: 'Exteraless.Backup.Applied',
+          langPackKey: 'Exterayond.Backup.Applied',
           langPackArguments: [result.applied]
         });
       };
@@ -71,24 +71,24 @@ const ExteralessOther = () => {
 
   return (
     <>
-      <Section caption="Exteraless.Backup.Info">
+      <Section caption="Exterayond.Backup.Info">
         <Row clickable={importBackup}>
           <Row.Icon icon="download" />
-          <Row.Title>{i18n('Exteraless.Backup.Import')}</Row.Title>
+          <Row.Title>{i18n('Exterayond.Backup.Import')}</Row.Title>
         </Row>
         <Row clickable={exportBackup}>
           <Row.Icon icon="download" />
-          <Row.Title>{i18n('Exteraless.Backup.Export')}</Row.Title>
+          <Row.Title>{i18n('Exterayond.Backup.Export')}</Row.Title>
         </Row>
       </Section>
-      <Section caption="Exteraless.Reset.Info">
+      <Section caption="Exterayond.Reset.Info">
         <Row clickable={resetSettings}>
           <Row.Icon icon="delete" />
-          <Row.Title>{i18n('Exteraless.Reset')}</Row.Title>
+          <Row.Title>{i18n('Exterayond.Reset')}</Row.Title>
         </Row>
       </Section>
     </>
   );
 };
 
-export default ExteralessOther;
+export default ExterayondOther;

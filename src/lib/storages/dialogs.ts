@@ -1142,7 +1142,7 @@ export default class DialogsStorage extends AppManager {
       }
     }
 
-    this.rootScope.dispatchEvent('exteraless_settings_updated', {key: 'SortByUnread', value: enabled});
+    this.rootScope.dispatchEvent('exterayond_settings_updated', {key: 'SortByUnread', value: enabled});
   }
 
   public generateIndexForDialog(

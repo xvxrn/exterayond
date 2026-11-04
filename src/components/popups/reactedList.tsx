@@ -220,7 +220,7 @@ export default async function showReactedListPopup(message$: Message.message, in
 
   const loaders: Map<HTMLElement, ScrollableLoader> = new Map();
 
-  listenerSetter.add(rootScope)('exteraless_settings_updated', ({key}) => {
+  listenerSetter.add(rootScope)('exterayond_settings_updated', ({key}) => {
     if(key === 'DisableNumberRounding' && middleware()) {
       standaloneCounters.forEach((reaction) => reaction.refreshCounter());
     }

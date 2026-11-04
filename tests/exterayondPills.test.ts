@@ -19,10 +19,10 @@ vi.hoisted(() => {
   } as unknown as Storage);
 });
 
-import {PILL_IDS, PILL_DEFAULT_ACTIVE, WEB_PILL_REGISTRY, nextPillIndex, parsePillIds, resolvePillLayout, getVisiblePillIds, getHubPillGroups, setPillActive, resetPillLayout} from '@stores/exteralessPills';
-import {OE_DEFAULTS, exteralessSettings, setExteralessSetting} from '@stores/exteralessSettings';
+import {PILL_IDS, PILL_DEFAULT_ACTIVE, WEB_PILL_REGISTRY, nextPillIndex, parsePillIds, resolvePillLayout, getVisiblePillIds, getHubPillGroups, setPillActive, resetPillLayout} from '@stores/exterayondPills';
+import {OE_DEFAULTS, exterayondSettings, setExterayondSetting} from '@stores/exterayondSettings';
 import {etgBackup} from '@lib/exteraBackup/etgBackup';
-import {bubbleRadiusToCss} from '@stores/exteralessSettings';
+import {bubbleRadiusToCss} from '@stores/exterayondSettings';
 import rootScope from '@lib/rootScope';
 
 // * a backup apply also writes the native archive flag, which rides the managers
@@ -37,7 +37,7 @@ afterEach(() => {
 const RESET_STORAGE = () => {
   (localStorage as unknown as {_data: Map<string, string>})._data.clear();
   for(const key of Object.keys(OE_DEFAULTS) as Array<keyof typeof OE_DEFAULTS>) {
-    setExteralessSetting(key, OE_DEFAULTS[key]);
+    setExterayondSetting(key, OE_DEFAULTS[key]);
   }
 };
 
@@ -61,8 +61,8 @@ describe('pill stack layout (PillStackConfig contract)', () => {
   });
 
   it('resolvePillLayout reads an id listed in both strings as active', () => {
-    setExteralessSetting('OEPillActivePills', '5,6');
-    setExteralessSetting('OEPillHiddenPills', '6,7');
+    setExterayondSetting('OEPillActivePills', '5,6');
+    setExterayondSetting('OEPillHiddenPills', '6,7');
     const layout = resolvePillLayout();
     expect(layout.active).toEqual([5, 6]);
     // * Android loadConfig filters the hidden list by !active.contains(it)
@@ -72,14 +72,14 @@ describe('pill stack layout (PillStackConfig contract)', () => {
   it('the strip renders only registered pills, the stored strings keep the rest', () => {
     // * PROXY(6) has no web counterpart; like Android's registry, an
     // * unregistered id is skipped by the strip and kept in the layout
-    setExteralessSetting('OEPillActivePills', '5,6');
+    setExterayondSetting('OEPillActivePills', '5,6');
     expect(getVisiblePillIds()).toEqual([PILL_IDS.CACHE]);
-    expect(exteralessSettings.OEPillActivePills).toBe('5,6');
+    expect(exterayondSettings.OEPillActivePills).toBe('5,6');
     expect(WEB_PILL_REGISTRY.map((pill) => pill.id)).toEqual([5]);
   });
 
   it('setPillActive moves a pill between the lists like Android setPillActive', () => {
-    setExteralessSetting('OEPillActivePills', '5,6');
+    setExterayondSetting('OEPillActivePills', '5,6');
     setPillActive(5, false);
     expect(resolvePillLayout()).toEqual({active: [6], hidden: [5]});
     setPillActive(5, true);
@@ -90,16 +90,16 @@ describe('pill stack layout (PillStackConfig contract)', () => {
   });
 
   it('resetPillLayout restores the default active list', () => {
-    setExteralessSetting('OEPillActivePills', '');
-    setExteralessSetting('OEPillHiddenPills', '1,2,3,4,5,6');
+    setExterayondSetting('OEPillActivePills', '');
+    setExterayondSetting('OEPillHiddenPills', '1,2,3,4,5,6');
     resetPillLayout();
     expect(resolvePillLayout()).toEqual({active: [5, 6], hidden: []});
   });
 
   it('the hub groups show registered pills only, active first in layout order', () => {
-    setExteralessSetting('OEPillActivePills', '5,6');
+    setExterayondSetting('OEPillActivePills', '5,6');
     // * an id listed as both hidden and active reads active (Android loadConfig)
-    setExteralessSetting('OEPillHiddenPills', '5');
+    setExterayondSetting('OEPillHiddenPills', '5');
     expect(getHubPillGroups()).toEqual({active: [PILL_IDS.CACHE], hidden: []});
     setPillActive(PILL_IDS.CACHE, false);
     expect(getHubPillGroups()).toEqual({active: [], hidden: [PILL_IDS.CACHE]});
@@ -129,32 +129,32 @@ describe('the strip switch (PILLS-03/04, PillStackView.animateToNextPill)', () =
   });
 
   it('OEPillLastActiveId stays in the pill-id domain', async() => {
-    setExteralessSetting('OEPillLastActiveId', 5);
-    expect(exteralessSettings.OEPillLastActiveId).toBe(5);
-    setExteralessSetting('OEPillLastActiveId', 99);
-    expect(exteralessSettings.OEPillLastActiveId).toBe(15);
-    setExteralessSetting('OEPillLastActiveId', -7);
-    expect(exteralessSettings.OEPillLastActiveId).toBe(-1);
+    setExterayondSetting('OEPillLastActiveId', 5);
+    expect(exterayondSettings.OEPillLastActiveId).toBe(5);
+    setExterayondSetting('OEPillLastActiveId', 99);
+    expect(exterayondSettings.OEPillLastActiveId).toBe(15);
+    setExterayondSetting('OEPillLastActiveId', -7);
+    expect(exterayondSettings.OEPillLastActiveId).toBe(-1);
   });
 });
 
 describe('the pill stack keys in the .extera backup', () => {  beforeEach(RESET_STORAGE);
 
   it('the layout strings round-trip under the exteraGram names in the pills section', () => {
-    setExteralessSetting('OEPillActivePills', '5,6');
-    setExteralessSetting('OEPillHiddenPills', '1');
-    setExteralessSetting('OEPillInfiniteScrolling', false);
-    const exported = JSON.parse(etgBackup.buildBackup(false, exteralessSettings));
+    setExterayondSetting('OEPillActivePills', '5,6');
+    setExterayondSetting('OEPillHiddenPills', '1');
+    setExterayondSetting('OEPillInfiniteScrolling', false);
+    const exported = JSON.parse(etgBackup.buildBackup(false, exterayondSettings));
     expect(exported.pillstackconfig.activePills).toBe('5,6');
     expect(exported.pillstackconfig.hiddenPills).toBe('1');
     expect(exported.exteraconfig.infiniteScrolling).toBe(false);
 
-    setExteralessSetting('OEPillActivePills', '5,6,7');
-    const applied = etgBackup.applyBackup(exported, (key, value) => setExteralessSetting(key, value as never));
+    setExterayondSetting('OEPillActivePills', '5,6,7');
+    const applied = etgBackup.applyBackup(exported, (key, value) => setExterayondSetting(key, value as never));
     expect(applied.applied).toBeGreaterThanOrEqual(3);
-    expect(exteralessSettings.OEPillActivePills).toBe('5,6');
-    expect(exteralessSettings.OEPillHiddenPills).toBe('1');
-    expect(exteralessSettings.OEPillInfiniteScrolling).toBe(false);
+    expect(exterayondSettings.OEPillActivePills).toBe('5,6');
+    expect(exterayondSettings.OEPillHiddenPills).toBe('1');
+    expect(exterayondSettings.OEPillInfiniteScrolling).toBe(false);
   });
 
   it('isPillsLayout rejects duplicates, non-ints and out-of-domain ids', () => {

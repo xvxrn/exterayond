@@ -2354,3 +2354,30 @@ results/voters requirements, closed-poll exclusion incl. the creator,
 hide_results_until_close with its creator exception). Typecheck and oxlint
 clean on the touched files. The visible result needs a public poll with
 results on the account — runbook step 5.23.
+
+## 064 — the debrand sweep (2026-11-04)
+
+The user's standing order ("remove every exteraless mention from the code")
+executed as one mechanical packet after the round-7 agent burned its quota on
+research without writing anything (its scope is redone here, inline).
+
+Renamed: the lang-key prefix `Exteraless.*` → `Exterayond.*` (768 references,
+zero left), the store/tab/test files (`exteraless*` → `exterayond*`, 21 git
+renames), the identifiers (`exteralessSettings` → `exterayondSettings`,
+`setExterayondSetting`, the types, the `exteraless_settings_updated` event →
+`exterayond_settings_updated`), the hub About header key/component, and the
+settings-search index (regenerated against the new keys). The storage key is
+now `exterayond-settings` with a one-time migration from the pre-rename key —
+the user's seeded record survives, proven by two new store tests (migrate +
+new-key-wins).
+
+Kept deliberately (the contracts and the attribution): every `OE*`/`Pill*`
+setting key and `.extera` backup alias (the Android compatibility contract),
+the `oe-` CSS prefix, the attribution comments citing the Android sources and
+`.research` paths, and the journal/history text. The remaining "exteraless"
+mentions in src are exactly those citations.
+
+Checks: 11 suites / 135 tests green (settings 32 with the two migration
+tests, pills, menu layout, theme palette, tabs, main menu tab, backup,
+search index, lang direction, background pick, archive, section), typecheck
+clean, the settings-search index regenerated against the new keys.

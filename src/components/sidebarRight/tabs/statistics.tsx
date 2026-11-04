@@ -1104,7 +1104,7 @@ export default class AppStatisticsTab extends SliderSuperTabEventable {
   public async init(chatIdOrPeerId: ChatId | PeerId, mid?: number, storyId?: number, mode?: 'poll') {
     const managers = bindManagersToSession(this.managers);
     this.container.classList.add('statistics-container');
-    this.listenerSetter.add(rootScope)('exteraless_settings_updated', ({key}) => {
+    this.listenerSetter.add(rootScope)('exterayond_settings_updated', ({key}) => {
       if(key !== 'DisableNumberRounding') {
         return;
       }

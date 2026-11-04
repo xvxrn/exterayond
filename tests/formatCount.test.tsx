@@ -12,14 +12,14 @@ import formatNumber from '@helpers/number/formatNumber';
 import rootScope from '@lib/rootScope';
 import {applyExteraBackup, SECTION_EXTERA} from '@lib/exteraBackup/etgBackup';
 import {
-  exteralessSettings,
-  resetExteralessSettings,
-  setExteralessSetting
-} from '@stores/exteralessSettings';
+  exterayondSettings,
+  resetExterayondSettings,
+  setExterayondSetting
+} from '@stores/exterayondSettings';
 
 /**
  * `DisableNumberRounding`: the formatter, the Badge that mounts it, and the
- * single `exteraless_settings_updated` refresh that imperative owners listen
+ * single `exterayond_settings_updated` refresh that imperative owners listen
  * for — all against the real store and the real rootScope event bus.
  */
 
@@ -30,7 +30,7 @@ const nbspCount = (value: string) => (value.match(/\u00a0/g) || []).length;
 
 describe('formatCount', () => {
   beforeEach(() => {
-    resetExteralessSettings();
+    resetExterayondSettings();
   });
 
   it('off is stock formatNumber byte for byte, decimals included', () => {
@@ -59,7 +59,7 @@ describe('formatCount', () => {
   });
 
   it('on is every digit, grouped by exactly one NBSP per thousand', () => {
-    setExteralessSetting('DisableNumberRounding', true);
+    setExterayondSetting('DisableNumberRounding', true);
     const cases: Array<[value: number, exact: string, nbsps: number]> = [
       [0, '0', 0],
       [999, '999', 0],
@@ -89,7 +89,7 @@ describe('formatCount', () => {
 
 describe('Badge with formatCount', () => {
   beforeEach(() => {
-    resetExteralessSettings();
+    resetExterayondSettings();
   });
 
   it('updates the mounted text in place on a toggle and a count change, then disposes', async() => {
@@ -101,7 +101,7 @@ describe('Badge with formatCount', () => {
     await flush();
     expect(badge.textContent).toBe('1K');
 
-    setExteralessSetting('DisableNumberRounding', true);
+    setExterayondSetting('DisableNumberRounding', true);
     await flush();
     expect(badge.textContent).toBe('1' + NBSP + '000');
     expect(container.querySelector('.badge')).toBe(badge);
@@ -112,7 +112,7 @@ describe('Badge with formatCount', () => {
     expect(badge.textContent).toBe('1' + NBSP + '234' + NBSP + '567');
     expect(container.querySelector('.badge')).toBe(badge);
 
-    setExteralessSetting('DisableNumberRounding', false);
+    setExterayondSetting('DisableNumberRounding', false);
     await flush();
     expect(badge.textContent).toBe('1.23M');
     expect(container.querySelector('.badge')).toBe(badge);
@@ -124,7 +124,7 @@ describe('Badge with formatCount', () => {
     expect(badge.isConnected).toBe(false);
     expect(container.querySelector('.badge')).toBeNull();
     setCount(1000);
-    setExteralessSetting('DisableNumberRounding', true);
+    setExterayondSetting('DisableNumberRounding', true);
     await flush();
     expect(badge.textContent).toBe('1.23M');
     expect(container.querySelector('.badge')).toBeNull();
@@ -136,45 +136,45 @@ describe('count refresh events', () => {
   let listener: (event: {key: string, value: boolean | number | string}) => void;
 
   beforeEach(() => {
-    resetExteralessSettings();
+    resetExterayondSettings();
     document.body.replaceChildren();
     events = [];
     listener = (event) => events.push(event);
-    rootScope.addEventListener('exteraless_settings_updated', listener);
+    rootScope.addEventListener('exterayond_settings_updated', listener);
   });
 
   afterEach(() => {
-    rootScope.removeEventListener('exteraless_settings_updated', listener);
-    resetExteralessSettings();
+    rootScope.removeEventListener('exterayond_settings_updated', listener);
+    resetExterayondSettings();
   });
 
   it('an unrelated setting and a no-op count write refresh nothing', () => {
-    setExteralessSetting('showSeconds', true);
-    setExteralessSetting('HidePhone', false);
-    setExteralessSetting('DisableNumberRounding', false);
-    setExteralessSetting('DisableNumberRounding', false);
+    setExterayondSetting('showSeconds', true);
+    setExterayondSetting('HidePhone', false);
+    setExterayondSetting('DisableNumberRounding', false);
+    setExterayondSetting('DisableNumberRounding', false);
     expect(events).toEqual([]);
   });
 
   it('a count toggle and a reset each refresh once', () => {
-    setExteralessSetting('DisableNumberRounding', true);
+    setExterayondSetting('DisableNumberRounding', true);
     expect(events).toEqual([{key: 'DisableNumberRounding', value: true}]);
 
     events.splice(0);
-    setExteralessSetting('DisableNumberRounding', true);
+    setExterayondSetting('DisableNumberRounding', true);
     expect(events).toEqual([]);
 
-    setExteralessSetting('DisableNumberRounding', false);
+    setExterayondSetting('DisableNumberRounding', false);
     expect(events).toEqual([{key: 'DisableNumberRounding', value: false}]);
 
-    setExteralessSetting('DisableNumberRounding', true);
+    setExterayondSetting('DisableNumberRounding', true);
     events.splice(0);
-    resetExteralessSettings();
-    expect(exteralessSettings.DisableNumberRounding).toBe(false);
+    resetExterayondSettings();
+    expect(exterayondSettings.DisableNumberRounding).toBe(false);
     expect(events).toEqual([{key: 'DisableNumberRounding', value: false}]);
 
     events.splice(0);
-    resetExteralessSettings();
+    resetExterayondSettings();
     expect(events).toEqual([]);
   });
 
@@ -188,7 +188,7 @@ describe('count refresh events', () => {
 
     // * the unrelated key applied after the import must not replace/swallow it
     events.splice(0);
-    setExteralessSetting('HidePhone', false);
+    setExterayondSetting('HidePhone', false);
     expect(events).toEqual([]);
 
     events.splice(0);
@@ -196,7 +196,7 @@ describe('count refresh events', () => {
       disableNumberRounding: false,
       formatTimeWithSeconds: false
     }});
-    setExteralessSetting('OEChatsRemoveMessageTail', false);
+    setExterayondSetting('OEChatsRemoveMessageTail', false);
     expect(events).toEqual([{key: 'DisableNumberRounding', value: false}]);
   });
 
@@ -206,7 +206,7 @@ describe('count refresh events', () => {
       formatTimeWithSeconds: true
     }});
     expect(applied.applied).toBe(1);
-    expect(exteralessSettings.DisableNumberRounding).toBe(false);
+    expect(exterayondSettings.DisableNumberRounding).toBe(false);
     expect(events).toEqual([]);
   });
 });

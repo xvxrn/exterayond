@@ -32,7 +32,7 @@ import {makeTime} from '@components/chat/utils';
 import {useAppConfig} from '@stores/appState';
 import {formatNanoton} from '@helpers/paymentsWrapCurrencyAmount';
 import {bindManagersToSession} from '@lib/accounts/bindManagersToAccount';
-import {exteralessSettings} from '@stores/exteralessSettings';
+import {exterayondSettings} from '@stores/exterayondSettings';
 import ensureButtonSemantics from '@helpers/dom/ensureButtonSemantics';
 import {canShowMessageTimeHint} from '@components/chat/messageTimeHint';
 
@@ -225,7 +225,7 @@ export namespace MessageRender {
   /** Android MessageHelper.showForwardDate; keep the original forward date, not saved_date. */
   export const appendForwardedDate = (header: HTMLElement, message: Message.message) => {
     const timestamp = message.fwd_from?.date;
-    if(!exteralessSettings.DateOfForwardedMsg || !timestamp) return;
+    if(!exterayondSettings.DateOfForwardedMsg || !timestamp) return;
     const span = document.createElement('span');
     span.className = 'bubble-forward-date';
     span.append('\u00A0· ', formatFullSentTimeRaw(timestamp, {combined: true}).dateEl);
@@ -393,7 +393,7 @@ export namespace MessageRender {
     inner.classList.add('time-inner');
     if(canShowMessageTimeHint(message, chatType)) {
       ensureButtonSemantics(inner);
-      inner.setAttribute('aria-label', I18n.format('Exteraless.MessageTimeDetails', true));
+      inner.setAttribute('aria-label', I18n.format('Exterayond.MessageTimeDetails', true));
     }
     if(title) inner.title = title;
 

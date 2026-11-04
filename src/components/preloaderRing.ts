@@ -40,7 +40,7 @@ import clamp from '@helpers/number/clamp';
 import htmlToDocumentFragment from '@helpers/dom/htmlToDocumentFragment';
 import createAppWindowIntersectionObserver from '@helpers/dom/createAppWindowIntersectionObserver';
 import {createEffect, createRoot, on} from 'solid-js';
-import {exteralessSettings} from '@stores/exteralessSettings';
+import {exterayondSettings} from '@stores/exterayondSettings';
 import md3ProgressPath from '@helpers/svg/md3ProgressPath';
 
 const N = 12;
@@ -617,7 +617,7 @@ export default class PreloaderRing {
 
   // `lit`: a brightness dot 0, or the line starting on it, has at least
   private render(lit: number) {
-    if(exteralessSettings.OEAppearanceNewLoadingStyle) {
+    if(exterayondSettings.OEAppearanceNewLoadingStyle) {
       const gap = 2;
       const arc = this.shown * CIRCUMFERENCE;
       this.put(this.track, 'stroke-dasharray', `${round(Math.max(0, CIRCUMFERENCE - arc - gap * 2))} ${round(CIRCUMFERENCE)}`);
@@ -636,7 +636,7 @@ export default class PreloaderRing {
   private updateWave() {
     const waiting = !this.manual && !this.target && this.phase !== 'go' && this.inSight && this.container.isConnected;
     this.container.classList.toggle('is-md3-waiting', waiting);
-    if(waiting && !exteralessSettings.OEAppearanceNewLoadingStyle && liteMode.getAnimationLevel() === 2 && typeof(this.dot.animate) === 'function') {
+    if(waiting && !exterayondSettings.OEAppearanceNewLoadingStyle && liteMode.getAnimationLevel() === 2 && typeof(this.dot.animate) === 'function') {
       if(!this.wave) {
         ++this.waveId;
         this.wave = this.splitDots().map((dot, i) => dot.animate(WAVE_KEYFRAMES, {duration: WAVE, delay: i * WAVE_STEP, iterations: Infinity}));
@@ -644,7 +644,7 @@ export default class PreloaderRing {
         PreloaderRing.watchLevel();
       }
     } else {
-      this.stopWave(exteralessSettings.OEAppearanceNewLoadingStyle || this.manual || !this.inSight || !this.container.isConnected || !liteMode.isAvailable('animations'));
+      this.stopWave(exterayondSettings.OEAppearanceNewLoadingStyle || this.manual || !this.inSight || !this.container.isConnected || !liteMode.isAvailable('animations'));
     }
   }
 
@@ -658,7 +658,7 @@ export default class PreloaderRing {
     }
 
     PreloaderRing.levelWatched = true;
-    createRoot(() => createEffect(on(() => [liteMode.getAnimationLevel(), exteralessSettings.OEAppearanceNewLoadingStyle], () => {
+    createRoot(() => createEffect(on(() => [liteMode.getAnimationLevel(), exterayondSettings.OEAppearanceNewLoadingStyle], () => {
       const rings = new Set([...observed.values(), ...PreloaderRing.waving]);
       rings.forEach((ring) => {
         ring.updateWave();

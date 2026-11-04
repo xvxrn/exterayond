@@ -1,4 +1,4 @@
-import {exteralessSettings} from '@stores/exteralessSettings';
+import {exterayondSettings} from '@stores/exterayondSettings';
 import formatNumber from '@helpers/number/formatNumber';
 import numberThousandSplitter from '@helpers/number/numberThousandSplitter';
 
@@ -8,10 +8,10 @@ import numberThousandSplitter from '@helpers/number/numberThousandSplitter';
  * grouped like the rest of the client's exact numbers (NBSP, RTL-safe).
  *
  * Reading the setting here is what makes a Solid expression update in place;
- * imperative owners re-read it from `exteraless_settings_updated`.
+ * imperative owners re-read it from `exterayond_settings_updated`.
  */
 export default function formatCount(count: number, decimals = 2): string {
-  if(!exteralessSettings.DisableNumberRounding) {
+  if(!exterayondSettings.DisableNumberRounding) {
     return formatNumber(count, decimals);
   }
 

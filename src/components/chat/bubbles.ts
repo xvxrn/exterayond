@@ -28,7 +28,7 @@ import showDeleteMessagesPopup from '@components/popups/deleteMessages';
 import repeatMessages from '@components/chat/repeatMessages';
 import appDownloadManager from '@lib/appDownloadManager';
 import detectLanguageForTranslation from '@helpers/detectLanguageForTranslation';
-import {DOUBLE_TAP_ACTIONS, resolveDoubleTapAction} from '@stores/exteralessSettings';
+import {DOUBLE_TAP_ACTIONS, resolveDoubleTapAction} from '@stores/exterayondSettings';
 import {AudioElement, DeferredMediaElement, isAudioElement} from '@components/audio';
 import {ChannelParticipant, Chat as MTChat, ChatParticipant, Document, Game, Message, MessageEntity,  MessageMedia,  MessageReplyHeader, Photo, PhotoSize, ReactionCount, SponsoredMessage, User, UserFull, WebPage, WebPageAttribute, Reaction, DocumentAttribute, InputStickerSet, TextWithEntities, FactCheck, WebDocument, MessageExtendedMedia, PeerSettings, LangPackString, ForumTopic, MessageAction} from '@layer';
 import {BOT_START_PARAM, NULL_PEER_ID, REPLIES_PEER_ID, SEND_WHEN_ONLINE_TIMESTAMP, STARS_CURRENCY} from '@appManagers/constants';
@@ -83,7 +83,7 @@ import {getAppWindow, onAppWindowChange, onBeforeAppWindowChange} from '@helpers
 import getObjectKeysAndSort from '@helpers/object/getObjectKeysAndSort';
 import forEachReverse from '@helpers/array/forEachReverse';
 import formatCount from '@helpers/number/formatCount';
-import {exteralessSettings, getStickerScale} from '@stores/exteralessSettings';
+import {exterayondSettings, getStickerScale} from '@stores/exterayondSettings';
 import getViewportSlice from '@helpers/dom/getViewportSlice';
 import SuperIntersectionObserver, {IntersectionCallback} from '@helpers/dom/superIntersectionObserver';
 import generateFakeIcon from '@components/generateFakeIcon';
@@ -2754,7 +2754,7 @@ export default class ChatBubbles {
       });
     });
 
-    this.listenerSetter.add(rootScope)('exteraless_settings_updated', ({key}) => {
+    this.listenerSetter.add(rootScope)('exterayond_settings_updated', ({key}) => {
       if(key === 'DisableNumberRounding') {
         this.refreshPostViews();
       }
@@ -3927,7 +3927,7 @@ export default class ChatBubbles {
     }
 
     const messageTime = findUpClassName(target, 'time');
-    if(messageTime && !this.chat.selection.isSelecting && exteralessSettings.ShowTimeHint) {
+    if(messageTime && !this.chat.selection.isSelecting && exterayondSettings.ShowTimeHint) {
       const message = this.chat.getMessage(bubbleFullMid);
       if(message && showMessageTimeHint(message, this.chat.type, messageTime, this.container)) return;
     }
@@ -13046,7 +13046,7 @@ export default class ChatBubbles {
         i18n('ChatYourSelfDescription4')
       ];
     } else if(type === 'greeting') {
-      const showSticker = !exteralessSettings.DontSendGreetingSticker;
+      const showSticker = !exterayondSettings.DontSendGreetingSticker;
       let subtitle = i18n('NoMessagesGreetingsDescription');
 
       // findAndSplice(this.messagesQueue, q => q.bubble === bubble);

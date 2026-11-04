@@ -6,7 +6,7 @@
  * `UrlCleaner`/`AdGuardRule`; both ChatsConfig.stripTrackingOnOpen and
  * stripTrackingOnPaste run it through here.
  */
-import {exteralessSettings} from '@stores/exteralessSettings';
+import {exterayondSettings} from '@stores/exterayondSettings';
 import {UrlCleaner} from './urlCleaner';
 
 export {UrlCleaner} from './urlCleaner';
@@ -36,8 +36,8 @@ const URL_IN_TEXT = /(?:https?:\/\/|www\.)[^\s<>"']+/;
 const URL_IN_TEXT_GLOBAL = new RegExp(URL_IN_TEXT.source, 'gi');
 
 const settingFor = (where: 'open' | 'paste') => where === 'open' ?
-  exteralessSettings.OEChatsStripTrackingOnOpen :
-  exteralessSettings.OEChatsStripTrackingOnPaste;
+  exterayondSettings.OEChatsStripTrackingOnOpen :
+  exterayondSettings.OEChatsStripTrackingOnPaste;
 
 /**
  * Cleans one link if the setting for `where` is on. The cleaner loads once,
@@ -68,7 +68,7 @@ export const cleanLinkSync = (url: string, where: 'open' | 'paste'): string => {
  * clean above actually has an instance.
  */
 export const preloadLinkCleaner = (): Promise<UrlCleaner | undefined> | undefined => {
-  if(exteralessSettings.OEChatsStripTrackingOnOpen || exteralessSettings.OEChatsStripTrackingOnPaste) {
+  if(exterayondSettings.OEChatsStripTrackingOnOpen || exterayondSettings.OEChatsStripTrackingOnPaste) {
     return loadCleaner();
   }
 
@@ -89,7 +89,7 @@ const EXTERNAL_ANCHOR_HREF = /^https?:/i;
  * hover and copy still show the original.
  */
 export const stripAnchorTracking = (anchor: HTMLAnchorElement): void => {
-  if(!cleaner || !exteralessSettings.OEChatsStripTrackingOnOpen || !anchor?.getAttribute) return;
+  if(!cleaner || !exterayondSettings.OEChatsStripTrackingOnOpen || !anchor?.getAttribute) return;
   const href = anchor.getAttribute('href');
   if(!href || anchor.hasAttribute('download') || anchor.closest('[contenteditable="true"]')) return;
   // * the cleaner only handles absolute http(s) URLs; tg:// and in-page

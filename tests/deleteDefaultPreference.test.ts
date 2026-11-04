@@ -1,6 +1,6 @@
 import '@helpers/peerIdPolyfill';
 import {ChatType} from '@components/chat/chatType';
-import {setExteralessSetting} from '@stores/exteralessSettings';
+import {setExterayondSetting} from '@stores/exterayondSettings';
 import showDeleteDialogPopup from '@components/popups/deleteDialog';
 import showDeleteMessagesPopup from '@components/popups/deleteMessages';
 
@@ -27,7 +27,7 @@ vi.mock('@helpers/date', () => ({formatFullSentTime: vi.fn()}));
 
 beforeEach(() => {
   vi.clearAllMocks();
-  setExteralessSetting('DeleteChatForBothSides', true);
+  setExterayondSetting('DeleteChatForBothSides', true);
   mocks.message.media = undefined;
   mocks.managers = {
     appPeersManager: {isSavedDialog: async() => false, isBot: async() => false, isMegagroup: async() => false},
@@ -40,11 +40,11 @@ beforeEach(() => {
     }
   };
 });
-afterEach(() => setExteralessSetting('DeleteChatForBothSides', true));
+afterEach(() => setExterayondSetting('DeleteChatForBothSides', true));
 const options = () => mocks.popup.mock.lastCall[1];
 
 test.each([false, true])('preselects available private-chat and message choices only when preference=%s', async(checked) => {
-  setExteralessSetting('DeleteChatForBothSides', checked);
+  setExterayondSetting('DeleteChatForBothSides', checked);
   await showDeleteDialogPopup(123 as PeerId, 'chat');
   expect(options().checkboxes[0].checked).toBe(checked);
   expect(mocks.flushHistory).not.toHaveBeenCalled();

@@ -21,7 +21,7 @@ vi.hoisted(() => {
 
 import {invisibleEncryptor} from '@lib/exteraBackup/invisibleEncryptor';
 import {etgBackup, applyExteraBackup, SECTION_EXTERA, SECTION_MAIN, EXTENSION} from '@lib/exteraBackup/etgBackup';
-import {OE_DEFAULTS, exteralessSettings, setExteralessSetting, getStickerTimeMode, setStickerTimeMode} from '@stores/exteralessSettings';
+import {OE_DEFAULTS, exterayondSettings, setExterayondSetting, getStickerTimeMode, setStickerTimeMode} from '@stores/exterayondSettings';
 import {setAppSettingsSilent} from '@stores/appSettings';
 import rootScope from '@lib/rootScope';
 
@@ -42,10 +42,10 @@ describe('exteraless .extera backup (EtgBackup contract)', () => {
     const applied = applyExteraBackup(root);
     expect(applied.applied).toBe(3);
     expect(applied.unsupported).toEqual(['showDetailsButton']);
-    expect(exteralessSettings.showAddToSavedMessages).toBe(true);
-    expect(exteralessSettings.CopyPhoto).toBe(true);
-    expect(exteralessSettings.showReport).toBe(true);
-    const exported = JSON.parse(etgBackup.buildBackup(false, exteralessSettings));
+    expect(exterayondSettings.showAddToSavedMessages).toBe(true);
+    expect(exterayondSettings.CopyPhoto).toBe(true);
+    expect(exterayondSettings.showReport).toBe(true);
+    const exported = JSON.parse(etgBackup.buildBackup(false, exterayondSettings));
     expect(exported.exteraconfig.showSaveMessageButton).toBe(true);
     expect(exported.exteraconfig.showCopyPhotoButton).toBe(true);
     expect(exported.exteraconfig.showReportButton).toBe(true);
@@ -55,15 +55,15 @@ describe('exteraless .extera backup (EtgBackup contract)', () => {
   it('uses the Android boolean aliases for MD3 sliders/switches and rejects non-booleans', () => {
     const root = {exteraconfig: {newSliderStyle: true, newSwitchStyle: true, newLoadingStyle: false, newNavigationBarStyle: true}};
     expect(applyExteraBackup(root).applied).toBe(4);
-    expect(exteralessSettings.SliderStyle).toBe(2);
-    expect(exteralessSettings.SwitchStyle).toBe(3);
-    const exported = JSON.parse(etgBackup.buildBackup(false, exteralessSettings));
+    expect(exterayondSettings.SliderStyle).toBe(2);
+    expect(exterayondSettings.SwitchStyle).toBe(3);
+    const exported = JSON.parse(etgBackup.buildBackup(false, exterayondSettings));
     expect(exported.exteraconfig.newSliderStyle).toBe(true);
     expect(exported.exteraconfig.newSwitchStyle).toBe(true);
     expect(exported.exteraconfig.newLoadingStyle).toBe(false);
     expect(applyExteraBackup({exteraconfig: {newSwitchStyle: false, newSliderStyle: false}}).applied).toBe(2);
-    expect(exteralessSettings.SwitchStyle).toBe(0);
-    expect(exteralessSettings.SliderStyle).toBe(0);
+    expect(exterayondSettings.SwitchStyle).toBe(0);
+    expect(exterayondSettings.SliderStyle).toBe(0);
     expect(applyExteraBackup({exteraconfig: {newSliderStyle: 2, newSwitchStyle: 'true'}}).applied).toBe(0);
     expect(exported.exteraconfig).not.toHaveProperty('md3Player');
     expect(exported.exteraconfig).not.toHaveProperty('m3ListItems');
@@ -71,7 +71,7 @@ describe('exteraless .extera backup (EtgBackup contract)', () => {
   beforeEach(() => {
     (localStorage as unknown as {_data: Map<string, string>})._data.clear();
     for(const key of Object.keys(OE_DEFAULTS) as Array<keyof typeof OE_DEFAULTS>) {
-      setExteralessSetting(key, OE_DEFAULTS[key]);
+      setExterayondSetting(key, OE_DEFAULTS[key]);
     }
   });
 
@@ -85,7 +85,7 @@ describe('exteraless .extera backup (EtgBackup contract)', () => {
   });
 
   it('builds the exteraGram sections with the format\'s key names', () => {
-    const backup = etgBackup.buildBackup(false, exteralessSettings as typeof OE_DEFAULTS & Record<string, boolean | number>);
+    const backup = etgBackup.buildBackup(false, exterayondSettings as typeof OE_DEFAULTS & Record<string, boolean | number>);
     const parsed = JSON.parse(backup);
     expect(Object.keys(parsed)).toContain('exteraconfig');
     expect(parsed.exteraconfig.squareFab).toBe(true);
@@ -98,16 +98,16 @@ describe('exteraless .extera backup (EtgBackup contract)', () => {
     expect(parsed.exteraconfig.showIdAndDc).toBe(1);
     expect(parsed.exteraconfig.disableGreetingSticker).toBe(true);
     expect(applyExteraBackup({exteraconfig: {showIdAndDc: 2}}).applied).toBe(1);
-    expect(exteralessSettings.IdDcType).toBe(2);
+    expect(exterayondSettings.IdDcType).toBe(2);
     expect(applyExteraBackup({exteraconfig: {showIdAndDc: 3}}).applied).toBe(0);
     expect(applyExteraBackup({exteraconfig: {showIdAndDc: true}}).applied).toBe(0);
     expect(applyExteraBackup({exteraconfig: {filterZalgo: true}}).applied).toBe(1);
-    expect(exteralessSettings.ZalgoFilter).toBe(true);
+    expect(exterayondSettings.ZalgoFilter).toBe(true);
     expect(applyExteraBackup({exteraconfig: {filterZalgo: 1}}).applied).toBe(0);
   });
 
   it('reads its own encrypted export and reports no unsupported keys', () => {
-    const backup = etgBackup.buildBackup(true, exteralessSettings as typeof OE_DEFAULTS & Record<string, boolean | number>);
+    const backup = etgBackup.buildBackup(true, exterayondSettings as typeof OE_DEFAULTS & Record<string, boolean | number>);
     const read = etgBackup.readBackup(backup);
     expect(read).not.toBeNull();
     expect(read!.knownCount).toBeGreaterThan(20);
@@ -134,44 +134,44 @@ describe('exteraless .extera backup (EtgBackup contract)', () => {
     await FLUSH();
 
     expect(result.applied).toBe(5);
-    expect(exteralessSettings.OEAppearanceAvatarCorners).toBe(10);
-    expect(exteralessSettings.OEChatsRemoveMessageTail).toBe(false);
-    expect(exteralessSettings.OEChatsStickerTimeSide).toBe(true);
-    expect(exteralessSettings.AutoPauseVideo).toBe(false);
-    expect(exteralessSettings.bubbleRadius).toBe(12);
+    expect(exterayondSettings.OEAppearanceAvatarCorners).toBe(10);
+    expect(exterayondSettings.OEChatsRemoveMessageTail).toBe(false);
+    expect(exterayondSettings.OEChatsStickerTimeSide).toBe(true);
+    expect(exterayondSettings.AutoPauseVideo).toBe(false);
+    expect(exterayondSettings.bubbleRadius).toBe(12);
     // unknown Android-only key: ignored
     expect(result.unsupported).toContain('mediaColumnsCount');
     // untouched
-    expect(exteralessSettings.OEChatsBottomButton).toBe(OE_DEFAULTS.OEChatsBottomButton);
+    expect(exterayondSettings.OEChatsBottomButton).toBe(OE_DEFAULTS.OEChatsBottomButton);
     expect(result.unsupported).toContain('useSystemIconShape');
   });
 
   it('round trips the pause-on-minimize trio the way Android exports it', async() => {
-    setExteralessSetting('AutoPauseVideo', false);
-    setExteralessSetting('OEChatsPauseVoice', true);
-    const parsed = JSON.parse(etgBackup.buildBackup(false, exteralessSettings));
+    setExterayondSetting('AutoPauseVideo', false);
+    setExterayondSetting('OEChatsPauseVoice', true);
+    const parsed = JSON.parse(etgBackup.buildBackup(false, exterayondSettings));
     expect(parsed.exteraconfig.pauseOnMinimizeVideo).toBe(false);
     expect(parsed.exteraconfig.pauseOnMinimizeVoice).toBe(true);
     expect(parsed.exteraconfig.pauseOnMinimizeRound).toBe(false);
-    setExteralessSetting('AutoPauseVideo', true);
+    setExterayondSetting('AutoPauseVideo', true);
     const result = applyExteraBackup({[SECTION_EXTERA]: {pauseOnMinimizeVideo: true, pauseOnMinimizeRound: true}});
     expect(result.applied).toBe(2);
     expect(result.unsupported).toEqual([]);
-    expect(exteralessSettings.AutoPauseVideo).toBe(true);
-    expect(exteralessSettings.OEChatsPauseRound).toBe(true);
+    expect(exterayondSettings.AutoPauseVideo).toBe(true);
+    expect(exterayondSettings.OEChatsPauseRound).toBe(true);
     expect(applyExteraBackup({[SECTION_EXTERA]: {pauseOnMinimizeVideo: 'yes'}}).applied).toBe(0);
   });
 
   it('round trips hideStories as the Android stories-header alias', async() => {
     // * Android exports NaConfig.getHideStoriesFromHeader() as "hideStories"
-    setExteralessSetting('HideStoriesFromHeader', false);
-    const parsed = JSON.parse(etgBackup.buildBackup(false, exteralessSettings));
+    setExterayondSetting('HideStoriesFromHeader', false);
+    const parsed = JSON.parse(etgBackup.buildBackup(false, exterayondSettings));
     expect(parsed.exteraconfig.hideStories).toBe(false);
 
     const result = applyExteraBackup({[SECTION_EXTERA]: {hideStories: true}});
     expect(result.applied).toBe(1);
     expect(result.unsupported).toEqual([]);
-    expect(exteralessSettings.HideStoriesFromHeader).toBe(true);
+    expect(exterayondSettings.HideStoriesFromHeader).toBe(true);
     // * a non-boolean is rejected like any untrusted value
     expect(applyExteraBackup({[SECTION_EXTERA]: {hideStories: 'off'}}).applied).toBe(0);
   });
@@ -180,33 +180,33 @@ describe('exteraless .extera backup (EtgBackup contract)', () => {
     // * Android exports ChatsConfig.hideCameraTile as "hideCameraTile"; on the
     // * web the flag is a documented no-op (the attach menu has no camera
     // * tile), so the alias applies silently instead of reporting unsupported
-    const parsed = JSON.parse(etgBackup.buildBackup(false, exteralessSettings));
+    const parsed = JSON.parse(etgBackup.buildBackup(false, exterayondSettings));
     expect(parsed.exteraconfig.hideCameraTile).toBe(false);
 
     const result = applyExteraBackup({[SECTION_EXTERA]: {hideCameraTile: true}});
     expect(result.applied).toBe(1);
     expect(result.unsupported).toEqual([]);
-    expect(exteralessSettings.OEChatsHideCameraTile).toBe(true);
+    expect(exterayondSettings.OEChatsHideCameraTile).toBe(true);
     expect(applyExteraBackup({[SECTION_EXTERA]: {hideCameraTile: 1}}).applied).toBe(0);
   });
 
   it('round trips hideAllChats as the Android all-chats-tab alias', async() => {
     // * Android exports NekoConfig.hideAllTab as "hideAllChats"
-    const parsed = JSON.parse(etgBackup.buildBackup(false, exteralessSettings));
+    const parsed = JSON.parse(etgBackup.buildBackup(false, exterayondSettings));
     expect(parsed.exteraconfig.hideAllChats).toBe(false);
 
     const result = applyExteraBackup({[SECTION_EXTERA]: {hideAllChats: true}});
     expect(result.applied).toBe(1);
     expect(result.unsupported).toEqual([]);
-    expect(exteralessSettings.HideAllTab).toBe(true);
+    expect(exterayondSettings.HideAllTab).toBe(true);
     expect(applyExteraBackup({[SECTION_EXTERA]: {hideAllChats: 'yes'}}).applied).toBe(0);
   });
 
   it('round trips centerTitle and useSystemFonts as the Android appearance aliases', async() => {
     // * Android exports NaConfig.centerActionBarTitle as "centerTitle"
     // * (EtgBackup.java:325) and NekoConfig.typeface as "useSystemFonts" (:339)
-    setExteralessSetting('OEAppearanceCenterTitle', true);
-    const parsed = JSON.parse(etgBackup.buildBackup(false, exteralessSettings));
+    setExterayondSetting('OEAppearanceCenterTitle', true);
+    const parsed = JSON.parse(etgBackup.buildBackup(false, exterayondSettings));
     expect(parsed.exteraconfig.centerTitle).toBe(true);
     // * Android's default: the platform fonts replace the bundled Roboto
     expect(parsed.exteraconfig.useSystemFonts).toBe(true);
@@ -214,8 +214,8 @@ describe('exteraless .extera backup (EtgBackup contract)', () => {
     const result = applyExteraBackup({[SECTION_EXTERA]: {centerTitle: false, useSystemFonts: false}});
     expect(result.applied).toBe(2);
     expect(result.unsupported).toEqual([]);
-    expect(exteralessSettings.OEAppearanceCenterTitle).toBe(false);
-    expect(exteralessSettings.TypefaceUseDefault).toBe(false);
+    expect(exterayondSettings.OEAppearanceCenterTitle).toBe(false);
+    expect(exterayondSettings.TypefaceUseDefault).toBe(false);
     expect(applyExteraBackup({[SECTION_EXTERA]: {centerTitle: 'on'}}).applied).toBe(0);
     expect(applyExteraBackup({[SECTION_EXTERA]: {useSystemFonts: 1}}).applied).toBe(0);
   });
@@ -224,50 +224,50 @@ describe('exteraless .extera backup (EtgBackup contract)', () => {
     // * Android exports ChatsConfig.wideChannelPosts/wideFeedPosts
     // * (EtgBackup.java:365-366); the web has no feed, so wideFeedPosts is a
     // * documented no-op that still round-trips
-    setExteralessSetting('OEChatsWideChannelPosts', true);
-    const parsed = JSON.parse(etgBackup.buildBackup(false, exteralessSettings));
+    setExterayondSetting('OEChatsWideChannelPosts', true);
+    const parsed = JSON.parse(etgBackup.buildBackup(false, exterayondSettings));
     expect(parsed.exteraconfig.wideChannelPosts).toBe(true);
     expect(parsed.exteraconfig.wideFeedPosts).toBe(false);
 
     const result = applyExteraBackup({[SECTION_EXTERA]: {wideChannelPosts: false, wideFeedPosts: true}});
     expect(result.applied).toBe(2);
     expect(result.unsupported).toEqual([]);
-    expect(exteralessSettings.OEChatsWideChannelPosts).toBe(false);
-    expect(exteralessSettings.OEChatsWideFeedPosts).toBe(true);
+    expect(exterayondSettings.OEChatsWideChannelPosts).toBe(false);
+    expect(exterayondSettings.OEChatsWideFeedPosts).toBe(true);
     expect(applyExteraBackup({[SECTION_EXTERA]: {wideChannelPosts: 'yes'}}).applied).toBe(0);
   });
 
   it('round trips showRepeatMessageButton as the Android repeat-menu alias', async() => {
     // * Android exports NekoConfig.showRepeat as "showRepeatMessageButton"
     // * (EtgBackup.java:371); NekoConfig.repeatConfirm has no alias
-    setExteralessSetting('showRepeat', true);
-    const parsed = JSON.parse(etgBackup.buildBackup(false, exteralessSettings));
+    setExterayondSetting('showRepeat', true);
+    const parsed = JSON.parse(etgBackup.buildBackup(false, exterayondSettings));
     expect(parsed.exteraconfig.showRepeatMessageButton).toBe(true);
     expect(parsed.exteraconfig.repeatConfirm).toBeUndefined();
 
     const result = applyExteraBackup({[SECTION_EXTERA]: {showRepeatMessageButton: false}});
     expect(result.applied).toBe(1);
     expect(result.unsupported).toEqual([]);
-    expect(exteralessSettings.showRepeat).toBe(false);
+    expect(exterayondSettings.showRepeat).toBe(false);
     expect(applyExteraBackup({[SECTION_EXTERA]: {showRepeatMessageButton: 'on'}}).applied).toBe(0);
   });
 
   it('round trips the tab counter alias the way Android exports it', async() => {
     // * Android's alias is a boolean: true = counters on (mode 0), false = off
     // * (mode 2); the except-muted mode never round-trips through the format
-    setExteralessSetting('IgnoreUnreadCount', 1);
-    const exported = JSON.parse(etgBackup.buildBackup(false, exteralessSettings));
+    setExterayondSetting('IgnoreUnreadCount', 1);
+    const exported = JSON.parse(etgBackup.buildBackup(false, exterayondSettings));
     expect(exported.exteraconfig.tabCounter).toBe(true);
 
     const result = applyExteraBackup({[SECTION_EXTERA]: {tabCounter: false}});
     expect(result.applied).toBe(1);
     expect(result.unsupported).toEqual([]);
-    expect(exteralessSettings.IgnoreUnreadCount).toBe(2);
+    expect(exterayondSettings.IgnoreUnreadCount).toBe(2);
 
     expect(applyExteraBackup({[SECTION_EXTERA]: {tabCounter: true}}).applied).toBe(1);
-    expect(exteralessSettings.IgnoreUnreadCount).toBe(0);
+    expect(exterayondSettings.IgnoreUnreadCount).toBe(0);
     expect(applyExteraBackup({[SECTION_EXTERA]: {tabCounter: 3}}).applied).toBe(0);
-    expect(exteralessSettings.IgnoreUnreadCount).toBe(0);
+    expect(exterayondSettings.IgnoreUnreadCount).toBe(0);
   });
 
   it('round trips all sticker-time modes and gives the composite mode precedence', () => {
@@ -277,9 +277,9 @@ describe('exteraless .extera backup (EtgBackup contract)', () => {
       expect(result.applied).toBe(2);
       expect(result.unsupported).toEqual([]);
       expect(getStickerTimeMode()).toBe(mode);
-      expect(exteralessSettings.HideTimeForSticker).toBe(mode === 2);
-      expect(exteralessSettings.OEChatsStickerTimeSide).toBe(mode === 1);
-      const parsed = JSON.parse(etgBackup.buildBackup(false, exteralessSettings));
+      expect(exterayondSettings.HideTimeForSticker).toBe(mode === 2);
+      expect(exterayondSettings.OEChatsStickerTimeSide).toBe(mode === 1);
+      const parsed = JSON.parse(etgBackup.buildBackup(false, exterayondSettings));
       expect(parsed.exteraconfig.stickerTimeMode).toBe(mode);
       expect(parsed.exteraconfig.hideStickerTime).toBe(mode === 2);
     }
@@ -302,51 +302,51 @@ describe('exteraless .extera backup (EtgBackup contract)', () => {
     const result = applyExteraBackup({[SECTION_EXTERA]: {hideSendAsPeer: true, removeMessageTail: false}});
     expect(result.applied).toBe(2);
     expect(result.unsupported).not.toContain('hideSendAsPeer');
-    expect(exteralessSettings.hideSendAsChannel).toBe(true);
-    expect(exteralessSettings.OEChatsRemoveMessageTail).toBe(false);
-    const saved = JSON.parse(etgBackup.buildBackup(false, exteralessSettings)).exteraconfig;
+    expect(exterayondSettings.hideSendAsChannel).toBe(true);
+    expect(exterayondSettings.OEChatsRemoveMessageTail).toBe(false);
+    const saved = JSON.parse(etgBackup.buildBackup(false, exterayondSettings)).exteraconfig;
     expect(saved.hideSendAsPeer).toBe(true);
     expect(saved.removeMessageTail).toBe(false);
     expect(applyExteraBackup({[SECTION_EXTERA]: {hideSendAsPeer: 'true'}}).applied).toBe(0);
     applyExteraBackup({[SECTION_EXTERA]: {hideSendAsPeer: false, removeMessageTail: true}});
-    expect(exteralessSettings.hideSendAsChannel).toBe(false);
-    expect(exteralessSettings.OEChatsRemoveMessageTail).toBe(true);
+    expect(exterayondSettings.hideSendAsChannel).toBe(false);
+    expect(exterayondSettings.OEChatsRemoveMessageTail).toBe(true);
   });
 
   it('round trips relative last seen and header status visibility independently', () => {
     const result = applyExteraBackup({[SECTION_EXTERA]: {relativeLastSeen: true, hideActionBarStatus: true}});
     expect(result.applied).toBe(2);
-    expect(exteralessSettings.OERelativeLastSeen).toBe(true);
-    expect(exteralessSettings.OEAppearanceHideActionBarStatus).toBe(true);
-    const saved = JSON.parse(etgBackup.buildBackup(false, exteralessSettings)).exteraconfig;
+    expect(exterayondSettings.OERelativeLastSeen).toBe(true);
+    expect(exterayondSettings.OEAppearanceHideActionBarStatus).toBe(true);
+    const saved = JSON.parse(etgBackup.buildBackup(false, exterayondSettings)).exteraconfig;
     expect(saved.relativeLastSeen).toBe(true);
     expect(saved.hideActionBarStatus).toBe(true);
     applyExteraBackup({[SECTION_EXTERA]: {relativeLastSeen: false, hideActionBarStatus: false}});
-    expect(exteralessSettings.OERelativeLastSeen).toBe(false);
-    expect(exteralessSettings.OEAppearanceHideActionBarStatus).toBe(false);
+    expect(exterayondSettings.OERelativeLastSeen).toBe(false);
+    expect(exterayondSettings.OEAppearanceHideActionBarStatus).toBe(false);
   });
 
   it('maps stickerShape to the sticker corner setting both ways, 0..2', () => {
     for(const shape of [0, 1, 2]) {
-      setExteralessSetting('OEChatsStickerShape', shape);
-      const parsed = JSON.parse(etgBackup.buildBackup(false, exteralessSettings as typeof OE_DEFAULTS & Record<string, boolean | number>));
+      setExterayondSetting('OEChatsStickerShape', shape);
+      const parsed = JSON.parse(etgBackup.buildBackup(false, exterayondSettings as typeof OE_DEFAULTS & Record<string, boolean | number>));
       expect(parsed.exteraconfig.stickerShape).toBe(shape);
 
-      setExteralessSetting('OEChatsStickerShape', (shape + 1) % 3);
+      setExterayondSetting('OEChatsStickerShape', (shape + 1) % 3);
       const result = applyExteraBackup({[SECTION_EXTERA]: {stickerShape: shape}});
       expect(result.applied).toBe(1);
-      expect(exteralessSettings.OEChatsStickerShape).toBe(shape);
+      expect(exterayondSettings.OEChatsStickerShape).toBe(shape);
       expect(result.unsupported).not.toContain('stickerShape');
     }
   });
 
   it('preserves fractional sticker sizes and rejects invalid backup sizes', () => {
     expect(applyExteraBackup({[SECTION_EXTERA]: {stickerSize: 12.75}}).applied).toBe(1);
-    expect(exteralessSettings.stickerSize).toBe(12.75);
-    expect(JSON.parse(etgBackup.buildBackup(false, exteralessSettings)).exteraconfig.stickerSize).toBe(12.75);
+    expect(exterayondSettings.stickerSize).toBe(12.75);
+    expect(JSON.parse(etgBackup.buildBackup(false, exterayondSettings)).exteraconfig.stickerSize).toBe(12.75);
     for(const value of [3, 21, true, '14']) {
       expect(applyExteraBackup({[SECTION_EXTERA]: {stickerSize: value}}).applied).toBe(0);
-      expect(exteralessSettings.stickerSize).toBe(12.75);
+      expect(exterayondSettings.stickerSize).toBe(12.75);
     }
   });
 
@@ -359,8 +359,8 @@ describe('exteraless .extera backup (EtgBackup contract)', () => {
     ] as const) {
       for(const value of [true, false]) {
         expect(applyExteraBackup({[SECTION_EXTERA]: {[alias]: value}}).applied).toBe(1);
-        expect(exteralessSettings[key]).toBe(value);
-        expect(JSON.parse(etgBackup.buildBackup(false, exteralessSettings)).exteraconfig[alias]).toBe(value);
+        expect(exterayondSettings[key]).toBe(value);
+        expect(JSON.parse(etgBackup.buildBackup(false, exterayondSettings)).exteraconfig[alias]).toBe(value);
       }
     }
   });
@@ -372,10 +372,10 @@ describe('exteraless .extera backup (EtgBackup contract)', () => {
       ['replyBackground', 'OEChatsReplyBackground']
     ] as const) {
       expect(applyExteraBackup({[SECTION_EXTERA]: {[alias]: false}}).applied).toBe(1);
-      expect(exteralessSettings[key]).toBe(false);
-      expect(JSON.parse(etgBackup.buildBackup(false, exteralessSettings)).exteraconfig[alias]).toBe(false);
+      expect(exterayondSettings[key]).toBe(false);
+      expect(JSON.parse(etgBackup.buildBackup(false, exterayondSettings)).exteraconfig[alias]).toBe(false);
       expect(applyExteraBackup({[SECTION_EXTERA]: {[alias]: true}}).applied).toBe(1);
-      expect(exteralessSettings[key]).toBe(true);
+      expect(exterayondSettings[key]).toBe(true);
     }
   });
 
@@ -388,10 +388,10 @@ describe('exteraless .extera backup (EtgBackup contract)', () => {
 
   it('rejects an out-of-range or non-integer stickerShape like an untrusted file', () => {
     for(const bad of [-1, 3, 1.5, '1', null]) {
-      setExteralessSetting('OEChatsStickerShape', 2);
+      setExterayondSetting('OEChatsStickerShape', 2);
       const result = applyExteraBackup({[SECTION_EXTERA]: {stickerShape: bad}});
       expect(result.applied).toBe(0);
-      expect(exteralessSettings.OEChatsStickerShape).toBe(2);
+      expect(exterayondSettings.OEChatsStickerShape).toBe(2);
     }
   });
 
@@ -405,44 +405,44 @@ describe('exteraless .extera backup (EtgBackup contract)', () => {
       stripTrackingOnPaste: false
     }});
     expect(result.applied).toBe(0);
-    expect(exteralessSettings.OEChatsHideCallButton).toBe(OE_DEFAULTS.OEChatsHideCallButton);
-    expect(exteralessSettings.OEChatsHideChannelSearchButton).toBe(OE_DEFAULTS.OEChatsHideChannelSearchButton);
-    expect(exteralessSettings.OEChatsStripTrackingOnOpen).toBe(OE_DEFAULTS.OEChatsStripTrackingOnOpen);
-    expect(exteralessSettings.OEChatsStripTrackingOnPaste).toBe(OE_DEFAULTS.OEChatsStripTrackingOnPaste);
+    expect(exterayondSettings.OEChatsHideCallButton).toBe(OE_DEFAULTS.OEChatsHideCallButton);
+    expect(exterayondSettings.OEChatsHideChannelSearchButton).toBe(OE_DEFAULTS.OEChatsHideChannelSearchButton);
+    expect(exterayondSettings.OEChatsStripTrackingOnOpen).toBe(OE_DEFAULTS.OEChatsStripTrackingOnOpen);
+    expect(exterayondSettings.OEChatsStripTrackingOnPaste).toBe(OE_DEFAULTS.OEChatsStripTrackingOnPaste);
   });
 
   it('maps hideFloatingButton to the new-chat floating button preference', () => {
-    setExteralessSetting('DisableDialogsFloatingButton', true);
-    const parsed = JSON.parse(etgBackup.buildBackup(false, exteralessSettings as typeof OE_DEFAULTS & Record<string, boolean | number>));
+    setExterayondSetting('DisableDialogsFloatingButton', true);
+    const parsed = JSON.parse(etgBackup.buildBackup(false, exterayondSettings as typeof OE_DEFAULTS & Record<string, boolean | number>));
     expect(parsed.exteraconfig.hideFloatingButton).toBe(true);
 
-    setExteralessSetting('DisableDialogsFloatingButton', false);
+    setExterayondSetting('DisableDialogsFloatingButton', false);
     const result = applyExteraBackup({[SECTION_EXTERA]: {hideFloatingButton: true}});
     expect(result.applied).toBe(1);
-    expect(exteralessSettings.DisableDialogsFloatingButton).toBe(true);
+    expect(exterayondSettings.DisableDialogsFloatingButton).toBe(true);
     expect(result.unsupported).not.toContain('hideFloatingButton');
   });
 
   it('rejects a non-boolean hideFloatingButton instead of trusting it', () => {
     const result = applyExteraBackup({[SECTION_EXTERA]: {hideFloatingButton: 'yes'}});
     expect(result.applied).toBe(0);
-    expect(exteralessSettings.DisableDialogsFloatingButton).toBe(false);
+    expect(exterayondSettings.DisableDialogsFloatingButton).toBe(false);
   });
 
   it('maps formatTimeWithSeconds to the showSeconds setting in both directions', () => {
-    setExteralessSetting('showSeconds', true);
-    const parsed = JSON.parse(etgBackup.buildBackup(false, exteralessSettings as typeof OE_DEFAULTS & Record<string, boolean | number>));
+    setExterayondSetting('showSeconds', true);
+    const parsed = JSON.parse(etgBackup.buildBackup(false, exterayondSettings as typeof OE_DEFAULTS & Record<string, boolean | number>));
     expect(parsed.exteraconfig.formatTimeWithSeconds).toBe(true);
 
-    setExteralessSetting('showSeconds', false);
+    setExterayondSetting('showSeconds', false);
     const result = applyExteraBackup({[SECTION_EXTERA]: {formatTimeWithSeconds: true}});
     expect(result.applied).toBe(1);
-    expect(exteralessSettings.showSeconds).toBe(true);
+    expect(exterayondSettings.showSeconds).toBe(true);
     expect(result.unsupported).not.toContain('formatTimeWithSeconds');
   });
 
   it('carries the plugin flags with web targets', () => {
-    const backup = etgBackup.buildBackup(false, exteralessSettings as typeof OE_DEFAULTS & Record<string, boolean | number>);
+    const backup = etgBackup.buildBackup(false, exterayondSettings as typeof OE_DEFAULTS & Record<string, boolean | number>);
     const parsed = JSON.parse(backup);
     expect(typeof parsed.exteraconfig.pluginsSafeMode).toBe('boolean');
     expect(typeof parsed.exteraconfig.pluginsDevMode).toBe('boolean');
@@ -460,18 +460,18 @@ describe('exteraless .extera backup (EtgBackup contract)', () => {
 
 describe('local own-phone visibility backup', () => {
   it('round-trips the Android hidePhoneNumber alias and rejects non-booleans', () => {
-    setExteralessSetting('HidePhone', false);
-    const backup = etgBackup.buildBackup(false, exteralessSettings as typeof OE_DEFAULTS & Record<string, boolean | number>);
+    setExterayondSetting('HidePhone', false);
+    const backup = etgBackup.buildBackup(false, exterayondSettings as typeof OE_DEFAULTS & Record<string, boolean | number>);
     expect(JSON.parse(backup).exteraconfig.hidePhoneNumber).toBe(false);
 
-    setExteralessSetting('HidePhone', true);
+    setExterayondSetting('HidePhone', true);
     applyExteraBackup(JSON.parse(backup));
-    expect(exteralessSettings.HidePhone).toBe(false);
+    expect(exterayondSettings.HidePhone).toBe(false);
 
     for(const invalid of [0, 1, 'false', null]) {
       applyExteraBackup({exteraconfig: {hidePhoneNumber: invalid}});
-      expect(exteralessSettings.HidePhone).toBe(false);
+      expect(exterayondSettings.HidePhone).toBe(false);
     }
-    setExteralessSetting('HidePhone', OE_DEFAULTS.HidePhone);
+    setExterayondSetting('HidePhone', OE_DEFAULTS.HidePhone);
   });
 });

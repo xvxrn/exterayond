@@ -23,7 +23,7 @@ hotListen(import.meta.hot, rootScope, 'replies_updated', (message) => {
   });
 });
 
-hotListen(import.meta.hot, rootScope, 'exteraless_settings_updated', ({key}) => {
+hotListen(import.meta.hot, rootScope, 'exterayond_settings_updated', ({key}) => {
   if(key !== 'DisableNumberRounding') {
     return;
   }

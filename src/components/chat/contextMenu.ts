@@ -47,7 +47,7 @@ import {addToProfileMusic, getSavedMusicDocument, removeFromProfileMusic} from '
 import getGroupedText from '@appManagers/utils/messages/getGroupedText';
 import confirmationPopup, {PopupConfirmationOptions} from '@components/confirmationPopup';
 import repeatMessages from '@components/chat/repeatMessages';
-import {exteralessSettings, verifyReportContext} from '@stores/exteralessSettings';
+import {exterayondSettings, verifyReportContext} from '@stores/exterayondSettings';
 import Icon from '@components/icon';
 import cloneDOMRect from '@helpers/dom/cloneDOMRect';
 import {ChatInputReplyTo} from '@components/chat/input';
@@ -1375,9 +1375,9 @@ export default class ChatContextMenu {
       // * message back into the same chat (ChatActivity.repeatMessage's
       // * doRepeatMessage), with NekoConfig.repeatConfirm asking first
       icon: 'redo',
-      text: 'Exteraless.MenuRepeat',
+      text: 'Exterayond.MenuRepeat',
       onClick: this.onRepeatClick,
-      verify: async() => exteralessSettings.showRepeat &&
+      verify: async() => exterayondSettings.showRepeat &&
         !isAnchoredEphemeralMessage(this.message) &&
         !this.noForwards &&
         this.message._ === 'message' &&
@@ -1388,9 +1388,9 @@ export default class ChatContextMenu {
       // * forward to the own chat, Android's conditions (ChatActivity:50685 —
       // * not the self chat, forwardable, real message)
       icon: 'savedmessages',
-      text: 'Exteraless.MenuAddToSaved',
+      text: 'Exterayond.MenuAddToSaved',
       onClick: this.onSaveToSavedClick,
-      verify: () => exteralessSettings.showAddToSavedMessages &&
+      verify: () => exterayondSettings.showAddToSavedMessages &&
         !isAnchoredEphemeralMessage(this.message) &&
         !this.noForwards &&
         this.message._ === 'message' &&
@@ -1402,7 +1402,7 @@ export default class ChatContextMenu {
       icon: 'copy',
       text: 'MediaViewer.Context.Copy',
       onClick: this.onCopyPhotoClick,
-      verify: () => exteralessSettings.CopyPhoto &&
+      verify: () => exterayondSettings.CopyPhoto &&
         !this.noForwards &&
         this.message._ === 'message' &&
         canCopyMediaToClipboard(getMediaFromMessage(this.message, true) as CopyableMedia)
@@ -1457,13 +1457,13 @@ export default class ChatContextMenu {
             // * never participate (the defect this rewiring fixes).
             verifyReportContext(
               await this.managers.appPeersManager.isChannel(this.messagePeerId),
-              exteralessSettings.showReport ?
+              exterayondSettings.showReport ?
                 await this.managers.appPeersManager.isAnyChat(this.messagePeerId) :
                 false,
-              exteralessSettings.showReport ?
+              exterayondSettings.showReport ?
                 await this.managers.appPeersManager.isBot(this.messagePeerId) :
                 false,
-              exteralessSettings.showReport
+              exterayondSettings.showReport
             )
         ),
       notDirect: () => true,

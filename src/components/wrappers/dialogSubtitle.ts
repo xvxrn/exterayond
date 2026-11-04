@@ -9,7 +9,7 @@ import rootScope from '@lib/rootScope';
 import {i18n} from '@lib/langPack';
 import {getMiddleware} from '@helpers/middleware';
 import type {Middleware, MiddlewareHelper} from '@helpers/middleware';
-import {exteralessSettings} from '@stores/exteralessSettings';
+import {exterayondSettings} from '@stores/exterayondSettings';
 import {createRenderEffect, createRoot} from 'solid-js';
 
 type MiddlewarePromise = <T>(value: T) => T;
@@ -54,7 +54,7 @@ function mountSenderMiniAvatar(
 
     createRenderEffect(() => {
       // * reading the setting keeps this effect on it; off costs no avatar at all
-      if(!exteralessSettings.OEAppearanceSenderMiniAvatars) {
+      if(!exterayondSettings.OEAppearanceSenderMiniAvatars) {
         removeAvatar();
         if(!loading) {
           helper?.destroy();
@@ -71,7 +71,7 @@ function mountSenderMiniAvatar(
         loading = false;
         // * a released subtitle never gets the avatar it asked for before it went
         if(helper !== current) return;
-        if(!exteralessSettings.OEAppearanceSenderMiniAvatars) {
+        if(!exterayondSettings.OEAppearanceSenderMiniAvatars) {
           current.destroy();
           helper = undefined;
           return;

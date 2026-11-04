@@ -1,21 +1,21 @@
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest';
 import {render} from 'solid-js/web';
 import {JSX} from 'solid-js';
-import Exteraless from '@components/sidebarLeft/tabs/exteralessTab';
-import ExteralessAppearance from '@components/sidebarLeft/tabs/exteralessAppearanceTab';
-import ExteralessChats from '@components/sidebarLeft/tabs/exteralessChatsTab';
-import ExteralessOther from '@components/sidebarLeft/tabs/exteralessOtherTab';
+import Exteraless from '@components/sidebarLeft/tabs/exterayondTab';
+import ExterayondAppearance from '@components/sidebarLeft/tabs/exterayondAppearanceTab';
+import ExterayondChats from '@components/sidebarLeft/tabs/exterayondChatsTab';
+import ExterayondOther from '@components/sidebarLeft/tabs/exterayondOtherTab';
 import {appSettings, setAppSettingsSilent} from '@stores/appSettings';
 import {SETTINGS_INIT} from '@config/state';
 import rootScope from '@lib/rootScope';
 import {
   OE_DEFAULTS,
   getMd3StyleCount,
-  resetExteralessSettings,
+  resetExterayondSettings,
   setAllMd3Styles,
-  setExteralessSetting,
-  useExteralessSettings
-} from '@stores/exteralessSettings';
+  setExterayondSetting,
+  useExterayondSettings
+} from '@stores/exterayondSettings';
 
 const mocks = vi.hoisted(() => ({
   tab: {
@@ -27,8 +27,8 @@ const mocks = vi.hoisted(() => ({
   openUrl: vi.fn(),
   confirmation: vi.fn(),
   toast: vi.fn(),
-  appearanceTabCtor: class AppExteralessAppearanceTab {},
-  chatsTabCtor: class AppExteralessChatsTab {},
+  appearanceTabCtor: class AppExterayondAppearanceTab {},
+  chatsTabCtor: class AppExterayondChatsTab {},
   quickReactionTabCtor: class AppQuickReactionTab {}
 }));
 
@@ -44,8 +44,8 @@ vi.mock('@lib/solidjs/hotReloadGuardProvider', () => ({
   hotReloadGuard: {
     appImManager: {openUrl: mocks.openUrl},
     tabs: {
-      AppExteralessAppearanceTab: mocks.appearanceTabCtor,
-      AppExteralessChatsTab: mocks.chatsTabCtor,
+      AppExterayondAppearanceTab: mocks.appearanceTabCtor,
+      AppExterayondChatsTab: mocks.chatsTabCtor,
       AppQuickReactionTab: mocks.quickReactionTabCtor
     }
   }
@@ -141,7 +141,7 @@ describe('the exteraless Preferences hub tab', () => {
     ]);
 
     const subtitles = [...document.querySelectorAll<HTMLElement>('.row-subtitle')].map((el) => el.textContent);
-    expect(subtitles.filter((text) => text === 'Exteraless.NotPorted')).toHaveLength(0);
+    expect(subtitles.filter((text) => text === 'Exterayond.NotPorted')).toHaveLength(0);
     // * every category is live
     expect(rowByIcon('general_filled').querySelector('.row-subtitle')).toBeNull();
     expect(rowByIcon('appearance_filled').querySelector('.row-subtitle')).toBeNull();
@@ -195,7 +195,7 @@ describe('the exteraless Appearance tab', () => {
     // * the accent swatch reads the active theme the way the app boot always
     // * has one: the factory set from SETTINGS_INIT
     setAppSettingsSilent('themes', SETTINGS_INIT.themes);
-    dispose = mount(() => <ExteralessAppearance />);
+    dispose = mount(() => <ExterayondAppearance />);
   });
 
   afterEach(() => {
@@ -215,17 +215,17 @@ describe('the exteraless Appearance tab', () => {
       // * the theme palette (V-4) is a plain toggle since acceptance round 1
       // * (F-2), not a slider; the player-style rows of Android's
       // * PlayerStyleEditor open the slider list
-      {name: 'Exteraless.Player.Cover.Style', value: 0, min: 0, max: 3},
-      {name: 'Exteraless.Player.Cover.Size', value: 100, min: 60, max: 100},
-      {name: 'Exteraless.Player.Cover.Radius', value: 28, min: 0, max: 48},
-      {name: 'Exteraless.Player.TitleAlign', value: 0, min: 0, max: 1},
-      {name: 'Exteraless.Player.TitleSize', value: 1, min: 0, max: 2},
-      {name: 'Exteraless.Player.TitlePosition', value: 0, min: 0, max: 1},
-      {name: 'Exteraless.Player.ControlsSize', value: 1, min: 0, max: 2},
-      {name: 'Exteraless.TabCounter', value: 1, min: 0, max: 2},
-      {name: 'Exteraless.AvatarCorners', value: OE_DEFAULTS.OEAppearanceAvatarCorners, min: 0, max: 28},
-      {name: 'Exteraless.BubbleRadius', value: OE_DEFAULTS.bubbleRadius, min: 0, max: 17},
-      {name: 'Exteraless.SectionRadius', value: OE_DEFAULTS.OEAppearanceSectionRadius, min: 0, max: 28}
+      {name: 'Exterayond.Player.Cover.Style', value: 0, min: 0, max: 3},
+      {name: 'Exterayond.Player.Cover.Size', value: 100, min: 60, max: 100},
+      {name: 'Exterayond.Player.Cover.Radius', value: 28, min: 0, max: 48},
+      {name: 'Exterayond.Player.TitleAlign', value: 0, min: 0, max: 1},
+      {name: 'Exterayond.Player.TitleSize', value: 1, min: 0, max: 2},
+      {name: 'Exterayond.Player.TitlePosition', value: 0, min: 0, max: 1},
+      {name: 'Exterayond.Player.ControlsSize', value: 1, min: 0, max: 2},
+      {name: 'Exterayond.TabCounter', value: 1, min: 0, max: 2},
+      {name: 'Exterayond.AvatarCorners', value: OE_DEFAULTS.OEAppearanceAvatarCorners, min: 0, max: 28},
+      {name: 'Exterayond.BubbleRadius', value: OE_DEFAULTS.bubbleRadius, min: 0, max: 17},
+      {name: 'Exterayond.SectionRadius', value: OE_DEFAULTS.OEAppearanceSectionRadius, min: 0, max: 28}
     ]);
   });
 
@@ -235,30 +235,30 @@ describe('the exteraless Appearance tab', () => {
     const rowTitles = () => [...document.querySelectorAll<HTMLElement>('.row .row-title')].map((el) => el.textContent);
 
     // * the card shows the radius slider and no spin toggle
-    expect(sliderNames()).toContain('Exteraless.Player.Cover.Radius');
-    expect(rowTitles()).not.toContain('Exteraless.Player.DiscSpin');
+    expect(sliderNames()).toContain('Exterayond.Player.Cover.Radius');
+    expect(rowTitles()).not.toContain('Exterayond.Player.DiscSpin');
 
     // * the disc drops the radius slider and shows the spin toggle, and the
     // * size slider stays for both framed styles
-    setExteralessSetting('OEPlayerCoverStyle', 3);
+    setExterayondSetting('OEPlayerCoverStyle', 3);
     await vi.waitFor(() => {
-      expect(sliderNames()).not.toContain('Exteraless.Player.Cover.Radius');
-      expect(sliderNames()).toContain('Exteraless.Player.Cover.Size');
-      expect(rowTitles()).toContain('Exteraless.Player.DiscSpin');
+      expect(sliderNames()).not.toContain('Exterayond.Player.Cover.Radius');
+      expect(sliderNames()).toContain('Exterayond.Player.Cover.Size');
+      expect(rowTitles()).toContain('Exterayond.Player.DiscSpin');
     });
-    setExteralessSetting('OEPlayerCoverStyle', 0);
+    setExterayondSetting('OEPlayerCoverStyle', 0);
   });
 
   it('moves a slider into the store', () => {
-    expect(useExteralessSettings()[0].OEAppearanceAvatarCorners).toBe(OE_DEFAULTS.OEAppearanceAvatarCorners);
+    expect(useExterayondSettings()[0].OEAppearanceAvatarCorners).toBe(OE_DEFAULTS.OEAppearanceAvatarCorners);
 
     const avatarCorners = [...document.querySelectorAll<HTMLElement>('.range-setting-selector')]
-    .find((el) => el.dataset.name === 'Exteraless.AvatarCorners');
+    .find((el) => el.dataset.name === 'Exterayond.AvatarCorners');
     avatarCorners.querySelector<HTMLElement>('.slider-zero').click();
-    expect(useExteralessSettings()[0].OEAppearanceAvatarCorners).toBe(0);
+    expect(useExterayondSettings()[0].OEAppearanceAvatarCorners).toBe(0);
 
     // * back to the default for the other tests
-    setExteralessSetting('OEAppearanceAvatarCorners', OE_DEFAULTS.OEAppearanceAvatarCorners);
+    setExterayondSetting('OEAppearanceAvatarCorners', OE_DEFAULTS.OEAppearanceAvatarCorners);
   });
 
   it('shows three live avatar previews', () => {
@@ -267,7 +267,7 @@ describe('the exteraless Appearance tab', () => {
 
   it('the MD3 master switch updates all components and its visible count', () => {
     setAllMd3Styles(false);
-    const master = [...document.querySelectorAll<HTMLElement>('.row')].find((row) => row.textContent.includes('Exteraless.Md3'));
+    const master = [...document.querySelectorAll<HTMLElement>('.row')].find((row) => row.textContent.includes('Exterayond.Md3'));
     expect(master.textContent).toContain('0/8');
     master.querySelector<HTMLInputElement>('input').click();
     expect(getMd3StyleCount()).toBe(8);
@@ -275,40 +275,40 @@ describe('the exteraless Appearance tab', () => {
     master.querySelector<HTMLInputElement>('input').click();
     expect(getMd3StyleCount()).toBe(0);
     expect(master.textContent).toContain('0/8');
-    resetExteralessSettings();
+    resetExterayondSettings();
   });
 
   it('moves a toggle into the store', () => {
-    expect(useExteralessSettings()[0].OEAppearanceSingleCornerRadius).toBe(OE_DEFAULTS.OEAppearanceSingleCornerRadius);
+    expect(useExterayondSettings()[0].OEAppearanceSingleCornerRadius).toBe(OE_DEFAULTS.OEAppearanceSingleCornerRadius);
 
-    const row = [...document.querySelectorAll<HTMLElement>('.row')].find((row) => row.textContent.includes('Exteraless.SingleCornerRadius'));
+    const row = [...document.querySelectorAll<HTMLElement>('.row')].find((row) => row.textContent.includes('Exterayond.SingleCornerRadius'));
     row.querySelector<HTMLInputElement>('input').click();
-    expect(useExteralessSettings()[0].OEAppearanceSingleCornerRadius).toBe(!OE_DEFAULTS.OEAppearanceSingleCornerRadius);
+    expect(useExterayondSettings()[0].OEAppearanceSingleCornerRadius).toBe(!OE_DEFAULTS.OEAppearanceSingleCornerRadius);
 
-    setExteralessSetting('OEAppearanceSingleCornerRadius', OE_DEFAULTS.OEAppearanceSingleCornerRadius);
+    setExterayondSetting('OEAppearanceSingleCornerRadius', OE_DEFAULTS.OEAppearanceSingleCornerRadius);
   });
 
   it('the theme palette is a single toggle that flips the store', () => {
-    expect(useExteralessSettings()[0].OEAppearanceThemePalette).toBe(false);
+    expect(useExterayondSettings()[0].OEAppearanceThemePalette).toBe(false);
 
-    const row = [...document.querySelectorAll<HTMLElement>('.row')].find((row) => row.textContent.includes('Exteraless.ThemePalette'));
+    const row = [...document.querySelectorAll<HTMLElement>('.row')].find((row) => row.textContent.includes('Exterayond.ThemePalette'));
     row.querySelector<HTMLInputElement>('input').click();
-    expect(useExteralessSettings()[0].OEAppearanceThemePalette).toBe(true);
+    expect(useExterayondSettings()[0].OEAppearanceThemePalette).toBe(true);
 
-    setExteralessSetting('OEAppearanceThemePalette', OE_DEFAULTS.OEAppearanceThemePalette);
+    setExterayondSetting('OEAppearanceThemePalette', OE_DEFAULTS.OEAppearanceThemePalette);
   });
 
   it('renders the centered title and system font rows of Android\'s appearance group', () => {
     const rowTitles = () => [...document.querySelectorAll<HTMLElement>('.row .row-title')].map((el) => el.textContent);
-    expect(rowTitles()).toContain('Exteraless.CenterTitle');
-    expect(rowTitles()).toContain('Exteraless.UseSystemFonts');
+    expect(rowTitles()).toContain('Exterayond.CenterTitle');
+    expect(rowTitles()).toContain('Exterayond.UseSystemFonts');
 
     const systemFontsRow = [...document.querySelectorAll<HTMLElement>('.row')]
-    .find((row) => row.textContent.includes('Exteraless.UseSystemFonts'));
+    .find((row) => row.textContent.includes('Exterayond.UseSystemFonts'));
     systemFontsRow.querySelector<HTMLInputElement>('input').click();
-    expect(useExteralessSettings()[0].TypefaceUseDefault).toBe(!OE_DEFAULTS.TypefaceUseDefault);
+    expect(useExterayondSettings()[0].TypefaceUseDefault).toBe(!OE_DEFAULTS.TypefaceUseDefault);
 
-    setExteralessSetting('TypefaceUseDefault', OE_DEFAULTS.TypefaceUseDefault);
+    setExterayondSetting('TypefaceUseDefault', OE_DEFAULTS.TypefaceUseDefault);
   });
 });
 
@@ -316,7 +316,7 @@ describe('the exteraless Chats tab', () => {
   let dispose: () => void;
 
   beforeEach(() => {
-    dispose = mount(() => <ExteralessChats />);
+    dispose = mount(() => <ExterayondChats />);
   });
 
   afterEach(() => {
@@ -327,88 +327,88 @@ describe('the exteraless Chats tab', () => {
   it('renders the wired toggles with their labels', () => {
     const titles = [...document.querySelectorAll<HTMLElement>('.row-title')].map((el) => el.textContent);
     expect(titles).toEqual([
-      'Exteraless.RemoveMessageTail',
-      'Exteraless.HideCallButton',
-      'Exteraless.HideSearchButton',
-      'Exteraless.UseEditedIcon',
-      'Exteraless.DateOfForwardedMsg',
-      'Exteraless.MessageTimeDetails',
-      'Exteraless.HideShareButton',
-      'Exteraless.HideGiftButton',
-      'Exteraless.HideSendAsPeer',
-      'Exteraless.DisableGreetingSticker',
-      'Exteraless.DisableTrending',
-      'Exteraless.HideGroupSticker',
-      'Exteraless.DeleteChatForBothSides',
-      'Exteraless.AskBeforeAVMessage',
-      'Exteraless.AskBeforeCalling',
-      'Exteraless.AskWhenRepeating',
-      'Exteraless.AskBeforeBotCommand',
-      'Exteraless.DontAutoPlayNextVoice',
-      'Exteraless.HidePremiumSection',
-      'Exteraless.HideHelpSection',
-      'Exteraless.HideStories',
-      'Exteraless.HideFloatingButton',
-      'Exteraless.HideAllChats',
-      'Exteraless.ReplyColors',
-      'Exteraless.ReplyEmoji',
-      'Exteraless.ReplyBackground',
-      'Exteraless.ShowResultsBeforeVoting',
-      'Exteraless.AlwaysSendInHD',
-      'Exteraless.MenuAddToSaved',
-      'Exteraless.MenuCopyPhoto',
-      'Exteraless.MenuReport',
-      'Exteraless.FixLinkPreview',
-      'Exteraless.DisableLinkPreviewByDefault',
-      'Exteraless.DisableGlobalSearch',
-      'Exteraless.StripTrackingOnOpen',
-      'Exteraless.StripTrackingOnPaste',
-      'Exteraless.WideChannelPosts',
-      'Exteraless.MenuRepeat',
-      'Exteraless.DoubleTapReaction',
-      'Exteraless.PauseVideo',
-      'Exteraless.PauseVoice',
-      'Exteraless.PauseRound',
-      'Exteraless.HideReactions.Channels',
-      'Exteraless.HideReactions.Groups',
-      'Exteraless.HideReactions.Private'
+      'Exterayond.RemoveMessageTail',
+      'Exterayond.HideCallButton',
+      'Exterayond.HideSearchButton',
+      'Exterayond.UseEditedIcon',
+      'Exterayond.DateOfForwardedMsg',
+      'Exterayond.MessageTimeDetails',
+      'Exterayond.HideShareButton',
+      'Exterayond.HideGiftButton',
+      'Exterayond.HideSendAsPeer',
+      'Exterayond.DisableGreetingSticker',
+      'Exterayond.DisableTrending',
+      'Exterayond.HideGroupSticker',
+      'Exterayond.DeleteChatForBothSides',
+      'Exterayond.AskBeforeAVMessage',
+      'Exterayond.AskBeforeCalling',
+      'Exterayond.AskWhenRepeating',
+      'Exterayond.AskBeforeBotCommand',
+      'Exterayond.DontAutoPlayNextVoice',
+      'Exterayond.HidePremiumSection',
+      'Exterayond.HideHelpSection',
+      'Exterayond.HideStories',
+      'Exterayond.HideFloatingButton',
+      'Exterayond.HideAllChats',
+      'Exterayond.ReplyColors',
+      'Exterayond.ReplyEmoji',
+      'Exterayond.ReplyBackground',
+      'Exterayond.ShowResultsBeforeVoting',
+      'Exterayond.AlwaysSendInHD',
+      'Exterayond.MenuAddToSaved',
+      'Exterayond.MenuCopyPhoto',
+      'Exterayond.MenuReport',
+      'Exterayond.FixLinkPreview',
+      'Exterayond.DisableLinkPreviewByDefault',
+      'Exterayond.DisableGlobalSearch',
+      'Exterayond.StripTrackingOnOpen',
+      'Exterayond.StripTrackingOnPaste',
+      'Exterayond.WideChannelPosts',
+      'Exterayond.MenuRepeat',
+      'Exterayond.DoubleTapReaction',
+      'Exterayond.PauseVideo',
+      'Exterayond.PauseVoice',
+      'Exterayond.PauseRound',
+      'Exterayond.HideReactions.Channels',
+      'Exterayond.HideReactions.Groups',
+      'Exterayond.HideReactions.Private'
     ]);
   });
 
   it('flips a setting from its toggle', () => {
-    expect(useExteralessSettings()[0].OEChatsHideCallButton).toBe(OE_DEFAULTS.OEChatsHideCallButton);
+    expect(useExterayondSettings()[0].OEChatsHideCallButton).toBe(OE_DEFAULTS.OEChatsHideCallButton);
 
     const checkboxes = [...document.querySelectorAll<HTMLElement>('.row-checkbox-toggle input')] as HTMLInputElement[];
     checkboxes[1].click();
-    expect(useExteralessSettings()[0].OEChatsHideCallButton).toBe(!OE_DEFAULTS.OEChatsHideCallButton);
+    expect(useExterayondSettings()[0].OEChatsHideCallButton).toBe(!OE_DEFAULTS.OEChatsHideCallButton);
 
-    setExteralessSetting('OEChatsHideCallButton', OE_DEFAULTS.OEChatsHideCallButton);
+    setExterayondSetting('OEChatsHideCallButton', OE_DEFAULTS.OEChatsHideCallButton);
   });
 
   it('shows the double-tap reaction row only while an action sends one, and opens the quick reaction tab (CHAT-11)', () => {
     const reactionRow = () => [...document.querySelectorAll<HTMLElement>('.row')]
-      .find((row) => row.querySelector<HTMLElement>('.row-title')?.textContent === 'Exteraless.DoubleTapReaction');
+      .find((row) => row.querySelector<HTMLElement>('.row-title')?.textContent === 'Exterayond.DoubleTapReaction');
 
     // * the defaults (send reactions both sides) show the row, Android's
     // * doubleTapReactionRow condition
     expect(reactionRow()).toBeDefined();
 
     // * no SEND_REACTIONS anywhere — the row leaves, live
-    setExteralessSetting('DoubleTapAction', 4); // Reply
-    setExteralessSetting('DoubleTapActionOut', 0); // None
+    setExterayondSetting('DoubleTapAction', 4); // Reply
+    setExterayondSetting('DoubleTapActionOut', 0); // None
     expect(reactionRow()).toBeUndefined();
 
     // * one side back to send reactions — the row returns and opens the stock
     // * quick-reaction subtab, the web's own reaction chooser
-    setExteralessSetting('DoubleTapActionOut', 1);
+    setExterayondSetting('DoubleTapActionOut', 1);
     expect(reactionRow()).toBeDefined();
     mocks.tab.slider.createTab.mockReturnValueOnce({open: vi.fn()});
     mocks.tab.slider.createTab.mockClear();
     reactionRow().click();
     expect(mocks.tab.slider.createTab).toHaveBeenCalledWith(mocks.quickReactionTabCtor);
 
-    setExteralessSetting('DoubleTapAction', OE_DEFAULTS.DoubleTapAction);
-    setExteralessSetting('DoubleTapActionOut', OE_DEFAULTS.DoubleTapActionOut);
+    setExterayondSetting('DoubleTapAction', OE_DEFAULTS.DoubleTapAction);
+    setExterayondSetting('DoubleTapActionOut', OE_DEFAULTS.DoubleTapActionOut);
   });
 });
 
@@ -421,8 +421,8 @@ describe('the exterayond reset action', () => {
     mocks.toast.mockClear();
     rootScope.managers = {appStateManager: {setByKey: vi.fn(() => Promise.resolve())}} as any;
     setAppSettingsSilent('showArchiveInChatList', false);
-    setExteralessSetting('OEAppearanceAvatarCorners', 4);
-    dispose = mount(() => <ExteralessOther />);
+    setExterayondSetting('OEAppearanceAvatarCorners', 4);
+    dispose = mount(() => <ExterayondOther />);
   });
 
   afterEach(() => {
@@ -437,7 +437,7 @@ describe('the exterayond reset action', () => {
     mocks.confirmation.mockReturnValueOnce(new Promise<void>((resolve) => confirm = resolve));
     rowByIcon('delete').click();
 
-    const [settings] = useExteralessSettings();
+    const [settings] = useExterayondSettings();
     expect(settings.OEAppearanceAvatarCorners).toBe(4);
     expect(appSettings.showArchiveInChatList).toBe(false);
     expect(mocks.confirmation).toHaveBeenCalledWith(expect.objectContaining({
@@ -449,7 +449,7 @@ describe('the exterayond reset action', () => {
     await Promise.resolve();
     expect({...settings}).toEqual(OE_DEFAULTS);
     expect(appSettings.showArchiveInChatList).toBe(true);
-    expect(mocks.toast).toHaveBeenCalledWith({langPackKey: 'Exteraless.Reset.Done'});
+    expect(mocks.toast).toHaveBeenCalledWith({langPackKey: 'Exterayond.Reset.Done'});
   });
 
   it('leaves preferences untouched when the confirmation is canceled', async() => {
@@ -458,7 +458,7 @@ describe('the exterayond reset action', () => {
     await Promise.resolve();
     await Promise.resolve();
 
-    const [settings] = useExteralessSettings();
+    const [settings] = useExterayondSettings();
     expect(settings.OEAppearanceAvatarCorners).toBe(4);
     expect(appSettings.showArchiveInChatList).toBe(false);
     expect(mocks.toast).not.toHaveBeenCalled();

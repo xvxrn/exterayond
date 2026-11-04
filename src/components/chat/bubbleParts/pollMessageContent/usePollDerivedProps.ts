@@ -6,7 +6,7 @@ import getPeerId from '@lib/appManagers/utils/peers/getPeerId';
 import {useHotReloadGuard} from '@lib/solidjs/hotReloadGuard';
 import {Accessor, createMemo, createResource} from 'solid-js';
 import {unwrap} from 'solid-js/store';
-import {exteralessSettings} from '@stores/exteralessSettings';
+import {exterayondSettings} from '@stores/exterayondSettings';
 import {PollMessageContentProps} from './PollMessageContent';
 import {getRoundedPercentsFromResults} from './roundPercents';
 import {shouldShufflePollOptions} from './shuffle';
@@ -130,7 +130,7 @@ export function usePollDerivedProps({props, pollOptions, chosenIndexes, newOptio
   // * voting, exactly `ChatMessageCell.isPollResultsPreviewEnabled()`
   const pollResultsPreview = createMemo(() =>
     isPollResultsPreviewEnabled(
-      exteralessSettings.OEChatsShowResultsBeforeVoting,
+      exterayondSettings.OEChatsShowResultsBeforeVoting,
       !!props.poll.pFlags.closed,
       !!props.poll.pFlags.hide_results_until_close,
       !!props.poll.pFlags.creator,

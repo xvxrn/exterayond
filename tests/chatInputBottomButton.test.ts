@@ -6,7 +6,7 @@ import {i18n} from '@lib/langPack';
 import type {LangPackKey} from '@lib/langPack';
 import {getMiddleware, MiddlewareHelper} from '@helpers/middleware';
 import ListenerSetter from '@helpers/listenerSetter';
-import {setExteralessSetting} from '@stores/exteralessSettings';
+import {setExterayondSetting} from '@stores/exterayondSettings';
 import type {ChatFull} from '@layer';
 
 vi.mock('@lib/appImManager', () => ({AppImManager: class {}, APP_TABS: {}, default: {}}));
@@ -93,7 +93,7 @@ const setup = (options: Options = {}) => {
     getMiddleware: () => () => true
   });
 
-  setExteralessSetting('OEChatsBottomButton', mode);
+  setExterayondSetting('OEChatsBottomButton', mode);
 
   return {
     host: host as Host,
@@ -107,8 +107,8 @@ const setup = (options: Options = {}) => {
 
 afterEach(() => {
   middlewareHelpers.splice(0).forEach((helper) => helper.destroy());
-  setExteralessSetting('OEChatsBottomButton', 1);
-  setExteralessSetting('OEAddCommaAfterMention', true);
+  setExterayondSetting('OEChatsBottomButton', 1);
+  setExterayondSetting('OEAddCommaAfterMention', true);
 });
 
 test.each([
@@ -118,7 +118,7 @@ test.each([
   [true, {_: 'user', id: 123, first_name: 'Test', pFlags: {}}, 'Test '],
   [true, {_: 'channel', id: 123, username: 'test_channel', pFlags: {}}, '@test_channel, ']
 ] as const)('mention punctuation follows Android for preference=%s and peer=%j', async(enabled, peer, expected) => {
-  setExteralessSetting('OEAddCommaAfterMention', enabled);
+  setExterayondSetting('OEAddCommaAfterMention', enabled);
   const insertAtCaret = vi.fn();
   const host = {
     chat: {peerId: 456},
@@ -241,7 +241,7 @@ test('2 -> 1 while the cached full answer is pending keeps the stock mute action
   await flush();
   expect(label(channelMuteBtn)).toBe(keyText('ChatList.Context.Mute'));
 
-  setExteralessSetting('OEChatsBottomButton', 1);
+  setExterayondSetting('OEChatsBottomButton', 1);
   await flush();
   pending.resolve(linkedFull());
   await flush();
@@ -259,7 +259,7 @@ test('2 -> 1 after the discussion resolved returns to the stock mute label and a
   await flush();
   expect(label(channelMuteBtn)).toBe(keyText('ViewDiscussion'));
 
-  setExteralessSetting('OEChatsBottomButton', 1);
+  setExterayondSetting('OEChatsBottomButton', 1);
   await flush();
   expect(label(channelMuteBtn)).toBe(keyText('ChatList.Context.Unmute'));
 
@@ -275,7 +275,7 @@ test('0 -> 1 restores an eligible plate and its stock label', async() => {
   await flush();
   expect(channelMuteBtn.classList.contains('hide')).toBe(true);
 
-  setExteralessSetting('OEChatsBottomButton', 1);
+  setExterayondSetting('OEChatsBottomButton', 1);
   await flush();
   expect(channelMuteBtn.classList.contains('hide')).toBe(false);
   expect(label(channelMuteBtn)).toBe(keyText('ChatList.Context.Mute'));

@@ -5,7 +5,7 @@ import type {AppImManager, ChatSetPeerOptions} from '@lib/appImManager';
 import EventListenerBase from '@helpers/eventListenerBase';
 import {logger, LogTypes} from '@lib/logger';
 import rootScope from '@lib/rootScope';
-import {exteralessSettings, resolveChatThemeOverride} from '@stores/exteralessSettings';
+import {exterayondSettings, resolveChatThemeOverride} from '@stores/exterayondSettings';
 import ChatBubbles, {FullMid, splitFullMid} from '@components/chat/bubbles';
 import ChatContextMenu from '@components/chat/contextMenu';
 import ChatInput from '@components/chat/input';
@@ -571,7 +571,7 @@ export default class Chat extends EventListenerBase<{
       // * app's own theme, exactly ChatActivity.setupChatTheme's early return
       const resolved = resolveChatThemeOverride(
         _fullPeer,
-        exteralessSettings.OEAppearanceCustomThemes,
+        exterayondSettings.OEAppearanceCustomThemes,
         getThemeByEmoticon
       );
 

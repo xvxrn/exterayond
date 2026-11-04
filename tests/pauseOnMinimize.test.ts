@@ -5,7 +5,7 @@
  * notes and round videos (`ChatsConfig`, default off) — and never music.
  */
 import {loadChatBubbles, LOAD_CHAT_BUBBLES_TIMEOUT} from '@tests/helpers/chatBubbles';
-import {setExteralessSetting} from '@stores/exteralessSettings';
+import {setExterayondSetting} from '@stores/exterayondSettings';
 
 let appMediaPlaybackController: typeof import('@components/appMediaPlaybackController')['default'];
 beforeAll(async() => {
@@ -19,9 +19,9 @@ beforeAll(async() => {
 }, LOAD_CHAT_BUBBLES_TIMEOUT);
 
 afterEach(() => {
-  setExteralessSetting('AutoPauseVideo', true);
-  setExteralessSetting('OEChatsPauseVoice', false);
-  setExteralessSetting('OEChatsPauseRound', false);
+  setExterayondSetting('AutoPauseVideo', true);
+  setExterayondSetting('OEChatsPauseVoice', false);
+  setExterayondSetting('OEChatsPauseRound', false);
 });
 
 /** Pretend the given document type is playing, hide the tab once, report whether it paused. */
@@ -55,11 +55,11 @@ test('the three Android toggles each own their document type', () => {
   // * the stock defaults: voice and round keep playing, video pauses
   expect(hideTabWhilePlaying('voice')).toBe(false);
   expect(hideTabWhilePlaying('round')).toBe(false);
-  setExteralessSetting('OEChatsPauseVoice', true);
-  setExteralessSetting('OEChatsPauseRound', true);
+  setExterayondSetting('OEChatsPauseVoice', true);
+  setExterayondSetting('OEChatsPauseRound', true);
   expect(hideTabWhilePlaying('voice')).toBe(true);
   expect(hideTabWhilePlaying('round')).toBe(true);
   // * the video toggle off returns the stock web behavior
-  setExteralessSetting('AutoPauseVideo', false);
+  setExterayondSetting('AutoPauseVideo', false);
   expect(hideTabWhilePlaying('video')).toBe(false);
 });

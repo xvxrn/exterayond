@@ -1,6 +1,6 @@
 import {SERVER_IMAGE_MIME_TYPES} from '@appManagers/constants';
 import {makeMediaSize} from '@helpers/mediaSize';
-import {exteralessSettings} from '@stores/exteralessSettings';
+import {exterayondSettings} from '@stores/exterayondSettings';
 
 const PHOTO_SIDE_LIMIT = 2560;
 // * exteraless alwaysSendInHD off = Android's SD: the smaller side limit and
@@ -23,7 +23,7 @@ export default function photoUploadPreparation(
   fileSize: number,
   convertIncompatible = false
 ) {
-  const sd = !exteralessSettings.OEChatsAlwaysSendInHD;
+  const sd = !exterayondSettings.OEChatsAlwaysSendInHD;
   const sideLimit = sd ? PHOTO_SD_SIDE_LIMIT : PHOTO_SIDE_LIMIT;
   const heavy = (mimeType === 'image/png' || mimeType === 'image/bmp') && fileSize > PHOTO_HEAVY_BYTES;
   if(mimeType === 'image/gif' || !(

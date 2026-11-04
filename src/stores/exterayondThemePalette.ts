@@ -3,7 +3,7 @@ import themeController from '@helpers/themeController';
 import {hotListen} from '@helpers/hotModule';
 import rootScope from '@lib/rootScope';
 import type {WallPaper} from '@layer';
-import {exteralessSettings} from '@stores/exteralessSettings';
+import {exterayondSettings} from '@stores/exterayondSettings';
 
 /**
  * The theme palette (user-directed look & feel, V-4; reshaped by acceptance
@@ -233,7 +233,7 @@ export const paletteTintSource = (): string | undefined => {
 const isDarkTheme = () => document.documentElement.classList.contains('night');
 
 const applyCurrentPalette = () => applyThemePalette(
-  exteralessSettings.OEAppearanceThemePalette,
+  exterayondSettings.OEAppearanceThemePalette,
   isDarkTheme(),
   paletteTintSource()
 );
@@ -254,7 +254,7 @@ if(typeof document !== 'undefined') {
     wallpaperDerivedTint = hex ? {key, hex} : undefined;
     applyCurrentPalette();
   });
-  hotListen(import.meta.hot, rootScope, 'exteraless_settings_updated', ({key}: {key: string}) => {
+  hotListen(import.meta.hot, rootScope, 'exterayond_settings_updated', ({key}: {key: string}) => {
     if(key === 'OEAppearanceThemePalette') {
       applyCurrentPalette();
     }

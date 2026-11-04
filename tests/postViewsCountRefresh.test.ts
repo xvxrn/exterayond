@@ -1,5 +1,5 @@
 import {loadChatBubbles, LOAD_CHAT_BUBBLES_TIMEOUT} from '@tests/helpers/chatBubbles';
-import {resetExteralessSettings, setExteralessSetting} from '@stores/exteralessSettings';
+import {resetExterayondSettings, setExterayondSetting} from '@stores/exterayondSettings';
 import {ChatType} from '@components/chat/chatType';
 import type {FullMid} from '@components/chat/bubbles';
 import type {Message} from '@layer';
@@ -19,7 +19,7 @@ vi.mock('@components/wrappers/sticker', () => ({
 
 /**
  * `DisableNumberRounding` rewrites the views counters already on screen through
- * `ChatBubbles.refreshPostViews` (`exteraless_settings_updated`), without a
+ * `ChatBubbles.refreshPostViews` (`exterayond_settings_updated`), without a
  * re-render. The fixture drives that method on a real `ChatBubbles.prototype`
  * with the DOM and messages the production code reads:
  * - two peers can hold the same numeric mid in mixed/global history, so the
@@ -53,7 +53,7 @@ beforeAll(async() => {
   vi.spyOn(storage, 'get').mockResolvedValue({
     _: 'langPackDifference', lang_code: 'en', from_version: 0, version: 1,
     strings: ['Sent', 'Edited', 'Forwarded'].map((name) => ({
-      _: 'langPackString', key: 'Exteraless.TimeHint.' + name, value: name + ': %1$s'
+      _: 'langPackString', key: 'Exterayond.TimeHint.' + name, value: name + ': %1$s'
     }))
   });
   await I18n.getCacheLangPackAndApply();
@@ -62,7 +62,7 @@ beforeAll(async() => {
 }, LOAD_CHAT_BUBBLES_TIMEOUT);
 
 beforeEach(() => {
-  resetExteralessSettings();
+  resetExterayondSettings();
   hintMocks.show.mockClear();
 });
 
@@ -74,7 +74,7 @@ test('forward headers use the original date only when enabled; saved date and mi
   header.textContent = 'Forwarded from Test author';
   MessageRender.appendForwardedDate(header, m);
   expect(header.textContent).toBe('Forwarded from Test author');
-  setExteralessSetting('DateOfForwardedMsg', true);
+  setExterayondSetting('DateOfForwardedMsg', true);
   MessageRender.appendForwardedDate(header, m);
   const date = header.querySelector('.bubble-forward-date');
   expect(date).not.toBeNull();
@@ -95,7 +95,7 @@ test('time hints are opt-in, omit imported/scheduled messages and build exact se
   const container = document.createElement('div');
   expect(showMessageTimeHint(m, ChatType.Chat, target, container)).toBe(false);
   expect(hintMocks.show).not.toHaveBeenCalled();
-  setExteralessSetting('ShowTimeHint', true);
+  setExterayondSetting('ShowTimeHint', true);
   expect(showMessageTimeHint(m, ChatType.Scheduled, target, container)).toBe(false);
   expect(showMessageTimeHint({...m, fwd_from: {...m.fwd_from, pFlags: {imported: true}}}, ChatType.Chat, target, container)).toBe(false);
   expect(showMessageTimeHint(m, ChatType.Chat, target, container)).toBe(true);
@@ -116,7 +116,7 @@ test('time hints are opt-in, omit imported/scheduled messages and build exact se
   expect(hintMocks.show.mock.results[0].value.close).toHaveBeenCalledOnce();
   showMessageTimeHint({...m, pFlags: {edit_hide: true}, fwd_from: undefined}, ChatType.Pinned, target, container);
   expect((hintMocks.show.mock.lastCall[0] as any).textElement.children).toHaveLength(1);
-  setExteralessSetting('ShowTimeHint', false);
+  setExterayondSetting('ShowTimeHint', false);
   expect(showMessageTimeHint(m, ChatType.Chat, target, container)).toBe(false);
 });
 
@@ -125,7 +125,7 @@ test('saved forward hover dates convert seconds to milliseconds before formattin
   const m = {...message(PEER_A, MID, 0), date: 1700000000, fwd_from: {
     _: 'messageFwdHeader', pFlags: {}, date: 1600000000, saved_date: saved
   }} as Message.message;
-  setExteralessSetting('ShowTimeHint', true);
+  setExterayondSetting('ShowTimeHint', true);
   const time = MessageRender.setTime({
     chat: {getPostAuthor: () => ''} as any, chatType: ChatType.Chat,
     message: m, isOut: false, middleware: getMiddleware().get()
@@ -139,7 +139,7 @@ test('saved forward hover dates convert seconds to milliseconds before formattin
 afterEach(() => {
   for(const [options] of hintMocks.show.mock.calls) options.onClose?.();
   document.body.replaceChildren();
-  resetExteralessSettings();
+  resetExterayondSettings();
 });
 
 function message(peerId: PeerId, mid: number, views: number): Message.message {
@@ -230,7 +230,7 @@ test('each peer reads its own message for a shared mid; one scroll save, existin
   h.registry[makeFullMid(PEER_A, MID + 1)] = bubbleA;
 
   const nodes = h.labels();
-  setExteralessSetting('DisableNumberRounding', true);
+  setExterayondSetting('DisableNumberRounding', true);
   h.harness.refreshPostViews();
 
   expect(h.labels()).toEqual(nodes);
@@ -249,7 +249,7 @@ test('each peer reads its own message for a shared mid; one scroll save, existin
   expect(h.root.children.length).toBe(2);
 
   // * exact -> compact rewrites the same nodes, not new ones
-  setExteralessSetting('DisableNumberRounding', false);
+  setExterayondSetting('DisableNumberRounding', false);
   h.harness.refreshPostViews();
 
   expect(h.labels()).toEqual(nodes);
@@ -293,7 +293,7 @@ test('unchanged, missing, zero and label-less bubbles are skipped without a scro
 });
 
 test('HIDE-16 keeps the empty-chat text without fetching or mounting a greeting sticker', async() => {
-  setExteralessSetting('DontSendGreetingSticker', true);
+  setExterayondSetting('DontSendGreetingSticker', true);
   const middleware = getMiddleware();
   const getGreetingSticker = vi.fn();
   const getProfile = vi.fn(async() => ({}));
@@ -324,7 +324,7 @@ test('chat sticker sizing updates attachment and render dimensions while preserv
   };
   const harness = {chat: {animationGroup: 'CHAT-TEST'}};
   const render = async(value: number, emoji = false, boxSize?: ReturnType<typeof makeMediaSize>) => {
-    setExteralessSetting('stickerSize', value);
+    setExterayondSetting('stickerSize', value);
     const container = document.createElement('div');
     const bubble = document.createElement('div');
     if(emoji) bubble.classList.add('emoji-big');
@@ -355,12 +355,12 @@ test('sender visibility guards the real menu without touching paid reactions or 
   const sender = new ChatSendAs({managers: {} as any, onReady: vi.fn(), onChange});
   const canOpen = spy.mock.lastCall[0].canOpen;
   expect(canOpen()).toBe(true);
-  setExteralessSetting('hideSendAsChannel', true);
+  setExterayondSetting('hideSendAsChannel', true);
   expect(canOpen()).toBe(false);
   expect(onChange).not.toHaveBeenCalled();
   const reactions = new ChatSendAs({managers: {} as any, forPaidReaction: true, onReady: vi.fn(), onChange});
   expect(spy.mock.lastCall[0].canOpen()).toBe(true);
-  setExteralessSetting('hideSendAsChannel', false);
+  setExterayondSetting('hideSendAsChannel', false);
   expect(canOpen()).toBe(true);
   sender.destroy();
   reactions.destroy();
@@ -369,7 +369,7 @@ test('sender visibility guards the real menu without touching paid reactions or 
 
 test('hiding header status never removes premium, verification or scam data from other titles', async() => {
   const {default: generateTitleIcons} = await import('@components/generateTitleIcons');
-  setExteralessSetting('OEAppearanceHideActionBarStatus', true);
+  setExterayondSetting('OEAppearanceHideActionBarStatus', true);
   const {elements} = await generateTitleIcons({
     peerId: PEER_A,
     peer: {_: 'user', id: PEER_A, pFlags: {premium: true, verified: true, scam: true}} as any,

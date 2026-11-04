@@ -2,7 +2,7 @@ import {beforeAll, beforeEach, describe, expect, it, vi} from 'vitest';
 import I18n from '@lib/langPack';
 import {formatDateAccordingToTodayNew, formatFullSentTimeRaw, formatTime} from '@helpers/date';
 import formatDuration from '@helpers/formatDuration';
-import {setExteralessSetting} from '@stores/exteralessSettings';
+import {setExterayondSetting} from '@stores/exterayondSettings';
 import rootScope from '@lib/rootScope';
 import commonStateStorage from '@lib/commonStateStorage';
 import type {LangPackDifference} from '@layer';
@@ -37,8 +37,8 @@ describe('message time with seconds', () => {
 
   beforeEach(async() => {
     document.body.replaceChildren();
-    setExteralessSetting('showSeconds', false);
-    setExteralessSetting('OERelativeLastSeen', false);
+    setExterayondSetting('showSeconds', false);
+    setExterayondSetting('OERelativeLastSeen', false);
     I18n.setTimeFormat('h23');
     await flush();
   });
@@ -48,14 +48,14 @@ describe('message time with seconds', () => {
     document.body.append(element);
     expect(element.textContent).toBe('12:34');
 
-    setExteralessSetting('showSeconds', true);
+    setExterayondSetting('showSeconds', true);
     await flush();
     expect(element.textContent).toBe('12:34:56');
 
     // * new timestamps mount with the setting already applied
     expect(formatTime(date).textContent).toBe('12:34:56');
 
-    setExteralessSetting('showSeconds', false);
+    setExterayondSetting('showSeconds', false);
     await flush();
     expect(element.textContent).toBe('12:34');
     expect(element.textContent).toBe(formatTime(date).textContent);
@@ -64,7 +64,7 @@ describe('message time with seconds', () => {
   it('keeps the user hour cycle, 12h included', async() => {
     const element = formatTime(date);
     document.body.append(element);
-    setExteralessSetting('showSeconds', true);
+    setExterayondSetting('showSeconds', true);
     I18n.setTimeFormat('h12');
     await flush();
     expect(element.textContent).toBe('12:34:56 PM');
@@ -80,12 +80,12 @@ describe('message time with seconds', () => {
     document.body.append(dateEl);
     const stock = dateEl.textContent;
 
-    setExteralessSetting('showSeconds', true);
+    setExterayondSetting('showSeconds', true);
     await flush();
     expect(dateEl.textContent).toContain('12:34:56');
     expect(dateEl.textContent).toBe(formatFullSentTimeRaw(timestamp, {combined: true}).dateEl.textContent);
 
-    setExteralessSetting('showSeconds', false);
+    setExterayondSetting('showSeconds', false);
     await flush();
     expect(dateEl.textContent).toBe(stock);
   });
@@ -100,7 +100,7 @@ describe('message time with seconds', () => {
     const dateText = dateEl.textContent;
     const durationText = JSON.stringify(duration);
 
-    setExteralessSetting('showSeconds', true);
+    setExterayondSetting('showSeconds', true);
     await flush();
 
     expect(separator.textContent).toBe(separatorText);
@@ -117,12 +117,12 @@ describe('message time with seconds', () => {
       const now = new Date(2024, 0, 1, 0, 30).getTime();
       vi.setSystemTime(now);
       const user = {_: 'user', id: 123, pFlags: {}, status: {_: 'userStatusOffline', was_online: now / 1000 - 3600}} as User.user;
-      setExteralessSetting('OERelativeLastSeen', false);
+      setExterayondSetting('OERelativeLastSeen', false);
       const stock = getUserStatusString(user).textContent;
       expect(stock).not.toContain('hour ago');
-      setExteralessSetting('OERelativeLastSeen', true);
+      setExterayondSetting('OERelativeLastSeen', true);
       expect(getUserStatusString(user).textContent).toBe('last seen 1 hour ago');
-      setExteralessSetting('OERelativeLastSeen', false);
+      setExterayondSetting('OERelativeLastSeen', false);
       expect(getUserStatusString(user).textContent).toBe(stock);
     } finally {
       vi.useRealTimers();
@@ -134,7 +134,7 @@ describe('message time with seconds', () => {
     try {
       const now = new Date(2024, 0, 2, 0, 30).getTime();
       vi.setSystemTime(now);
-      setExteralessSetting('OERelativeLastSeen', true);
+      setExterayondSetting('OERelativeLastSeen', true);
       const offline = (seconds: number) => getUserStatusString({
         _: 'user', id: 123, pFlags: {}, status: {_: 'userStatusOffline', was_online: now / 1000 - seconds}
       } as User.user).textContent;
@@ -143,22 +143,22 @@ describe('message time with seconds', () => {
       expect(offline(-60)).toBe('last seen just now');
     } finally {
       vi.useRealTimers();
-      setExteralessSetting('OERelativeLastSeen', false);
+      setExterayondSetting('OERelativeLastSeen', false);
     }
   });
 
   it('does not infer precise activity from private statuses or replace bot and online labels', () => {
-    setExteralessSetting('OERelativeLastSeen', true);
+    setExterayondSetting('OERelativeLastSeen', true);
     const user = {_: 'user', id: 123, pFlags: {}} as User.user;
     for(const status of ['userStatusRecently', 'userStatusLastWeek', 'userStatusLastMonth', 'userStatusOnline'] as const) {
       user.status = status === 'userStatusOnline' ? {_: status, expires: 0} : {_: status, pFlags: {}};
       const relative = getUserStatusString(user).textContent;
-      setExteralessSetting('OERelativeLastSeen', false);
+      setExterayondSetting('OERelativeLastSeen', false);
       expect(getUserStatusString(user).textContent).toBe(relative);
-      setExteralessSetting('OERelativeLastSeen', true);
+      setExterayondSetting('OERelativeLastSeen', true);
     }
     user.pFlags.bot = true;
     expect(getUserStatusString(user).textContent).toBe('bot');
-    setExteralessSetting('OERelativeLastSeen', false);
+    setExterayondSetting('OERelativeLastSeen', false);
   });
 });

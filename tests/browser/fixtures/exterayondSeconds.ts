@@ -6,7 +6,7 @@ import {installSandboxEnvironment} from '@components/popupSandbox/environment';
 import I18n from '@lib/langPack';
 import {formatDateAccordingToTodayNew, formatFullSentTimeRaw, formatTime} from '@helpers/date';
 import formatDuration from '@helpers/formatDuration';
-import {setExteralessSetting} from '@stores/exteralessSettings';
+import {setExterayondSetting} from '@stores/exterayondSettings';
 import '@/scss/style.scss';
 
 const resultEl = document.getElementById('fixture-result')!;
@@ -80,7 +80,7 @@ const renderSamples = () => {
 };
 
 toggle.addEventListener('change', async() => {
-  setExteralessSetting('showSeconds', toggle.checked);
+  setExterayondSetting('showSeconds', toggle.checked);
   await report();
 });
 
@@ -109,7 +109,7 @@ const boot = async() => {
 
   try {
     await installSandboxEnvironment();
-    setExteralessSetting('showSeconds', false);
+    setExterayondSetting('showSeconds', false);
     I18n.setTimeFormat(cycle);
     toggle.checked = false;
     renderSamples();

@@ -35,13 +35,13 @@ import {
   resolveMainMenuLayout,
   resetMainMenuLayout,
   setMenuItemVisible
-} from '@stores/exteralessMenuLayout';
-import {OE_DEFAULTS, exteralessSettings, setExteralessSetting} from '@stores/exteralessSettings';
+} from '@stores/exterayondMenuLayout';
+import {OE_DEFAULTS, exterayondSettings, setExterayondSetting} from '@stores/exterayondSettings';
 
 const RESET_STORAGE = () => {
   (localStorage as unknown as {_data: Map<string, string>})._data.clear();
   for(const key of Object.keys(OE_DEFAULTS) as Array<keyof typeof OE_DEFAULTS>) {
-    setExteralessSetting(key, OE_DEFAULTS[key]);
+    setExterayondSetting(key, OE_DEFAULTS[key]);
   }
 };
 
@@ -73,19 +73,19 @@ describe('main menu layout (MainMenuLayout contract)', () => {
   });
 
   it('resolve keeps Settings at its own position and appends it when hidden', () => {
-    setExteralessSetting('OEAppearanceMainMenuLayout', USER_LAYOUT);
+    setExterayondSetting('OEAppearanceMainMenuLayout', USER_LAYOUT);
     const layout = resolveMainMenuLayout();
     // * 18/17/106 stay in the string (unbacked ids are the consumer's skip)
     expect(layout.visible).toEqual([14, 18, 8, 17, 106]);
     expect(layout.hidden).not.toContain(MAIN_MENU_ITEMS.SETTINGS);
 
-    setExteralessSetting('OEAppearanceMainMenuLayout', '14,6;2,8,11');
+    setExterayondSetting('OEAppearanceMainMenuLayout', '14,6;2,8,11');
     expect(resolveMainMenuLayout().visible).toEqual([14, 6, MAIN_MENU_ITEMS.SETTINGS]);
   });
 
   it('an uncustomized key means the stock menu (resolve yields no lists)', () => {
     expect(resolveMainMenuLayout()).toEqual({visible: [], hidden: []});
-    setExteralessSetting('OEAppearanceMainMenuLayout', '14,6;2,8,11');
+    setExterayondSetting('OEAppearanceMainMenuLayout', '14,6;2,8,11');
     expect(resolveMainMenuLayout().visible.length).toBeGreaterThan(0);
   });
 
@@ -97,7 +97,7 @@ describe('main menu layout (MainMenuLayout contract)', () => {
       visible: [...WEB_MENU_STOCK_ORDER, MAIN_MENU_ITEMS.SETTINGS],
       hidden: []
     });
-    setExteralessSetting('OEAppearanceMainMenuLayout', USER_LAYOUT);
+    setExterayondSetting('OEAppearanceMainMenuLayout', USER_LAYOUT);
     expect(getEditorMainMenuLayout()).toEqual(resolveMainMenuLayout());
   });
 
@@ -106,7 +106,7 @@ describe('main menu layout (MainMenuLayout contract)', () => {
     // * an empty visible half (the old behavior: ";11") would collapse the
     // * menu to Settings alone
     setMenuItemVisible(MAIN_MENU_ITEMS.SAVED, false);
-    expect(exteralessSettings.OEAppearanceMainMenuLayout).toBe('14,6,10,8;11');
+    expect(exterayondSettings.OEAppearanceMainMenuLayout).toBe('14,6,10,8;11');
     expect(resolveMainMenuLayout().visible).toEqual([14, 6, 10, MAIN_MENU_ITEMS.SETTINGS]);
     expect(resolveMainMenuLayout().hidden).toContain(MAIN_MENU_ITEMS.SAVED);
 
@@ -117,7 +117,7 @@ describe('main menu layout (MainMenuLayout contract)', () => {
   });
 
   it('setMenuItemVisible moves an id between the halves', () => {
-    setExteralessSetting('OEAppearanceMainMenuLayout', USER_LAYOUT);
+    setExterayondSetting('OEAppearanceMainMenuLayout', USER_LAYOUT);
     setMenuItemVisible(MAIN_MENU_ITEMS.CONTACTS, true);
     expect(resolveMainMenuLayout().visible).toEqual([14, 18, 8, 17, 106, MAIN_MENU_ITEMS.CONTACTS]);
     expect(resolveMainMenuLayout().hidden).not.toContain(MAIN_MENU_ITEMS.CONTACTS);
@@ -130,9 +130,9 @@ describe('main menu layout (MainMenuLayout contract)', () => {
   });
 
   it('reset returns to the Android "not customized" empty string', () => {
-    setExteralessSetting('OEAppearanceMainMenuLayout', USER_LAYOUT);
+    setExterayondSetting('OEAppearanceMainMenuLayout', USER_LAYOUT);
     resetMainMenuLayout();
-    expect(exteralessSettings.OEAppearanceMainMenuLayout).toBe('');
+    expect(exterayondSettings.OEAppearanceMainMenuLayout).toBe('');
     expect(resolveMainMenuLayout()).toEqual({visible: [], hidden: []});
   });
 });
@@ -148,11 +148,11 @@ describe('the editor reorder and dividers (FOLD-10/12)', () => {
   it('the displayed entries are the backed ids and the dividers, unbacked ids skipped', () => {
     expect(getEditorVisibleEntries()).toEqual([...WEB_MENU_STOCK_ORDER, MAIN_MENU_ITEMS.SETTINGS]);
 
-    setExteralessSetting('OEAppearanceMainMenuLayout', USER_LAYOUT);
+    setExterayondSetting('OEAppearanceMainMenuLayout', USER_LAYOUT);
     // * 18 (Profile), 17 (QR) and 106 (Feed) have no web backing
     expect(getEditorVisibleEntries()).toEqual([MAIN_MENU_ITEMS.ARCHIVE, MAIN_MENU_ITEMS.SETTINGS]);
 
-    setExteralessSetting('OEAppearanceMainMenuLayout', '11,-1,14,8;2');
+    setExterayondSetting('OEAppearanceMainMenuLayout', '11,-1,14,8;2');
     expect(getEditorVisibleEntries()).toEqual([
       MAIN_MENU_ITEMS.SAVED, MAIN_MENU_ITEMS.DIVIDER, MAIN_MENU_ITEMS.ARCHIVE, MAIN_MENU_ITEMS.SETTINGS
     ]);
@@ -161,7 +161,7 @@ describe('the editor reorder and dividers (FOLD-10/12)', () => {
   it('moveMenuEntry swaps displayed neighbors and keeps Settings at its position', () => {
     // * the stock editor layout: Saved, Archive, Contacts, Calls, Settings
     moveMenuEntry(1, 'up');
-    expect(exteralessSettings.OEAppearanceMainMenuLayout.split(';')[0]).toBe('14,11,6,10,8');
+    expect(exterayondSettings.OEAppearanceMainMenuLayout.split(';')[0]).toBe('14,11,6,10,8');
     expect(getEditorVisibleEntries()).toEqual([14, 11, 6, 10, 8]);
 
     // * the entry now at index 1 is Saved — it moves down past Contacts
@@ -177,48 +177,48 @@ describe('the editor reorder and dividers (FOLD-10/12)', () => {
     expect(getEditorVisibleEntries()).toEqual([...WEB_MENU_STOCK_ORDER, MAIN_MENU_ITEMS.SETTINGS]);
     moveMenuEntry(-1, 'down');
     moveMenuEntry(99, 'up');
-    expect(exteralessSettings.OEAppearanceMainMenuLayout).toBe('');
+    expect(exterayondSettings.OEAppearanceMainMenuLayout).toBe('');
     moveMenuEntry(4, 'down');
     expect(getEditorVisibleEntries()).toEqual([...WEB_MENU_STOCK_ORDER, MAIN_MENU_ITEMS.SETTINGS]);
   });
 
   it('moveMenuEntry splices across unbacked ids between the displayed neighbors', () => {
     // * visible = Saved, Profile(unbacked), Contacts, Calls, Settings
-    setExteralessSetting('OEAppearanceMainMenuLayout', '11,18,6,10,8;');
+    setExterayondSetting('OEAppearanceMainMenuLayout', '11,18,6,10,8;');
     moveMenuEntry(1, 'up'); // * Contacts moves above Saved; Profile drifts along
-    expect(exteralessSettings.OEAppearanceMainMenuLayout.split(';')[0]).toBe('6,11,18,10,8');
+    expect(exterayondSettings.OEAppearanceMainMenuLayout.split(';')[0]).toBe('6,11,18,10,8');
     expect(getEditorVisibleEntries()).toEqual([6, 11, 10, 8]);
   });
 
   it('moveMenuEntry moves a divider like any displayed entry', () => {
-    setExteralessSetting('OEAppearanceMainMenuLayout', '11,-1,14,8;2');
+    setExterayondSetting('OEAppearanceMainMenuLayout', '11,-1,14,8;2');
     moveMenuEntry(1, 'down');
-    expect(exteralessSettings.OEAppearanceMainMenuLayout.split(';')[0]).toBe('11,14,-1,8');
+    expect(exterayondSettings.OEAppearanceMainMenuLayout.split(';')[0]).toBe('11,14,-1,8');
     moveMenuEntry(2, 'up');
-    expect(exteralessSettings.OEAppearanceMainMenuLayout.split(';')[0]).toBe('11,-1,14,8');
+    expect(exterayondSettings.OEAppearanceMainMenuLayout.split(';')[0]).toBe('11,-1,14,8');
   });
 
   it('addMenuDivider appends to the end of the visible half (Android ID_ADD_DIVIDER)', () => {
     addMenuDivider();
-    expect(exteralessSettings.OEAppearanceMainMenuLayout.split(';')[0]).toBe('11,14,6,10,8,-1');
+    expect(exterayondSettings.OEAppearanceMainMenuLayout.split(';')[0]).toBe('11,14,6,10,8,-1');
     expect(getEditorVisibleEntries()).toEqual([11, 14, 6, 10, 8, -1]);
     // * the parser keeps dividers in the visible half only; a second one is fine
     addMenuDivider();
-    expect(exteralessSettings.OEAppearanceMainMenuLayout.split(';')[0]).toBe('11,14,6,10,8,-1,-1');
+    expect(exterayondSettings.OEAppearanceMainMenuLayout.split(';')[0]).toBe('11,14,6,10,8,-1,-1');
   });
 
   it('removeMenuDivider removes the nth divider, unknown ordinals are no-ops', () => {
-    setExteralessSetting('OEAppearanceMainMenuLayout', '11,-1,14,-1,8;2');
+    setExterayondSetting('OEAppearanceMainMenuLayout', '11,-1,14,-1,8;2');
     removeMenuDivider(0);
-    expect(exteralessSettings.OEAppearanceMainMenuLayout.split(';')[0]).toBe('11,14,-1,8');
+    expect(exterayondSettings.OEAppearanceMainMenuLayout.split(';')[0]).toBe('11,14,-1,8');
     // * only ordinal 0 exists now — 1 is a no-op
     removeMenuDivider(1);
-    expect(exteralessSettings.OEAppearanceMainMenuLayout.split(';')[0]).toBe('11,14,-1,8');
+    expect(exterayondSettings.OEAppearanceMainMenuLayout.split(';')[0]).toBe('11,14,-1,8');
     removeMenuDivider(0);
     // * no dividers left, further removals are no-ops
-    expect(exteralessSettings.OEAppearanceMainMenuLayout.split(';')[0]).toBe('11,14,8');
+    expect(exterayondSettings.OEAppearanceMainMenuLayout.split(';')[0]).toBe('11,14,8');
     removeMenuDivider(0);
-    expect(exteralessSettings.OEAppearanceMainMenuLayout.split(';')[0]).toBe('11,14,8');
+    expect(exterayondSettings.OEAppearanceMainMenuLayout.split(';')[0]).toBe('11,14,8');
   });
 });
 
@@ -239,7 +239,7 @@ describe('the .extera main-menu aliases (EtgBackup.addMainMenuEntries)', () => {
 
   it('the layout half replaces the visible half; the hidden half keeps the stock visible on a fresh client', () => {
     applyMainMenuHalf('layout', [14, 8]);
-    expect(exteralessSettings.OEAppearanceMainMenuLayout.startsWith('14,8;')).toBe(true);
+    expect(exterayondSettings.OEAppearanceMainMenuLayout.startsWith('14,8;')).toBe(true);
 
     RESET_STORAGE();
     applyMainMenuHalf('hidden', [2, 6]);
@@ -272,7 +272,7 @@ describe('applyMainMenuLayoutToButtons (the tools menu consumption)', () => {
   });
 
   it('a customized key lays the mapped items out and keeps the web-only frame', () => {
-    setExteralessSetting('OEAppearanceMainMenuLayout', USER_LAYOUT);
+    setExterayondSetting('OEAppearanceMainMenuLayout', USER_LAYOUT);
     const out = applyMainMenuLayoutToButtons(stock);
     // * 18/17/106 have no web backing and render nothing; 14 and 8 do;
     // * Settings is forced in; stories/addAccount/createANew/more keep the frame
@@ -280,7 +280,7 @@ describe('applyMainMenuLayoutToButtons (the tools menu consumption)', () => {
   });
 
   it('a DIVIDER in the visible half marks the previous item with a hairline', () => {
-    setExteralessSetting('OEAppearanceMainMenuLayout', '14,-1,8;6,11,10');
+    setExterayondSetting('OEAppearanceMainMenuLayout', '14,-1,8;6,11,10');
     const out = applyMainMenuLayoutToButtons(stock);
     const archive = out.find((button) => button.name === 'archive');
     expect(archive?.separatorDown).toBe(true);
@@ -288,9 +288,9 @@ describe('applyMainMenuLayoutToButtons (the tools menu consumption)', () => {
   });
 
   it('the divider marks reset between applications', () => {
-    setExteralessSetting('OEAppearanceMainMenuLayout', '14,-1,8;6,11,10');
+    setExterayondSetting('OEAppearanceMainMenuLayout', '14,-1,8;6,11,10');
     applyMainMenuLayoutToButtons(stock);
-    setExteralessSetting('OEAppearanceMainMenuLayout', '14,8;6,11,10');
+    setExterayondSetting('OEAppearanceMainMenuLayout', '14,8;6,11,10');
     const out = applyMainMenuLayoutToButtons(stock);
     expect(out.find((button) => button.name === 'archive')?.separatorDown).toBeUndefined();
   });

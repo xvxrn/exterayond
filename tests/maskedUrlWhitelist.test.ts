@@ -7,7 +7,7 @@ import {stubBrowserGlobals} from '@tests/helpers/browserGlobals';
 import {MessageEntity} from '@layer';
 import {setAppStateSilent} from '@stores/appState';
 import isWhitelistedUrl from '@lib/richTextProcessor/isWhitelistedUrl';
-import {setOpenLinkConfirmation} from '@stores/exteralessSettings';
+import {setOpenLinkConfirmation} from '@stores/exterayondSettings';
 
 // wrapRichText reaches the worker proxy through langPack; none of that is needed to build a link
 vi.mock('@lib/apiManagerProxy', () => ({default: new Proxy({}, {get: () => vi.fn()})}));

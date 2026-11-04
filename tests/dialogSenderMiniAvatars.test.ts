@@ -48,7 +48,7 @@ import {
   setPromiseMiddleware
 } from '@components/dialogElement';
 import {getMiddleware, type MiddlewareHelper} from '@helpers/middleware';
-import {setExteralessSetting} from '@stores/exteralessSettings';
+import {setExterayondSetting} from '@stores/exterayondSettings';
 
 const flush = () => new Promise((resolve) => setTimeout(resolve, 0));
 const MINI_AVATAR = '.dialog-sender-mini-avatar';
@@ -97,11 +97,11 @@ describe('sender mini avatars', () => {
       node.classList.add('avatar');
       return {node};
     });
-    setExteralessSetting('OEAppearanceSenderMiniAvatars', true);
+    setExterayondSetting('OEAppearanceSenderMiniAvatars', true);
   });
 
   afterEach(() => {
-    setExteralessSetting('OEAppearanceSenderMiniAvatars', true);
+    setExterayondSetting('OEAppearanceSenderMiniAvatars', true);
   });
 
   it('follows the setting live, without a second avatar or one after release', async() => {
@@ -115,27 +115,27 @@ describe('sender mini avatars', () => {
     await flush();
     expect(sender.querySelectorAll(MINI_AVATAR)).toHaveLength(1);
 
-    setExteralessSetting('OEAppearanceSenderMiniAvatars', false);
+    setExterayondSetting('OEAppearanceSenderMiniAvatars', false);
     await flush();
     expect(sender.querySelectorAll(MINI_AVATAR)).toHaveLength(0);
     expect(mocks.avatarNew).toHaveBeenCalledTimes(1);
 
-    setExteralessSetting('OEAppearanceSenderMiniAvatars', true);
+    setExterayondSetting('OEAppearanceSenderMiniAvatars', true);
     await flush();
     expect(sender.querySelectorAll(MINI_AVATAR)).toHaveLength(1);
     expect(mocks.avatarNew).toHaveBeenCalledTimes(2);
 
     owner.destroy();
     row.destroy();
-    setExteralessSetting('OEAppearanceSenderMiniAvatars', false);
-    setExteralessSetting('OEAppearanceSenderMiniAvatars', true);
+    setExterayondSetting('OEAppearanceSenderMiniAvatars', false);
+    setExterayondSetting('OEAppearanceSenderMiniAvatars', true);
     await flush();
     expect(sender.querySelectorAll(MINI_AVATAR)).toHaveLength(0);
     expect(mocks.avatarNew).toHaveBeenCalledTimes(2);
   });
 
   it('creates no avatar at all while the setting is off', async() => {
-    setExteralessSetting('OEAppearanceSenderMiniAvatars', false);
+    setExterayondSetting('OEAppearanceSenderMiniAvatars', false);
 
     const row = getMiddleware();
     await render(makeMessage(), (value) => value, row.get().create());

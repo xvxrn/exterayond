@@ -160,8 +160,8 @@ export type BroadcastEvents = {
 
   'connection_status_change': ConnectionStatusChange,
   'settings_updated': {key: string, value: any, settings: StateSettings},
-  /** exteraless Preferences changed (`@stores/exteralessSettings`); imperative count owners re-read the store */
-  'exteraless_settings_updated': {key: string, value: boolean | number | string},
+  /** exteraless Preferences changed (`@stores/exterayondSettings`); imperative count owners re-read the store */
+  'exterayond_settings_updated': {key: string, value: boolean | number | string},
   /**
    * The wallpaper's dominant color landed (`@helpers/wallpaperTint`, G-4):
    * `hex` is the image wallpaper's dominant chromatic color, or undefined for

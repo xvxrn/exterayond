@@ -2,7 +2,7 @@ import {render} from 'solid-js/web';
 import {createStore} from 'solid-js/store';
 import '@helpers/peerIdPolyfill';
 import PeerProfile from '@components/peerProfile';
-import {exteralessSettings, setExteralessSetting} from '@stores/exteralessSettings';
+import {exterayondSettings, setExterayondSetting} from '@stores/exterayondSettings';
 import formatUserPhone from '@components/wrappers/formatUserPhone';
 
 const mocks = vi.hoisted(() => ({
@@ -103,8 +103,8 @@ beforeEach(() => {
   }
   originalSurfaces.set('MainSection', PeerProfile.MainSection);
   PeerProfile.MainSection = () => <PeerProfile.Phone />;
-  setExteralessSetting('HidePhone', true);
-  setExteralessSetting('IdDcType', 1);
+  setExterayondSetting('HidePhone', true);
+  setExterayondSetting('IdDcType', 1);
   host = document.createElement('div');
   document.body.append(host);
 });
@@ -118,7 +118,7 @@ afterEach(() => {
   }
   originalSurfaces.clear();
   vi.restoreAllMocks();
-  setExteralessSetting('HidePhone', true);
+  setExterayondSetting('HidePhone', true);
 });
 
 function mount(peerId: number, phone?: string, isDialog = false) {
@@ -141,12 +141,12 @@ describe('GEN-07 profile ID and data center', () => {
     const setPeer = mount(2);
     setPeer('photo', {_: 'userProfilePhoto', dc_id: 3});
     expect(row().querySelector('.row-title').textContent).toBe('2');
-    expect(row().textContent).toContain('Exteraless.ProfileId.Dc 3');
+    expect(row().textContent).toContain('Exterayond.ProfileId.Dc 3');
     row().click();
     expect(mocks.copiedText).toHaveBeenCalledWith('2');
-    setExteralessSetting('IdDcType', 2);
+    setExterayondSetting('IdDcType', 2);
     expect(row().querySelector('.row-title').textContent).toBe('2');
-    setExteralessSetting('IdDcType', 0);
+    setExterayondSetting('IdDcType', 0);
     expect(row()).toBeNull();
     expect(mocks.baseDc).not.toHaveBeenCalled();
   });
@@ -156,24 +156,24 @@ describe('GEN-07 profile ID and data center', () => {
     const setPeer = mount(-123);
     setPeer('_', 'chat');
     expect(row().querySelector('.row-title').textContent).toBe('123');
-    setExteralessSetting('IdDcType', 2);
+    setExterayondSetting('IdDcType', 2);
     expect(row().querySelector('.row-title').textContent).toBe('-123');
     setPeer('_', 'channel');
     expect(row().querySelector('.row-title').textContent).toBe('-1000000000123');
-    expect(row().textContent).toContain('Exteraless.ProfileId.DcUnknown');
+    expect(row().textContent).toContain('Exterayond.ProfileId.DcUnknown');
     expect(row().querySelector('[dir="ltr"]')).not.toBeNull();
   });
 
   it('uses the current connection DC for self, and makes no lookup while hidden', async() => {
     PeerProfile.MainSection = () => <PeerProfile.IdAndDc />;
-    setExteralessSetting('IdDcType', 0);
+    setExterayondSetting('IdDcType', 0);
     mount(1);
     expect(row()).toBeNull();
     expect(mocks.baseDc).not.toHaveBeenCalled();
-    setExteralessSetting('IdDcType', 1);
+    setExterayondSetting('IdDcType', 1);
     await new Promise((resolve) => setTimeout(resolve, 0));
     expect(mocks.baseDc).toHaveBeenCalledTimes(1);
-    expect(row().textContent).toContain('Exteraless.ProfileId.Dc 4');
+    expect(row().textContent).toContain('Exterayond.ProfileId.Dc 4');
   });
 });
 
@@ -181,11 +181,11 @@ describe('PeerProfile.Phone local own-number visibility', () => {
   it('removes own phone from the DOM and reacts to the preference in place', () => {
     const phone = '12025550123'; // synthetic reserved example number
     mount(1, phone);
-    expect(exteralessSettings.HidePhone).toBe(true);
+    expect(exterayondSettings.HidePhone).toBe(true);
     expect(row()).toBeNull();
     expect(host.innerHTML).not.toContain(phone);
 
-    setExteralessSetting('HidePhone', false);
+    setExterayondSetting('HidePhone', false);
     expect(row()?.textContent).toContain(formatUserPhone(phone));
     expect(row()?.querySelector('[dir="ltr"]')).not.toBeNull();
     row().click();
@@ -194,7 +194,7 @@ describe('PeerProfile.Phone local own-number visibility', () => {
     menu.buttons[0].onClick();
     expect(mocks.copyPhone).toHaveBeenCalledTimes(2);
 
-    setExteralessSetting('HidePhone', true);
+    setExterayondSetting('HidePhone', true);
     expect(row()).toBeNull();
     expect(host.textContent).not.toContain(formatUserPhone(phone));
     expect(host.querySelector('[hidden], [style*="display: none"]')).toBeNull();
@@ -203,16 +203,16 @@ describe('PeerProfile.Phone local own-number visibility', () => {
   it('keeps contact numbers visible with hiding enabled or disabled', () => {
     mount(2, '12025550124');
     expect(row()?.textContent).toContain(formatUserPhone('12025550124'));
-    setExteralessSetting('HidePhone', false);
+    setExterayondSetting('HidePhone', false);
     expect(row()?.textContent).toContain(formatUserPhone('12025550124'));
-    setExteralessSetting('HidePhone', true);
+    setExterayondSetting('HidePhone', true);
     row().click();
     expect(mocks.copyPhone).toHaveBeenCalledWith(formatUserPhone('12025550124'));
   });
 
   it('preserves anonymous phone lookup, fallback copy and information link', () => {
     mount(1, '88800000001'); // synthetic anonymous number
-    setExteralessSetting('HidePhone', false);
+    setExterayondSetting('HidePhone', false);
     row().click();
     expect(mocks.collectible).toHaveBeenCalledWith({peerId: 1, phone: '88800000001', onFail: expect.any(Function)});
     mocks.collectible.mock.calls[0][0].onFail();
@@ -226,7 +226,7 @@ describe('PeerProfile.Phone local own-number visibility', () => {
   it.each([1, 2])('renders no missing phone for peer %s, including preference changes', (peerId) => {
     const setPeer = mount(peerId);
     expect(row()).toBeNull();
-    setExteralessSetting('HidePhone', false);
+    setExterayondSetting('HidePhone', false);
     expect(row()).toBeNull();
     setPeer('phone', '12025550125');
     expect(row()).not.toBeNull();
@@ -237,13 +237,13 @@ describe('PeerProfile.Phone local own-number visibility', () => {
   it('keeps the existing own-dialog detail guard with either preference value', () => {
     mount(1, '12025550126', true);
     expect(row()).toBeNull();
-    setExteralessSetting('HidePhone', false);
+    setExterayondSetting('HidePhone', false);
     expect(row()).toBeNull();
   });
 
   it('keeps non-user peers without a phone row', () => {
     mount(-3, '12025550127');
-    setExteralessSetting('HidePhone', false);
+    setExterayondSetting('HidePhone', false);
     expect(row()).toBeNull();
   });
 });

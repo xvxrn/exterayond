@@ -2,12 +2,12 @@ import type {Message} from '@layer';
 import {ChatType} from '@components/chat/chatType';
 import showTooltip from '@components/tooltip';
 import I18n, {i18n, LangPackKey} from '@lib/langPack';
-import {exteralessSettings} from '@stores/exteralessSettings';
+import {exterayondSettings} from '@stores/exterayondSettings';
 import appNavigationController, {NavigationItem} from '@components/appNavigationController';
 import tooltipController from '@helpers/tooltipController';
 
 export function canShowMessageTimeHint(message: Message.message | Message.messageService, chatType: ChatType) {
-  return exteralessSettings.ShowTimeHint &&
+  return exterayondSettings.ShowTimeHint &&
     !(message as Message.message).fwd_from?.pFlags?.imported &&
     [ChatType.Chat, ChatType.Discussion, ChatType.Pinned, ChatType.Saved, ChatType.Search].includes(chatType);
 }
@@ -27,10 +27,10 @@ export function showMessageTimeHint(message: Message.message | Message.messageSe
     row.append(i18n(key, [date]));
     text.append(row);
   };
-  append('Exteraless.TimeHint.Sent', message.date);
+  append('Exterayond.TimeHint.Sent', message.date);
   if(message._ === 'message') {
-    if(!message.pFlags.edit_hide) append('Exteraless.TimeHint.Edited', message.edit_date);
-    append('Exteraless.TimeHint.Forwarded', message.fwd_from?.date);
+    if(!message.pFlags.edit_hide) append('Exterayond.TimeHint.Edited', message.edit_date);
+    append('Exterayond.TimeHint.Forwarded', message.fwd_from?.date);
   }
   tooltipController.closeAll();
   const {close} = showTooltip({

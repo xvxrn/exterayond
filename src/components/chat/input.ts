@@ -73,7 +73,7 @@ import CommandsHelper from '@components/chat/commandsHelper';
 import AutocompleteHelperController from '@components/chat/autocompleteHelperController';
 import AutocompleteHelper from '@components/chat/autocompleteHelper';
 import MentionsHelper from '@components/chat/mentionsHelper';
-import {exteralessSettings} from '@stores/exteralessSettings';
+import {exterayondSettings} from '@stores/exterayondSettings';
 import {applyPagePreviewRules} from '@lib/linkCleaner/pagePreviewRules';
 import fixSafariStickyInput from '@helpers/dom/fixSafariStickyInput';
 import ReplyKeyboard from '@components/chat/replyKeyboard';
@@ -2356,7 +2356,7 @@ export default class ChatInput {
   // never opens another chat.
   private onChannelMuteClick() {
     const discussTarget = this.discussTarget;
-    if(exteralessSettings.OEChatsBottomButton === 2 && discussTarget?.peerId === this.chat.peerId) {
+    if(exterayondSettings.OEChatsBottomButton === 2 && discussTarget?.peerId === this.chat.peerId) {
       this.chat.appImManager.setInnerPeer({peerId: discussTarget.peerIdToOpen});
       return;
     }
@@ -2378,7 +2378,7 @@ export default class ChatInput {
     createRoot((dispose) => {
       this.chat.destroyMiddlewareHelper.onDestroy(dispose);
       createEffect(() => {
-        void exteralessSettings.OEChatsBottomButton;
+        void exterayondSettings.OEChatsBottomButton;
         this.updateChannelMuteButton();
       });
     });
@@ -2395,7 +2395,7 @@ export default class ChatInput {
 
     const peerId = this.chat.peerId;
     const canShow = this.channelMuteBtnPeerId === peerId && this.channelMuteBtnCanShow;
-    const mode = exteralessSettings.OEChatsBottomButton;
+    const mode = exterayondSettings.OEChatsBottomButton;
     this.channelMuteBtn.classList.toggle('hide', !canShow || mode === 0);
 
     if(!canShow) {
@@ -2418,7 +2418,7 @@ export default class ChatInput {
 
     const middleware = this.getMiddleware();
     Promise.resolve(this.managers.appProfileManager.getCachedFullChat(peerId.toChatId())).then((chatFull) => {
-      if(!middleware() || this.chat.peerId !== peerId || exteralessSettings.OEChatsBottomButton !== 2) {
+      if(!middleware() || this.chat.peerId !== peerId || exterayondSettings.OEChatsBottomButton !== 2) {
         return;
       }
 
@@ -2767,7 +2767,7 @@ export default class ChatInput {
       }
 
       // Android appends a comma to public mentions, except bots. Named mentions keep a space.
-      str += usernames[0] && !(peer as User.user).pFlags?.bot && exteralessSettings.OEAddCommaAfterMention ? ', ' : ' ';
+      str += usernames[0] && !(peer as User.user).pFlags?.bot && exterayondSettings.OEAddCommaAfterMention ? ', ' : ' ';
       this.insertAtCaret(str, entity, isHelper);
     });
   }
@@ -4020,7 +4020,7 @@ export default class ChatInput {
     // restores the flag its composer saved. The gate stands before the
     // same-URL cache check so a fetch left in flight by a live toggle loses
     // its guard and cannot attach the suppressed preview late.
-    if(!this.editMsgId && exteralessSettings.DisableLinkPreviewByDefault) {
+    if(!this.editMsgId && exterayondSettings.DisableLinkPreviewByDefault) {
       const hadPreview = !!(this.willSendWebPage || this.getWebPagePromise);
       this.lastUrl = '';
       this.willSendWebPage = null;
@@ -4046,7 +4046,7 @@ export default class ChatInput {
     // outgoing message carries the fixed preview where Android lets the
     // server re-preview the original text. The rewrite stands before the
     // same-URL cache check so both fetch and cache key use the fixed URL.
-    if(exteralessSettings.FixLinkPreview) {
+    if(exterayondSettings.FixLinkPreview) {
       foundUrl = applyPagePreviewRules(foundUrl);
     }
 

@@ -1,5 +1,5 @@
-import {exteralessSettings, setExteralessSetting} from '@stores/exteralessSettings';
-import type {ExteralessSettings} from '@stores/exteralessSettings';
+import {exterayondSettings, setExterayondSetting} from '@stores/exterayondSettings';
+import type {ExterayondSettings} from '@stores/exterayondSettings';
 import type {LangPackKey} from '@lib/langPack';
 
 /**
@@ -63,7 +63,7 @@ export type WebPillRegistration = {
  */
 export const WEB_PILL_REGISTRY: readonly WebPillRegistration[] = [
   // * Android registers the cache pill under R.string.StorageUsage
-  {id: PILL_IDS.CACHE, kind: 'cache', nameKey: 'Exteraless.PillStack.CacheName'}
+  {id: PILL_IDS.CACHE, kind: 'cache', nameKey: 'Exterayond.PillStack.CacheName'}
 ];
 
 export const getRegisteredPill = (id: number): WebPillRegistration | undefined =>
@@ -99,7 +99,7 @@ export type PillLayout = {
  * hidden and active reads active.
  */
 export const resolvePillLayout = (
-  settings: Pick<ExteralessSettings, 'OEPillActivePills' | 'OEPillHiddenPills'> = exteralessSettings
+  settings: Pick<ExterayondSettings, 'OEPillActivePills' | 'OEPillHiddenPills'> = exterayondSettings
 ): PillLayout => {
   const active = parsePillIds(settings.OEPillActivePills);
   const hidden = parsePillIds(settings.OEPillHiddenPills).filter((id) => !active.includes(id));
@@ -115,7 +115,7 @@ export const isRegisteredPill = (id: number): boolean =>
  * the same filter here.
  */
 export const getVisiblePillIds = (
-  settings: Pick<ExteralessSettings, 'OEPillActivePills' | 'OEPillHiddenPills'> = exteralessSettings
+  settings: Pick<ExterayondSettings, 'OEPillActivePills' | 'OEPillHiddenPills'> = exterayondSettings
 ): number[] => resolvePillLayout(settings).active.filter(isRegisteredPill);
 
 /**
@@ -124,7 +124,7 @@ export const getVisiblePillIds = (
  * does not know): registered pills only, active first in display order.
  */
 export const getHubPillGroups = (
-  settings: Pick<ExteralessSettings, 'OEPillActivePills' | 'OEPillHiddenPills'> = exteralessSettings
+  settings: Pick<ExterayondSettings, 'OEPillActivePills' | 'OEPillHiddenPills'> = exterayondSettings
 ): PillLayout => {
   const layout = resolvePillLayout(settings);
   return {
@@ -134,8 +134,8 @@ export const getHubPillGroups = (
 };
 
 const persistPillLayout = (active: number[], hidden: number[]) => {
-  setExteralessSetting('OEPillActivePills', serializePillIds(active));
-  setExteralessSetting('OEPillHiddenPills', serializePillIds(hidden));
+  setExterayondSetting('OEPillActivePills', serializePillIds(active));
+  setExterayondSetting('OEPillHiddenPills', serializePillIds(hidden));
 };
 
 /** Android `PillStackConfig.setPillActive`: out of both lists, into the target. */

@@ -13,14 +13,14 @@ import {
   settingsSearchVersion
 } from './registry';
 import type {SettingsSearchEntryKind} from './types';
-import {exteralessSettings} from '@stores/exteralessSettings';
+import {exterayondSettings} from '@stores/exterayondSettings';
 
 const HELP_ROWS = new Set<LangPackKey>(['SettingsHelp', 'AskAQuestion', 'TelegramFAQ', 'TelegramFeatures', 'PrivacyPolicy']);
 const PREMIUM_ROWS = new Set<LangPackKey>(['Premium.Boarding.Title', 'TelegramBusiness', 'MenuTelegramStars', 'MenuTelegramStarsTon', 'Chat.Menu.SendGift']);
 
 const isVisible = (item: SettingsSearchItem) => item.sectionId !== ROOT_SECTION_ID || !(
-  exteralessSettings.HideHelpSection && HELP_ROWS.has(item.titleLangKey) ||
-  exteralessSettings.HidePremiumSection && PREMIUM_ROWS.has(item.titleLangKey)
+  exterayondSettings.HideHelpSection && HELP_ROWS.has(item.titleLangKey) ||
+  exterayondSettings.HidePremiumSection && PREMIUM_ROWS.has(item.titleLangKey)
 );
 
 /**

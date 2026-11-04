@@ -22,7 +22,7 @@ import SetTransition from '@components/singleTransition';
 import getChatMembersString from '@components/wrappers/getChatMembersString';
 import {hotReloadGuard} from '@lib/solidjs/hotReloadGuardProvider';
 import {bindManagersToSession} from '@lib/accounts/bindManagersToAccount';
-import {exteralessSettings} from '@stores/exteralessSettings';
+import {exterayondSettings} from '@stores/exterayondSettings';
 
 const SEND_AS_ANIMATION_DURATION = 300;
 
@@ -118,7 +118,7 @@ export default class ChatSendAs {
       container: this.menuContainer ?? this.container,
       direction: this.forPaidReaction ? 'bottom-center' : 'top-right',
       buttons: sendAsButtons,
-      canOpen: () => this.forPaidReaction || !exteralessSettings.hideSendAsChannel,
+      canOpen: () => this.forPaidReaction || !exterayondSettings.hideSendAsChannel,
       onOpenBefore: () => {
         onSendAsMenuToggle(true);
       },

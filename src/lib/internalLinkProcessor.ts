@@ -63,7 +63,7 @@ import {APP_TABS} from '@lib/appColumns';
 import {bindManagersToSession} from '@lib/accounts/bindManagersToAccount';
 import confirmBotCommand from '@components/chat/confirmBotCommand';
 import callbackify from '@helpers/callbackify';
-import {exteralessSettings} from '@stores/exteralessSettings';
+import {exterayondSettings} from '@stores/exterayondSettings';
 import {getAccountSession, isSessionLeaving} from '@lib/accounts/getCurrentAccount';
 import {isMaskedUrlTrusted} from '@lib/richTextProcessor/isWhitelistedUrl';
 import isSuspiciousUrl from '@helpers/string/isSuspiciousUrl';
@@ -115,8 +115,8 @@ export class InternalLinkProcessor {
           return onConfirmed ? onConfirmed(a) : a.click();
         };
         const isNavigation = !element.hasAttribute('download') && !/^(blob:|data:)/i.test(href);
-        const shouldAsk = isNavigation && (exteralessSettings.ConfirmAllLinks ||
-          (!exteralessSettings.SkipOpenLinkConfirm && (masked || isSuspiciousUrl(href)) && !isMaskedUrlTrusted(href)));
+        const shouldAsk = isNavigation && (exterayondSettings.ConfirmAllLinks ||
+          (!exterayondSettings.SkipOpenLinkConfirm && (masked || isSuspiciousUrl(href)) && !isMaskedUrlTrusted(href)));
         if(!shouldAsk) return proceed();
         const destination = document.createElement('span');
         destination.dir = 'ltr';

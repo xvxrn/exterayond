@@ -12,21 +12,21 @@ describe('settings search index', () => {
   const sectionIds = new Set(generated.sections.map((section) => section.id));
 
   it('indexes preference rows without confirmation-dialog labels', () => {
-    const keys = generated.entries.filter((entry) => entry.sectionId === 'AppExteralessOtherTab')
+    const keys = generated.entries.filter((entry) => entry.sectionId === 'AppExterayondOtherTab')
     .map((entry) => entry.titleLangKey);
-    expect(keys).toContain('Exteraless.Reset');
-    expect(keys).not.toContain('Exteraless.Reset.Title');
-    const chatKeys = generated.entries.filter((entry) => entry.sectionId === 'AppExteralessChatsTab')
+    expect(keys).toContain('Exterayond.Reset');
+    expect(keys).not.toContain('Exterayond.Reset.Title');
+    const chatKeys = generated.entries.filter((entry) => entry.sectionId === 'AppExterayondChatsTab')
     .map((entry) => entry.titleLangKey);
-    expect(chatKeys).toContain('Exteraless.AskBeforeCalling');
-    expect(chatKeys).toContain('Exteraless.AskBeforeBotCommand');
-    expect(chatKeys).toContain('Exteraless.DateOfForwardedMsg');
-    expect(chatKeys).toContain('Exteraless.MessageTimeDetails');
-    expect(chatKeys).toContain('Exteraless.HideSendAsPeer');
-    expect(chatKeys).toContain('Exteraless.OpenLinkPolicy');
-    const appearanceKeys = generated.entries.filter((entry) => entry.sectionId === 'AppExteralessAppearanceTab')
+    expect(chatKeys).toContain('Exterayond.AskBeforeCalling');
+    expect(chatKeys).toContain('Exterayond.AskBeforeBotCommand');
+    expect(chatKeys).toContain('Exterayond.DateOfForwardedMsg');
+    expect(chatKeys).toContain('Exterayond.MessageTimeDetails');
+    expect(chatKeys).toContain('Exterayond.HideSendAsPeer');
+    expect(chatKeys).toContain('Exterayond.OpenLinkPolicy');
+    const appearanceKeys = generated.entries.filter((entry) => entry.sectionId === 'AppExterayondAppearanceTab')
     .map((entry) => entry.titleLangKey);
-    for(const key of ['Exteraless.Md3', 'Exteraless.Md3.ProgressIndicators', 'Exteraless.Md3.Sliders', 'Exteraless.Md3.Switches', 'Exteraless.Md3.Navigation', 'Exteraless.Md3.ListItems', 'Exteraless.Md3.Player', 'Exteraless.Md3.MiniPlayer']) {
+    for(const key of ['Exterayond.Md3', 'Exterayond.Md3.ProgressIndicators', 'Exterayond.Md3.Sliders', 'Exterayond.Md3.Switches', 'Exterayond.Md3.Navigation', 'Exterayond.Md3.ListItems', 'Exterayond.Md3.Player', 'Exterayond.Md3.MiniPlayer']) {
       expect(appearanceKeys).toContain(key);
     }
     expect(keys).not.toContain('Reset');

@@ -1,5 +1,5 @@
 import {loadChatBubbles, LOAD_CHAT_BUBBLES_TIMEOUT} from '@tests/helpers/chatBubbles';
-import {setExteralessSetting} from '@stores/exteralessSettings';
+import {setExterayondSetting} from '@stores/exterayondSettings';
 
 /**
  * exteraless ConfirmAVMessage: the recording's release pauses into the
@@ -34,10 +34,10 @@ const recordingHost = () => {
 };
 
 describe('ConfirmAVMessage', () => {
-  afterEach(() => setExteralessSetting('ConfirmAVMessage', false));
+  afterEach(() => setExterayondSetting('ConfirmAVMessage', false));
 
   test('the release pauses for preview instead of sending while enabled', () => {
-    setExteralessSetting('ConfirmAVMessage', true);
+    setExterayondSetting('ConfirmAVMessage', true);
     const {host, recorder, press} = recordingHost();
     press();
     expect(host.onPauseToggleClick).toHaveBeenCalledTimes(1);
@@ -45,7 +45,7 @@ describe('ConfirmAVMessage', () => {
   });
 
   test('the paused preview send commits the recording', () => {
-    setExteralessSetting('ConfirmAVMessage', true);
+    setExterayondSetting('ConfirmAVMessage', true);
     const {host, recorder, press} = recordingHost();
     host.recordPaused = true;
     press();
@@ -63,7 +63,7 @@ describe('ConfirmAVMessage', () => {
   });
 
   test('a too short recording is cancelled regardless of the setting', () => {
-    setExteralessSetting('ConfirmAVMessage', true);
+    setExterayondSetting('ConfirmAVMessage', true);
     const {host, recorder, press} = recordingHost();
     host.recordAccumulatedMs = 0;
     host.recordStartTime = Date.now();

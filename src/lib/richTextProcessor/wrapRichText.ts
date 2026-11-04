@@ -35,7 +35,7 @@ import filterDisabledEntities, {markMessageLinkEntity} from '@lib/richTextProces
 import {RICH_TEXT_BUTTON_SELECTOR, setRichTextButton} from '@lib/richTextProcessor/richTextButtons';
 import {TEXT_LINK_ATTRIBUTE} from '@helpers/dom/linkPress';
 import type {Middleware} from '@helpers/middleware';
-import {exteralessSettings} from '@stores/exteralessSettings';
+import {exterayondSettings} from '@stores/exterayondSettings';
 
 // Android MessageHelper.zalgoFilter: trigger on four marks, then remove all marks.
 const ZALGO_TRIGGER = /\p{M}{4}/u;
@@ -180,7 +180,7 @@ export default function wrapRichText(text: string, options: WrapRichTextOptions 
     i: 0,
     usedLength: 0,
     text,
-    filterZalgo: !options.wrappingDraft && exteralessSettings.ZalgoFilter &&
+    filterZalgo: !options.wrappingDraft && exterayondSettings.ZalgoFilter &&
       text.length >= 4 && text.length <= 2048 && ZALGO_TRIGGER.test(text)
   };
 

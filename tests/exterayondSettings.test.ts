@@ -23,22 +23,22 @@ const localStorageStub = vi.hoisted(() => {
 
 vi.stubGlobal('localStorage', localStorageStub);
 
-const STORAGE_KEY = 'exterayond-exteraless-settings';
+const STORAGE_KEY = 'exterayond-settings';
 
 // * the store is module state over localStorage: every test re-evaluates it
 // * against the storage the test has set up
 const loadStore = () => {
   vi.resetModules();
-  return import('@stores/exteralessSettings');
+  return import('@stores/exterayondSettings');
 };
 
-describe('exteraless settings store', () => {
+describe('exterayond settings store', () => {
   beforeEach(() => {
     localStorageStub.clear();
   });
 
   test('defaults are the Android config values', async() => {
-    const {OE_DEFAULTS, OE_AVATAR_CORNERS_MAX, OE_SECTION_RADIUS_STOCK, exteralessSettings} = await loadStore();
+    const {OE_DEFAULTS, OE_AVATAR_CORNERS_MAX, OE_SECTION_RADIUS_STOCK, exterayondSettings} = await loadStore();
     expect(OE_DEFAULTS).toEqual({
       OEAppearanceAvatarCorners: 28,
       OEAppearanceSectionRadius: 20,
@@ -151,34 +151,34 @@ describe('exteraless settings store', () => {
     });
     expect(OE_AVATAR_CORNERS_MAX).toBe(28);
     expect(OE_SECTION_RADIUS_STOCK).toBe(20);
-    expect(exteralessSettings.OEAppearanceAvatarCorners).toBe(28);
-    expect(exteralessSettings.OEAppearanceSectionRadius).toBe(20);
-    expect(exteralessSettings.OEChatsRemoveMessageTail).toBe(true);
+    expect(exterayondSettings.OEAppearanceAvatarCorners).toBe(28);
+    expect(exterayondSettings.OEAppearanceSectionRadius).toBe(20);
+    expect(exterayondSettings.OEChatsRemoveMessageTail).toBe(true);
   });
 
   test('clamps out-of-range and non-finite values', async() => {
-    const {clampExteralessSetting, OE_DEFAULTS} = await loadStore();
-    expect(clampExteralessSetting('OEAppearanceAvatarCorners', 999)).toBe(28);
-    expect(clampExteralessSetting('OEAppearanceAvatarCorners', -3)).toBe(0);
-    expect(clampExteralessSetting('OEAppearanceAvatarCorners', 14.6)).toBe(15);
-    expect(clampExteralessSetting('OEAppearanceSectionRadius', NaN)).toBe(OE_DEFAULTS.OEAppearanceSectionRadius);
-    expect(clampExteralessSetting('OEAppearanceSectionRadius', Infinity)).toBe(OE_DEFAULTS.OEAppearanceSectionRadius);
-    expect(clampExteralessSetting('stickerSize', 12.75)).toBe(12.75);
-    expect(clampExteralessSetting('stickerSize', -1)).toBe(4);
-    expect(clampExteralessSetting('stickerSize', 100)).toBe(20);
-    expect(clampExteralessSetting('stickerSize', NaN)).toBe(14);
-    expect(clampExteralessSetting('OEPlayerCoverStyle', 4)).toBe(3);
-    expect(clampExteralessSetting('OEPlayerCoverStyle', -1)).toBe(0);
-    expect(clampExteralessSetting('OEPlayerCoverSize', 40)).toBe(60);
-    expect(clampExteralessSetting('OEPlayerCoverRadius', 99)).toBe(48);
-    expect(clampExteralessSetting('OEPlayerTitleAlign', 2)).toBe(1);
-    expect(clampExteralessSetting('OEPlayerTitleSize', 3)).toBe(2);
-    expect(clampExteralessSetting('OEPlayerControlsSize', -5)).toBe(0);
+    const {clampExterayondSetting, OE_DEFAULTS} = await loadStore();
+    expect(clampExterayondSetting('OEAppearanceAvatarCorners', 999)).toBe(28);
+    expect(clampExterayondSetting('OEAppearanceAvatarCorners', -3)).toBe(0);
+    expect(clampExterayondSetting('OEAppearanceAvatarCorners', 14.6)).toBe(15);
+    expect(clampExterayondSetting('OEAppearanceSectionRadius', NaN)).toBe(OE_DEFAULTS.OEAppearanceSectionRadius);
+    expect(clampExterayondSetting('OEAppearanceSectionRadius', Infinity)).toBe(OE_DEFAULTS.OEAppearanceSectionRadius);
+    expect(clampExterayondSetting('stickerSize', 12.75)).toBe(12.75);
+    expect(clampExterayondSetting('stickerSize', -1)).toBe(4);
+    expect(clampExterayondSetting('stickerSize', 100)).toBe(20);
+    expect(clampExterayondSetting('stickerSize', NaN)).toBe(14);
+    expect(clampExterayondSetting('OEPlayerCoverStyle', 4)).toBe(3);
+    expect(clampExterayondSetting('OEPlayerCoverStyle', -1)).toBe(0);
+    expect(clampExterayondSetting('OEPlayerCoverSize', 40)).toBe(60);
+    expect(clampExterayondSetting('OEPlayerCoverRadius', 99)).toBe(48);
+    expect(clampExterayondSetting('OEPlayerTitleAlign', 2)).toBe(1);
+    expect(clampExterayondSetting('OEPlayerTitleSize', 3)).toBe(2);
+    expect(clampExterayondSetting('OEPlayerControlsSize', -5)).toBe(0);
     // * the theme palette is a boolean since acceptance round 1 (F-2): numbers
     // * and strings fall back like any non-boolean value
-    expect(clampExteralessSetting('OEAppearanceThemePalette', true)).toBe(true);
-    expect(clampExteralessSetting('OEAppearanceThemePalette', 1 as any)).toBe(false);
-    expect(clampExteralessSetting('OEAppearanceThemePalette', 'yes' as any)).toBe(false);
+    expect(clampExterayondSetting('OEAppearanceThemePalette', true)).toBe(true);
+    expect(clampExterayondSetting('OEAppearanceThemePalette', 1 as any)).toBe(false);
+    expect(clampExterayondSetting('OEAppearanceThemePalette', 'yes' as any)).toBe(false);
   });
 
   test('the player style mappings follow Android PlayerStyle', async() => {
@@ -199,45 +199,45 @@ describe('exteraless settings store', () => {
   });
 
   test('link modes match the Android two-flag contract and All wins conflicts', async() => {
-    const {getOpenLinkConfirmation, setOpenLinkConfirmation, setExteralessSetting, exteralessSettings, resetExteralessSettings} = await loadStore();
+    const {getOpenLinkConfirmation, setOpenLinkConfirmation, setExterayondSetting, exterayondSettings, resetExterayondSettings} = await loadStore();
     expect(getOpenLinkConfirmation()).toBe(0);
     setOpenLinkConfirmation(1);
-    expect(exteralessSettings.ConfirmAllLinks).toBe(true);
-    expect(exteralessSettings.SkipOpenLinkConfirm).toBe(false);
-    setExteralessSetting('SkipOpenLinkConfirm', true);
+    expect(exterayondSettings.ConfirmAllLinks).toBe(true);
+    expect(exterayondSettings.SkipOpenLinkConfirm).toBe(false);
+    setExterayondSetting('SkipOpenLinkConfirm', true);
     expect(getOpenLinkConfirmation()).toBe(1);
     setOpenLinkConfirmation(2);
-    expect(exteralessSettings.ConfirmAllLinks).toBe(false);
-    expect(exteralessSettings.SkipOpenLinkConfirm).toBe(true);
+    expect(exterayondSettings.ConfirmAllLinks).toBe(false);
+    expect(exterayondSettings.SkipOpenLinkConfirm).toBe(true);
     for(const value of [-1, 3, 0.5, NaN]) setOpenLinkConfirmation(value);
     expect(getOpenLinkConfirmation()).toBe(2);
-    resetExteralessSettings();
+    resetExterayondSettings();
     expect(getOpenLinkConfirmation()).toBe(0);
   });
 
   test('the hashtag search page follows the Android chat/channel key split', async() => {
-    const {getHashtagSearchType, setExteralessSetting, resetExteralessSettings} = await loadStore();
+    const {getHashtagSearchType, setExterayondSetting, resetExterayondSettings} = await loadStore();
     // * 0 is the stock default: no type picked, the search opens on this chat
     expect(getHashtagSearchType(false)).toBeUndefined();
     expect(getHashtagSearchType(true)).toBeUndefined();
-    setExteralessSetting('SearchHashtagDefaultPageChat', 1);
-    setExteralessSetting('SearchHashtagDefaultPageChannel', 2);
+    setExterayondSetting('SearchHashtagDefaultPageChat', 1);
+    setExterayondSetting('SearchHashtagDefaultPageChannel', 2);
     expect(getHashtagSearchType(false)).toBe('my');
     expect(getHashtagSearchType(true)).toBe('public');
-    setExteralessSetting('SearchHashtagDefaultPageChat', 2);
+    setExterayondSetting('SearchHashtagDefaultPageChat', 2);
     expect(getHashtagSearchType(false)).toBe('public');
     // * out-of-range values clamp to the ends of the Android 0..2 range
-    setExteralessSetting('SearchHashtagDefaultPageChat', 5);
+    setExterayondSetting('SearchHashtagDefaultPageChat', 5);
     expect(getHashtagSearchType(false)).toBe('public');
-    setExteralessSetting('SearchHashtagDefaultPageChannel', -1);
+    setExterayondSetting('SearchHashtagDefaultPageChannel', -1);
     expect(getHashtagSearchType(true)).toBeUndefined();
-    resetExteralessSettings();
+    resetExterayondSettings();
     expect(getHashtagSearchType(true)).toBeUndefined();
     expect(getHashtagSearchType(false)).toBeUndefined();
   });
 
   test('the wallpaper pattern gate draws only pattern records while enabled', async() => {
-    const {wallpaperDrawsPattern, setExteralessSetting, resetExteralessSettings} = await loadStore();
+    const {wallpaperDrawsPattern, setExterayondSetting, resetExterayondSettings} = await loadStore();
     const pattern = {_: 'wallPaper', slug: 'pattern', pFlags: {pattern: true}} as any;
     const image = {_: 'wallPaper', slug: 'photo1', pFlags: {}} as any;
 
@@ -249,28 +249,28 @@ describe('exteraless settings store', () => {
     expect(wallpaperDrawsPattern(image, true)).toBe(false);
 
     // * off is Android's intensity 0: no pattern layer, the gradient only
-    setExteralessSetting('OEAppearanceWallpaperPattern', false);
+    setExterayondSetting('OEAppearanceWallpaperPattern', false);
     expect(wallpaperDrawsPattern(pattern)).toBe(false);
 
-    resetExteralessSettings();
+    resetExterayondSettings();
     expect(wallpaperDrawsPattern(pattern)).toBe(true);
   });
 
   test('the wallpaper pattern toggle announces itself on the live channel', async() => {
-    const {setExteralessSetting} = await loadStore();
+    const {setExterayondSetting} = await loadStore();
     const rootScope = (await import('@lib/rootScope')).default;
     const events: string[] = [];
     const listener = ({key}: {key: string}) => events.push(key);
-    rootScope.addEventListener('exteraless_settings_updated', listener);
+    rootScope.addEventListener('exterayond_settings_updated', listener);
 
-    setExteralessSetting('OEAppearanceWallpaperPattern', false);
-    setExteralessSetting('OEAppearanceWallpaperPattern', false); // * unchanged: no event
-    setExteralessSetting('SortByUnread', true); // * not a live key: no event
+    setExterayondSetting('OEAppearanceWallpaperPattern', false);
+    setExterayondSetting('OEAppearanceWallpaperPattern', false); // * unchanged: no event
+    setExterayondSetting('SortByUnread', true); // * not a live key: no event
     expect(events).toEqual(['OEAppearanceWallpaperPattern']);
 
-    setExteralessSetting('OEAppearanceWallpaperPattern', true);
+    setExterayondSetting('OEAppearanceWallpaperPattern', true);
     expect(events).toEqual(['OEAppearanceWallpaperPattern', 'OEAppearanceWallpaperPattern']);
-    rootScope.removeEventListener('exteraless_settings_updated', listener);
+    rootScope.removeEventListener('exterayond_settings_updated', listener);
   });
 
   test('the double-tap action follows the direction and keeps the Android enum (CHAT-10)', async() => {
@@ -280,16 +280,16 @@ describe('exteraless settings store', () => {
       DOUBLE_TAP_INCOMING_OPTIONS,
       DOUBLE_TAP_OUTGOING_OPTIONS,
       doubleTapActionLangKey,
-      setExteralessSetting
+      setExterayondSetting
     } = await loadStore();
 
     // * the direction picks the key (ChatActivity.onDoubleClick's isOutOwner branch)
     expect(resolveDoubleTapAction(false, {DoubleTapAction: 4, DoubleTapActionOut: 0} as any)).toBe(4);
     expect(resolveDoubleTapAction(true, {DoubleTapAction: 4, DoubleTapActionOut: 0} as any)).toBe(0);
     // * the live store is the default source
-    setExteralessSetting('DoubleTapActionOut', DOUBLE_TAP_ACTIONS.FORWARD);
+    setExterayondSetting('DoubleTapActionOut', DOUBLE_TAP_ACTIONS.FORWARD);
     expect(resolveDoubleTapAction(true)).toBe(DOUBLE_TAP_ACTIONS.FORWARD);
-    setExteralessSetting('DoubleTapActionOut', 1);
+    setExterayondSetting('DoubleTapActionOut', 1);
 
     // * the enum is Android's DoubleTap.kt verbatim
     expect(DOUBLE_TAP_ACTIONS).toEqual({
@@ -320,8 +320,8 @@ describe('exteraless settings store', () => {
     // * in the selector's fallback, never faked into another action
     expect(resolveDoubleTapAction(false, {DoubleTapAction: 9, DoubleTapActionOut: 1} as any)).toBe(9);
     expect(doubleTapActionLangKey(9)).toBe('Disable');
-    expect(doubleTapActionLangKey(DOUBLE_TAP_ACTIONS.SEND_REACTIONS)).toBe('Exteraless.DoubleTap.SendReactions');
-    expect(doubleTapActionLangKey(DOUBLE_TAP_ACTIONS.REPEAT)).toBe('Exteraless.MenuRepeat');
+    expect(doubleTapActionLangKey(DOUBLE_TAP_ACTIONS.SEND_REACTIONS)).toBe('Exterayond.DoubleTap.SendReactions');
+    expect(doubleTapActionLangKey(DOUBLE_TAP_ACTIONS.REPEAT)).toBe('Exterayond.MenuRepeat');
   });
 
   test('the custom themes gate drops the peer theme and wallpaper when off', async() => {
@@ -354,61 +354,61 @@ describe('exteraless settings store', () => {
   });
 
   test('Forced MD3 composes eight Android settings and resets their original defaults', async() => {
-    const {getMd3StyleCount, setAllMd3Styles, exteralessSettings, setExteralessSetting, resetExteralessSettings} = await loadStore();
+    const {getMd3StyleCount, setAllMd3Styles, exterayondSettings, setExterayondSetting, resetExterayondSettings} = await loadStore();
     expect(getMd3StyleCount()).toBe(5);
     setAllMd3Styles(false);
     expect(getMd3StyleCount()).toBe(0);
-    expect(exteralessSettings.SwitchStyle).toBe(0);
+    expect(exterayondSettings.SwitchStyle).toBe(0);
     setAllMd3Styles(true);
     expect(getMd3StyleCount()).toBe(8);
-    expect(exteralessSettings.SliderStyle).toBe(2);
-    expect(exteralessSettings.SwitchStyle).toBe(3);
-    setExteralessSetting('SwitchStyle', 2);
+    expect(exterayondSettings.SliderStyle).toBe(2);
+    expect(exterayondSettings.SwitchStyle).toBe(3);
+    setExterayondSetting('SwitchStyle', 2);
     expect(getMd3StyleCount()).toBe(8);
-    resetExteralessSettings();
+    resetExterayondSettings();
     expect(getMd3StyleCount()).toBe(5);
   });
 
   test('boolean settings reject non-boolean values', async() => {
-    const {clampExteralessSetting, OE_DEFAULTS} = await loadStore();
-    expect(clampExteralessSetting('OEChatsHideCallButton', true)).toBe(true);
-    expect(clampExteralessSetting('OEChatsHideCallButton', 1 as any)).toBe(OE_DEFAULTS.OEChatsHideCallButton);
-    expect(clampExteralessSetting('DisableDialogsFloatingButton', true)).toBe(true);
-    expect(clampExteralessSetting('DisableDialogsFloatingButton', 'yes' as any)).toBe(false);
-    expect(clampExteralessSetting('showSeconds', 1 as any)).toBe(false);
-    expect(clampExteralessSetting('showSeconds', 'yes' as any)).toBe(false);
-    expect(clampExteralessSetting('HidePhone', 'yes' as any)).toBe(true);
-    expect(clampExteralessSetting('OEChatsRemoveMessageTail', 'yes' as any)).toBe(OE_DEFAULTS.OEChatsRemoveMessageTail);
+    const {clampExterayondSetting, OE_DEFAULTS} = await loadStore();
+    expect(clampExterayondSetting('OEChatsHideCallButton', true)).toBe(true);
+    expect(clampExterayondSetting('OEChatsHideCallButton', 1 as any)).toBe(OE_DEFAULTS.OEChatsHideCallButton);
+    expect(clampExterayondSetting('DisableDialogsFloatingButton', true)).toBe(true);
+    expect(clampExterayondSetting('DisableDialogsFloatingButton', 'yes' as any)).toBe(false);
+    expect(clampExterayondSetting('showSeconds', 1 as any)).toBe(false);
+    expect(clampExterayondSetting('showSeconds', 'yes' as any)).toBe(false);
+    expect(clampExterayondSetting('HidePhone', 'yes' as any)).toBe(true);
+    expect(clampExterayondSetting('OEChatsRemoveMessageTail', 'yes' as any)).toBe(OE_DEFAULTS.OEChatsRemoveMessageTail);
   });
 
   test('reset restores defaults and clears only the exterayond preferences record', async() => {
-    const {OE_DEFAULTS, exteralessSettings, setExteralessSetting, resetExteralessSettings} = await loadStore();
+    const {OE_DEFAULTS, exterayondSettings, setExterayondSetting, resetExterayondSettings} = await loadStore();
     localStorageStub.setItem('unrelated-preferences', 'keep');
     localStorageStub.setItem('plugin_settings_example', 'keep');
-    setExteralessSetting('OEAppearanceAvatarCorners', 4);
-    setExteralessSetting('OEChatsRemoveMessageTail', false);
-    setExteralessSetting('OEChatsBottomButton', 2);
-    setExteralessSetting('showSeconds', true);
-    setExteralessSetting('HidePhone', false);
+    setExterayondSetting('OEAppearanceAvatarCorners', 4);
+    setExterayondSetting('OEChatsRemoveMessageTail', false);
+    setExterayondSetting('OEChatsBottomButton', 2);
+    setExterayondSetting('showSeconds', true);
+    setExterayondSetting('HidePhone', false);
 
-    resetExteralessSettings();
+    resetExterayondSettings();
 
-    expect({...exteralessSettings}).toEqual(OE_DEFAULTS);
+    expect({...exterayondSettings}).toEqual(OE_DEFAULTS);
     expect(localStorageStub.getItem(STORAGE_KEY)).toBeNull();
     expect(localStorageStub.getItem('unrelated-preferences')).toBe('keep');
     expect(localStorageStub.getItem('plugin_settings_example')).toBe('keep');
-    expect({...((await loadStore()).exteralessSettings)}).toEqual(OE_DEFAULTS);
+    expect({...((await loadStore()).exterayondSettings)}).toEqual(OE_DEFAULTS);
   });
 
   test('reset applies defaults in memory when browser storage refuses removal', async() => {
-    const {OE_DEFAULTS, exteralessSettings, setExteralessSetting, resetExteralessSettings} = await loadStore();
-    setExteralessSetting('OEAppearanceAvatarCorners', 4);
+    const {OE_DEFAULTS, exterayondSettings, setExterayondSetting, resetExterayondSettings} = await loadStore();
+    setExterayondSetting('OEAppearanceAvatarCorners', 4);
     const remove = vi.spyOn(localStorageStub, 'removeItem').mockImplementation(() => {
       throw new Error('storage unavailable');
     });
     try {
-      expect(() => resetExteralessSettings()).not.toThrow();
-      expect({...exteralessSettings}).toEqual(OE_DEFAULTS);
+      expect(() => resetExterayondSettings()).not.toThrow();
+      expect({...exterayondSettings}).toEqual(OE_DEFAULTS);
     } finally {
       remove.mockRestore();
     }
@@ -421,10 +421,10 @@ describe('exteraless settings store', () => {
       showSeconds: true
     }));
 
-    const {exteralessSettings} = await loadStore();
-    expect(exteralessSettings.OEAppearanceAvatarCorners).toBe(12);
-    expect(exteralessSettings.OEAppearanceSectionRadius).toBe(0);
-    expect(exteralessSettings.showSeconds).toBe(true);
+    const {exterayondSettings} = await loadStore();
+    expect(exterayondSettings.OEAppearanceAvatarCorners).toBe(12);
+    expect(exterayondSettings.OEAppearanceSectionRadius).toBe(0);
+    expect(exterayondSettings.showSeconds).toBe(true);
   });
 
   test('a corrupt or untrusted record falls back to defaults and clamps', async() => {
@@ -436,23 +436,39 @@ describe('exteraless settings store', () => {
       somethingElse: true
     }));
 
-    const {exteralessSettings} = await loadStore();
-    expect(exteralessSettings.OEAppearanceAvatarCorners).toBe(28);
-    expect(exteralessSettings.OEAppearanceSectionRadius).toBe(20);
-    expect(exteralessSettings.OEChatsRemoveMessageTail).toBe(true);
-    expect(exteralessSettings.showSeconds).toBe(false);
+    const {exterayondSettings} = await loadStore();
+    expect(exterayondSettings.OEAppearanceAvatarCorners).toBe(28);
+    expect(exterayondSettings.OEAppearanceSectionRadius).toBe(20);
+    expect(exterayondSettings.OEChatsRemoveMessageTail).toBe(true);
+    expect(exterayondSettings.showSeconds).toBe(false);
   });
 
   test('garbage storage is ignored', async() => {
     localStorageStub.setItem(STORAGE_KEY, 'not json at all');
-    const {exteralessSettings} = await loadStore();
-    expect(exteralessSettings.OEAppearanceAvatarCorners).toBe(28);
+    const {exterayondSettings} = await loadStore();
+    expect(exterayondSettings.OEAppearanceAvatarCorners).toBe(28);
+  });
+
+  test('a legacy pre-rename record migrates to the new key and is removed', async() => {
+    localStorageStub.setItem('exterayond-exteraless-settings', JSON.stringify({OEAppearanceAvatarCorners: 10}));
+    const {exterayondSettings} = await loadStore();
+    expect(exterayondSettings.OEAppearanceAvatarCorners).toBe(10);
+    expect(JSON.parse(localStorageStub.getItem(STORAGE_KEY)).OEAppearanceAvatarCorners).toBe(10);
+    expect(localStorageStub.getItem('exterayond-exteraless-settings')).toBeNull();
+  });
+
+  test('the new key wins over a stale legacy record', async() => {
+    localStorageStub.setItem('exterayond-exteraless-settings', JSON.stringify({OEAppearanceAvatarCorners: 5}));
+    localStorageStub.setItem(STORAGE_KEY, JSON.stringify({OEAppearanceAvatarCorners: 12}));
+    const {exterayondSettings} = await loadStore();
+    expect(exterayondSettings.OEAppearanceAvatarCorners).toBe(12);
+    expect(localStorageStub.getItem('exterayond-exteraless-settings')).not.toBeNull();
   });
 
   test('setting a value clamps it and writes the record back', async() => {
-    const {setExteralessSetting} = await loadStore();
-    setExteralessSetting('OEAppearanceAvatarCorners', 100);
-    setExteralessSetting('OEChatsRemoveMessageTail', false);
+    const {setExterayondSetting} = await loadStore();
+    setExterayondSetting('OEAppearanceAvatarCorners', 100);
+    setExterayondSetting('OEChatsRemoveMessageTail', false);
     const persisted = JSON.parse(localStorageStub.getItem(STORAGE_KEY));
     expect(persisted.OEAppearanceAvatarCorners).toBe(28);
     expect(persisted.OEAppearanceSectionRadius).toBe(20);
@@ -524,7 +540,7 @@ describe('exteraless settings application (jsdom)', () => {
   const flush = () => new Promise((resolve) => setTimeout(resolve, 0));
 
   test('the effect applies the CSS variables and root classes', async() => {
-    const {setExteralessSetting} = await loadStore();
+    const {setExterayondSetting} = await loadStore();
     const root = document.documentElement;
 
     // * Android defaults: circle avatars, squircle FAB, no message tails
@@ -534,74 +550,74 @@ describe('exteraless settings application (jsdom)', () => {
     expect(root.classList.contains('oe-remove-message-tail')).toBe(true);
     expect(root.classList.contains('oe-single-corner-radius')).toBe(false);
     expect(root.classList.contains('oe-hide-title-status')).toBe(false);
-    setExteralessSetting('OEAppearanceHideActionBarStatus', true);
+    setExterayondSetting('OEAppearanceHideActionBarStatus', true);
     await flush();
     expect(root.classList.contains('oe-hide-title-status')).toBe(true);
-    setExteralessSetting('OEAppearanceHideActionBarStatus', false);
+    setExterayondSetting('OEAppearanceHideActionBarStatus', false);
     await flush();
     expect(root.classList.contains('oe-hide-title-status')).toBe(false);
 
-    setExteralessSetting('OEAppearanceAvatarCorners', 7);
+    setExterayondSetting('OEAppearanceAvatarCorners', 7);
     await flush();
     expect(root.style.getPropertyValue('--oe-avatar-radius')).toBe('12.5%');
 
-    setExteralessSetting('OEChatsRemoveMessageTail', false);
+    setExterayondSetting('OEChatsRemoveMessageTail', false);
     await flush();
     expect(root.classList.contains('oe-remove-message-tail')).toBe(false);
 
-    setExteralessSetting('OEAppearanceSquareFab', false);
+    setExterayondSetting('OEAppearanceSquareFab', false);
     await flush();
     expect(root.style.getPropertyValue('--oe-fab-radius')).toBe('');
 
-    setExteralessSetting('OEAppearanceSingleCornerRadius', true);
+    setExterayondSetting('OEAppearanceSingleCornerRadius', true);
     await flush();
     expect(root.classList.contains('oe-single-corner-radius')).toBe(true);
 
-    setExteralessSetting('OEAppearanceSectionRadius', 8);
+    setExterayondSetting('OEAppearanceSectionRadius', 8);
     await flush();
     expect(root.style.getPropertyValue('--oe-section-radius')).toBe('8px');
   });
 
   test('the floating new-chat preference is a live root class and reset clears it', async() => {
-    const {setExteralessSetting, resetExteralessSettings} = await loadStore();
+    const {setExterayondSetting, resetExterayondSettings} = await loadStore();
     const root = document.documentElement;
 
     expect(root.classList.contains('oe-hide-new-chat-button')).toBe(false);
 
-    setExteralessSetting('DisableDialogsFloatingButton', true);
+    setExterayondSetting('DisableDialogsFloatingButton', true);
     await flush();
     expect(root.classList.contains('oe-hide-new-chat-button')).toBe(true);
 
-    setExteralessSetting('DisableDialogsFloatingButton', false);
+    setExterayondSetting('DisableDialogsFloatingButton', false);
     await flush();
     expect(root.classList.contains('oe-hide-new-chat-button')).toBe(false);
 
-    setExteralessSetting('DisableDialogsFloatingButton', true);
+    setExterayondSetting('DisableDialogsFloatingButton', true);
     await flush();
-    resetExteralessSettings();
+    resetExterayondSettings();
     await flush();
     expect(root.classList.contains('oe-hide-new-chat-button')).toBe(false);
   });
 
   test('the centered header title and the system font follow the Android defaults and reset', async() => {
-    const {setExteralessSetting, resetExteralessSettings} = await loadStore();
+    const {setExterayondSetting, resetExterayondSettings} = await loadStore();
     const root = document.documentElement;
 
     // * Android defaults: OEAppearanceCenterTitle false, TypefaceUseDefault true
     expect(root.classList.contains('oe-center-title')).toBe(false);
     expect(root.classList.contains('oe-system-font')).toBe(true);
 
-    setExteralessSetting('OEAppearanceCenterTitle', true);
-    setExteralessSetting('TypefaceUseDefault', false);
+    setExterayondSetting('OEAppearanceCenterTitle', true);
+    setExterayondSetting('TypefaceUseDefault', false);
     await flush();
     expect(root.classList.contains('oe-center-title')).toBe(true);
     expect(root.classList.contains('oe-system-font')).toBe(false);
 
-    setExteralessSetting('OEChatsWideChannelPosts', true);
+    setExterayondSetting('OEChatsWideChannelPosts', true);
     await flush();
     expect(root.classList.contains('oe-wide-posts')).toBe(true);
 
-    resetExteralessSettings();
+    resetExterayondSettings();
     await flush();
     expect(root.classList.contains('oe-center-title')).toBe(false);
     expect(root.classList.contains('oe-system-font')).toBe(true);
@@ -609,80 +625,80 @@ describe('exteraless settings application (jsdom)', () => {
   });
 
   test('the stories strip hiding follows the Android default and resets off', async() => {
-    const {setExteralessSetting, resetExteralessSettings} = await loadStore();
+    const {setExterayondSetting, resetExterayondSettings} = await loadStore();
     const root = document.documentElement;
 
     // * Android NaConfig.HideStoriesFromHeader defaults to true: the strip is hidden
     expect(root.classList.contains('oe-hide-stories')).toBe(true);
 
-    setExteralessSetting('HideStoriesFromHeader', false);
+    setExterayondSetting('HideStoriesFromHeader', false);
     await flush();
     expect(root.classList.contains('oe-hide-stories')).toBe(false);
 
-    setExteralessSetting('HideStoriesFromHeader', true);
+    setExterayondSetting('HideStoriesFromHeader', true);
     await flush();
     expect(root.classList.contains('oe-hide-stories')).toBe(true);
 
-    resetExteralessSettings();
+    resetExterayondSettings();
     await flush();
     expect(root.classList.contains('oe-hide-stories')).toBe(true);
   });
 
   test('reaction visibility updates live and reset clears all three categories', async() => {
-    const {setExteralessSetting, resetExteralessSettings} = await loadStore();
+    const {setExterayondSetting, resetExterayondSettings} = await loadStore();
     const flags = [
       ['OEChatsHideReactionsPrivate', 'oe-hide-reactions-private'],
       ['OEChatsHideReactionsChannels', 'oe-hide-reactions-channels'],
       ['OEChatsHideReactionsGroups', 'oe-hide-reactions-groups']
     ] as const;
     for(const [key, className] of flags) {
-      setExteralessSetting(key, true);
+      setExterayondSetting(key, true);
       await flush();
       expect(document.documentElement.classList.contains(className)).toBe(true);
     }
-    resetExteralessSettings();
+    resetExterayondSettings();
     await flush();
     for(const [, className] of flags) expect(document.documentElement.classList.contains(className)).toBe(false);
   });
 
   test('hiding the sender selector applies live and reset restores it', async() => {
-    const {setExteralessSetting, resetExteralessSettings} = await loadStore();
-    setExteralessSetting('hideSendAsChannel', true);
+    const {setExterayondSetting, resetExterayondSettings} = await loadStore();
+    setExterayondSetting('hideSendAsChannel', true);
     await flush();
     expect(document.documentElement.classList.contains('oe-hide-send-as')).toBe(true);
-    resetExteralessSettings();
+    resetExterayondSettings();
     await flush();
     expect(document.documentElement.classList.contains('oe-hide-send-as')).toBe(false);
     expect(document.documentElement.classList.contains('oe-remove-message-tail')).toBe(true);
   });
 
   test('the attached sidebar is a live root class and reset restores the float', async() => {
-    const {setExteralessSetting, resetExteralessSettings} = await loadStore();
+    const {setExterayondSetting, resetExterayondSettings} = await loadStore();
     const root = document.documentElement;
 
     // * the default is stock: the sidebar floats
     expect(root.classList.contains('oe-attached-sidebar')).toBe(false);
 
-    setExteralessSetting('OEAppearanceAttachedSidebar', true);
+    setExterayondSetting('OEAppearanceAttachedSidebar', true);
     await flush();
     expect(root.classList.contains('oe-attached-sidebar')).toBe(true);
 
-    setExteralessSetting('OEAppearanceAttachedSidebar', false);
+    setExterayondSetting('OEAppearanceAttachedSidebar', false);
     await flush();
     expect(root.classList.contains('oe-attached-sidebar')).toBe(false);
 
-    setExteralessSetting('OEAppearanceAttachedSidebar', true);
+    setExterayondSetting('OEAppearanceAttachedSidebar', true);
     await flush();
-    resetExteralessSettings();
+    resetExterayondSettings();
     await flush();
     expect(root.classList.contains('oe-attached-sidebar')).toBe(false);
   });
 
   test('the attached sidebar toggle raises the one-shot layout animation class', async() => {
-    const {setExteralessSetting} = await loadStore();
+    const {setExterayondSetting} = await loadStore();
     const root = document.documentElement;
 
-    setExteralessSetting('OEAppearanceAttachedSidebar', true);
+    setExterayondSetting('OEAppearanceAttachedSidebar', true);
     await flush();
     expect(root.classList.contains('oe-attached-sidebar')).toBe(true);
     expect(root.classList.contains('oe-sidebar-layout-animate')).toBe(true);
@@ -692,30 +708,30 @@ describe('exteraless settings application (jsdom)', () => {
     expect(root.classList.contains('oe-sidebar-layout-animate')).toBe(false);
 
     // * effect re-runs without a flip (another setting changed) re-add nothing
-    setExteralessSetting('OEAppearanceAvatarCorners', 7);
+    setExterayondSetting('OEAppearanceAvatarCorners', 7);
     await flush();
     expect(root.classList.contains('oe-sidebar-layout-animate')).toBe(false);
-    setExteralessSetting('OEAppearanceAvatarCorners', 28);
+    setExterayondSetting('OEAppearanceAvatarCorners', 28);
   });
 
   test('the channel gift button hiding is off by default, live, and reset clears it', async() => {
-    const {setExteralessSetting, resetExteralessSettings} = await loadStore();
+    const {setExterayondSetting, resetExterayondSettings} = await loadStore();
     const root = document.documentElement;
 
     // * Android NaConfig.HideGiftButtonInChannel defaults to false: stock plate
     expect(root.classList.contains('oe-hide-channel-gift-button')).toBe(false);
 
-    setExteralessSetting('HideGiftButtonInChannel', true);
+    setExterayondSetting('HideGiftButtonInChannel', true);
     await flush();
     expect(root.classList.contains('oe-hide-channel-gift-button')).toBe(true);
 
-    setExteralessSetting('HideGiftButtonInChannel', false);
+    setExterayondSetting('HideGiftButtonInChannel', false);
     await flush();
     expect(root.classList.contains('oe-hide-channel-gift-button')).toBe(false);
 
-    setExteralessSetting('HideGiftButtonInChannel', true);
+    setExterayondSetting('HideGiftButtonInChannel', true);
     await flush();
-    resetExteralessSettings();
+    resetExterayondSettings();
     await flush();
     expect(root.classList.contains('oe-hide-channel-gift-button')).toBe(false);
   });

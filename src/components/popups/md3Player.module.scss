@@ -43,6 +43,13 @@
   color: var(--primary-color);
   background: color-mix(in srgb, var(--primary-color) 16%, var(--surface-color));
   font-size: 72px;
+
+  // * with the cover swipe (OEPlayerCoverSwipe) on, the cover owns the
+  // * horizontal axis; a vertical touch still scrolls the popup. Off keeps
+  // * the stock cover with no gesture and no touch-action change.
+  &.is-swipeable {
+    touch-action: pan-y;
+  }
 }
 
 .artwork {

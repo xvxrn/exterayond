@@ -315,6 +315,18 @@ const ExterayondAppearance = () => {
             <Row.Title>{i18n('Exterayond.Player.DiscSpin')}</Row.Title>
           </Row>
         )}
+        {framedCover() && (
+          <Row>
+            <Row.CheckboxFieldToggle>
+              <CheckboxFieldTsx
+                toggle
+                checked={exterayondSettings.OEPlayerCoverSwipe}
+                onChange={(value) => setExterayondSetting('OEPlayerCoverSwipe', value)}
+              />
+            </Row.CheckboxFieldToggle>
+            <Row.Title>{i18n('Exterayond.Player.Cover.Swipe')}</Row.Title>
+          </Row>
+        )}
       </Section>
       <Section name="Exterayond.Player.Title">
         <RangeSettingSelector

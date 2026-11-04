@@ -240,6 +240,9 @@ describe('the exteraless Appearance tab', () => {
     // * the card shows the radius slider and no spin toggle
     expect(sliderNames()).toContain('Exterayond.Player.Cover.Radius');
     expect(rowTitles()).not.toContain('Exterayond.Player.DiscSpin');
+    // * the cover swipe (PLAYER-06) is a framed-cover row, like Android's
+    // * refreshVisibility setVisible(swipeRow, framed)
+    expect(rowTitles()).toContain('Exterayond.Player.Cover.Swipe');
 
     // * the disc drops the radius slider and shows the spin toggle, and the
     // * size slider stays for both framed styles
@@ -248,6 +251,14 @@ describe('the exteraless Appearance tab', () => {
       expect(sliderNames()).not.toContain('Exterayond.Player.Cover.Radius');
       expect(sliderNames()).toContain('Exterayond.Player.Cover.Size');
       expect(rowTitles()).toContain('Exterayond.Player.DiscSpin');
+      expect(rowTitles()).toContain('Exterayond.Player.Cover.Swipe');
+    });
+
+    // * a non-framed cover hides the swipe row with the framed-only rows
+    setExterayondSetting('OEPlayerCoverStyle', 1);
+    await vi.waitFor(() => {
+      expect(rowTitles()).not.toContain('Exterayond.Player.Cover.Swipe');
+      expect(rowTitles()).not.toContain('Exterayond.Player.DiscSpin');
     });
     setExterayondSetting('OEPlayerCoverStyle', 0);
   });

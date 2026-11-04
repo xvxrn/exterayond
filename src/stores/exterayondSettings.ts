@@ -98,6 +98,13 @@ export const OE_DEFAULTS = {
   OEPlayerCoverSize: 100,
   OEPlayerCoverRadius: 28,
   OEPlayerDiscSpin: true,
+  /**
+   * Android `OEPlayerCoverSwipe` (default true): the card and disc covers drag
+   * horizontally to switch the track (`PlayerSheet.onCoverTouch`, which returns
+   * early for the other cover styles). Off restores the stock cover, which has
+   * no gesture; Android EtgBackup exports none of the player keys.
+   */
+  OEPlayerCoverSwipe: true,
   OEPlayerTitleAlign: 0,
   OEPlayerTitleSize: 1,
   OEPlayerTitleAbove: false,

@@ -223,6 +223,7 @@ const generated: GeneratedSettingsSearchData = {
     {id: 'AppExterayondAppearanceTab:Exterayond.Player.Cover.Radius', sectionId: 'AppExterayondAppearanceTab', kind: 'row', titleLangKey: 'Exterayond.Player.Cover.Radius'},
     {id: 'AppExterayondAppearanceTab:Exterayond.Player.Cover.Size', sectionId: 'AppExterayondAppearanceTab', kind: 'row', titleLangKey: 'Exterayond.Player.Cover.Size'},
     {id: 'AppExterayondAppearanceTab:Exterayond.Player.Cover.Style', sectionId: 'AppExterayondAppearanceTab', kind: 'row', titleLangKey: 'Exterayond.Player.Cover.Style'},
+    {id: 'AppExterayondAppearanceTab:Exterayond.Player.Cover.Swipe', sectionId: 'AppExterayondAppearanceTab', kind: 'toggle', titleLangKey: 'Exterayond.Player.Cover.Swipe'},
     {id: 'AppExterayondAppearanceTab:Exterayond.Player.DiscSpin', sectionId: 'AppExterayondAppearanceTab', kind: 'toggle', titleLangKey: 'Exterayond.Player.DiscSpin'},
     {id: 'AppExterayondAppearanceTab:Exterayond.Player.Layout', sectionId: 'AppExterayondAppearanceTab', kind: 'subsection', titleLangKey: 'Exterayond.Player.Layout'},
     {id: 'AppExterayondAppearanceTab:Exterayond.Player.Mini', sectionId: 'AppExterayondAppearanceTab', kind: 'subsection', titleLangKey: 'Exterayond.Player.Mini'},

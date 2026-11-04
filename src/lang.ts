@@ -6100,6 +6100,7 @@ const lang = {
   'Exterayond.Player.Cover.Size': 'Size',
   'Exterayond.Player.Cover.Radius': 'Corner radius',
   'Exterayond.Player.DiscSpin': 'Spin while playing',
+  'Exterayond.Player.Cover.Swipe': 'Swipe the cover to switch tracks',
   'Exterayond.Player.Title': 'Title',
   'Exterayond.Player.TitleAlign': 'Title alignment',
   'Exterayond.Player.Align.Start': 'Left',

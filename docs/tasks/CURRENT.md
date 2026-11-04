@@ -15,7 +15,8 @@ end-to-end encryption module `src/lib/calls/e2e/`. See packet 058 in
 [progress.md](progress.md) before grepping for old paths.
 
 As of 31 October 2026, Forced MD3 remains the pending-priority block: its
-eight-part settings group, the base web adaptations and the MD3 player's
+eight-part settings group (packet 065 added the ninth, independent modal
+chrome part), the base web adaptations and the MD3 player's
 style settings exist, but desktop visual review is blocked (no browser in
 the autonomous sessions). Read [task 028](028-forced-md3.md) and the last
 sections of [progress.md](progress.md). Do not mark LOOK-18–23 or the PLAYER
@@ -111,21 +112,29 @@ fallback — implemented-but-unreviewed, awaiting the user's click-path
 acceptance; **FOLD-10/12** — the hub Main Menu editor gained reorder
 (up/down buttons, the desktop stand-in for Android's drag) and divider
 add/remove/move; **CHAT-26** — poll results before voting audited
-complete, the gate extracted into a tested predicate. The checklist
-count is 73/296 by a literal recount (the running count was understated
-by two — CHAT-36 and GEN-07, integrated since packets 022/014 but never
-counted) plus the user-directed sections.
+complete, the gate extracted into a tested predicate.
+
+Packets 065–066 (2026-11-04) shipped **the ninth MD3 part** and
+**MEDIA-10**: `OEAppearanceMd3Dialogs` (packet 065) is the web-side modal
+chrome toggle — popup/dialog cards, context-menu cards and the search
+field take the M3 tonal surfaces behind the `oe-md3-dialogs` root class,
+as an independent hub row outside the eight-part master's x/8 count;
+`ShowSmallGIF` (packet 066, MEDIA-10) renders standalone chat GIFs inside
+the compact dp(120) box through `gifMediaBox` → `wrapVideo` →
+`wrapPhoto` → `setAttachmentSize`'s new `noMinSize`. Both are off =
+stock byte-for-byte, both carry decision-logic tests and runbook steps
+(1.25, 5.24); both await the user's visual acceptance. The checklist
+count is 74/296 (MEDIA-10 checked; the ninth MD3 part lives under the
+checked V-3 entry) plus the user-directed sections.
 
 After that, pick unchecked items from the checklist, generally small to
-large. Remaining browser-free candidates are mostly subsystems: MEDIA-10
-(compact GIFs) needs bubble-layout work. Other mid-size candidates:
-MENU-03..05/07..09 (menu compositions, each a real-handler audit),
-CHAT-12/13 (quick transitions), EMOJI-01 (system emoji), LOOK-04 (title
-text), PLAYER-06/07 and the mini-player rows. LOOK-06 is class 3 (the
-W-7 verdict: no canvas-effect subsystem). Pick from the checklist and
-verify against the Android source per packet. Plugins are deferred until
-the user explicitly asks to resume them. Phone-only hardware features
-are not desktop tasks.
+large. Mid-size candidates: MENU-03..05/07..09 (menu compositions, each
+a real-handler audit), CHAT-12/13 (quick transitions), EMOJI-01 (system
+emoji), LOOK-04 (title text), PLAYER-06/07 and the mini-player rows.
+LOOK-06 is class 3 (the W-7 verdict: no canvas-effect subsystem). Pick
+from the checklist and verify against the Android source per packet.
+Plugins are deferred until the user explicitly asks to resume them.
+Phone-only hardware features are not desktop tasks.
 
 ## Operating constraints
 

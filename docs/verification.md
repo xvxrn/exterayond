@@ -449,6 +449,29 @@ lyrics, gestures) likewise stays open.
 - **[AUTH · content: an audio message]**
 - PASS/FAIL:
 
+### 1.25 V-3 — the ninth MD3 part, "Dialogs, menus and search" (packet 065; appended)
+
+- Appearance tab → "Forced MD3" → "Choose components". The last row,
+  **"Dialogs, menus and search"** (`OEAppearanceMd3Dialogs`), is an
+  independent toggle: the master switch never flips it and the x/8 count
+  ignores it. Default **off**.
+- On → the M3 modal chrome (tonal surfaces, no behavior change):
+  - every popup card (and dialog card — Web K renders both through one
+    owner) is tinted from the accent instead of the flat background;
+  - context menus and dropdown menu cards are opaque, accent-tinted
+    surfaces instead of frosted glass;
+  - the search fields (sidebar headers, settings) are accent-tinted pills
+    with no outline.
+- Off → the stock chrome byte-for-byte (frosted menus, flat cards, outlined
+  fields). Colors only — no shape, layout or motion change on any surface;
+  popups with their own background override (image popups, calls) keep it.
+- Look at: with the toggle on, open a confirmation dialog, a right-click
+  context menu, and use the chat-list search — day and night themes; then
+  toggle off and confirm the stock look. Also confirm the x/8 master count
+  does not change with this row.
+- **[AUTH · no chat data]**
+- PASS/FAIL:
+
 ---
 
 ## Batch 2 — Composer and the sending path
@@ -1474,6 +1497,27 @@ only prior check was synthetic.
   switching back to off restores the stock "vote to see results" state; a
   quiz poll behaves as before.
 - **[AUTH · content: a poll with received results you have not voted in]**
+- PASS/FAIL:
+
+### 5.24 MEDIA-10 — "Show Small GIF" (packet 066, appended)
+
+- Chats tab → the section captioned "GIF attachments render inside a
+  compact 120 px box instead of filling the bubble." Row **"Show Small
+  GIF"** (`ShowSmallGIF`, NaConfig bool, default off).
+- On → a standalone GIF attachment in a chat renders inside a compact
+  120 px box: its media keeps the aspect ratio (the web adaptation —
+  Android pins a square 120dp cell and fills it, stretching non-square
+  GIFs) and never takes the sizing's minimum-side or text-width
+  expansions, so a wide GIF lands around 120 px wide instead of the stock
+  ~200+ px. A GIF smaller than the box stays at its natural size (the web
+  never zooms media up). Grouped albums, webpage previews, the GIFs search
+  grid and the media viewer keep their own sizing, like Android's group
+  layout does; the "GIF" label, caption and time keep their places.
+- Off: byte-for-byte stock.
+- Look at: a chat with a wide GIF and a tall GIF, toggle on (both compact,
+  aspect-correct, captions still readable) and off (stock size returns);
+  send one with a caption; confirm a grouped GIF album is unchanged.
+- **[AUTH · content: a GIF attachment in any chat]**
 - PASS/FAIL:
 
 ---

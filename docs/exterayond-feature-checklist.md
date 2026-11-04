@@ -6,9 +6,9 @@
 
 Статус интеграции не означает проверку на пользовательском аккаунте. Подробности и пределы проверок — в [журнале](tasks/progress.md). Проверки только на ПК, короткие и целевые. Плагины отложены; аппаратные Android-исключения перечислены в исходном каталоге и не выданы за выполненные функции.
 
-Current progress: **73 completed entries out of 296** — a literal recount of
-the checked catalog lines after packets 059–063 (the previous running count
-said 64 before this run; the two-entry drift predates it — CHAT-36 and
+Current progress: **74 completed entries out of 296** — MEDIA-10 joined the
+73-entry recount of packets 059–063 in packet 066 (the previous running count
+said 64 before that run; the two-entry drift predates it — CHAT-36 and
 GEN-07 are checked and integrated but were not counted). Plus 4 completed
 user-directed look & feel entries (V-1..V-4) and 4 completed W entries
 (W-1..W-3, W-6) in the user-directed sections below — outside the catalog
@@ -446,8 +446,7 @@ catalog remains the source reference.
 - [ ] **MEDIA-09 — Увеличенный битрейт записи видео** (**А**).
   [`enhancedVideoBitrateRow`](https://github.com/exteraless/exteraless/blob/8b7ec40ecada6ab3cfcc24e9f3d8ae262c02de63/TMessagesProj/src/main/java/app/exteraless/settings/OpenExteraChatsActivity.java#L335) — Пределы реального браузерного кодировщика нужно проверять отдельно.
 
-- [ ] **MEDIA-10 — Компактное отображение GIF** (**П**).
-  [`showSmallGifRow`](https://github.com/exteraless/exteraless/blob/8b7ec40ecada6ab3cfcc24e9f3d8ae262c02de63/TMessagesProj/src/main/java/app/exteraless/settings/OpenExteraChatsActivity.java#L339)
+- [x] ~~**MEDIA-10 — Компактное отображение GIF** (**П**).~~ 066: NaConfig `ShowSmallGIF` (bool, default false; the persisted name is the contract, `EtgBackup` exports no alias); `ChatMessageCell` pins a standalone GIF's layout cell to `w = h = dp(120)`. The web wires the decision through the store's `gifMediaBox` into the chat's single-media owner (`bubbles.ts` → `wrapVideo` → `wrapPhoto` → `setAttachmentSize` with `noMinSize`): the compact 120px box, the media keeping its aspect ratio (the declared adaptation — Android pins a square cell and fills it), the sizing's minimum-side and text-width expansions skipped. Albums, webpage previews, the GIFs grid and the media viewer keep stock sizing, like Android's group layout. Hub row in Chats; decision-logic tests. Visual acceptance pending (runbook 5.24).
 
 - [ ] **MEDIA-11 — Шаг перемотки двойным нажатием: 5 / 10 / 15 / 30 секунд** (**А**).
   [`doubleTapSeekDurationRow`](https://github.com/exteraless/exteraless/blob/8b7ec40ecada6ab3cfcc24e9f3d8ae262c02de63/TMessagesProj/src/main/java/app/exteraless/settings/OpenExteraChatsActivity.java#L333)
@@ -963,7 +962,7 @@ Android source first where a key exists.
 
 - [x] ~~V-4 — Theme palettes and the accent picker~~. 047: ladder (1) near-black palette and (3) AMOLED variant as one `OEAppearanceThemePalette` selector over the dark surface variables (dark themes only, live, clears only its own writes, no theme object touched); (2) a per-theme accent color picker through the stock `applyAccentPreset` pipeline (preview via `applyTheme`, debounced commit, survives reload, reset = factory theme); (4) the custom-theme editor was not needed — the stock system expresses the rest. Acceptance round 1 reshaped it: F-2 dropped the selector for a single toggle (off = stock, on = the near-black palette; AMOLED removed entirely), and F-3 made it Material-You — the palette tints every surface of its family from the accent color or an explicit "Set a color" pick (the pick wins), and a committed accent carries an accent-hued material wallpaper (gradient + the shared pattern) unless the user owns the background. Acceptance round 2 (G-1/G-4): a "Set a color" pick applies in the same task (`applyThemeFast` — background re-applies no longer run the theme-switch view transition) and wins over everything; the palette's tint chain is explicit — explicit background color > explicit accent PICK (the picker's `preset:*` theme) > wallpaper-derived > the theme's own accent — and an image wallpaper's dominant color (JS canvas sampling at render time, cached per record, `exteraless_wallpaper_tint`) tints the family while the toggle is on, re-derived on every wallpaper change.
 
-- [x] ~~V-3 — Forced MD3 coverage strengthening~~. 048: the coverage audit table lives in the journal (packet 048); the eight-part group's choke points verified covered (switches, loading, Section rows app-wide, settings sliders, chat header, folder navigation, player, mini player), chat-list rows covered by contract, and the audio rows' seek line extended behind `oe-md3-sliders` (the web's other slider family, ported M3 values); popup/menu/dialog card chrome, search input, media viewer chrome and the composer are listed as waiting on an owning-toggle decision.
+- [x] ~~V-3 — Forced MD3 coverage strengthening~~. 048: the coverage audit table lives in the journal (packet 048); the eight-part group's choke points verified covered (switches, loading, Section rows app-wide, settings sliders, chat header, folder navigation, player, mini player), chat-list rows covered by contract, and the audio rows' seek line extended behind `oe-md3-sliders` (the web's other slider family, ported M3 values); popup/menu/dialog card chrome, search input, media viewer chrome and the composer are listed as waiting on an owning-toggle decision. 065: the ninth part `OEAppearanceMd3Dialogs` (web-side contract — Android themes modals through the theme, no key of its own) ships the modal chrome behind its own independent row, outside the master's x/8 count: popup/dialog cards, context-menu cards and the search field take the M3 tonal surfaces (`oe-md3-dialogs`, color-only, off = stock byte-for-byte); media viewer chrome and the composer still wait on a decision.
 
 ## User-directed W entries (the Neko/Na keys the 296-catalog never carried)
 

@@ -2381,3 +2381,102 @@ Checks: 11 suites / 135 tests green (settings 32 with the two migration
 tests, pills, menu layout, theme palette, tabs, main menu tab, backup,
 search index, lang direction, background pick, archive, section), typecheck
 clean, the settings-search index regenerated against the new keys.
+## 065 / V-3 — the ninth MD3 part: OEAppearanceMd3Dialogs, the modal chrome (2026-11-04)
+
+The packet-048 audit left the popup / context-menu / dialog card chrome and
+the search input "waiting on an owning-toggle decision"; packet 065 ships
+that decision as a ninth, independent MD3 part. Android has no key of its
+own here — its M3 themes recolor modals through the theme (`key_dialogBackground`),
+never through a per-part toggle — so `OEAppearanceMd3Dialogs` (bool, default
+false) is this port's contract: the key, the default and the `oe-md3-dialogs`
+root class are web-side, styled after the M3 component spec's modal surfaces.
+The eight-part master deliberately does not own it: `MD3_BOOLEAN_KEYS` and
+`getMd3StyleCount()` are untouched, the row stands outside the master's
+group in the hub, and the count stays x/8.
+
+Surfaces (each in its owner file, one root class, color-only and
+direction-neutral):
+
+- Popup and dialog cards — `:root.oe-md3-dialogs .popup-container`
+  (`_popup.scss`): `--popup-background-color` becomes the M3 tonal container
+  (`color-mix(in srgb, var(--primary-color) 8%, var(--surface-color))`, the
+  surfaceContainerHigh role in the group's established tonal-mix language).
+  The web's popup card is the dialog card — Web K renders every modal
+  through the one `.popup-container` owner — so one block covers both
+  Android surfaces. Per-popup inline `--popup-background-color` overrides
+  (image popups, calls) keep their own look.
+- Context-menu cards — `:root.oe-md3-dialogs .btn-menu` (`_button.scss`):
+  `--menu-background-color` takes the same tonal mix and
+  `--menu-backdrop-filter` goes `none` — M3 menus are opaque surfaces, the
+  stock menu is frosted glass. The var rides the shared custom property, so
+  the menu card, its items wrapper and the reactions container all follow;
+  with `oe-no-glass-menus` also on, both states are solid and the tonal mix
+  (later in the sheet) wins the background.
+- Search field — `:root.oe-md3-dialogs .input-search`
+  (`_inputSearch.scss`): `--input-search-background-color` takes the tonal
+  mix and `--input-search-border-color` goes transparent — the M3
+  search-bar container (tinted, no outline); the stock pill shape is
+  already the M3 "full" shape. The focused state keeps its own colors.
+
+Shapes stay stock on purpose: the pinned Android reference recolors modal
+surfaces through the theme and keeps Telegram's own radii (no M3 corner
+overrides exist in the exteraless source), and the web chrome is already at
+the M3 shape intent (the 40px popup card, the 16px menu card, the pill
+field) — so the part carries surfaces only, and nothing reshapes.
+
+Hub: the row "Dialogs, menus and search" (`Exterayond.Md3.Dialogs`) sits
+inside the Forced MD3 section after the eight-part customize list, an
+independent row with its own toggle; the search keywords gained
+dialogs/menus/popup/search. The settings-search index was regenerated
+(one new entry). Tests: the store suite grew the class-gate decision (the
+`oe-md3-dialogs` root class follows the toggle, reset restores stock), the
+defaults table, and the ninth-part independence (the master never flips it,
+it never joins the count). Checks: store + settings-search suites 42 tests
+green, typecheck clean, oxlint clean on touched files, standalone sass
+compile passes with all three rules emitted.
+
+Awaiting the user's visual acceptance: popup cards, context menus and the
+search field in both toggle states, day and night themes.
+
+## 066 / MEDIA-10 — Show Small GIF, the compact GIFs (2026-11-04)
+
+The Android contract, read from the pinned source: NaConfig `ShowSmallGIF`
+(bool, default false, `NaConfig.kt`; the persisted name is the contract, and
+`EtgBackup` exports no alias, so none was invented). The single consumer is
+`ChatMessageCell`'s single-media layout: after the GIF's w/h are computed
+from the document's image-size attribute, `if (ShowSmallGIF && TYPE_GIF)
+w = h = dp(120)` — the cell pins to a 120dp square; the grouped layout
+recomputes its sizes from positions below, so albums are never compacted.
+
+The web wires the same decision into the existing owners: the store's
+`gifMediaBox(docType, box)` returns the regular box untouched by default
+and, for a GIF document with the setting on, a compact 120px box plus the
+compact flag; the chat's single-media owner passes both into `wrapVideo`
+(`bubbles.ts` `messageMediaDocument`), which forwards `noMinSize` through
+both of its sizing paths — the `image/gif` branch (`wrapPhoto`) and the
+mp4-type GIF's poster call (most Telegram GIFs are mp4 documents, so the
+video path sizes their container) — into `setAttachmentSize`'s new
+`noMinSize`, skipping the web sizing's own minimum-side (200px) and
+text-width (320px) expansions, which would otherwise defeat the compact
+box. Two declared
+adaptations, both recorded on the store helper and in the runbook step:
+the web box is a maximum, so the media keeps its aspect ratio inside 120px
+where Android pins a square and fills it (stretching non-square GIFs), and
+a GIF smaller than the box stays at its natural size (the web never zooms
+media up).
+
+Scope kept to Android's: standalone chat GIFs only — grouped albums,
+webpage previews, the GIFs search grid (its own masonry sizing) and the
+media viewer keep their sizing; every other `wrapVideo`/`wrapPhoto` caller
+is untouched (the new params are optional and default to stock). The hub
+gains the row "Show Small GIF" (`Exterayond.ShowSmallGIF`, the Android
+string verbatim) in Chats with its caption; the settings-search index was
+regenerated (one new entry). Tests: the store suite grew the decision
+contract (stock passthrough when off, GIF-only compaction to the Android
+dp(120), non-GIF types never compact, the caller's explicit flag wins,
+reset restores stock). Checks: store + settings-search suites 43 tests
+green, typecheck clean, oxlint clean on touched files.
+
+Awaiting the user's visual acceptance (runbook 5.24): a wide and a tall
+GIF in a chat, compact on and off, with and without a caption; a grouped
+GIF album unchanged.

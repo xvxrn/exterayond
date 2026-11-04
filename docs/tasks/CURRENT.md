@@ -127,6 +127,28 @@ stock byte-for-byte, both carry decision-logic tests and runbook steps
 count is 74/296 (MEDIA-10 checked; the ninth MD3 part lives under the
 checked V-3 entry) plus the user-directed sections.
 
+Packets 070–072 (2026-11-05) worked the menu compositions and the
+verdict-only rows: **070** wired the menu composition toggles where the web
+menus actually carry the item — MENU-03's `ChatMenuItemBoostGroup` /
+`ChatMenuItemLinkedChat` over the chat header menu's boost and View
+Discussion rows, MENU-05's `Reactions` / `CopyLink` / `AddToFavorites` over
+the message context menu's reactions strip, Copy Message Link and the
+favorites add-direction (8 of Android's 24 with real handlers counting the
+already-wired W-1/W-2/CHAT-35/W-3; showTranslate is unwirable — Android's
+item is a fork addition, the web's is stock) — MENU-04's icon-row verdict
+recorded, the other keys annotated per-key with their reasons; all three
+entries stay unchecked (partial/verdict). **071** recorded CHAT-12/13 as
+class 3: the rows only disable Android's stock pull-down-to-next-chat
+transition (`ChatPullingDownDrawable`), which Web K does not implement; no
+keys, no EtgBackup aliases. **072** recorded EMOJI-01 as documented
+equivalence (the web renders standard emoji through the system emoji font
+stack permanently; Telegram's image set waits on an emoji-image primitive)
+and LOOK-04's precise blocker (the chat list header has no title element —
+`index.html` + `sidebarLeft/index.ts` verified; a web variant would be
+parallel UI). No code in 071/072. Checklist count unchanged (74/296); the
+hub gained the "Chat menu" section and four "Message menu" rows; runbook
+5.25 appended.
+
 After that, pick unchecked items from the checklist, generally small to
 large. Mid-size candidates: MENU-03..05/07..09 (menu compositions, each
 a real-handler audit), CHAT-12/13 (quick transitions), EMOJI-01 (system

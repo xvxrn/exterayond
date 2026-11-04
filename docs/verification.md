@@ -469,6 +469,20 @@ lyrics, gestures) likewise stays open.
   context menu, and use the chat-list search — day and night themes; then
   toggle off and confirm the stock look. Also confirm the x/8 master count
   does not change with this row.
+- Packet 069 additions (the hunt fixed two cascade defects, tested in
+  `tests/exterayondMd3DialogsChrome.test.ts`):
+  - a search field **inside** a dialog card (the share / select-peers
+    popup) takes a stronger accent step than the card itself — the pinned
+    reference's `dialogSearchBackground` distinction — so the borderless
+    pill no longer dissolves into the card. Look at: the share popup's
+    search field with the toggle on, day and night — the field must read
+    as its own surface against the card; fields outside dialogs (sidebar,
+    settings) keep the card-level 8% pill.
+  - with `oe-no-glass-menus` **also** on, the reactions strip of a message
+    context menu now follows the tonal mix too (it kept the plain surface
+    before, an element-level declaration beat the inherited one). Look at:
+    both toggles on → right-click a message → the reactions strip matches
+    the menu card's tint.
 - **[AUTH · no chat data]**
 - PASS/FAIL:
 
@@ -1518,6 +1532,44 @@ only prior check was synthetic.
   aspect-correct, captions still readable) and off (stock size returns);
   send one with a caption; confirm a grouped GIF album is unchanged.
 - **[AUTH · content: a GIF attachment in any chat]**
+- PASS/FAIL:
+
+---
+
+### 5.25 MENU-03 / MENU-05 — the menu composition toggles (packet 070, appended; 073 amended)
+
+- Chats tab → **"Chat menu"** (`Exterayond.ChatMenu`): **"Boost Group"**
+  (`ChatMenuItemBoostGroup`, default on) gates the chat header menu's
+  Boost Channel / Boost Group rows; **"View discussion"**
+  (`ChatMenuItemLinkedChat`, default on) gates the header menu's View
+  Discussion row. Off hides the row from the menu; on and reset restore
+  the stock menu. The menu re-reads the toggles on every open (nothing is
+  frozen at build time).
+- Chats tab → **"Message menu"** (`Exterayond.MessageMenu`), the rows with a
+  real web handler behind them (8 of Android's 24; the rest are recorded in
+  the checklist), in Android's row order: **"Repeat"** (packet 043),
+  **"Reactions"** (`Reactions`, default on) keeps the reactions strip at the
+  top of the message context menu, **"Copy Link"** (`CopyLink`, default on)
+  keeps "Copy Message Link", **"Add to Favorites"** ("AddToFavorites",
+  default on) keeps the sticker/GIF favorites item.
+- Off on any of them → the item disappears from its menu on the next open;
+  on or reset → the stock menu. Two Android escapes survive the off state
+  (073): the double-tap Show Reactions action (CHAT-10) still opens its menu
+  WITH the strip while "Reactions" is off (Android's `|| onDoubleTapped`),
+  and "Copy Link" off still keeps the link row for a sticker or a poll post
+  in a channel (Android's `isAnyKindOfSticker() || isPoll()`).
+- Look at: right-click a message in a channel (a message with reactions) —
+  toggle "Reactions" off and confirm the strip is gone and the menu stands
+  correctly without it, then on again; with "Reactions" off, double-tap a
+  message (the double-tap action set to Show Reactions) and confirm the
+  strip IS there; toggle "Copy Link" off on a channel post and confirm the
+  item is gone, then confirm it is still there for a channel sticker or poll
+  post; toggle "Add to Favorites" off on a sticker and confirm "Delete from
+  Favorites" still shows for an already favorited sticker; in a boostable
+  channel/group toggle "Boost Group" off and confirm the header menu loses
+  the boost row. Day and night themes.
+- **[AUTH · content: a channel post with reactions, a sticker, a boostable
+  chat]**
 - PASS/FAIL:
 
 ---

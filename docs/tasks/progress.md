@@ -2480,3 +2480,258 @@ green, typecheck clean, oxlint clean on touched files.
 Awaiting the user's visual acceptance (runbook 5.24): a wide and a tall
 GIF in a chat, compact on and off, with and without a caption; a grouped
 GIF album unchanged.
+
+## 069 / bug-hunt — the ninth MD3 part and MEDIA-10 under the microscope (2026-11-04)
+
+A focused break-then-fix pass over packets 065–066, jsdom/compile-proven
+before anything was touched. Two proven defects fixed, each with its test;
+MEDIA-10 audited clean end to end.
+
+**Proven and fixed (ninth MD3 part, packet 065):**
+
+- *The in-dialog search field dissolved into the dialog card.* The packet's
+  popup rule and search-field rule emit the identical tonal mix, and the
+  tonal pill drops the border stock tells the field apart by — so every
+  `.input-search` hosted inside a `.popup-container` (the share /
+  select-peers popup's `SelectorSearch`) became invisible against the card.
+  The pinned reference contradicts that collapse:
+  `monet_dark_gram.attheme` gives the dialog search field its own lighter
+  surface (`dialogSearchBackground` n1_900 against `dialogBackground`
+  n2_800_80). Fix: a scoped rule
+  (`:root.oe-md3-dialogs .popup-container .input-search`) takes the tonal
+  ladder's next step (12% against the card's 8%), leaving the sidebar and
+  settings fields at the packet's declared role (`_inputSearch.scss`).
+- *The documented dual-toggle resolution was not real on the reactions
+  container.* `oe-no-glass-menus` writes `--menu-background-color` on
+  `.btn-menu-reactions-container` itself, and an element-level declaration
+  beats an inherited value at any sheet order — so with both toggles on, the
+  reactions strip kept the plain surface while the menu card took the tonal
+  mix, despite the packet note's "the tonal mix (later in the sheet) wins".
+  Fix: the ninth-part menu rule declares on the container too (equal
+  specificity, later in the sheet), making the documented resolution real
+  (`_button.scss`).
+
+**Tests:** new `tests/exterayondMd3DialogsChrome.test.ts` — a compile audit
+over the three owner partials (every `oe-md3-dialogs` rule is anchored at the
+root class → off matches nothing; every declaration is a custom property →
+color-only, RTL-neutral by construction; the in-dialog field's surface
+differs from the card's and the standalone field's; the reactions-container
+declaration exists, matches the no-glass rule's specificity and sits later
+in the sheet), plus the jsdom class gate across theme switches (night/day
+class flips and palette applies never remove `oe-md3-dialogs`; the palette's
+inline surface family and the chrome class coexist; the palette never claims
+the part's own variables; off and reset restore stock).
+
+**MEDIA-10 (packet 066): audited clean, no fix.** New
+`tests/exterayondCompactGifSizing.test.ts` pins the end of the sizing chain:
+the mp4-poster path (thumbs-chosen size) and the image/gif path (the
+synthetic full-document photoSize) both keep the compact box with
+`noMinSize`; the stock path still applies the 200px min-side and the 320px
+text-width expansions (and the video's 368px minimum with a player);
+a GIF smaller than the box stays at its natural size. Audited by reading:
+`gifMediaBox`'s single call site sits inside the single-media branch after
+the album check, so grouped albums never compact; the pre-existing
+`noMinSize` caller (sticker sizing, bf2c93e) is untouched; every other
+`wrapVideo`/`wrapPhoto` caller keeps the stock default. One doc note: the
+progress text called `noMinSize` "new" — it existed for the media peek; the
+packet reuses it.
+
+**Cross-check (hunt item 3): clean.** The compact box travels as inline px
+from `setAttachmentSize`; the ninth part declares only the five chrome
+variables, and none of them has a JS consumer outside the theme applier and
+the palette — the two features cannot move each other's pixels. The media
+viewer is not a `.popup-container`, so the ninth part never recolors it.
+
+Owner-state audit of the search field: focus keeps its own transparent
+background and accent border (direct properties on the input element beat
+the wrapper's variable — the documented intent); input-search has no error
+state; the hover outline (`--secondary-color`) remains visible under the
+part — the owner's own state, kept deliberately.
+
+Checks: the four suites (new two + settings + palette) 63 tests green,
+`scss-types` + `tsc --noEmit` clean, oxlint clean on the touched files.
+Runbook 1.25 gained the two acceptance checks above; 5.24 unchanged (no
+behavior change). Checklist count unchanged (74/296).
+
+## 070 / MENU-03 + MENU-05 — the menu composition toggles, MENU-04 verdict (2026-11-05)
+
+The per-item menu behaviors behind Android's `OpenExteraChatsActivity` "Menus"
+screen. The Android contract, read from the pinned source: MENU-03 gates 13
+chat header menu items (the NaConfig `Shortcuts*` and `ChatMenuItem*` keys),
+MENU-05 gates 24 message menu items (NaConfig `Show*` mixed with NekoConfig
+`show*`), MENU-04 (`GroupedMessageMenu`, default true) swaps the message menu
+for `GroupedIconsView`'s icon row. `EtgBackup` exports none of the
+individually wired keys (the menu items travel only via the combined
+`quickAdminShortcuts` and `groupMessageMenu`), so no backup aliases were
+invented.
+
+**Wired (each default true = the stock menu, off hides, reset restores):**
+
+- MENU-03, chat header menu (`topbar.ts` `menuButtons`): `ChatMenuItemBoostGroup`
+  gates the web's own BoostChannel/BoostGroup rows; `ChatMenuItemLinkedChat`
+  gates "View Discussion" — the two items of Android's 13 the web menu
+  actually carries.
+- MENU-05, message context menu (`contextMenu.ts`): `Reactions` drops the
+  reactions strip (the strip's creation condition; the double-tap Show
+  Reactions path is separate, matching Android's `|| onDoubleTapped`);
+  `CopyLink` gates "Copy Message Link"; `AddToFavorites` gates the add
+  direction only — "DeleteFromFavorites" always shows for a favorited
+  sticker, like Android's gate. The group's already-wired members
+  (showAddToSavedMessages W-1, CopyPhoto W-2, showRepeat CHAT-35, showReport
+  W-3) complete 8 of 24 with real handlers.
+
+**Not stored, each with its reason (checklist):** the admin shortcuts
+(default-false gates would hide or duplicate web surfaces; Administrators /
+Permissions / Members / EventLog are fork additions with no web row),
+Statistics (the web item is stock — a default-false gate contradicts off =
+stock), ToBeginning / GoToMessage / HideTitle / DeleteOwnMessages (fork
+additions without web handlers), ViewDeleted / ClearDeleted (class 3 —
+AyuMoments' deleted-message store does not exist on the web), showTranslate
+(Android's item is a fork addition, default false; the web item is stock with
+its own availability), and the 13 further message-menu items with no web
+counterpart. MENU-04 verdict: the web menu has no icon-row surface, building
+one is a fork-addition UI, not an override — key not stored, entry unchecked.
+
+Hub: the Chats tab gained a "Chat menu" section (the two header-menu rows)
+and the "Message menu" section grew the Reactions / Copy Link / Add to
+Favorites rows beside Repeat; the stock titles are the Android row titles
+verbatim (`Reactions`, `CopyLink`, `AddToFavorites`, `BoostingBoostGroupMenu`
+= the web's "Boost Group", `LinkedGroupChat` = the web's "View discussion").
+Search keywords added for the two sections. The settings-search index was
+regenerated (+6 entries). Tests: the store suite gained the MENU gate
+contract (five defaults true = stock menus, off, reset) and the defaults
+table; the tabs suite's exact Chats-tab row list gained the five new rows
+(its committed list was also missing packet 066's ShowSmallGIF row — that
+one-line gap was patched and committed by the parallel housekeeping session
+while this pass ran, commit 2c98a28, which therefore also carries this
+packet's five expectation rows). Store 37 tests green, tabs 17 green,
+settings-search 8 green, `scss-types` + `tsc --noEmit` clean, oxlint clean
+on the touched files.
+
+Runbook 5.25 appended. Checklist: MENU-03 and MENU-05 annotated partial
+(2/13 and 8/24), MENU-04 verdict recorded — all three unchecked, count
+unchanged (74/296). Awaiting the user's menu acceptance (runbook 5.25).
+
+## 071 / CHAT-12 + CHAT-13 — the quick-transition rows, class-3 verdicts (2026-11-05)
+
+The Android contract, read from the pinned source: the two "Quick Swipe
+Transition" rows ("Channels" / "Topics") do not own their own keys — each row
+reads and writes the inverted NekoConfig flags (`quickTransitionForChannels()
+= !NekoConfig.disableSwipeToNext.Bool()`, same for `disableSwipeToNextTopic`,
+both default false = transition on), and the only consumer is
+`ChatsHelper.allowSwipeToNext(isTopic)`, which gates Android's stock
+pull-down-at-the-top-of-the-message-list transition into the next chat or
+forum topic (`ChatPullingDownDrawable`, `ChatActivity`'s `pullingDownOffset`
+gesture path).
+
+Web K implements none of that gesture: a repo-wide search finds no
+pull-to-next-chat primitive (no `pullingDown`/`nextChat`/sliding-view analog
+in `src/`). The exteraless toggles are kill-switches over a stock gesture the
+web does not have — a toggle without its behavior is forbidden, and building
+the gesture subsystem is upstream territory (`do not speculatively rebuild
+Telegram features`), so the portability classes put both entries at class 3.
+`EtgBackup` exports neither key (the `quickTransitionForChannels` /
+`quickTransitionForTopics` names live only in ExteraConfig's own legacy
+backup list, which the `.extera` format port does not implement), so there is
+nothing to store either.
+
+No code changes: docs-only packet (checklist annotations, this section);
+nothing to typecheck or lint. Checklist count unchanged (74/296); CHAT-12/13
+stay unchecked with their verdicts.
+
+## 072 / EMOJI-01 + LOOK-04 — the system emoji and the chat list title, verdicts (2026-11-05)
+
+**EMOJI-01 (use system emoji).** Android contract: NekoConfig `useSystemEmoji`
+(persisted `EmojiUseDefault`, bool, default false) switches `Emoji.java`
+between Telegram's bundled emoji drawables (off) and the system emoji font
+(on) at three gates (the rendering choice, the big-emoji path, the Apple-logo
+exception). The web renders standard emoji as text through the system emoji
+font stack permanently (`base.scss`'s emoji `font-family`:
+apple color emoji / segoe ui emoji / noto color emoji / android emoji / …) —
+the ON outcome is the base's permanent behavior. The OFF outcome (Telegram's
+image set) waits on an emoji-image rendering primitive Web K does not have,
+so the toggle has no second state to wire and building one is upstream
+territory. `EtgBackup` exports no alias, so nothing is stored. Recorded as
+documented equivalence with no controls (the HIDE-13/HIDE-11 treatment);
+entry unchecked.
+
+**LOOK-04 (custom chat list title).** Android contract:
+`OEAppearanceTitleText` (AppearanceConfig int 0..4, default 0; modes app
+name / username / name / "Chats" / custom with `titleTextScrolls` for
+1/2/4), consumed by `TypefaceHelper.getTitleText` into the DialogsActivity
+ActionBar title. The web chat list header has no title element to override —
+verified: `index.html`'s main view header (`.main-search-sidebar-header`)
+holds only the burger/back buttons and `AppSidebarLeft.construct` appends the
+search field into `.item-main .sidebar-header`; every `sidebar-header__title`
+on the web belongs to a SliderTab sub-screen (archived, settings, folder
+tabs), not the chat list. The five modes address a surface the web does not
+render; a "web variant" would mean building a new title element into the
+header — a parallel surface Android never gates, which the product model
+forbids — so the e3b39c2 verdict stands with the owner analysis now pinned to
+files. The EtgBackup alias `titleText` (int 0..3; custom never round-trips
+through Android's own range) stays recognized-unsupported. Entry unchecked.
+
+No code changes: docs-only packet; nothing to typecheck or lint. Checklist
+count unchanged (74/296).
+
+## 073 / MENU-03 + MENU-05 bug hunt — the double-tap escape and the CopyLink exception (2026-11-05)
+
+The packet-070 bug hunt, each finding proven against the pinned Android
+source first, then by a test that failed on the unfixed code and passes now.
+
+**Proven and fixed.**
+
+- **The Reactions gate broke the double-tap Show Reactions escape.** Android
+  reads `NaConfig.getShowReactions().Bool() || onDoubleTapped`
+  (`ChatActivity:33145`, passed at `:2283`): with the composition toggle off,
+  a menu opened by the double-tap Show Reactions action still carries the
+  reactions strip. 070's web gate was a bare `exterayondSettings.Reactions`
+  over the strip's creation condition — and the web's CHAT-10 SHOW_REACTIONS
+  action dispatches a plain synthetic `contextmenu` indistinguishable from a
+  right-click, so with the toggle off the action degenerated into a plain
+  menu open. Fix: the store gained `markDoubleTapMenuEvent` /
+  `isDoubleTapMenuEvent` (a WeakSet over the event objects — the mark dies
+  with the event, nothing can leak into a later right-click); bubbles.ts
+  marks the synthetic event it dispatches; the menu reads the mark in
+  `prepareForMessage` into a per-open `onDoubleTapped` field (reset on every
+  open) and the strip condition is now
+  `(exterayondSettings.Reactions || this.onDoubleTapped)` — Android's
+  precedence verbatim, the setting first, the escape as the OR, both plain
+  booleans (no truthy-Promise short-circuit, the packet-069 lesson).
+- **The CopyLink gate lost Android's sticker/poll exception.** Android's
+  non-grouped channel menu — the composition the web menu carries, per the
+  MENU-04 verdict — keeps the Copy Link row for `isAnyKindOfSticker() ||
+  isPoll()` with the toggle off (`ChatActivity:50320`): the link is the only
+  share path those kinds have. 070's web gate hid the row for them too. Fix:
+  the store gained `verifyCopyLinkContext(copyLink, isSticker, isPoll)` (the
+  `verifyReportContext` pattern), and the row's verify feeds it the web's own
+  sticker detection (the document `sticker` flag, the `verifyFavoriteSticker`
+  pattern) and `media._ === 'messageMediaPoll'`. Material limit: Android also
+  keeps the row for emoji-only texts (`TYPE_EMOJIS`); the web has no detector
+  for that shape, so those follow the toggle — recorded in the checklist.
+
+**Audited clean.** The topbar gates were suspected of a build-once menu, but
+`ButtonMenuToggle` awaits `filterButtonMenuItems(buttons)` on every open —
+the store is read live each time (proven: the new tests toggle the setting
+and run the real filter over the SAME built buttons array). The Add To
+Favorites gate matches Android exactly (add direction gated,
+`DeleteFromFavorites` ungated). The hub's Chats tab gained the "Chat menu"
+section and the four message-menu rows; live reactivity and reset were
+already covered. One hub fix: the four Message-menu rows now follow
+Android's row order (Repeat < Reactions < CopyLink < AddToFavorites,
+`OpenExteraChatsActivity` rows 229/234/236/240) — Repeat had been placed
+last.
+
+Tests: new `tests/exterayondMenuGates.test.ts` (10) drives the REAL menu
+paths — the header menu through `constructUtils` + the open-time
+`filterButtonMenuItems`, the message menu through `onContextMenu`'s full
+async open (`prepareForMessage` → `init`, with the reactions strip component
+stubbed) — toggling each setting and asserting the row/strip leaves and
+returns; pre-fix it failed exactly on the two bugs (4 failed). Tabs suite
+row list reordered with the component. Store 38 (+2: the CopyLink context
+helper, the double-tap mark pair), tabs 17, settings-search 8, menu gates
+10 — all green; `tsc --noEmit` clean, oxlint clean on the touched
+files. Runbook 5.25 amended (the two escapes, the row order). Checklist
+annotations updated on MENU-05 (MENU-03 needed none — its gates were
+already correct); count unchanged (74/296), entries unchecked. Awaiting the
+user's re-walk of runbook 5.25.

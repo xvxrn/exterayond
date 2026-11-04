@@ -140,6 +140,36 @@ export const OE_DEFAULTS = {
   repeatConfirm: true,
   /** Android NekoConfig.showRepeat: the message menu gains the "Repeat" action. */
   showRepeat: false,
+  /**
+   * Android NaConfig.ShowReactions ("Reactions", default true): the message
+   * context menu's reactions strip. Off drops the strip, except for the menu
+   * the double-tap Show Reactions action (CHAT-10) opens — Android's
+   * `|| onDoubleTapped` escape (`ChatActivity:33145`), carried by the
+   * synthetic event's mark (see `markDoubleTapMenuEvent`).
+   */
+  Reactions: true,
+  /**
+   * Android NaConfig.ShowCopyLink ("CopyLink", default true): the message
+   * context menu's "Copy Message Link" item.
+   */
+  CopyLink: true,
+  /**
+   * Android NaConfig.ShowAddToFavorites ("AddToFavorites", default true): the
+   * message context menu's favorites item for stickers and GIFs — the add
+   * direction only, like Android's gate (`DeleteFromFavorites` always shows
+   * for an already favorited sticker).
+   */
+  AddToFavorites: true,
+  /**
+   * Android NaConfig.ChatMenuItemBoostGroup (default true): the chat header
+   * menu's boost item (the web's own BoostChannel/BoostGroup rows).
+   */
+  ChatMenuItemBoostGroup: true,
+  /**
+   * Android NaConfig.ChatMenuItemLinkedChat (default true): the chat header
+   * menu's linked-chat item (the web's own "View Discussion" row).
+   */
+  ChatMenuItemLinkedChat: true,
   DisableClickCommandToSend: false,
   DateOfForwardedMsg: false,
   ShowTimeHint: false,
@@ -607,6 +637,36 @@ export const resolveDoubleTapAction = (
   isOutgoing: boolean,
   settings: Pick<ExterayondSettings, 'DoubleTapAction' | 'DoubleTapActionOut'> = exterayondSettings
 ): number => isOutgoing ? settings.DoubleTapActionOut : settings.DoubleTapAction;
+
+/**
+ * The CHAT-10 double-tap Show Reactions action opens the message menu through
+ * a synthetic contextmenu (bubbles.ts); the MENU-05 Reactions composition
+ * gate must let that menu carry the strip even with the toggle off —
+ * Android's `onDoubleTapped` createMenu argument (passed at
+ * ChatActivity:2283, read at ChatActivity:33145 as
+ * `getShowReactions().Bool() || onDoubleTapped`). A WeakSet over the event
+ * objects: the mark dies with the event, so no state can leak into a later
+ * right-click.
+ */
+const doubleTapMenuEvents = new WeakSet<Event>();
+
+export const markDoubleTapMenuEvent = (event: Event) => {
+  doubleTapMenuEvents.add(event);
+};
+
+export const isDoubleTapMenuEvent = (event: Event) => doubleTapMenuEvents.has(event);
+
+/**
+ * The message menu's channel CopyLink row (MENU-05, ChatActivity:50320 — the
+ * non-grouped menu, which is the composition the web menu carries): the
+ * toggle off keeps the row for the message kinds whose only share path it is
+ * — a sticker of any kind (`isAnyKindOfSticker()`, the web's document
+ * `sticker` flag) or a poll (`isPoll()`). Android also keeps it for emoji-only
+ * texts (TYPE_EMOJIS); the web has no detector for that shape, so those
+ * follow the toggle — a documented limit.
+ */
+export const verifyCopyLinkContext = (copyLink: boolean, isSticker: boolean, isPoll: boolean): boolean =>
+  copyLink || isSticker || isPoll;
 
 /**
  * The per-message Report's contexts (W-entry, Android ChatActivity:50200):

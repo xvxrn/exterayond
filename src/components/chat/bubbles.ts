@@ -28,7 +28,7 @@ import showDeleteMessagesPopup from '@components/popups/deleteMessages';
 import repeatMessages from '@components/chat/repeatMessages';
 import appDownloadManager from '@lib/appDownloadManager';
 import detectLanguageForTranslation from '@helpers/detectLanguageForTranslation';
-import {DOUBLE_TAP_ACTIONS, resolveDoubleTapAction} from '@stores/exterayondSettings';
+import {DOUBLE_TAP_ACTIONS, markDoubleTapMenuEvent, resolveDoubleTapAction} from '@stores/exterayondSettings';
 import {AudioElement, DeferredMediaElement, isAudioElement} from '@components/audio';
 import {ChannelParticipant, Chat as MTChat, ChatParticipant, Document, Game, Message, MessageEntity,  MessageMedia,  MessageReplyHeader, Photo, PhotoSize, ReactionCount, SponsoredMessage, User, UserFull, WebPage, WebPageAttribute, Reaction, DocumentAttribute, InputStickerSet, TextWithEntities, FactCheck, WebDocument, MessageExtendedMedia, PeerSettings, LangPackString, ForumTopic, MessageAction} from '@layer';
 import {BOT_START_PARAM, NULL_PEER_ID, REPLIES_PEER_ID, SEND_WHEN_ONLINE_TIMESTAMP, STARS_CURRENCY} from '@appManagers/constants';
@@ -2300,13 +2300,17 @@ export default class ChatBubbles {
         // * Android opens the message menu off the double tap
         // * (createMenu(..., onDoubleTapped)); a synthetic contextmenu on the
         // * bubble rides the stock open path — the same untrusted contextmenu
-        // * the a11y layer's keyboard path already synthesizes
-        bubble.dispatchEvent(new MouseEvent('contextmenu', {
+        // * the a11y layer's keyboard path already synthesizes. The mark is
+        // * what lets the opened menu keep its reactions strip while the
+        // * Reactions composition toggle is off (MENU-05's onDoubleTapped)
+        const event = new MouseEvent('contextmenu', {
           bubbles: true,
           cancelable: true,
           clientX: e.clientX,
           clientY: e.clientY
-        }));
+        });
+        markDoubleTapMenuEvent(event);
+        bubble.dispatchEvent(event);
         return;
       }
 

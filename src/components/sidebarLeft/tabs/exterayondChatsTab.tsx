@@ -248,6 +248,35 @@ const ExterayondChats = () => {
           <Row.Title>{i18n('Exterayond.WideChannelPosts')}</Row.Title>
         </Row>
       </Section>
+      {/* MENU-03 — the chat menu composition (Android's chatMenu group): the
+          web rows only where Web K's header menu carries the item; the rest of
+          Android's 13 are recorded in the checklist with their dispositions */}
+      <Section name="Exterayond.ChatMenu">
+        <Row>
+          <Row.CheckboxFieldToggle>
+            <CheckboxFieldTsx
+              toggle
+              checked={exterayondSettings.ChatMenuItemBoostGroup as boolean}
+              onChange={(value) => setExterayondSetting('ChatMenuItemBoostGroup', value)}
+            />
+          </Row.CheckboxFieldToggle>
+          <Row.Title>{i18n('BoostGroup')}</Row.Title>
+        </Row>
+        <Row>
+          <Row.CheckboxFieldToggle>
+            <CheckboxFieldTsx
+              toggle
+              checked={exterayondSettings.ChatMenuItemLinkedChat as boolean}
+              onChange={(value) => setExterayondSetting('ChatMenuItemLinkedChat', value)}
+            />
+          </Row.CheckboxFieldToggle>
+          <Row.Title>{i18n('ViewDiscussion')}</Row.Title>
+        </Row>
+      </Section>
+      {/* MENU-05 — the message menu composition (Android's messageMenu group):
+          the toggles with a real web handler behind them, in Android's row
+          order (Repeat < Reactions < CopyLink < AddToFavorites); the stock
+          titles are the Android row titles verbatim */}
       <Section name="Exterayond.MessageMenu">
         <Row>
           <Row.CheckboxFieldToggle>
@@ -259,6 +288,38 @@ const ExterayondChats = () => {
           </Row.CheckboxFieldToggle>
           <Row.Title>{i18n('Exterayond.MenuRepeat')}</Row.Title>
           <Row.Subtitle>{i18n('Exterayond.MenuRepeat.Info')}</Row.Subtitle>
+        </Row>
+        <Row>
+          <Row.CheckboxFieldToggle>
+            <CheckboxFieldTsx
+              toggle
+              checked={exterayondSettings.Reactions as boolean}
+              onChange={(value) => setExterayondSetting('Reactions', value)}
+            />
+          </Row.CheckboxFieldToggle>
+          <Row.Title>{i18n('Reactions')}</Row.Title>
+          <Row.Subtitle>{i18n('Exterayond.MenuReactions.Info')}</Row.Subtitle>
+        </Row>
+        <Row>
+          <Row.CheckboxFieldToggle>
+            <CheckboxFieldTsx
+              toggle
+              checked={exterayondSettings.CopyLink as boolean}
+              onChange={(value) => setExterayondSetting('CopyLink', value)}
+            />
+          </Row.CheckboxFieldToggle>
+          <Row.Title>{i18n('CopyLink')}</Row.Title>
+        </Row>
+        <Row>
+          <Row.CheckboxFieldToggle>
+            <CheckboxFieldTsx
+              toggle
+              checked={exterayondSettings.AddToFavorites as boolean}
+              onChange={(value) => setExterayondSetting('AddToFavorites', value)}
+            />
+          </Row.CheckboxFieldToggle>
+          <Row.Title>{i18n('AddToFavorites')}</Row.Title>
+          <Row.Subtitle>{i18n('Exterayond.MenuAddToFavorites.Info')}</Row.Subtitle>
         </Row>
       </Section>
       {doubleTapSection}

@@ -47,7 +47,7 @@ import {addToProfileMusic, getSavedMusicDocument, removeFromProfileMusic} from '
 import getGroupedText from '@appManagers/utils/messages/getGroupedText';
 import confirmationPopup, {PopupConfirmationOptions} from '@components/confirmationPopup';
 import repeatMessages from '@components/chat/repeatMessages';
-import {exterayondSettings, verifyReportContext} from '@stores/exterayondSettings';
+import {exterayondSettings, isDoubleTapMenuEvent, verifyCopyLinkContext, verifyReportContext} from '@stores/exterayondSettings';
 import Icon from '@components/icon';
 import cloneDOMRect from '@helpers/dom/cloneDOMRect';
 import {ChatInputReplyTo} from '@components/chat/input';
@@ -251,6 +251,8 @@ export default class ChatContextMenu {
 
   private isLegacy: boolean;
   private messagePeerId: number;
+  /** MENU-05: the menu was opened by the double-tap Show Reactions action (Android's `onDoubleTapped`). */
+  private onDoubleTapped: boolean;
 
   private canViewReadTime: boolean;
   private messageLanguage: TranslatableLanguageISO;
@@ -481,6 +483,10 @@ export default class ChatContextMenu {
       this.isUsernameTarget = this.target.tagName === 'A' && this.target.classList.contains('mention');
       this.isTag = !!tagReactionElement;
       this.reactionElement = tagReactionElement as ReactionElement;
+      // * MENU-05 / Android's createMenu(..., onDoubleTapped): the CHAT-10
+      // * double-tap Show Reactions dispatch marks its synthetic event (the
+      // * store's WeakSet) — per-open state, reset on every open
+      this.onDoubleTapped = isDoubleTapMenuEvent(e as Event);
 
       if(this.isTag && !rootScope.premium) {
         hotReloadGuard.showPremiumPopup({feature: 'saved_tags'});
@@ -1107,7 +1113,9 @@ export default class ChatContextMenu {
       icon: isGif ? 'gifs' : 'favourites',
       text: isGif ? 'SaveToGIFs' : 'AddToFavorites',
       onClick: this.onFaveStickerClick.bind(this, false),
-      verify: () => verifyFavoriteSticker(true)
+      // * MENU-05 / Android NaConfig.ShowAddToFavorites: the add direction
+      // * only — "DeleteFromFavorites" below always shows for a favorited one
+      verify: () => exterayondSettings.AddToFavorites && verifyFavoriteSticker(true)
     }, {
       icon: isGif ? 'crossgif' : 'crossstar',
       text: isGif ? 'Message.Context.RemoveGif' : 'DeleteFromFavorites',
@@ -1270,12 +1278,23 @@ export default class ChatContextMenu {
       icon: 'link',
       text: 'MessageContext.CopyMessageLink1',
       onClick: this.onCopyLinkClick,
-      verify: async() => !isEphemeralMessage(this.message) &&
-        !isAnchoredEphemeralMessage(this.message) &&
-        !this.isLegacy &&
-        await this.managers.appPeersManager.isChannel(this.peerId) &&
-        !this.chat.isMonoforum &&
-        !this.message.pFlags.is_outgoing
+      verify: async() => {
+        const doc = ((this.message as Message.message).media as MessageMedia.messageMediaDocument)?.document as MyDocument;
+        return verifyCopyLinkContext(
+          exterayondSettings.CopyLink,
+          // * MENU-05 / Android ChatActivity:50320 (the non-grouped menu the
+          // * web composition carries): the toggle off keeps the row for
+          // * stickers and polls — the kinds whose only share path it is
+          !!doc?.sticker,
+          (this.message as Message.message)?.media?._ === 'messageMediaPoll'
+        ) &&
+          !isEphemeralMessage(this.message) &&
+          !isAnchoredEphemeralMessage(this.message) &&
+          !this.isLegacy &&
+          await this.managers.appPeersManager.isChannel(this.peerId) &&
+          !this.chat.isMonoforum &&
+          !this.message.pFlags.is_outgoing;
+      }
     }, {
       icon: 'pin',
       text: 'Message.Context.Pin',
@@ -1975,7 +1994,13 @@ export default class ChatContextMenu {
     let menuPadding: MenuPositionPadding;
     let reactionsMenu: ChatReactionsMenu;
     let reactionsMenuPosition: 'horizontal' | 'vertical';
+    // * MENU-05 / Android NaConfig.ShowReactions: the strip is the menu's
+    // * reactions view; off drops it, but the double-tap Show Reactions menu
+    // * keeps it — Android's precedence verbatim
+    // * (ChatActivity:33145, `getShowReactions().Bool() || onDoubleTapped`):
+    // * the setting first, the escape as the OR
     if(
+      (exterayondSettings.Reactions || this.onDoubleTapped) &&
       this.chat.type !== ChatType.Logs &&
       this.message &&
       (this.message._ === 'message' || (this.message._ === 'messageService' && this.message.pFlags.reactions_are_possible)) &&

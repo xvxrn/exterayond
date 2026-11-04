@@ -121,6 +121,11 @@ describe('exterayond settings store', () => {
       AskBeforeCalling: true,
       repeatConfirm: true,
       showRepeat: false,
+      Reactions: true,
+      CopyLink: true,
+      AddToFavorites: true,
+      ChatMenuItemBoostGroup: true,
+      ChatMenuItemLinkedChat: true,
       DisableClickCommandToSend: false,
       DateOfForwardedMsg: false,
       ShowTimeHint: false,
@@ -156,6 +161,29 @@ describe('exterayond settings store', () => {
     expect(exterayondSettings.OEAppearanceAvatarCorners).toBe(28);
     expect(exterayondSettings.OEAppearanceSectionRadius).toBe(20);
     expect(exterayondSettings.OEChatsRemoveMessageTail).toBe(true);
+  });
+
+  test('the menu composition gates default to the stock menus (MENU-03/05)', async() => {
+    const {exterayondSettings, setExterayondSetting, resetExterayondSettings} = await loadStore();
+    // * Android's defaults for the wired menu items are all true: a fresh
+    // * client renders the stock menus (reactions strip, copy link, favorites,
+    // * the header menu's boost and linked-chat rows)
+    const keys = ['Reactions', 'CopyLink', 'AddToFavorites', 'ChatMenuItemBoostGroup', 'ChatMenuItemLinkedChat'] as const;
+    for(const key of keys) {
+      expect(exterayondSettings[key]).toBe(true);
+    }
+
+    // * off hides the item from its owner menu; the store keeps the value
+    for(const key of keys) setExterayondSetting(key, false);
+    for(const key of keys) {
+      expect(exterayondSettings[key]).toBe(false);
+    }
+
+    // * reset restores the stock menus
+    resetExterayondSettings();
+    for(const key of keys) {
+      expect(exterayondSettings[key]).toBe(true);
+    }
   });
 
   test('clamps out-of-range and non-finite values', async() => {
@@ -576,6 +604,30 @@ describe('the per-message Report contexts (W-3, ChatActivity:50200)', () => {
 
     // * a private conversation with a human is never a Report context
     expect(verifyReportContext(false, false, false, true)).toBe(false);
+  });
+});
+
+describe('the MENU-05 channel CopyLink row context (ChatActivity:50320)', () => {
+  test('the toggle off keeps the row for the message kinds whose only share path it is', async() => {
+    const {verifyCopyLinkContext} = await loadStore();
+    expect(verifyCopyLinkContext(true, false, false)).toBe(true);
+    expect(verifyCopyLinkContext(false, false, false)).toBe(false);
+    // * Android's `isAnyKindOfSticker() || isPoll()`: a sticker, a poll
+    expect(verifyCopyLinkContext(false, true, false)).toBe(true);
+    expect(verifyCopyLinkContext(false, false, true)).toBe(true);
+  });
+});
+
+describe('the CHAT-10 double-tap Show Reactions mark (ChatActivity:33145)', () => {
+  test('the mark rides the event object only — no state can leak into a later open', async() => {
+    const {markDoubleTapMenuEvent, isDoubleTapMenuEvent} = await loadStore();
+    const marked = new Event('contextmenu');
+    const plain = new MouseEvent('contextmenu');
+    expect(isDoubleTapMenuEvent(marked)).toBe(false);
+    expect(isDoubleTapMenuEvent(plain)).toBe(false);
+    markDoubleTapMenuEvent(marked);
+    expect(isDoubleTapMenuEvent(marked)).toBe(true);
+    expect(isDoubleTapMenuEvent(plain)).toBe(false);
   });
 });
 

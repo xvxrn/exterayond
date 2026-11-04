@@ -520,6 +520,8 @@ export default class ChatTopbar {
         });
       },
       verify: async() => {
+        // * MENU-03 / Android NaConfig.ChatMenuItemLinkedChat gates the item
+        if(!exterayondSettings.ChatMenuItemLinkedChat) return false;
         const chatFull = await this.managers.appProfileManager.getCachedFullChat(this.peerId.toChatId());
         return this.chat.type === ChatType.Chat && !!(chatFull as ChatFull.channelFull)?.linked_chat_id;
       }
@@ -650,12 +652,13 @@ export default class ChatTopbar {
       icon: 'addboost',
       text: 'BoostChannel',
       onClick: onBoostClick,
-      verify: async() => this.chat.isBroadcast
+      // * MENU-03 / Android NaConfig.ChatMenuItemBoostGroup gates the item
+      verify: async() => exterayondSettings.ChatMenuItemBoostGroup && this.chat.isBroadcast
     }, {
       icon: 'addboost',
       text: 'BoostGroup',
       onClick: onBoostClick,
-      verify: async() => this.chat.isMegagroup
+      verify: async() => exterayondSettings.ChatMenuItemBoostGroup && this.chat.isMegagroup
     }, {
       icon: 'bots',
       text: 'Settings',

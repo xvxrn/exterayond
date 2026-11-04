@@ -57,6 +57,7 @@ describe('exterayond settings store', () => {
       SwitchStyle: 2,
       OEAppearanceNewNavigationBarStyle: false,
       OEAppearanceM3ListItems: false,
+      OEAppearanceMd3Dialogs: false,
       IgnoreUnreadCount: 1,
       OEAppearanceMd3Player: true,
       OEAppearanceMd3MiniPlayer: true,
@@ -90,6 +91,7 @@ describe('exterayond settings store', () => {
       OEChatsReplyBackground: true,
       OEChatsPauseVoice: false,
       OEChatsPauseRound: false,
+      ShowSmallGIF: false,
       DoubleTapAction: 1,
       DoubleTapActionOut: 1,
       AutoPauseVideo: true,
@@ -369,6 +371,24 @@ describe('exterayond settings store', () => {
     expect(getMd3StyleCount()).toBe(5);
   });
 
+  test('the ninth MD3 part (dialogs) stays outside the master count and group', async() => {
+    const {getMd3StyleCount, setAllMd3Styles, exterayondSettings, setExterayondSetting, resetExterayondSettings} = await loadStore();
+    // * the default is stock and the count is the eight-part x/8
+    expect(exterayondSettings.OEAppearanceMd3Dialogs).toBe(false);
+    expect(getMd3StyleCount()).toBe(5);
+
+    // * the master never flips the ninth part and it never counts
+    setAllMd3Styles(true);
+    expect(exterayondSettings.OEAppearanceMd3Dialogs).toBe(false);
+    expect(getMd3StyleCount()).toBe(8);
+    setExterayondSetting('OEAppearanceMd3Dialogs', true);
+    expect(getMd3StyleCount()).toBe(8);
+
+    // * reset restores it like any setting
+    resetExterayondSettings();
+    expect(exterayondSettings.OEAppearanceMd3Dialogs).toBe(false);
+  });
+
   test('boolean settings reject non-boolean values', async() => {
     const {clampExterayondSetting, OE_DEFAULTS} = await loadStore();
     expect(clampExterayondSetting('OEChatsHideCallButton', true)).toBe(true);
@@ -506,6 +526,36 @@ describe('exteraless CSS mappings', () => {
     expect(sectionRadiusToCss(21)).toBe('21px');
     expect(sectionRadiusToCss(0)).toBe('0px');
     expect(sectionRadiusToCss(28)).toBe('28px');
+  });
+});
+
+describe('the compact GIF decision (MEDIA-10, ChatMessageCell dp(120))', () => {
+  test('a GIF document takes the compact box with the setting on, everything else never does', async() => {
+    const {gifMediaBox, OE_COMPACT_GIF_SIZE, setExterayondSetting, resetExterayondSettings} = await loadStore();
+    const stock = {width: 480, height: 480} as any;
+
+    // * off (the Android default): every box passes through untouched
+    expect(gifMediaBox('gif', stock)).toEqual({box: stock, compact: false});
+    expect(gifMediaBox('gif', stock).box).toBe(stock);
+
+    // * on: only a GIF document compacts, to the Android dp(120)
+    setExterayondSetting('ShowSmallGIF', true);
+    const compacted = gifMediaBox('gif', stock);
+    expect(compacted.compact).toBe(true);
+    expect(compacted.box.width).toBe(OE_COMPACT_GIF_SIZE);
+    expect(compacted.box.height).toBe(OE_COMPACT_GIF_SIZE);
+
+    // * the other media types keep the regular box even with the setting on
+    expect(gifMediaBox('video', stock).compact).toBe(false);
+    expect(gifMediaBox('round', stock).compact).toBe(false);
+    expect(gifMediaBox('voice', stock).compact).toBe(false);
+
+    // * an explicit flag wins over the live store (the caller's own decision)
+    expect(gifMediaBox('gif', stock, false).compact).toBe(false);
+    expect(gifMediaBox('gif', stock, true).compact).toBe(true);
+
+    resetExterayondSettings();
+    expect(gifMediaBox('gif', stock).compact).toBe(false);
   });
 });
 
@@ -712,6 +762,28 @@ describe('exteraless settings application (jsdom)', () => {
     await flush();
     expect(root.classList.contains('oe-sidebar-layout-animate')).toBe(false);
     setExterayondSetting('OEAppearanceAvatarCorners', 28);
+  });
+
+  test('the MD3 dialogs chrome class follows the ninth part and reset restores stock', async() => {
+    const {setExterayondSetting, resetExterayondSettings} = await loadStore();
+    const root = document.documentElement;
+
+    // * the default is stock byte-for-byte: no class on the root
+    expect(root.classList.contains('oe-md3-dialogs')).toBe(false);
+
+    setExterayondSetting('OEAppearanceMd3Dialogs', true);
+    await flush();
+    expect(root.classList.contains('oe-md3-dialogs')).toBe(true);
+
+    setExterayondSetting('OEAppearanceMd3Dialogs', false);
+    await flush();
+    expect(root.classList.contains('oe-md3-dialogs')).toBe(false);
+
+    setExterayondSetting('OEAppearanceMd3Dialogs', true);
+    await flush();
+    resetExterayondSettings();
+    await flush();
+    expect(root.classList.contains('oe-md3-dialogs')).toBe(false);
   });
 
   test('the channel gift button hiding is off by default, live, and reset clears it', async() => {

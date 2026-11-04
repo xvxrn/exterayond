@@ -1,6 +1,7 @@
 import {batch, createEffect, createRoot} from 'solid-js';
 import {createStore, unwrap} from 'solid-js/store';
 import {hotEffect, hotListen} from '@helpers/hotModule';
+import {makeMediaSize, MediaSize} from '@helpers/mediaSize';
 import rootScope from '@lib/rootScope';
 import type {LangPackKey} from '@lib/langPack';
 import type {ChatFull, ChatTheme, UserFull, WallPaper} from '@layer';
@@ -42,6 +43,9 @@ export const OE_PLAYER_COVER_SIZE_MAX = 100;
 /** Android `PlayerStyle.COVER_RADIUS_MAX`. */
 export const OE_PLAYER_COVER_RADIUS_MAX = 48;
 
+/** Android NaConfig.ShowSmallGIF: `ChatMessageCell` pins a GIF's cell to `w = h = dp(120)`. */
+export const OE_COMPACT_GIF_SIZE = 120;
+
 export const OE_DEFAULTS = {
   OEAppearanceAvatarCorners: OE_AVATAR_CORNERS_MAX,
   OEAppearanceSectionRadius: OE_SECTION_RADIUS_STOCK,
@@ -68,6 +72,15 @@ export const OE_DEFAULTS = {
   SwitchStyle: 2,
   OEAppearanceNewNavigationBarStyle: false,
   OEAppearanceM3ListItems: false,
+  /**
+   * The ninth MD3 part (web-side, packet 065): the M3 modal chrome — popup
+   * and dialog cards, context-menu cards and the search field. Android has
+   * no toggle of its own (its M3 themes recolor modals through the theme),
+   * so the key, the default and the root class are this port's contract;
+   * the eighth-part master's x/8 count deliberately excludes it. Off keeps
+   * the stock chrome byte-for-byte.
+   */
+  OEAppearanceMd3Dialogs: false,
   /**
    * Android NaConfig folder-tab counter mode: 0 all chats, 1 except muted
    * (the effective default through NaConfig's legacy preference), 2 off.
@@ -235,6 +248,12 @@ export const OE_DEFAULTS = {
   OEChatsHideReactionsPrivate: false,
   OEChatsPauseVoice: false,
   OEChatsPauseRound: false,
+  /**
+   * Android NaConfig.ShowSmallGIF (default false; the persisted name is the
+   * contract): a GIF document's chat media renders inside the compact
+   * `dp(120)` box (`ChatMessageCell`). EtgBackup exports no alias.
+   */
+  ShowSmallGIF: false,
   /**
    * Android NaConfig.DoubleTapAction / DoubleTapActionOut (ints, defaults 1 =
    * send the quick reaction): the CHAT-10 double-tap action by direction.
@@ -780,6 +799,24 @@ export const bubbleRadiusToCss = (radius: number = exterayondSettings.bubbleRadi
 };
 
 /**
+ * The compact-GIF decision (MEDIA-10, `ChatMessageCell`'s
+ * `w = h = dp(120)`): with `ShowSmallGIF` on, a GIF document's chat media
+ * renders inside the compact box instead of the regular one. The web box is
+ * a maximum — the media keeps its aspect ratio inside it, while Android
+ * pins a square cell and fills it; the web keeps the aspect (the declared
+ * adaptation). Only the standalone chat media takes it — grouped albums and
+ * the GIFs search grid compute their sizes elsewhere, like Android's group
+ * layout does.
+ */
+export const gifMediaBox = (
+  docType: string,
+  box: MediaSize,
+  showSmallGIF: boolean = exterayondSettings.ShowSmallGIF
+): {box: MediaSize, compact: boolean} => showSmallGIF && docType === 'gif'
+  ? {box: makeMediaSize(OE_COMPACT_GIF_SIZE, OE_COMPACT_GIF_SIZE), compact: true}
+  : {box, compact: false};
+
+/**
  * Android `PlayerStyle.coverStyle()`: card, wide, full, disc. */
 export const getPlayerCoverStyle = (value = exterayondSettings.OEPlayerCoverStyle) =>
   clampExterayondSetting('OEPlayerCoverStyle', value);
@@ -867,6 +904,7 @@ if(typeof document !== 'undefined') {
       classList.toggle('oe-md3-navigation', exterayondSettings.OEAppearanceNewNavigationBarStyle);
       classList.toggle('oe-md3-list-items', exterayondSettings.OEAppearanceM3ListItems);
       classList.toggle('oe-md3-mini-player', exterayondSettings.OEAppearanceMd3MiniPlayer);
+      classList.toggle('oe-md3-dialogs', exterayondSettings.OEAppearanceMd3Dialogs);
       classList.toggle('oe-no-reply-colors', !exterayondSettings.OEChatsReplyColors);
       classList.toggle('oe-no-reply-emoji', !exterayondSettings.OEChatsReplyEmoji);
       classList.toggle('oe-no-reply-background', !exterayondSettings.OEChatsReplyBackground);

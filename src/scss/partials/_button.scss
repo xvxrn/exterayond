@@ -1410,3 +1410,14 @@ $btn-menu-z-index: 4;
   text-transform: uppercase;
   font-weight: 600;
 }
+
+// * exteraless MD3 dialogs (packet 065, the ninth MD3 part): the menu cards
+// * take the M3 menu surface — an opaque container tinted from the accent
+// * (the M3 theme's surfaceContainer role) instead of the frosted glass. The
+// * backdrop-filter override rides the shared --menu-backdrop-filter
+// * variable, so the menu, its items wrapper and the reactions container all
+// * follow. Color only, direction-neutral.
+:root.oe-md3-dialogs .btn-menu {
+  --menu-background-color: color-mix(in srgb, var(--primary-color) 8%, var(--surface-color));
+  --menu-backdrop-filter: none;
+}

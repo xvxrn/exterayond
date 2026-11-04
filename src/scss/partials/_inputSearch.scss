@@ -211,3 +211,13 @@
     padding: .375rem !important;
   }
 }
+
+// * exteraless MD3 dialogs (packet 065, the ninth MD3 part): the search
+// * field takes the M3 search-bar surface — a tonal container tinted from
+// * the accent (the M3 theme's surfaceContainerHigh role) with no outline.
+// * The stock shape is already the M3 full (pill) shape. Color only,
+// * direction-neutral; the focused state keeps its own styles.
+:root.oe-md3-dialogs .input-search {
+  --input-search-background-color: color-mix(in srgb, var(--primary-color) 8%, var(--surface-color));
+  --input-search-border-color: transparent;
+}

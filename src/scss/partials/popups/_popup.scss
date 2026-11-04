@@ -448,3 +448,15 @@
     margin-bottom: 0.5rem;
   }
 }
+
+// * exteraless MD3 dialogs (packet 065, the ninth MD3 part): the popup and
+// * dialog cards take the M3 modal surface — a tonal container tinted from
+// * the accent (the M3 theme's surfaceContainerHigh role, the same tonal-mix
+// * language the other MD3 parts use). Android themes its modals through the
+// * M3 theme rather than a per-part toggle, so the surface role is the pinned
+// * reference, not a ported key. The web's popup card is the dialog card: one
+// * owner, one treatment. Color only — the stock card shape is already the
+// * M3 extra-large intent, and every value here is direction-neutral.
+:root.oe-md3-dialogs .popup-container {
+  --popup-background-color: color-mix(in srgb, var(--primary-color) 8%, var(--surface-color));
+}

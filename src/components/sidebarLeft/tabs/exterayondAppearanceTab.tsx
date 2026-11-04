@@ -257,6 +257,18 @@ const ExterayondAppearance = () => {
               <Row.Title>{i18n(label)}</Row.Title>
             </Row>
           ))}
+          {/* * the ninth MD3 part (packet 065) stays an independent row: the
+            * master's x/8 count and its group are the eight Android parts' */}
+          <Row>
+            <Row.CheckboxFieldToggle>
+              <CheckboxFieldTsx
+                toggle
+                checked={exterayondSettings.OEAppearanceMd3Dialogs}
+                onChange={(value) => setExterayondSetting('OEAppearanceMd3Dialogs', value)}
+              />
+            </Row.CheckboxFieldToggle>
+            <Row.Title>{i18n('Exterayond.Md3.Dialogs')}</Row.Title>
+          </Row>
         </details>
       </Section>
       <Section name="Exterayond.Player.Cover" caption="Exterayond.Player.StyleInfo">

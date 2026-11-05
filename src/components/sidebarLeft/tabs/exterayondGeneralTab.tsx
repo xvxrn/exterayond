@@ -15,7 +15,8 @@ const General = () => {
   const [exterayondSettings, setExterayondSetting] = useExterayondSettings();
 
   return (
-    <Section name="Exterayond.General">
+    <>
+      <Section name="Exterayond.General">
       <RangeSettingSelector
         textLeft={i18n('Exterayond.IdDcType')}
         textRight={(value) => i18n(value === 0 ? 'Exterayond.IdDcType.Hidden' : value === 1 ? 'Exterayond.IdDcType.TelegramApi' : 'Exterayond.IdDcType.BotApi')}
@@ -114,6 +115,23 @@ const General = () => {
         <Row.Subtitle>{i18n('Exterayond.AddCommaAfterMention.Info')}</Row.Subtitle>
       </Row>
     </Section>
+    {/* * TRANS-05 (Android's path: General → translatorRow →
+      * NekoTranslatorSettingsActivity, the "Translate" header group): the
+      * translator mode. The selector row is titled on the web — Android's
+      * ConfigCellSelectBox renders untitled, the web selector needs a label
+      * (the documented adaptation) */}
+    <Section name="Exterayond.Translate" caption="Exterayond.Translate.Mode.Info">
+      <RangeSettingSelector
+        textLeft={i18n('Exterayond.Translate.Mode')}
+        textRight={(value) => i18n(value === 0 ? 'Exterayond.Translate.Mode.Off' : value === 1 ? 'Exterayond.Translate.Mode.Manual' : 'Exterayond.Translate.Mode.All')}
+        value={exterayondSettings.translatorMode}
+        minValue={0}
+        maxValue={2}
+        step={1}
+        onChange={(value) => setExterayondSetting('translatorMode', value)}
+      />
+    </Section>
+    </>
   );
 };
 

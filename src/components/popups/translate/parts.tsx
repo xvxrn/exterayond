@@ -12,7 +12,9 @@ import {I18nTsx} from '@helpers/solid/i18n';
 import {requestRAF} from '@helpers/solid/requestRAF';
 import classNames from '@helpers/string/classNames';
 import {Message, RichMessage, TextWithEntities} from '@layer';
+import {buildTranslatedDisplayText, shouldKeepOriginalForManualTranslation} from '@lib/exterayondTranslate';
 import {flattenRichMessageContent, richMessageToPage} from '@lib/richMessage';
+import {exterayondSettings} from '@stores/exterayondSettings';
 import {useHotReloadGuard} from '@lib/solidjs/hotReloadGuard';
 import SolidJSHotReloadGuardProvider, {hotReloadGuard} from '@lib/solidjs/hotReloadGuardProvider';
 import {createEffect, createResource, createSignal, JSX, Match, Switch} from 'solid-js';
@@ -39,6 +41,11 @@ export const Result = (props: {
   language: TranslatableLanguageISO;
   message?: Message.message;
   textWithEntities?: TextWithEntities;
+  /**
+   * The original side the popup shows (the rich-message-aware computation
+   * from the body) — TRANS-05's keep-original copy reads its text.
+   */
+  originalTextWithEntities?: TextWithEntities;
   wireCaptionClick?: (div: HTMLElement) => void;
 }) => {
   const {rootScope, wrapRichText} = useHotReloadGuard();
@@ -87,6 +94,26 @@ export const Result = (props: {
       flattenRichMessageContent(translated.value) :
       translated.value;
     const {text, html} = prepareTextWithEntitiesForCopying(textWithEntities);
+
+    // * TRANS-05 (`NaConfig.translatorMode`): under "Manual Only"/"On" the
+    // * manual takeaway carries the original — Android's `startTrans` alert
+    // * shows `buildTranslatedDisplayText(original, translation,
+    // * shouldKeepOriginalForManualTranslation(mode))` and the inline
+    // * pipeline renders the same join into the message; the popup's copy is
+    // * the web's single manual-translation takeaway (GEN-01: the popup is
+    // * the sheet analog, its cards always show both sides like the sheet).
+    // * Off copies the translation alone — the stock behavior.
+    if(shouldKeepOriginalForManualTranslation(exterayondSettings.translatorMode) && props.originalTextWithEntities?.text) {
+      const joined = buildTranslatedDisplayText(props.originalTextWithEntities.text, text, true);
+      try {
+        await copyTextToClipboard(joined, undefined, {rethrow: true});
+        toastNew({langPackKey: 'TextCopied'});
+      } catch{
+        toastNew({langPackKey: 'TextCopyFailed'});
+      }
+      return;
+    }
+
     try {
       await copyTextToClipboard(text, html, {rethrow: true});
       toastNew({langPackKey: 'TextCopied'});

@@ -123,6 +123,7 @@ export function TranslatePopupBodyContent(props: {
               <Result
                 message={options.message}
                 textWithEntities={options.textWithEntities}
+                originalTextWithEntities={originalTextWithEntities}
                 language={peerTranslation.language()}
                 wireCaptionClick={wireCaptionClick}
                 title={

@@ -1736,6 +1736,7 @@ visual review.
 | 4 — Dialogs / headers / message visuals | 20 | LOOK-03, 02*, 05, 08; GEN-02…07; CHAT-04…06, 23, 24, 27, 28, 40; HIDE-01, 12 | | | * unchecked entry; LOOK-05/08 + CHAT-40 appended from packets 041/042 |
 | 5 — Folders, search, stickers, rest | 18 | GEN-14; LOOK-27; CHAT-01…03, 20, 22; HIDE-02, 03, 07, 09, 10, 14…16, 21, 22; OTHER-03 | | | |
 | 6 — Backup round-trip | 1 | OTHER-01 (unchecked entry) | | | with plugin flags |
+| 7 — Ghost Mode | 6 | GHOST-01…05 (checked, suppression decision-tested), GHOST-12 | | | the observable half needs a second account (7.1) |
 | **Total** | **82** | 49 checked + 20 packet-028/029 items (17 entries + master + player toggles + base popup) + 2 wired-but-unchecked (MEDIA-01, CHAT-37) + OTHER-01 + 4 user-directed V entries (045–048) | | | snapshot at 58/296; CHAT-30 (036), LOOK-05/08 (041), CHAT-40 (042), CHAT-35 (043), V-1..V-4 (045–048), CHAT-10/11 (051) appended; PILLS-01/06/12 + FOLD-11/13 (052–054) and W-1..W-3, W-6 (055–056) appended — steps 5.19–5.22; LOOK-01/02 (059) and LOOK-11/12 (060) appended — steps 4.21–4.22; FOLD-10/12 joined 5.20 (062), 2.12 rewritten for the CHAT-37 anchor strip (061), CHAT-26 appended — 5.23 (063) |
 
 After each session of user verification, record the outcomes: update the
@@ -1768,7 +1769,7 @@ Bubble Radius).
 - **[no chat data]**
 - PASS/FAIL:
 
-### 6.3 The import report names the unsupported keys (packet 080, appended)
+### 6.3 The import report names the unsupported keys (packet 080b, appended)
 
 The import toast now lists the Android-only key names a file carried, after
 the applied count — "Applied N settings from the backup. Unsupported keys
@@ -1780,6 +1781,64 @@ toast (before packet 080 the same import reported only the applied count and
 the unsupported names were visible nowhere). The names follow the module's
 key-table order, not the file's.
 - **[no chat data]**
+- PASS/FAIL:
+
+---
+
+## Batch 7 — Ghost Mode (client-side suppression)
+
+Hub location: **Other** tab → "Ghost Mode" (Android reaches the same screen
+from Other → AyuMoments → ghostRow). The suppression is client-side only —
+the client withholds or rewrites its own outgoing packets exactly as the
+Android client does at the pinned revision; nothing is faked beyond that.
+The genuinely observable half (does the partner see me?) needs a second
+account or device — that part is yours; the steps mark where.
+
+### 7.1 GHOST-01..05, GHOST-12 — the master toggle, the essentials, the locks (packets 081–082)
+
+- The section shows the master toggle with a "0/5" counter and five rows in
+  Android's order and wording: Don't Read Messages, Don't Read Stories,
+  Don't Send Online, Don't Send Typing, Go Offline Automatically. At the
+  defaults every checkbox is off.
+- Toggle the master: toast "Ghost mode turned on", counter "5/5", the five
+  checkboxes flip (the first four to checked — the checkbox shows the ghost
+  state, Android's CheckBoxCell — "Go Offline Automatically" to checked too).
+  Toggling again: "Ghost mode turned off", "0/5".
+- **[second account]** With ghost on: your status reads offline to the
+  partner within a few seconds (the rewritten pings); typing in a chat shows
+  no "typing…" on the partner's side; opening a chat does not clear the
+  partner's unread badge; viewing a story does not register a view. A voice
+  note played to the end is also not marked read (`readMessageContents` is a
+  read receipt too).
+- **[second account]** Turn ghost off and open the previously opened chat:
+  the backlog marks read on the server again (the suppressed reads are not
+  latched — the first read after leaving covers up to the current top
+  message, like Android's re-attempts).
+- The known web-base difference: with "Don't Send Typing" on, the draft
+  sync between the account's own devices pauses too (the web sends drafts
+  over the same `messages.setTyping` request; Android has no such packets).
+- Locks (GHOST-12): the small lock button on each essential row toggles the
+  lock; a locked row's checkbox is disabled and the master toggle leaves its
+  value alone (lock "Don't Send Typing", toggle the master — it stays on).
+  Lock four rows: the fifth lock button is disabled (Android's four-cap),
+  unlocking is never refused. Keyboard: the lock button is a real button
+  with `aria-pressed`.
+- The section is searchable: "Ghost Mode" and the five row titles come up in
+  the settings search and open the Other tab.
+- RTL: the lock buttons ride the row titles' inline end and mirror with the
+  rest of the hub.
+- **[no chat data]** (status/read observations only)
+- PASS/FAIL:
+
+---
+### 7.2 packet 083 — the section heading correction
+
+- The Ghost Mode section's heading reads **"Ghost essentials"** (Android's
+  `GhostEssentialsHeader`), with the master toggle row still titled
+  "Ghost Mode"; in the settings search the section comes up as
+  "Ghost essentials" and the master row as "Ghost Mode".
+- Everything else in 7.1 is unchanged; re-verify the section visually after
+  pulling this packet.
 - PASS/FAIL:
 
 ---

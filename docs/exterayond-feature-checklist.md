@@ -626,7 +626,7 @@ catalog remains the source reference.
 - [ ] **PILLS-07 — Виджет состояния прокси** (**А**). **052: вердикт — класс 3: в браузерном клиенте нет подсистемы прокси (браузер не открывает SOCKS/MTProto-транспорт), Web K не имеет ни настроек, ни состояния прокси; id 6 остаётся в строке раскладки (хранится, переносится в backup), полоса его не рендерит. Не подделывается.**
   [`ProxyPill`](https://github.com/exteraless/exteraless/blob/8b7ec40ecada6ab3cfcc24e9f3d8ae262c02de63/TMessagesProj/src/main/java/app/exteraless/pillstack/PillRegistry.java#L25) — Зависит от выбранной веб-архитектуры подключения.
 
-- [ ] **PILLS-08 — Виджет переключения Ghost Mode** (**С**). **052: вердикт — ждёт собственную подсистему (GHOST-01 не переносился); пилюля не регистрируется, не подделывается.**
+- [ ] **PILLS-08 — Виджет переключения Ghost Mode** (**С**). **052: вердикт — ждёт собственную подсистему (GHOST-01 не переносился); пилюля не регистрируется, не подделывается. 082: GHOST-01 перенесён (переключатель в хабе, пакеты 081–082) — пилюля остаётся незарегистрированной до своей регистрации в веб-реестре пилюль.**
   [`GhostPill`](https://github.com/exteraless/exteraless/blob/8b7ec40ecada6ab3cfcc24e9f3d8ae262c02de63/TMessagesProj/src/main/java/app/exteraless/pillstack/PillRegistry.java#L22)
 
 - [ ] **PILLS-09 — Виджет локального статуса/последней активности** (**А**). **052: вердикт — ждёт AYU-09 (локальная история последней активности); пилюля не регистрируется.**
@@ -845,40 +845,41 @@ catalog remains the source reference.
 
 ## Ghost Mode и параметры отправки
 
-- [ ] **GHOST-01 — Единый переключатель Ghost Mode** (**С**).
-  [`ghostModeToggleRow`](https://github.com/exteraless/exteraless/blob/8b7ec40ecada6ab3cfcc24e9f3d8ae262c02de63/TMessagesProj/src/main/java/tw/nekomimi/nekogram/settings/GhostModeActivity.java#L35) — Не аппаратная функция. Нужен аккуратный перенос на уровень отправки соответствующих MTProto-событий.
+- [x] ~~**GHOST-01 — Единый переключатель Ghost Mode** (**С**).~~ **081–082: перенесён.** Мастер-переключатель — семантика `NekoConfig.setGhostMode`/`isGhostModeActive`/`toggleGhostMode` в чистом модуле `src/lib/exterayondGhost.ts` (пять «essentials», блокировки GHOST-12 учитываются так же: заблокированные флаги не участвуют ни в активном состоянии, ни в переключении), строка в хабе (вкладка Other — путь Android тоже идёт через Other → AyuMoments) со счётчиком «x/5» и тостами `GhostModeEnabled`/`Disabled`. После переключения, как в Android, уходит status-запрос «online» — при входе в режим его переписывает только что включённое подавление (GHOST-04), при выходе он реально возвращает online. Подавление — только клиентское, ровно как в Android-клиенте; поведение ждёт шага 7.1 рунбука (нужна проверка со второй учёткой).
+  [`ghostModeToggleRow`](https://github.com/exteraless/exteraless/blob/8b7ec40ecada6ab3cfcc24e9f3d8ae262c02de63/TMessagesProj/src/main/java/tw/nekomimi/nekogram/settings/GhostModeActivity.java#L35)
 
-- [ ] **GHOST-02 — Управление отправкой прочтения сообщений** (**П**).
+- [x] ~~**GHOST-02 — Управление отправкой прочтения сообщений** (**П**).~~ **081: подавление на веб-точках.** `readHistory` (все три запроса — `messages.readHistory`/`channels.readHistory`/`messages.readDiscussion`) пропускает серверный вызов, локальная пометка прочтения остаётся; `triedToReadMaxId` при подавлении не фиксируется — после выхода из режима следующий отклик чата дочитывает backlog на сервере, как пере-попытки Android. `readMessageContents`/`channels.readMessageContents` (голосовые/медиа) — то же. `messages.getMessagesViews` переписывается в `increment=false` (Android переписывает, а не блокирует). `messages.readEncryptedHistory` не существует на вебе (секретных чатов нет); `readMentions`/`readReactions` Android не подавляет — и веб не подавляет.
   [`sendReadMessagePacketsRow`](https://github.com/exteraless/exteraless/blob/8b7ec40ecada6ab3cfcc24e9f3d8ae262c02de63/TMessagesProj/src/main/java/tw/nekomimi/nekogram/settings/GhostModeActivity.java#L37)
 
-- [ ] **GHOST-03 — Управление отправкой прочтения историй** (**П**).
+- [x] ~~**GHOST-03 — Управление отправкой прочтения историй** (**П**).~~ **081:** `stories.readStories` и `stories.incrementStoryViews` пропускают вызов после локальной пометки (паттерн существующего TEST_READ); «story ghost session» Android (просмотр без прочтения) — территория AYU, не переносилась.
   [`sendReadStoriesPacketsRow`](https://github.com/exteraless/exteraless/blob/8b7ec40ecada6ab3cfcc24e9f3d8ae262c02de63/TMessagesProj/src/main/java/tw/nekomimi/nekogram/settings/GhostModeActivity.java#L38)
 
-- [ ] **GHOST-04 — Управление отправкой статуса online** (**П**).
+- [x] ~~**GHOST-04 — Управление отправкой статуса online** (**П**).~~ **081:** как в Android, запрос не блокируется, а переписывается в `offline=true` (`updateMyOnlineStatus` — единственная точка `account.updateStatus` на вебе); локальный статус самого себя следует тому, что сказано серверу (у Android то же правило показа в UserCell/ProfileActivity).
   [`sendOnlinePacketsRow`](https://github.com/exteraless/exteraless/blob/8b7ec40ecada6ab3cfcc24e9f3d8ae262c02de63/TMessagesProj/src/main/java/tw/nekomimi/nekogram/settings/GhostModeActivity.java#L39)
 
-- [ ] **GHOST-05 — Управление отправкой прогресса загрузки** (**П**).
+- [x] ~~**GHOST-05 — Управление отправкой прогресса загрузки** (**П**).~~ **081:** на зафиксированной ревизии Android флаг блокирует `messages.setTyping` целиком (typing + upload-progress идут одним запросом); веб так же блокирует `setTyping` ранним выходом. Материальная разница базы: черновик-синхронизация веба (`sendMessageTextDraftAction`) ездит тем же запросом и останавливается вместе с ним (у Android таких пакетов нет) — записано в рунбук 7.1.
   [`sendUploadProgressRow`](https://github.com/exteraless/exteraless/blob/8b7ec40ecada6ab3cfcc24e9f3d8ae262c02de63/TMessagesProj/src/main/java/tw/nekomimi/nekogram/settings/GhostModeActivity.java#L40)
 
-- [ ] **GHOST-06 — Отправка offline после online** (**П**).
+- [ ] **GHOST-06 — Отправка offline после online** (**П**). **081: ключ хранится и участвует в мастер-состоянии и счётчике x/5 (как в Android), но его поведение — offline-запрос после завершения каждого исходящего send-запроса (`handleOfflineAfterSend`) — ждёт хук отправки веб-пайплайна (единая точка «сообщение ушло» у веба распределена по sendMessage/sendMedia/forward). Не подделывается.**
   [`sendOfflinePacketAfterOnlineRow`](https://github.com/exteraless/exteraless/blob/8b7ec40ecada6ab3cfcc24e9f3d8ae262c02de63/TMessagesProj/src/main/java/tw/nekomimi/nekogram/settings/GhostModeActivity.java#L41)
 
-- [ ] **GHOST-07 — Отмечать прочитанным после собственного ответа** (**П**).
+- [ ] **GHOST-07 — Отмечать прочитанным после собственного ответа** (**П**). **082: не хранится, строки в хабе нет — поведение (read-after-send с обходом подавления через AyuState.allowReadPacket) требует того же хука отправки, что GHOST-06; строка появится вместе с поведением.**
   [`markReadAfterSendRow`](https://github.com/exteraless/exteraless/blob/8b7ec40ecada6ab3cfcc24e9f3d8ae262c02de63/TMessagesProj/src/main/java/tw/nekomimi/nekogram/settings/GhostModeActivity.java#L43)
 
-- [ ] **GHOST-08 — Отправка без звука по умолчанию** (**П**).
+- [ ] **GHOST-08 — Отправка без звука по умолчанию** (**П**). **082: не хранится — Android подставляет `notify=false` во все отправки; веб-провод композитора ещё не подключён к этому ключу.**
   [`sendWithoutSoundRow`](https://github.com/exteraless/exteraless/blob/8b7ec40ecada6ab3cfcc24e9f3d8ae262c02de63/TMessagesProj/src/main/java/tw/nekomimi/nekogram/settings/GhostModeActivity.java#L46)
 
-- [ ] **GHOST-09 — Поведение Ghost Mode при отложенной отправке** (**П**).
-  [`scheduledSendRow`](https://github.com/exteraless/exteraless/blob/8b7ec40ecada6ab3cfcc24e9f3d8ae262c02de63/TMessagesProj/src/main/java/tw/nekomimi/nekogram/settings/GhostModeActivity.java#L48) — NaConfig.ghostScheduledSend; точную семантику перенести из потребителя, не подменять обычным планировщиком сообщений.
+- [ ] **GHOST-09 — Поведение Ghost Mode при отложенной отправке** (**П**). **082: не хранится. Android (`shouldSendAsGhostScheduled`) при включённом режиме и выключенных online-пакетах отправляет обычные сообщения «отложенно-немедленно», чтобы не поднимать статус; требует того же хука отправки. Точную семантику переносить из потребителя, не подменять обычным планировщиком сообщений.**
+  [`scheduledSendRow`](https://github.com/exteraless/exteraless/blob/8b7ec40ecada6ab3cfcc24e9f3d8ae262c02de63/TMessagesProj/src/main/java/tw/nekomimi/nekogram/settings/GhostModeActivity.java#L48)
 
-- [ ] **GHOST-10 — Пункт Ghost Mode в боковом меню** (**П**).
+- [ ] **GHOST-10 — Пункт Ghost Mode в боковом меню** (**П**). **082: не хранится — пункт меню-ящика (Android MainMenuHelper с заголовком Enable/Disable Ghost) ждёт своего места в веб-меню; сам механизм переключения готов.**
   [`showGhostInDrawerRow`](https://github.com/exteraless/exteraless/blob/8b7ec40ecada6ab3cfcc24e9f3d8ae262c02de63/TMessagesProj/src/main/java/tw/nekomimi/nekogram/settings/GhostModeActivity.java#L50)
 
-- [ ] **GHOST-11 — Индикатор Ghost Mode** (**П**).
+- [ ] **GHOST-11 — Индикатор Ghost Mode** (**П**). **082: не хранится — Android рисует призрака справа от заголовка чата (ActionBar:642) и в списке чатов; веб-аналог — иконка у заголовка топбара — ещё не подключён.**
   [`showGhostModeStatusRow`](https://github.com/exteraless/exteraless/blob/8b7ec40ecada6ab3cfcc24e9f3d8ae262c02de63/TMessagesProj/src/main/java/tw/nekomimi/nekogram/settings/GhostModeActivity.java#L51)
 
-- [ ] **GHOST-12 — Фиксация отдельных флагов при общем переключении Ghost Mode** (**П**).
+- [x] ~~**GHOST-12 — Фиксация отдельных флагов при общем переключении Ghost Mode** (**П**).~~ **082: пять ключей `*Locked` хранятся, мастер-переключатель пропускает заблокированные (решение в тестах); десктопный аналог долгого нажатия — явная кнопка-замок на строке (клавиатурнодоступная, aria-pressed), заблокированная строка гасит свой чекбокс; кап Android «не больше четырёх замков» — пятая кнопка отказывает (вместо shake).**
+  [`sendReadMessagePacketsLocked`](https://github.com/exteraless/exteraless/blob/8b7ec40ecada6ab3cfcc24e9f3d8ae262c02de63/TMessagesProj/src/main/java/tw/nekomimi/nekogram/settings/GhostModeActivity.java#L175)
   [`sendReadMessagePacketsLocked`](https://github.com/exteraless/exteraless/blob/8b7ec40ecada6ab3cfcc24e9f3d8ae262c02de63/TMessagesProj/src/main/java/tw/nekomimi/nekogram/settings/GhostModeActivity.java#L175) — Поддержка locked-полей и долгого нажатия; на ПК нужен явный доступный аналог.
 
 ## Облако, резервные копии и обслуживание

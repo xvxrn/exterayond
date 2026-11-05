@@ -187,13 +187,36 @@ desktop dblclick toggles full-screen) and PLAYER-14 as nothing-to-re-locate
 actions group and the overflow menu; the web popup has neither surface).
 No code in 078. Checklist count unchanged (74/296).
 
+Packet 080 (2026-11-05) recorded GEN-08..GEN-11 as class 3 (web file
+engine has no speed levels or min-chunk knob; downloads are browser-owned,
+so no save-path/subfolder surface exists). **Packet 080b** landed the
+packet-079 follow-up: the hub's `.extera` import toast now names the
+unsupported Android-only keys (`backupImportReport` in
+`src/lib/exteraBackup/etgBackup.ts` — one toast, the applied count travels
+inside it; runbook 6.3). **Packets 081–082 (2026-11-05) started the Ghost
+Mode subsystem** — chosen over Translation for self-containedness (pure
+client-side suppression at manager chokepoints the web owns, no
+providers/CORS/keys; PILLS-08 waits on GHOST-01). The Android contract
+(`NekoConfig` ghost block + `AyuGhostUtils.interceptRequest` @8b7ec40) lives
+in the worker-safe `src/lib/exterayondGhost.ts`; the store gained the ten
+Android-named keys (five essentials + five locks) pushed worker-side like
+the GEN-12 flag; the gates: `readHistory`/`readMessages` skip the server
+call without latching, `setTyping` blocks whole, `incrementMessageViews`
+rewrites `increment=false`, `updateMyOnlineStatus` rewrites to offline
+(never drops), `readStories`/`incrementStoryViews` skip. The hub's Other tab
+gained the "Ghost Mode" section — master toggle with the x/5 counter, the
+five essentials in Android's wording, explicit lock buttons as GHOST-12's
+desktop analog (four-cap). Checklist count **80/296** (GHOST-01..05 +
+GHOST-12 checked). Ghost's remaining rows (offline-after-send,
+mark-read-after-send, silent-by-default, scheduled-send, drawer item, status
+indicator) wait on the send-pipeline hook and two small UI wirings —
+annotated per entry, never faked. Runbook batch 7 / step 7.1 appended; the
+suppression's observable half needs the user's second account.
+
 Remaining player candidates: PLAYER-07 (cover extend — visual), PLAYER-13
 (block order — would reuse the FOLD-10/12 editor pattern over the web
 popup's progress/transport blocks, whose actions block does not exist).
-Packet 080 (2026-11-05) recorded GEN-08..GEN-11 as class 3 (web file
-engine has no speed levels or min-chunk knob; downloads are browser-owned,
-so no save-path/subfolder surface exists). Plugins are deferred until the
-user explicitly asks to resume them.
+Plugins are deferred until the user explicitly asks to resume them.
 Phone-only hardware features are not desktop tasks.
 
 ## Operating constraints

@@ -3176,7 +3176,7 @@ Storage items of `OpenExteraGeneralActivity`).
 
 Checklist: all four entries annotated, unchecked — count unchanged (74/296).
 
-## 080 / the `.extera` import report names the unsupported keys (2026-11-05)
+## 080b / the `.extera` import report names the unsupported keys (2026-11-05)
 
 The follow-up packet 079 explicitly offered: the `applyBackup`/`readBackup`
 functions returned the unsupported key names since packet 010, but the hub's
@@ -3198,7 +3198,7 @@ not beside it. The Other tab's import handler maps the descriptor through
 not an indexed row title), and the key name avoids the extractor's "Confirm"
 deny list as a matter of hygiene.
 
-Tests: `tests/exteraBackup.test.ts` gained "the import report (packet 080)"
+Tests: `tests/exteraBackup.test.ts` gained "the import report (packet 080b)"
 (2 tests): a file with `tabletMode` + `titleText` applies its one supported
 key and reports `[1, 2, 'titleText, tabletMode']` (the names follow the key
 table's order, not the file's — pinned), and an empty unsupported list keeps
@@ -3206,3 +3206,223 @@ Android's plain toast with `[5]`. exteraBackup suite green (36). `tsc
 --noEmit` clean; oxlint clean on the four touched files. Runbook 6.3
 appended. Checklist count unchanged (74/296) — compatibility surface, no
 feature entry.
+
+## 081 / GHOST-01..05 — the Ghost Mode suppression core (2026-11-05)
+
+The new subsystem run after the small-portable queue exhausted: Ghost Mode
+versus Translation scanned against the pinned Android source and Web K's own
+code; Ghost won on self-containedness — it is pure client-side suppression at
+manager chokepoints the web already owns (`AyuGhostUtils.interceptRequest` is
+Android's model; no providers, no CORS, no keys, unlike the translation
+pipeline whose web surface is a popup plus an inline subsystem), and PILLS-08
+explicitly waits on GHOST-01.
+
+The Android contract @8b7ec40, read from `NekoConfig`'s ghost block +
+`GhostModeActivity` + `AyuGhostUtils`: five "essentials" (`sendReadMessagePackets`,
+`sendReadStoriesPackets`, `sendOnlinePackets`, `sendUploadProgress`,
+`sendOfflinePacketAfterOnline`, defaults true/true/true/true/false) with five
+`*Locked` companions (default false); `isGhostModeActive` = every UNLOCKED
+essential in its ghost state, where a flag's ghost value is
+`(key == sendOfflinePacketAfterOnline) == value`; `setGhostMode` moves
+unlocked flags to `(item == offlineAfterOnline) == enabled`; `toggleGhostMode`
+then always sends `performStatusRequest(false)` — an *online* packet that the
+just-enabled suppression rewrites to offline when entering (the interceptor
+forces `updateStatus.offline = true`, it never drops the request) and that
+really goes online when leaving. The interception: `sendUploadProgress` off
+blocks `messages.setTyping` whole; `sendReadMessagePackets` off blocks the
+read requests (`readHistory`/`readEncryptedHistory`/`readDiscussion`/
+`readMessageContents` both layers, fake `affectedMessages{pts:-1}` answer)
+and rewrites `getMessagesViews.increment = false`; `sendReadStoriesPackets`
+off blocks `stories.readStories`/`incrementStoryViews`; `sendOnlinePackets`
+off rewrites status requests. `markReadAfterSend` and `sendOfflinePacketAfterOnline`
+hook the send pipeline (deferred, below). EtgBackup exports none of the ghost
+keys (verified against EtgBackup.java) — no backup aliases invented.
+
+Web implementation, manager-gated (the interception points Web K owns):
+
+- `src/lib/exterayondGhost.ts` — a worker-safe pure module (no DOM/Solid):
+  the flag type + Android defaults, `GHOST_ESSENTIAL_KEYS` in
+  `ghostToggleItems`' order, `isFlagInGhostState`, `isGhostModeActive`,
+  `ghostModeTarget`, `applyGhostMode`, the four suppression predicates
+  (`ghostSuppressesReadReceipts`, `ghostSuppressesStoryReads`,
+  `ghostBlocksTyping`, `ghostStatusToAnnounce`), and the worker-side state
+  with `set/getExterayondGhostFlags`.
+- `appMessagesManager.readHistory` — the suppression joins the existing
+  `skipServerCall` (local apply always runs; no fake response needed because
+  the web's local apply does not depend on the response). One deliberate
+  divergence from the naive port, proven by comment and test: a suppressed
+  read does NOT latch `triedToReadMaxId` — Android re-attempts the read on
+  every chat open while blocked, so leaving the mode must re-read the
+  backlog; latching would permanently hide it from the server.
+- `appMessagesManager.readMessages` — both `readMessageContents` invokes
+  skipped, local update kept (the suppressed non-channel branch carries no
+  pts, like Android's fake -1).
+- `appMessagesManager.setTyping` — early return (typing + upload progress +
+  the web-only draft sync ride the one request; the draft pause is a
+  documented base difference, Android sends no draft packets).
+- `appMessagesManager.incrementMessageViews` — `increment: false` rewrite.
+- `appUsersManager.updateMyOnlineStatus` — `ghostStatusToAnnounce` rewrite
+  before the local self-status set, so local and server agree (Android's
+  self cells display offline while the flag is on).
+- `appStoriesManager.readStories` (the `TEST_READ` precedent line) and
+  `incrementStoryViews` — invoke skipped after the local update.
+- The store: the ten keys (five essentials + five locks) with the Android
+  names and defaults; `GHOST_FLAG_KEYS`/`GHOST_LOCKED_OF`; `pushGhostFlags`
+  mirrors the GEN-12 `setSortByUnread` push (flag changes, `resetExterayondSettings`,
+  `user_auth`/`account_switched` via `pushWorkerState`); the locks never
+  reach the worker.
+- `setExterayondGhostMode(enabled)` + `isExterayondGhostModeActive()` — the
+  master toggle: `applyGhostMode` over the store's locks, then Android's
+  `toggleGhostMode` status request (`updateMyOnlineStatus(false)` — rewritten
+  to offline while entering, genuinely online when leaving).
+
+Tests: new `tests/exterayondGhost.test.ts` (20) — the decisions against the
+Android contracts (ghost-state comparison, the unlocked-only active check
+with the vacuous all-locked case, setGhostMode targets with locks, the
+request-kind mapping, the status rewrite), the store push (flag change, lock
+change staying tab-side, the session events, the reset), the master toggle
+(targets + toast-side status request + lock retention), and six source
+contracts pinning the manager gates. `tests/exterayondSettings.test.ts`
+gained the ten default rows (the OE_DEFAULTS literal); the import-graph
+ratchet grew by exactly the new leaf module (`reloadPage` 404 → 405,
+`check --update --allow-increase`). All green; `tsc --noEmit` clean, oxlint
+clean on the touched files. Checklist: GHOST-02..05 annotated + checked,
+GHOST-06/07 waiting on the send-pipeline hook, count pending the 082 rows
+(checked entries count only after the hub lands; recorded under 082).
+
+## 082 / GHOST-01 + GHOST-12 — the hub section, the locks (2026-11-05)
+
+The Ghost Mode section lives in the hub's **Other** tab — the web mapping of
+Android's path (Other → AyuMoments → ghostRow → GhostModeActivity): the
+master toggle row with Android's "%d/5" ghost-state counter as its subtitle,
+then the five essentials in Android's order and wording (`GhostEssentialsHeader`
+is the section; the row titles are strings_nax's verbatim: "Don't Read
+Messages", "Don't Read Stories", "Don't Send Online", "Don't Send Typing",
+"Go Offline Automatically"). The checkboxes show the ghost state like
+Android's CheckBoxCell (`checkValue = !item.Bool()` except the
+offline-after row); toggling toasts `GhostModeEnabled`/`Disabled` (the
+bulletin parity). GHOST-07's `markReadAfterSend`, GHOST-08's silent-by-default
+and GHOST-09's scheduled-send rows are NOT rendered — no web behavior yet,
+never a toggle without its behavior (annotated in the checklist instead).
+
+GHOST-12's desktop analog of Android's long-press lock: an explicit lock
+button on each essential row (`GhostLockButton`, its own module — the
+settings-search extractor indexes every literal i18n() a tab renders, and
+the button's aria-label is not a row), keyboard-reachable, `aria-pressed`,
+reusing the FOLD editor's icon-button style via a shared selector. A locked
+row's checkbox is disabled (Android `setEnabled(!isLocked)`); the four-cap
+(Android's shake at `getGhostModeLockedCount() >= 4`) disables the fifth
+lock button instead — unlocking is never refused. The lock section caption
+is the one deliberately adapted string (the interaction is a button, not a
+long press); everything else is Android's wording.
+
+Settings search: the extractor picked the section, the master toggle and —
+after unrolling the map-driven row titles into literal `i18n()` calls at the
+render site (the extractor cannot see computed labels) — all five essentials
+(+7 entries, 551 → 555); the phantom aria-label entry disappeared when the
+button moved out of the tab file. Tests: `tests/exterayondTabs.test.tsx`
+gained the Ghost Mode describe (4): the row structure/order/titles/counter,
+the master toggle's store flip + toast parity both ways, the lock keeping an
+essential through the master toggle with its checkbox disabled, and the
+fifth-lock refusal. Suite green (21). Runbook batch 7 / step 7.1 appended
+(the observable half needs the user's second account). Checklist: GHOST-01
+and GHOST-12 checked with annotations, GHOST-02..05 annotated (checked
+under 081's count below), GHOST-06..11 annotated waiting, PILLS-08's
+annotation updated. **Checklist count: 80/296** (74 + GHOST-01..05 + GHOST-12).
+`tsc --noEmit` clean, oxlint clean on the touched files.
+
+Deferred honestly, in wait order: GHOST-06 + GHOST-07 need the send-pipeline
+hook (a single "message went out" point across sendMessage/sendMedia/
+forward/scheduled — its own packet); GHOST-08 is a composer wiring; GHOST-09
+needs `shouldSendAsGhostScheduled`'s semantics ported with that same hook;
+GHOST-10 (a burger-menu item) and GHOST-11 (a topbar title ghost icon) are
+small UI wirings once the core is user-accepted; the story-ghost session is
+AYU territory. The suppression semantics await the user's runbook 7.1
+walk with a second account — nothing here claims the server "un-sees"
+anything; client-side withholding only, like the Android client.
+
+## 083 / bug-hunt over 081–082 — the Ghost Mode suppression core and the hub (2026-11-05)
+
+The focused hunt over the ghost work: the Android contract re-read from the
+pinned source (`NekoConfig`'s ghost block, `GhostModeActivity`,
+`AyuGhostUtils.interceptRequest` @8b7ec40), then every suppression call site,
+the state machine, the hub/lock surfaces and the cross-feature edges.
+
+**Audited clean (no action):**
+
+- The five gates read the worker-side flags LIVE at call time
+  (`getExterayondGhostFlags()` inside each gate); the tab store loads from
+  `index.ts` before the session restore, `rootScope.managers` exists before
+  `user_auth` can fire, and the pushes ride the same FIFO IPC as the
+  suppression calls — the boot/toggle ordering hazard has no window. The
+  `account_switched` re-push keeps the one shared worker-module state
+  coherent across sessions (Android's `NekoConfig` is app-global too).
+- `readHistory`: the suppression joins the existing `skipServerCall` whose
+  local-only path is the already-exercised redundancy path — unread
+  counters, read-content markers, mentions/reactions cache, folders and
+  `notification_reset` all update locally; `pts` never advances, which is
+  correct (the server processed nothing). `triedToReadMaxId` is not latched:
+  `messages.readHistory(max_id)` is cumulative, so any later read covers the
+  suppressed backlog, and the latch would have blocked exactly those
+  post-exit re-reads.
+- `readMessages`: the suppressed `undefined` promise is safe (both callers
+  fire-and-forget; the `Promise.all` follow-ups accept it); the
+  `readMentions`/`readReactions` follow-ups pass through like Android's —
+  `isReadMessageRequest` does not list them, so the server-side mention and
+  reaction badges clear even in ghost mode (Android's own behavior).
+- `setTyping` blocks whole (Android blocks `TL_messages_setTyping` whole —
+  typing, upload progress and the web-only draft sync ride it); the early
+  `return false` matches the established can't-send answer.
+- `incrementMessageViews` rewrites `increment` and keeps the request (view
+  counts still fetched, no read-marking — Android's `views.increment`
+  rewrite); the story gates sit after the local apply (`readStories`) and
+  before the invoke (`incrementStoryViews`).
+- `updateMyOnlineStatus` rewrites before both the local `setUserStatus`
+  (`offline=true` → `userStatusOffline`, so the local self status follows
+  the announcement) and the single `account.updateStatus` invoke; all three
+  callers (the ping, the switch/unload offline, the master toggle) go
+  through it.
+- The state machine is an exact port; and Android's `toggleGhostMode`
+  provably always sends `performStatusRequest(false)` — its `sendOnlineNow`
+  is dead logic (`setGhostMode` resets the unlocked offline-after flag
+  before the read; the locked one fails `!locked`) — so the web's
+  unconditional online packet matches.
+- The four-lock cap, the disabled checkbox (reactive `toggleDisability`,
+  `.checkbox-disabled` dimming), the verbatim row titles/toasts, the
+  `%d/5` counter counting ghost-state flags regardless of locks, the
+  native-button lock with `aria-pressed`, and the RTL-safe shared
+  icon-button style all match `GhostModeActivity`/strings_nax.
+- Cross-feature: the suppression's local apply is the stock read's local
+  half, so HideAllTab/IgnoreUnreadCount folder badges recompute from the
+  same locally-read state (coherent; after a reload the server state
+  returns, as on Android). The `.extera` backup neither exports nor imports
+  any ghost key (`buildBackup`/`applyBackup` iterate the alias table only —
+  byte-compatibility preserved), and the settings-search index carries
+  exactly the section, the master toggle and the five essentials.
+
+**Fixed (each with its test):**
+
+- **The section heading was not Android's.** `GhostEssentialsHeader` reads
+  "Ghost essentials"; the hub section rendered `Exterayond.Ghost` as
+  "Ghost Mode", duplicating the master row's own title — packet 082's own
+  claim ("`GhostEssentialsHeader` is the section") says the header wording.
+  `src/lang.ts`: `'Exterayond.Ghost'` → `'Ghost essentials'` (the master
+  row keeps `Exterayond.Ghost.Title` = "Ghost Mode"); pinned by a source
+  contract in the ghost suite.
+- **Dead code:** the unused `GHOST_LOCKED_KEYS` in the store and the
+  unused `lockedStoreKey` prop (with its now-unused `ExterayondSettingsKey`
+  type import) in the Other tab's `GhostEssentialRow` — removed.
+- **The unproven end-to-end gap, now proven:** the store tests mocked the
+  manager and the module tests never saw the store's payload — new tests
+  run the REAL suppression predicates over the payload the master toggle
+  actually pushes (entering activates every predicate and rewrites the
+  toggle's online packet to offline; leaving deactivates all), the reset
+  pushes stock flags (suppression off in the worker), and the essential
+  row's checkbox value round-trips through `isFlagInGhostState` (the hub's
+  onChange inverse) for all five keys both ways.
+
+Tests: `tests/exterayondGhost.test.ts` 20 → 24, all green;
+`exterayondTabs` (21), `exterayondSettings` (40), `exteraBackup` (36),
+`settingsSearchIndex` (8) green after the tab/lang touches. `tsc --noEmit`
+clean; oxlint clean on the touched files. Checklist count unchanged
+(80/296) — corrections inside already-checked entries.

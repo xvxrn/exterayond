@@ -171,7 +171,17 @@ describe('exterayond settings store', () => {
       showReport: false,
       showMessageDetails: false,
       showViewHistory: false,
-      bubbleRadius: 17
+      bubbleRadius: 17,
+      sendReadMessagePackets: true,
+      sendReadStoriesPackets: true,
+      sendOnlinePackets: true,
+      sendUploadProgress: true,
+      sendOfflinePacketAfterOnline: false,
+      sendReadMessagePacketsLocked: false,
+      sendReadStoriesPacketsLocked: false,
+      sendOnlinePacketsLocked: false,
+      sendUploadProgressLocked: false,
+      sendOfflinePacketAfterOnlineLocked: false
     });
     expect(OE_AVATAR_CORNERS_MAX).toBe(28);
     expect(OE_SECTION_RADIUS_STOCK).toBe(20);

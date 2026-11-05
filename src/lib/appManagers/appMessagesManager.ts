@@ -101,6 +101,8 @@ import type {ConfirmedPaymentResult} from '@components/chat/paidMessagesIntercep
 import RepayRequestHandler, {RepayRequest} from '@appManagers/utils/repayRequestHandler';
 import getPhotoInput from '@appManagers/utils/photos/getPhotoInput';
 import {increment, MonoforumDialog} from '@lib/storages/monoforumDialogs';
+import {getExterayondGhostFlags, ghostBlocksTyping, ghostSuppressesReadReceipts, setExterayondGhostFlags as storeGhostFlags} from '@lib/exterayondGhost';
+import type {ExterayondGhostFlags} from '@lib/exterayondGhost';
 import formatStarsAmount from '@appManagers/utils/payments/formatStarsAmount';
 import {makeMessageMediaInputForSuggestedPost} from '@appManagers/utils/messages/makeMessageMediaInput';
 import createObservedState, {wrapObject} from '@helpers/createObservedState';
@@ -6803,6 +6805,16 @@ export class AppMessagesManager extends AppManager {
     this.dialogsStorage.setSortByUnread(enabled);
   }
 
+  /**
+   * Ghost Mode (packets 081–082): the tab pushes the five essentials into
+   * the worker, where the suppression gates read them (`@lib/exterayondGhost`
+   * — the `setSortByUnread` pattern). The locks stay tab-side: they gate the
+   * master toggle, not the suppression.
+   */
+  public setExterayondGhostFlags(flags: ExterayondGhostFlags) {
+    storeGhostFlags(flags);
+  }
+
   public cantForwardDeleteMids(storageKey: MessagesStorageKey, mids: number[]) {
     const storage = this.getMessagesStorage(storageKey);
     let cantForward = !mids.length, cantDelete = !mids.length;
@@ -9748,7 +9760,18 @@ export class AppMessagesManager extends AppManager {
     // user can scroll into messages whose mid <= a previously-read maxId
     // (e.g. messages loaded later, or scrolling up after a fast jump to bottom).
     // Without this, the unread counter "freezes" mid-scroll on high-volume chats.
-    const skipServerCall = historyStorage.triedToReadMaxId >= maxId || !!historyStorage.readPromise;
+    // GHOST-02 (`AyuGhostUtils.interceptRequest` blocks the read requests and
+    // answers them with a fake `affectedMessages{pts:-1}`): with
+    // `sendReadMessagePackets` off the server call is skipped the same way
+    // the redundancy skip is — the local apply does not depend on the
+    // response here, so no fake response is needed. Android keeps
+    // re-attempting the read on every chat open while the mode is on (the
+    // requests are simply blocked), so a suppressed read must not latch
+    // `triedToReadMaxId`: leaving the mode re-reads up to the then-current
+    // maxId and the server catches up, like on Android.
+    const suppressReadReceipts = ghostSuppressesReadReceipts(getExterayondGhostFlags());
+    const skipServerCall = suppressReadReceipts ||
+      historyStorage.triedToReadMaxId >= maxId || !!historyStorage.readPromise;
 
     let apiPromise: Promise<any>;
     if(monoforumThreadId) {
@@ -9837,7 +9860,8 @@ export class AppMessagesManager extends AppManager {
 
     // Track the highest maxId we've locally applied so future overlapping calls
     // can correctly decide whether the server call is still needed.
-    if(!(historyStorage.triedToReadMaxId >= maxId)) {
+    // GHOST-02: a suppressed read records nothing — the server never got it.
+    if(!suppressReadReceipts && !(historyStorage.triedToReadMaxId >= maxId)) {
       historyStorage.triedToReadMaxId = maxId;
     }
 
@@ -10149,6 +10173,11 @@ export class AppMessagesManager extends AppManager {
     const hadUnreadReactions = !!dialog?.unread_reactions_count;
 
     msgIds = msgIds.map((mid) => getServerMessageId(mid));
+    // * GHOST-02: `readMessageContents` requests are read receipts too
+    // * (Android's isReadMessageRequest lists both TL variants) — skip the
+    // * server call, keep the local apply (the suppressed `messages.*`
+    // * branch then carries no pts, like Android's fake response's -1)
+    const suppressRead = ghostSuppressesReadReceipts(getExterayondGhostFlags());
     let promise: Promise<any>, update: Update.updateChannelReadMessagesContents | Update.updateReadMessagesContents;
     if(peerId.isAnyChat() && this.appPeersManager.isChannel(peerId)) {
       const channelId = peerId.toChatId();
@@ -10159,10 +10188,12 @@ export class AppMessagesManager extends AppManager {
         messages: msgIds
       };
 
-      promise = this.apiManager.invokeApi('channels.readMessageContents', {
-        channel: this.appChatsManager.getChannelInput(channelId),
-        id: msgIds
-      });
+      if(!suppressRead) {
+        promise = this.apiManager.invokeApi('channels.readMessageContents', {
+          channel: this.appChatsManager.getChannelInput(channelId),
+          id: msgIds
+        });
+      }
     } else {
       update = {
         _: 'updateReadMessagesContents',
@@ -10171,13 +10202,15 @@ export class AppMessagesManager extends AppManager {
         pts_count: undefined
       };
 
-      promise = this.apiManager.invokeApi('messages.readMessageContents', {
-        id: msgIds
-      }).then((affectedMessages) => {
-        (update as Update.updateReadMessagesContents).pts = affectedMessages.pts;
-        (update as Update.updateReadMessagesContents).pts_count = affectedMessages.pts_count;
-        this.apiUpdatesManager.processLocalUpdate(update);
-      });
+      if(!suppressRead) {
+        promise = this.apiManager.invokeApi('messages.readMessageContents', {
+          id: msgIds
+        }).then((affectedMessages) => {
+          (update as Update.updateReadMessagesContents).pts = affectedMessages.pts;
+          (update as Update.updateReadMessagesContents).pts_count = affectedMessages.pts_count;
+          this.apiUpdatesManager.processLocalUpdate(update);
+        });
+      }
     }
 
     this.apiUpdatesManager.processLocalUpdate(update);
@@ -12931,10 +12964,14 @@ export class AppMessagesManager extends AppManager {
       return;
     }
 
+    // * GHOST-02: Android does not block `messages.getMessagesViews` — it
+    // * rewrites `views.increment = false` (AyuGhostUtils), keeping the view
+    // * counts and dropping the read-marking.
+    const increment = !ghostSuppressesReadReceipts(getExterayondGhostFlags());
     return this.apiManager.invokeApiSingle('messages.getMessagesViews', {
       peer: this.appPeersManager.getInputPeerById(peerId),
       id: mids.map((mid) => getServerMessageId(mid)),
-      increment: true
+      increment
     }).then((views) => {
       this.appPeersManager.saveApiPeers(views);
 
@@ -14485,6 +14522,15 @@ export class AppMessagesManager extends AppManager {
     force?: boolean,
     threadId?: number
   ): Promise<boolean> {
+    // * GHOST-05 (`AyuGhostUtils.interceptRequest` blocks TL_messages_setTyping
+    // * and TL_messages_setEncryptedTyping whole): with `sendUploadProgress`
+    // * off no typing packet goes out. The web's draft-sync action rides the
+    // * same request type (a web-only feature — Android has no draft
+    // * packets), so it pauses with it; documented in the runbook.
+    if(ghostBlocksTyping(getExterayondGhostFlags())) {
+      return false;
+    }
+
     if(threadId && !this.appPeersManager.isForum(peerId) && !this.appPeersManager.isBotforum(peerId)) {
       threadId = undefined;
     }

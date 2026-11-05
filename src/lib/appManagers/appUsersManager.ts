@@ -6,6 +6,7 @@
  */
 
 import filterUnique from '@helpers/array/filterUnique';
+import {getExterayondGhostFlags, ghostStatusToAnnounce} from '@lib/exterayondGhost';
 import indexOfAndSplice from '@helpers/array/indexOfAndSplice';
 import deferredPromise, {CancellablePromise} from '@helpers/cancellablePromise';
 import cleanSearchText, {ProcessSearchTextOptions, processSearchText} from '@helpers/cleanSearchText';
@@ -1295,6 +1296,13 @@ export class AppUsersManager extends AppManager {
   }
 
   public updateMyOnlineStatus(offline: boolean) {
+    // * GHOST-04 (`AyuGhostUtils.interceptRequest` forces
+    // * `updateStatus.offline = true` instead of blocking the request): with
+    // * `sendOnlinePackets` off the pings keep flowing and announce offline,
+    // * and the local self status follows what the server is told — Android's
+    // * self cells show offline while the flag is on (UserCell:738,
+    // * ProfileActivity:11916).
+    offline = ghostStatusToAnnounce(offline, getExterayondGhostFlags());
     // * an account a tab has just switched to may not have loaded itself yet
     const self = this.getSelf();
     self && this.setUserStatus(self.id, offline);

@@ -501,7 +501,7 @@ describe('the full Android key-set sweep (packet 079)', () => {
   });
 });
 
-describe('the import report (packet 080)', () => {
+describe('the import report (packet 080b)', () => {
   it('names the unsupported keys in the report toast, with the applied count kept', () => {
     const root = {exteraconfig: {showSaveMessageButton: true, tabletMode: true, titleText: 'x'}};
     const result = applyExteraBackup(root);

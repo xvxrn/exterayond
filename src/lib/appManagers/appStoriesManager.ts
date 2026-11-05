@@ -10,6 +10,7 @@ import deepEqual from '@helpers/object/deepEqual';
 import safeReplaceObject from '@helpers/object/safeReplaceObject';
 import pause from '@helpers/schedulers/pause';
 import tsNow from '@helpers/tsNow';
+import {getExterayondGhostFlags, ghostSuppressesStoryReads} from '@lib/exterayondGhost';
 import {Reaction, ReportReason, StoriesAllStories, StoriesStories, StoryItem, Update, PeerStories, User, Chat, StoryView, MediaArea, StoryAlbum, StoriesStealthMode, InputPrivacyRule} from '@layer';
 import getPrivacyRulesDetails from '@appManagers/utils/privacy/getPrivacyRulesDetails';
 import getStoryPrivacyType from '@appManagers/utils/stories/privacyType';
@@ -1375,7 +1376,9 @@ export default class AppStoriesManager extends AppManager {
       max_id: maxId
     });
 
-    if(TEST_READ) {
+    // * GHOST-03 (`AyuGhostUtils.interceptRequest` blocks TL_stories_readStories):
+    // * the local read state applies, the server never learns
+    if(TEST_READ || ghostSuppressesStoryReads(getExterayondGhostFlags())) {
       return;
     }
 
@@ -1389,6 +1392,12 @@ export default class AppStoriesManager extends AppManager {
   }
 
   public incrementStoryViews(peerId: PeerId, ids: StoryItem['id'][]) {
+    // * GHOST-03: `stories.incrementStoryViews` is blocked with the same flag
+    // * (Android's isReadStoriesRequest lists both).
+    if(ghostSuppressesStoryReads(getExterayondGhostFlags())) {
+      return;
+    }
+
     return this.apiManager.invokeApiSingleProcess({
       method: 'stories.incrementStoryViews',
       params: {

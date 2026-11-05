@@ -3,6 +3,8 @@ import {createStore, unwrap} from 'solid-js/store';
 import {hotEffect, hotListen} from '@helpers/hotModule';
 import {makeMediaSize, MediaSize} from '@helpers/mediaSize';
 import rootScope from '@lib/rootScope';
+import {applyGhostMode, isGhostModeActive} from '@lib/exterayondGhost';
+import type {ExterayondGhostFlags} from '@lib/exterayondGhost';
 import type {LangPackKey} from '@lib/langPack';
 import type {ChatFull, ChatTheme, UserFull, WallPaper} from '@layer';
 
@@ -416,7 +418,28 @@ export const OE_DEFAULTS = {
    * tail-side corners clamp to min(6, radius). The default keeps Web K's own
    * bubble geometry (the stock 15px/5px pair ≈ Android's 17/6dp at mdpi).
    */
-  bubbleRadius: 17
+  bubbleRadius: 17,
+  /**
+   * Ghost Mode (packets 081–082): Android `NekoConfig`'s ghost block, the
+   * five "essentials" and their long-press locks (GHOST-01..06, GHOST-12),
+   * the names and defaults verbatim. Client-side suppression only: see
+   * `src/lib/exterayondGhost.ts` for the contract. Android `EtgBackup`
+   * exports none of the ghost keys (verified against EtgBackup.java), so no
+   * backup alias exists. The locks are master-toggle bookkeeping (GHOST-12);
+   * `markReadAfterSend` (GHOST-07), `silentMessageByDefault` (GHOST-08),
+   * `ghostScheduledSend` (GHOST-09), the drawer item (GHOST-10) and the
+   * status indicator (GHOST-11) wait on their web surfaces and are unstored.
+   */
+  sendReadMessagePackets: true,
+  sendReadStoriesPackets: true,
+  sendOnlinePackets: true,
+  sendUploadProgress: true,
+  sendOfflinePacketAfterOnline: false,
+  sendReadMessagePacketsLocked: false,
+  sendReadStoriesPacketsLocked: false,
+  sendOnlinePacketsLocked: false,
+  sendUploadProgressLocked: false,
+  sendOfflinePacketAfterOnlineLocked: false
 } as const;
 
 export type ExterayondSettingsKey = keyof typeof OE_DEFAULTS;
@@ -551,16 +574,105 @@ const pushSortByUnread = () => {
   }
 };
 
+/** The store keys the Ghost Mode suppression consumes (the five essentials, Android's ghostToggleItems). */
+export const GHOST_FLAG_KEYS = [
+  'sendReadMessagePackets',
+  'sendReadStoriesPackets',
+  'sendOnlinePackets',
+  'sendUploadProgress',
+  'sendOfflinePacketAfterOnline'
+] as const satisfies readonly ExterayondSettingsKey[];
+
+/** The store key of an essential's master-toggle lock (GHOST-12). */
+export const GHOST_LOCKED_OF: Record<typeof GHOST_FLAG_KEYS[number], ExterayondSettingsKey> = {
+  sendReadMessagePackets: 'sendReadMessagePacketsLocked',
+  sendReadStoriesPackets: 'sendReadStoriesPacketsLocked',
+  sendOnlinePackets: 'sendOnlinePacketsLocked',
+  sendUploadProgress: 'sendUploadProgressLocked',
+  sendOfflinePacketAfterOnline: 'sendOfflinePacketAfterOnlineLocked'
+};
+
+/**
+ * Ghost Mode reaches the worker's managers the same way the GEN-12 flag
+ * does: pushed once per account session and on every change (the
+ * suppression gates read the worker-side state in
+ * `@lib/exterayondGhost`, never the store).
+ */
+const pushGhostFlags = () => {
+  try {
+    void rootScope.managers?.appMessagesManager.setExterayondGhostFlags({
+      sendReadMessagePackets: exterayondSettings.sendReadMessagePackets as boolean,
+      sendReadStoriesPackets: exterayondSettings.sendReadStoriesPackets as boolean,
+      sendOnlinePackets: exterayondSettings.sendOnlinePackets as boolean,
+      sendUploadProgress: exterayondSettings.sendUploadProgress as boolean,
+      sendOfflinePacketAfterOnline: exterayondSettings.sendOfflinePacketAfterOnline as boolean
+    });
+  } catch(e) {
+    // * no managers yet (tests, early import): the next auth event pushes it
+  }
+};
+
+/** Everything the worker-side consumers need from this store, pushed on auth. */
+const pushWorkerState = () => {
+  pushSortByUnread();
+  pushGhostFlags();
+};
+
 const [exterayondSettings, setExterayondSettings] = createStore<ExterayondSettings>({
   ...OE_DEFAULTS,
   ...readPersisted()
 });
 
+/**
+ * The Ghost Mode essentials as the worker module reads them, with their
+ * locks (GHOST-12) — the master toggle's inputs.
+ */
+const ghostModeState = () => {
+  const flags = {} as ExterayondGhostFlags;
+  const locked: Partial<Record<keyof ExterayondGhostFlags, boolean>> = {};
+  for(const key of GHOST_FLAG_KEYS) {
+    flags[key] = exterayondSettings[key] as boolean;
+    locked[key] = exterayondSettings[GHOST_LOCKED_OF[key]] as boolean;
+  }
+
+  return {flags, locked};
+};
+
+/** Whether the unlocked essentials all sit in their ghost state (Android `isGhostModeActive`). */
+export const isExterayondGhostModeActive = () => {
+  const {flags, locked} = ghostModeState();
+  return isGhostModeActive(flags, locked);
+};
+
+/**
+ * The master toggle (GHOST-01, Android `NekoConfig.setGhostMode`):
+ * unlocked essentials move to the ghost (on) or stock (off) targets, the
+ * locked ones keep their values; each change pushes the flags into the
+ * worker. Android's `toggleGhostMode` then sends a status request — an
+ * *online* packet: entering the mode the just-enabled suppression rewrites
+ * it to offline (GHOST-04), leaving it really goes online.
+ */
+export const setExterayondGhostMode = (enabled: boolean) => {
+  const {flags, locked} = ghostModeState();
+  const next = applyGhostMode(flags, locked, enabled);
+  batch(() => {
+    for(const key of GHOST_FLAG_KEYS) {
+      setExterayondSetting(key, next[key] as never);
+    }
+  });
+
+  try {
+    void rootScope.managers?.appUsersManager.updateMyOnlineStatus(false);
+  } catch(e) {
+    // * no managers yet: the next natural status ping applies the rewrite
+  }
+};
+
 if(typeof document !== 'undefined') {
   // * hotListen keeps a hot re-run of this module from stacking a second
   // * pair of listeners (scripts/import-graph.mjs)
-  hotListen(import.meta.hot, rootScope, 'user_auth', pushSortByUnread);
-  hotListen(import.meta.hot, rootScope, 'account_switched', pushSortByUnread);
+  hotListen(import.meta.hot, rootScope, 'user_auth', pushWorkerState);
+  hotListen(import.meta.hot, rootScope, 'account_switched', pushWorkerState);
 }
 
 /**
@@ -580,6 +692,9 @@ const setExterayondSetting = <K extends ExterayondSettingsKey>(key: K, value: Ex
   }
   if(key === 'SortByUnread' && previous !== clamped) {
     pushSortByUnread();
+  }
+  if((GHOST_FLAG_KEYS as readonly ExterayondSettingsKey[]).includes(key) && previous !== clamped) {
+    pushGhostFlags();
   }
 };
 
@@ -602,6 +717,13 @@ const resetExterayondSettings = () => {
 
   if(previous.SortByUnread !== OE_DEFAULTS.SortByUnread) {
     pushSortByUnread();
+  }
+
+  for(const key of GHOST_FLAG_KEYS) {
+    if(previous[key] !== OE_DEFAULTS[key]) {
+      pushGhostFlags();
+      break;
+    }
   }
 };
 

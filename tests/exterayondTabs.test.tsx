@@ -83,10 +83,11 @@ vi.mock('@components/rowTsx', () => {
 });
 
 vi.mock('@components/checkboxFieldTsx', () => ({
-  default: (props: {checked: boolean, onChange: (checked: boolean) => void}) => (
+  default: (props: {checked: boolean, disabled?: boolean, onChange: (checked: boolean) => void}) => (
     <input
       type="checkbox"
       checked={props.checked}
+      disabled={props.disabled}
       onClick={() => props.onChange(!props.checked)}
     />
   )
@@ -492,5 +493,89 @@ describe('the exterayond reset action', () => {
     expect(settings.OEAppearanceAvatarCorners).toBe(4);
     expect(appSettings.showArchiveInChatList).toBe(false);
     expect(mocks.toast).not.toHaveBeenCalled();
+  });
+});
+
+describe('the Ghost Mode section of the Other tab (packets 081–082)', () => {
+  let dispose: () => void;
+  const originalManagers = rootScope.managers;
+
+  const ghostSection = () => document.querySelector<HTMLElement>('.section[data-name="Exterayond.Ghost"]');
+  const ghostRows = () => [...ghostSection().querySelectorAll<HTMLElement>('.row')];
+  const ghostCheckbox = (index: number) =>
+    ghostRows()[index].querySelector<HTMLInputElement>('.row-checkbox-toggle input');
+  const ghostLock = (index: number) =>
+    ghostRows()[index].querySelector<HTMLButtonElement>('.row-title-right button');
+  const ghostSubtitle = () => ghostSection().querySelector<HTMLElement>('.row-subtitle').textContent;
+
+  beforeEach(() => {
+    mocks.toast.mockClear();
+    rootScope.managers = {appStateManager: {setByKey: vi.fn(() => Promise.resolve())}} as any;
+    dispose = mount(() => <ExterayondOther />);
+  });
+
+  afterEach(() => {
+    dispose();
+    rootScope.managers = originalManagers;
+    resetExterayondSettings();
+    document.body.replaceChildren();
+  });
+
+  it('renders the master toggle and the five essentials in Android\'s order and titles', () => {
+    const titles = ghostRows().map((row) => row.querySelector('.row-title')?.childNodes[0]?.textContent);
+    expect(titles).toEqual([
+      'Exterayond.Ghost.Title',
+      'Exterayond.Ghost.NoReadMessages',
+      'Exterayond.Ghost.NoReadStories',
+      'Exterayond.Ghost.NoOnline',
+      'Exterayond.Ghost.NoTyping',
+      'Exterayond.Ghost.OfflineAfter'
+    ]);
+    // * Android's "%d/5" counter at the stock defaults
+    expect(ghostSubtitle()).toBe('0/5');
+    // * the checkboxes show the ghost state: all send, offline-after off
+    expect(ghostCheckbox(1).checked).toBe(false);
+    expect(ghostCheckbox(5).checked).toBe(false);
+  });
+
+  it('the master toggle applies the ghost targets and toasts like the Android bulletin', () => {
+    ghostCheckbox(0).click();
+
+    const [settings] = useExterayondSettings();
+    expect(settings.sendReadMessagePackets).toBe(false);
+    expect(settings.sendOfflinePacketAfterOnline).toBe(true);
+    expect(mocks.toast).toHaveBeenCalledWith({langPackKey: 'Exterayond.Ghost.Enabled'});
+    expect(ghostSubtitle()).toBe('5/5');
+
+    mocks.toast.mockClear();
+    ghostCheckbox(0).click();
+    expect(settings.sendReadMessagePackets).toBe(true);
+    expect(settings.sendOfflinePacketAfterOnline).toBe(false);
+    expect(mocks.toast).toHaveBeenCalledWith({langPackKey: 'Exterayond.Ghost.Disabled'});
+    expect(ghostSubtitle()).toBe('0/5');
+  });
+
+  it('the lock keeps an essential through the master toggle and disables its checkbox (GHOST-12)', () => {
+    ghostLock(4).click(); // * "Don't Send Typing" (sendUploadProgress)
+
+    const [settings] = useExterayondSettings();
+    expect(settings.sendUploadProgressLocked).toBe(true);
+    expect(ghostCheckbox(4).disabled).toBe(true);
+
+    ghostCheckbox(0).click();
+    expect(settings.sendUploadProgress).toBe(true);
+    expect(settings.sendReadMessagePackets).toBe(false);
+    expect(ghostSubtitle()).toBe('4/5');
+  });
+
+  it('refuses a fifth lock like Android\'s four-cap shake', () => {
+    for(const index of [1, 2, 3, 4]) {
+      ghostLock(index).click();
+    }
+
+    // * unlocking a locked row stays possible; the fifth essential's lock
+    // * button is refused while four are held (the master row has none)
+    expect(ghostLock(1).disabled).toBe(false);
+    expect(ghostLock(5).disabled).toBe(true);
   });
 });

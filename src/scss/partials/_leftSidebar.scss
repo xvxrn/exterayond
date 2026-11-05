@@ -1851,7 +1851,10 @@ html.oe-hide-new-chat-button #new-menu {
   margin-inline-start: .5rem;
 }
 
-.exteraless-menu-move-button {
+// * the same small icon button serves the Ghost Mode lock (GHOST-12's
+// * desktop analog of Android's long-press lock)
+.exteraless-menu-move-button,
+.exterayond-ghost-lock-button {
   display: inline-flex;
   align-items: center;
   justify-content: center;

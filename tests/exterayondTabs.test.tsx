@@ -523,6 +523,9 @@ describe('the Translation section of the General tab (packet 085, TRANS-05)', ()
 
   it('writes the mode through the store', () => {
     const selector = document.querySelector<HTMLElement>('.section[data-name="Exterayond.Translate"] .range-setting-selector');
+    // * leave the stock 0 first: the stub only offers the zero click, and a
+    // * zero->zero write would pass with a broken onChange
+    setExterayondSetting('translatorMode', 2);
     selector.querySelector<HTMLButtonElement>('.slider-zero').click();
 
     const [settings] = useExterayondSettings();

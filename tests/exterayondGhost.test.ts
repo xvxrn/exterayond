@@ -183,6 +183,9 @@ describe('the Ghost Mode decisions (NekoConfig ghost block)', () => {
   });
 
   it('the offline-after-send hook applies to every online request (GHOST-06, handleOfflineAfterSend)', () => {
+    // * Android `AyuGhostUtils.OFFLINE_DELAY_MS` — the delayed offline packet's
+    // * verbatim gap
+    expect(GHOST_OFFLINE_AFTER_SEND_DELAY).toBe(1000);
     const flags: ExterayondGhostFlags = {...GHOST_FLAG_DEFAULTS, sendOfflinePacketAfterOnline: true};
     // * Android's isOnlineRequest: every send kind plus the edit
     const online: ExterayondGhostSendMethod[] = [
@@ -514,6 +517,15 @@ describe('the manager gates (source contracts)', () => {
     ]) {
       expect(new RegExp(`exteraGhostSendHook\\(.{0,120}?${method}'`, 's').test(flat), method).toBe(true);
     }
+
+    // * the drift direction the hook count alone cannot catch: a NEW send or
+    // * edit invoke added without passing its promise through the hook. Every
+    // * send-kind invoke literal keeps this pinned count (one per site, the
+    // * ternary sites matching on their first literal) — a new invoke site
+    // * must wrap its promise AND bump both pins consciously
+    const kinds = 'sendMessage|sendMedia|sendMultiMedia|forwardMessages|sendInlineBotResult|sendScheduledMessages|editMessage';
+    const invokeCount = flat.match(new RegExp(`invokeApi(?:After)?\\(.{0,60}?'(?:messages\\.(?:${kinds}))'`, 'g'))?.length ?? 0;
+    expect(invokeCount, 'send/edit invoke literals').toBe(10);
   });
 
   it('the hook reads the worker flags live and carries both consumers (packet 084)', () => {
@@ -526,10 +538,19 @@ describe('the manager gates (source contracts)', () => {
 
   it('the read-after-send bypasses the GHOST-02 gate with a direct invoke (packet 084)', () => {
     // * Android's markReadOnServer builds the read request outside the
-    // * interceptor's read branch — the direct invoke here does the same
-    expect(messagesSource).toContain('private exteraGhostReadAfterSend(peerId: PeerId)');
-    expect(messagesSource).toContain(`this.apiManager.invokeApi('messages.readHistory', {`);
-    expect(messagesSource).toContain(`this.apiManager.invokeApi('channels.readHistory', {`);
+    // * interceptor's read branch — the direct invoke here does the same. The
+    // * assertions read the bypass's own body (the normal readHistory carries
+    // * the same invoke literals, so a file-wide check would pass with the
+    // * bypass deleted)
+    const bypass = messagesSource.slice(
+      messagesSource.indexOf('private exteraGhostReadAfterSend'),
+      messagesSource.indexOf('public cantForwardDeleteMids')
+    );
+    expect(bypass).not.toBe('');
+    expect(bypass).toContain('this.getHistoryStorage(peerId).maxId');
+    expect(bypass.replace(/\s+/g, '')).toContain(`this.apiManager.invokeApi('channels.readHistory',{`);
+    expect(bypass.replace(/\s+/g, '')).toContain(`this.apiManager.invokeApi('messages.readHistory',{`);
+    expect(bypass.replace(/\s+/g, '')).toContain(`processLocalUpdate({_:'updatePts'`);
   });
 
   it('the section heading carries Android\'s GhostEssentialsHeader wording (packet 083)', () => {

@@ -1768,4 +1768,18 @@ Bubble Radius).
 - **[no chat data]**
 - PASS/FAIL:
 
+### 6.3 The import report names the unsupported keys (packet 080, appended)
+
+The import toast now lists the Android-only key names a file carried, after
+the applied count — "Applied N settings from the backup. Unsupported keys
+(M): a, b, …". A file with no unsupported keys keeps the plain toast, and a
+rejected file keeps "not a compatible .extera backup".
+
+Walk: in 6.1's negative check, the `tabletMode` import now names it in the
+toast (before packet 080 the same import reported only the applied count and
+the unsupported names were visible nowhere). The names follow the module's
+key-table order, not the file's.
+- **[no chat data]**
+- PASS/FAIL:
+
 ---

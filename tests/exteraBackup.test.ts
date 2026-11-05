@@ -20,7 +20,7 @@ vi.hoisted(() => {
 });
 
 import {invisibleEncryptor} from '@lib/exteraBackup/invisibleEncryptor';
-import {etgBackup, applyExteraBackup, SECTION_EXTERA, SECTION_MAIN, EXTENSION} from '@lib/exteraBackup/etgBackup';
+import {etgBackup, applyExteraBackup, backupImportReport, SECTION_EXTERA, SECTION_MAIN, EXTENSION} from '@lib/exteraBackup/etgBackup';
 import {OE_DEFAULTS, exterayondSettings, setExterayondSetting, getStickerTimeMode, setStickerTimeMode} from '@stores/exterayondSettings';
 import {setAppSettingsSilent} from '@stores/appSettings';
 import rootScope from '@lib/rootScope';
@@ -498,6 +498,26 @@ describe('the full Android key-set sweep (packet 079)', () => {
     const read = etgBackup.readBackup(JSON.stringify({exteraconfig: {pluginsSafeMode: true, pluginsDevMode: false}}));
     expect(read).not.toBeNull();
     expect(read!.knownCount).toBe(2);
+  });
+});
+
+describe('the import report (packet 080)', () => {
+  it('names the unsupported keys in the report toast, with the applied count kept', () => {
+    const root = {exteraconfig: {showSaveMessageButton: true, tabletMode: true, titleText: 'x'}};
+    const result = applyExteraBackup(root);
+    expect(result.applied).toBe(1);
+    // * the names follow the module's own key table order, not file order
+    expect(result.unsupported).toEqual(['titleText', 'tabletMode']);
+
+    const report = backupImportReport(result);
+    expect(report.langPackKey).toBe('Exterayond.Backup.Unsupported');
+    expect(report.langPackArguments).toEqual([1, 2, 'titleText, tabletMode']);
+  });
+
+  it('keeps Android\'s plain applied toast when nothing was unsupported', () => {
+    const report = backupImportReport({applied: 5, unsupported: []});
+    expect(report.langPackKey).toBe('Exterayond.Backup.Applied');
+    expect(report.langPackArguments).toEqual([5]);
   });
 });
 

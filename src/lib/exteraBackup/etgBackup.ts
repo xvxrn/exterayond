@@ -12,6 +12,7 @@
  */
 import {OE_DEFAULTS, clampExterayondSetting, exterayondSettings, setExterayondSetting, getStickerTimeMode, setStickerTimeMode} from '@stores/exterayondSettings';
 import type {ExterayondSettings, ExterayondSettingsKey} from '@stores/exterayondSettings';
+import type {FormatterArguments} from '@lib/langPack';
 import {isArchiveHidden, setArchiveHidden} from '@stores/exterayondPreferences';
 import {applyMainMenuHalf, resolveMainMenuLayout, isMenuIdArray} from '@stores/exterayondMenuLayout';
 import {PLUGINS_DEVELOPER_MODE_KEY, pluginsManager} from '@plugins/manager';
@@ -446,3 +447,20 @@ export const buildExteraBackup = (encrypt: boolean): string =>
 
 export const applyExteraBackup = (root: Record<string, Record<string, unknown>>): ApplyResult =>
   etgBackup.applyBackup(root, (key, value) => setExterayondSetting(key, value as never));
+
+/**
+ * The import report the hub shows (packet 080): Android's "applied N"
+ * bulletin, extended — when the file carried Android-only keys — with their
+ * names, per the module contract ("recognized by name and reported as
+ * unsupported"). One toast either way, so the applied count never gets
+ * replaced by a second toast.
+ */
+export const backupImportReport = (result: ApplyResult): {
+  langPackKey: 'Exterayond.Backup.Applied' | 'Exterayond.Backup.Unsupported',
+  langPackArguments: FormatterArguments
+} => result.unsupported.length
+  ? {
+    langPackKey: 'Exterayond.Backup.Unsupported',
+    langPackArguments: [result.applied, result.unsupported.length, result.unsupported.join(', ')]
+  }
+  : {langPackKey: 'Exterayond.Backup.Applied', langPackArguments: [result.applied]};

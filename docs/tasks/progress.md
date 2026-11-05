@@ -3136,3 +3136,73 @@ Checks: `exteraBackup` 34, `exterayondSettings` + `settingsSearchIndex` 48,
 touched files. Checklist count unchanged (74/296) — the pass fixed
 compatibility behavior, no feature entries. Runbook 6.2 appended for the
 three import-behavior changes.
+
+## 080 / GEN verdict batch 1 — download/upload speed and save-path rows (2026-11-05)
+
+Four verdict-only entries, no code, the 071/072/078 pattern; the Android
+contracts re-read from the pinned source (GEN-08..GEN-11 are the Speed /
+Storage items of `OpenExteraGeneralActivity`).
+
+- **GEN-08 — class 3, the web engine has no level knob.** `OEGeneralDownloadSpeedBoost`
+  (GeneralConfig.kt int 0..2, default 0; normal/fast/ultra) tunes
+  `FileLoadOperation.updateParams` — chunk size 128K/512K/1M and parallel
+  requests 4/8/12 (FileLoadOperation.java:307). The web file engine sizes
+  parts adaptively from the file size and `maxDownloadParts` (appConfig) in
+  `apiFileManager.getLimitPart`, and downloads run with
+  `maxRequests = Infinity`. Mapping three levels would mean inventing a
+  parallel transfer policy, not overriding an existing parameter. Key not
+  stored; the EtgBackup alias `downloadSpeedBoost` (integer 0..2,
+  EtgBackup.java:406) stays recognized-unsupported.
+- **GEN-09 — class 3, the same engine-strategy class.** `NekoConfig.uploadBoost`
+  (bool) raises FileUploadOperation's min upload chunk floor 128K -> 512K
+  (FileUploadOperation.java:334, constants :42-44). The web upload path is
+  the same adaptive `getLimitPart(fileSize, true)` starting at 64K
+  `MIN_PART_SIZE`; it has no min-floor knob to gate, and a toggle would be
+  new transfer policy rather than an override of an existing surface. Key
+  not stored; the EtgBackup alias `uploadSpeedBoost` (EtgBackup.java:317)
+  stays recognized-unsupported.
+- **GEN-10 — class 3, downloads are browser-owned.** `NaConfig.SaveToChatSubfolder`
+  (bool) appends a per-chat subfolder under `NekoConfig.customSavePath` on
+  Android's external storage (MediaController.java:5274). On the web there is
+  no application download directory: `DownloadWriter` streams chunks into
+  the service worker (`downloadChunk`/`downloadFinalize`) and the browser's
+  save flow owns the file — no folder structure exists to gate. No EtgBackup
+  alias exists for the key (the name appears only in settings screens and
+  MediaController), so there is nothing to store.
+- **GEN-11 — class 3, no application save path exists on the web.**
+  `NekoConfig.customSavePath` (string) addresses an arbitrary filesystem
+  path; the browser owns the download directory, so nothing maps. Already
+  in `KNOWN_UNSUPPORTED_KEYS` (packet 079 added it); key not stored.
+
+Checklist: all four entries annotated, unchecked — count unchanged (74/296).
+
+## 080 / the `.extera` import report names the unsupported keys (2026-11-05)
+
+The follow-up packet 079 explicitly offered: the `applyBackup`/`readBackup`
+functions returned the unsupported key names since packet 010, but the hub's
+import toast rendered only the applied count — against the module's own header
+contract ("recognized by name and reported as unsupported") and AGENTS.md's
+"shown as unsupported". Android's `EtgBackupUi` has no such surface (its
+bulletin is also just "applied N"), so the web addition is documented as its
+own improvement, not an Android port.
+
+`backupImportReport(result)` in `src/lib/exteraBackup/etgBackup.ts` (the
+store-connected facade) turns an `ApplyResult` into the one toast descriptor:
+Android's `Exterayond.Backup.Applied` when nothing was unsupported, otherwise
+the new `Exterayond.Backup.Unsupported` — "Applied %1$d settings from the
+backup. Unsupported keys (%2$d): %3$s" — with the names joined in the
+module's key-table order. One toast either way: a second `toastNew` would
+replace the first, so the applied count must travel inside the report toast,
+not beside it. The Other tab's import handler maps the descriptor through
+`toastNew`; no other flow changed. No settings-search surface (a toast key is
+not an indexed row title), and the key name avoids the extractor's "Confirm"
+deny list as a matter of hygiene.
+
+Tests: `tests/exteraBackup.test.ts` gained "the import report (packet 080)"
+(2 tests): a file with `tabletMode` + `titleText` applies its one supported
+key and reports `[1, 2, 'titleText, tabletMode']` (the names follow the key
+table's order, not the file's — pinned), and an empty unsupported list keeps
+Android's plain toast with `[5]`. exteraBackup suite green (36). `tsc
+--noEmit` clean; oxlint clean on the four touched files. Runbook 6.3
+appended. Checklist count unchanged (74/296) — compatibility surface, no
+feature entry.

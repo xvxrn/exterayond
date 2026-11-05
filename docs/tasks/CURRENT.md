@@ -190,7 +190,10 @@ No code in 078. Checklist count unchanged (74/296).
 Remaining player candidates: PLAYER-07 (cover extend — visual), PLAYER-13
 (block order — would reuse the FOLD-10/12 editor pattern over the web
 popup's progress/transport blocks, whose actions block does not exist).
-Plugins are deferred until the user explicitly asks to resume them.
+Packet 080 (2026-11-05) recorded GEN-08..GEN-11 as class 3 (web file
+engine has no speed levels or min-chunk knob; downloads are browser-owned,
+so no save-path/subfolder surface exists). Plugins are deferred until the
+user explicitly asks to resume them.
 Phone-only hardware features are not desktop tasks.
 
 ## Operating constraints

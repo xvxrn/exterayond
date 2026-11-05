@@ -181,7 +181,9 @@ describe('exterayond settings store', () => {
       sendReadStoriesPacketsLocked: false,
       sendOnlinePacketsLocked: false,
       sendUploadProgressLocked: false,
-      sendOfflinePacketAfterOnlineLocked: false
+      sendOfflinePacketAfterOnlineLocked: false,
+      markReadAfterSend: true,
+      translatorMode: 0
     });
     expect(OE_AVATAR_CORNERS_MAX).toBe(28);
     expect(OE_SECTION_RADIUS_STOCK).toBe(20);
@@ -528,6 +530,17 @@ describe('exterayond settings store', () => {
     expect(clampExterayondSetting('showSeconds', 'yes' as any)).toBe(false);
     expect(clampExterayondSetting('HidePhone', 'yes' as any)).toBe(true);
     expect(clampExterayondSetting('OEChatsRemoveMessageTail', 'yes' as any)).toBe(OE_DEFAULTS.OEChatsRemoveMessageTail);
+  });
+
+  test('the translator mode stays within Android\'s 0..2 (the store\'s shared numeric clamp)', async() => {
+    const {clampExterayondSetting} = await loadStore();
+    expect(clampExterayondSetting('translatorMode', 0)).toBe(0);
+    expect(clampExterayondSetting('translatorMode', 1)).toBe(1);
+    expect(clampExterayondSetting('translatorMode', 2)).toBe(2);
+    // * the store's generic numeric clamp saturates (every slider shares it);
+    // * Android's load-time fallback-to-off lives in clampTranslatorMode
+    expect(clampExterayondSetting('translatorMode', 3)).toBe(2);
+    expect(clampExterayondSetting('translatorMode', -1)).toBe(0);
   });
 
   test('reset restores defaults and clears only the exterayond preferences record', async() => {

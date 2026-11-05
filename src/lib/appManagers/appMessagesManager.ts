@@ -101,8 +101,8 @@ import type {ConfirmedPaymentResult} from '@components/chat/paidMessagesIntercep
 import RepayRequestHandler, {RepayRequest} from '@appManagers/utils/repayRequestHandler';
 import getPhotoInput from '@appManagers/utils/photos/getPhotoInput';
 import {increment, MonoforumDialog} from '@lib/storages/monoforumDialogs';
-import {getExterayondGhostFlags, ghostBlocksTyping, ghostSuppressesReadReceipts, setExterayondGhostFlags as storeGhostFlags} from '@lib/exterayondGhost';
-import type {ExterayondGhostFlags} from '@lib/exterayondGhost';
+import {getExterayondGhostFlags, ghostBlocksTyping, ghostOfflineAfterSendApplies, ghostReadAfterSendApplies, ghostSuppressesReadReceipts, GHOST_OFFLINE_AFTER_SEND_DELAY, setExterayondGhostFlags as storeGhostFlags} from '@lib/exterayondGhost';
+import type {ExterayondGhostFlags, ExterayondGhostSendMethod} from '@lib/exterayondGhost';
 import formatStarsAmount from '@appManagers/utils/payments/formatStarsAmount';
 import {makeMessageMediaInputForSuggestedPost} from '@appManagers/utils/messages/makeMessageMediaInput';
 import createObservedState, {wrapObject} from '@helpers/createObservedState';
@@ -2568,7 +2568,7 @@ export class AppMessagesManager extends AppManager {
       invert_media: richMessage ? undefined : options.invertMedia,
       ...(inputMediaWebPage ? {media: inputMediaWebPage} : {})
     });
-    return this.invokeWithRichMessageReferenceRetry(inputRichMessage, invoke).then((updates) => {
+    return this.exteraGhostSendHook('messages.editMessage', peerId, this.invokeWithRichMessageReferenceRetry(inputRichMessage, invoke)).then((updates) => {
       this.invalidateRichMessage(peerId, mid);
       this.apiUpdatesManager.processUpdateMessage(updates);
     }, this.onEditMessageError);
@@ -3015,7 +3015,7 @@ export class AppMessagesManager extends AppManager {
     const sendEntities = this.getInputEntities(entities);
 
     const schedule_date = scheduleDate || (message.pFlags.is_scheduled ? message.date : undefined);
-    return this.apiManager.invokeApi('messages.editMessage', {
+    return this.exteraGhostSendHook('messages.editMessage', message.peerId, this.apiManager.invokeApi('messages.editMessage', {
       peer: this.appPeersManager.getInputPeerById(message.peerId),
       id: message.id,
       message: message.message,
@@ -3023,7 +3023,7 @@ export class AppMessagesManager extends AppManager {
       media: inputMedia,
       schedule_date,
       invert_media: invertMedia
-    }).then((updates) => {
+    })).then((updates) => {
       this.apiUpdatesManager.processUpdateMessage(updates);
     }, (error: ApiError) => {
       this.log.error('editMessage error:', error);
@@ -3272,7 +3272,7 @@ export class AppMessagesManager extends AppManager {
       const replyTo = options.replyTo;
       let apiPromise: any;
       if(options.viaBotId) {
-        apiPromise = this.apiManager.invokeApiAfter('messages.sendInlineBotResult', {
+        apiPromise = this.exteraGhostSendHook('messages.sendInlineBotResult', peerId, this.apiManager.invokeApiAfter('messages.sendInlineBotResult', {
           peer: inputPeer,
           random_id: message.random_id,
           reply_to: replyTo,
@@ -3281,7 +3281,7 @@ export class AppMessagesManager extends AppManager {
           clear_draft: options.clearDraft,
           send_as: sendAs,
           allow_paid_stars: paidStars
-        }, sentRequestOptions);
+        }, sentRequestOptions));
       } else {
         let media: InputMedia | undefined;
         if(options.suggestedPost?.changeMid) {
@@ -3322,7 +3322,11 @@ export class AppMessagesManager extends AppManager {
           mergedOptions,
           sentRequestOptions
         );
-        apiPromise = this.invokeWithRichMessageReferenceRetry(inputRichMessage, invoke);
+        apiPromise = this.exteraGhostSendHook(
+          richMessage || (!options.webPage && !media) ? 'messages.sendMessage' : 'messages.sendMedia',
+          peerId,
+          this.invokeWithRichMessageReferenceRetry(inputRichMessage, invoke)
+        );
       }
 
       this.pendingAfterMsgs[peerId] = sentRequestOptions;
@@ -3783,7 +3787,7 @@ export class AppMessagesManager extends AppManager {
           });
         }
 
-        return this.apiManager.invokeApi('messages.sendMedia', {
+        return this.exteraGhostSendHook('messages.sendMedia', peerId, this.apiManager.invokeApi('messages.sendMedia', {
           background: options.background,
           peer: this.appPeersManager.getInputPeerById(peerId),
           media: inputMedia,
@@ -3801,7 +3805,7 @@ export class AppMessagesManager extends AppManager {
           effect: options.effect,
           allow_paid_stars: paidStars,
           suggested_post: message.suggested_post
-        }).then((updates) => {
+        })).then((updates) => {
           this.apiUpdatesManager.processUpdateMessage(updates)
           this.apiUpdatesManager.processPaidMessageUpdate({
             paidStars,
@@ -4336,7 +4340,7 @@ export class AppMessagesManager extends AppManager {
             });
           }
 
-          return this.apiManager.invokeApi(options.stars ? 'messages.sendMedia' : 'messages.sendMultiMedia', {
+          return this.exteraGhostSendHook(options.stars ? 'messages.sendMedia' : 'messages.sendMultiMedia', peerId, this.apiManager.invokeApi(options.stars ? 'messages.sendMedia' : 'messages.sendMultiMedia', {
             peer: inputPeer,
             reply_to: options.replyTo,
             schedule_date: options.scheduleDate,
@@ -4356,7 +4360,7 @@ export class AppMessagesManager extends AppManager {
             } : {
               multi_media: multiMedia
             })
-          }).then((updates) => {
+          })).then((updates) => {
             this.apiUpdatesManager.processUpdateMessage(updates);
             this.apiUpdatesManager.processPaidMessageUpdate({
               paidStars,
@@ -4703,7 +4707,7 @@ export class AppMessagesManager extends AppManager {
       const sendAs = options.sendAsPeerId ? this.appPeersManager.getInputPeerById(options.sendAsPeerId) : undefined;
       let apiPromise: Promise<any>;
       if(options.viaBotId) {
-        apiPromise = this.apiManager.invokeApiAfter('messages.sendInlineBotResult', {
+        apiPromise = this.exteraGhostSendHook('messages.sendInlineBotResult', peerId, this.apiManager.invokeApiAfter('messages.sendInlineBotResult', {
           peer: this.appPeersManager.getInputPeerById(peerId),
           random_id: message.random_id,
           reply_to: options.replyTo,
@@ -4714,9 +4718,9 @@ export class AppMessagesManager extends AppManager {
           silent: options.silent,
           send_as: sendAs,
           allow_paid_stars: paidStars
-        }, sentRequestOptions);
+        }, sentRequestOptions));
       } else {
-        apiPromise = this.apiManager.invokeApiAfter('messages.sendMedia', {
+        apiPromise = this.exteraGhostSendHook('messages.sendMedia', peerId, this.apiManager.invokeApiAfter('messages.sendMedia', {
           peer: this.appPeersManager.getInputPeerById(peerId),
           media: inputMedia as InputMedia,
           random_id: message.random_id,
@@ -4730,7 +4734,7 @@ export class AppMessagesManager extends AppManager {
           send_as: sendAs,
           update_stickersets_order: options.updateStickersetOrder,
           allow_paid_stars: paidStars
-        }, sentRequestOptions);
+        }, sentRequestOptions));
       }
 
       this.pendingAfterMsgs[peerId] = sentRequestOptions;
@@ -6218,7 +6222,7 @@ export class AppMessagesManager extends AppManager {
       getServerMessageId(mid)
     ));
 
-    const send = () => this.apiManager.invokeApiAfter('messages.forwardMessages', {
+    const send = () => this.exteraGhostSendHook('messages.forwardMessages', peerId, this.apiManager.invokeApiAfter('messages.forwardMessages', {
       from_peer: this.appPeersManager.getInputPeerById(fromPeerId),
       from_ephemeral: options.fromEphemeral || undefined,
       id: forwardIds,
@@ -6238,7 +6242,7 @@ export class AppMessagesManager extends AppManager {
         replyToMonoforumPeerId: options.replyToMonoforumPeerId,
         replyToMsgId: this.appPeersManager.isBotforum(peerId) ? options.threadId : undefined
       })
-    }, sentRequestOptions).then((updates) => {
+    }, sentRequestOptions)).then((updates) => {
       this.log('forwardMessages updates:', updates);
       this.apiUpdatesManager.processUpdateMessage(updates);
       this.apiUpdatesManager.processPaidMessageUpdate({
@@ -6813,6 +6817,73 @@ export class AppMessagesManager extends AppManager {
    */
   public setExterayondGhostFlags(flags: ExterayondGhostFlags) {
     storeGhostFlags(flags);
+  }
+
+  /**
+   * Ghost Mode's send-pipeline hook (packet 084): the web's "message went
+   * out" point. Android hangs GHOST-07/GHOST-06 off `AyuGhostUtils
+   * .interceptRequest`'s send branch (`handleReadAfterSend` /
+   * `handleOfflineAfterSend`); the web's send path is spread across the send
+   * invokes of this manager, so the hook is the documented extension point
+   * and every send (and, for GHOST-06, edit) invoke site passes its promise
+   * through it. The request-kind tables and both decisions live in
+   * `@lib/exterayondGhost`; with the stock flags the hook is a pass-through.
+   */
+  private exteraGhostSendHook<T>(method: ExterayondGhostSendMethod, peerId: PeerId, promise: Promise<T>): Promise<T> {
+    const flags = getExterayondGhostFlags();
+
+    // * GHOST-07 fires when the request goes out (Android intercepts the
+    // * outgoing request, it does not wait for the response)
+    if(ghostReadAfterSendApplies(method, flags)) {
+      this.exteraGhostReadAfterSend(peerId);
+    }
+
+    if(ghostOfflineAfterSendApplies(method, flags)) {
+      // * GHOST-06: Android wraps the completion callback — error or not —
+      // * and schedules the offline packet `OFFLINE_DELAY_MS` later
+      return promise.finally(() => {
+        setTimeout(() => {
+          void this.appUsersManager.updateMyOnlineStatus(true);
+        }, GHOST_OFFLINE_AFTER_SEND_DELAY);
+      });
+    }
+
+    return promise;
+  }
+
+  /**
+   * GHOST-07's read-after-send (`AyuGhostUtils.handleReadAfterSend` →
+   * `markReadOnServer(maxId, peer, internal = true)`): the dialog is marked
+   * read on the server up to its current max message id. The request is sent
+   * directly — the normal `readHistory` is exactly what the GHOST-02
+   * suppression skips, while Android's `AyuState.setAllowReadPacket(true, 1)`
+   * exists to let this one through. Only the server marking happens (with
+   * the messages-layer pts, as Android's `processNewDifferenceParams` does);
+   * the local read state needs nothing from it.
+   */
+  private exteraGhostReadAfterSend(peerId: PeerId) {
+    const maxId = this.getHistoryStorage(peerId).maxId;
+    if(!maxId) {
+      return;
+    }
+
+    if(this.appPeersManager.isChannel(peerId)) {
+      this.apiManager.invokeApi('channels.readHistory', {
+        channel: this.appChatsManager.getChannelInput(peerId.toChatId()),
+        max_id: getServerMessageId(maxId)
+      }).catch(noop);
+    } else {
+      this.apiManager.invokeApi('messages.readHistory', {
+        peer: this.appPeersManager.getInputPeerById(peerId),
+        max_id: getServerMessageId(maxId)
+      }).then((affectedMessages) => {
+        this.apiUpdatesManager.processLocalUpdate({
+          _: 'updatePts',
+          pts: affectedMessages.pts,
+          pts_count: affectedMessages.pts_count
+        });
+      }).catch(noop);
+    }
   }
 
   public cantForwardDeleteMids(storageKey: MessagesStorageKey, mids: number[]) {
@@ -13038,10 +13109,10 @@ export class AppMessagesManager extends AppManager {
   }
 
   public sendScheduledMessages(peerId: PeerId, mids: number[]) {
-    return this.apiManager.invokeApi('messages.sendScheduledMessages', {
+    return this.exteraGhostSendHook('messages.sendScheduledMessages', peerId, this.apiManager.invokeApi('messages.sendScheduledMessages', {
       peer: this.appPeersManager.getInputPeerById(peerId),
       id: mids.map((mid) => getServerMessageId(mid))
-    }).then((updates) => {
+    })).then((updates) => {
       this.apiUpdatesManager.processUpdateMessage(updates);
     });
   }

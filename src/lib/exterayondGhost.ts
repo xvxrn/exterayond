@@ -3,11 +3,12 @@
  * exteraless @8b7ec40: the ghost block of `NekoConfig.java` (the five
  * essentials, their locks, `isGhostModeActive`/`setGhostMode`) and
  * `AyuGhostUtils.interceptRequest` (which request kinds each flag withholds
- * or rewrites). Client-side suppression only: the client withholds or
- * rewrites its own outgoing read-receipt / typing / status / story packets,
- * exactly as the Android client does at the same call level — nothing here
- * claims to unsend a packet or to change what the server learned before the
- * mode was on.
+ * or rewrites), plus the send-pipeline consumers of that same interceptor
+ * (`handleReadAfterSend` / `handleOfflineAfterSend` — GHOST-07/GHOST-06).
+ * Client-side suppression only: the client withholds or rewrites its own
+ * outgoing read-receipt / typing / status / story packets, exactly as the
+ * Android client does at the same call level — nothing here claims to unsend
+ * a packet or to change what the server learned before the mode was on.
  *
  * The module is worker-safe (no DOM, no Solid): the gating managers run in
  * the shared worker, and the tab-side settings store pushes the flags through
@@ -34,11 +35,19 @@ export type ExterayondGhostFlags = {
   sendUploadProgress: boolean,
   /**
    * Android `NekoConfig.sendOfflinePacketAfterOnline` (default false) —
-   * GHOST-06: after a message-send request completes, go offline again. Its
-   * per-send hook waits on the web send pipeline; the flag already takes part
-   * in the master-toggle state like on Android.
+   * GHOST-06: after a message-send request completes, go offline again
+   * (the send-pipeline hook, packet 084).
    */
-  sendOfflinePacketAfterOnline: boolean
+  sendOfflinePacketAfterOnline: boolean,
+  /**
+   * Android `NekoConfig.markReadAfterSend` (default true) — GHOST-07: when a
+   * message-send request goes out while read receipts are suppressed, mark
+   * the dialog read on the server (the send-pipeline hook, packet 084). Not
+   * a master-toggle essential — Android keeps it a standalone config outside
+   * `ghostToggleItems`; it rides the worker push because the send hook reads
+   * it worker-side.
+   */
+  markReadAfterSend: boolean
 };
 
 /** Android `NekoConfig` ghost-block defaults: every packet sends (stock behavior). */
@@ -47,7 +56,8 @@ export const GHOST_FLAG_DEFAULTS: ExterayondGhostFlags = {
   sendReadStoriesPackets: true,
   sendOnlinePackets: true,
   sendUploadProgress: true,
-  sendOfflinePacketAfterOnline: false
+  sendOfflinePacketAfterOnline: false,
+  markReadAfterSend: true
 };
 
 /** The master-toggle keys, `NekoConfig.ghostToggleItems`' order. */
@@ -146,6 +156,58 @@ export const ghostStatusToAnnounce = (offline: boolean, flags: ExterayondGhostFl
  */
 export const ghostBlocksTyping = (flags: ExterayondGhostFlags): boolean =>
   !flags.sendUploadProgress;
+
+/**
+ * The web request kinds of Android `AyuGhostUtils.isMessageSendRequest`
+ * (GHOST-07's consumers) — the send invokes of `appMessagesManager`. The
+ * secret-chat sends of `isOnlineRequest` have no web counterpart (Web K
+ * implements no secret chats); `messages.editMessage` is an online request
+ * for GHOST-06 only, exactly like Android's tables.
+ */
+export type ExterayondGhostSendMethod =
+  | 'messages.sendMessage'
+  | 'messages.sendMedia'
+  | 'messages.sendMultiMedia'
+  | 'messages.forwardMessages'
+  | 'messages.sendInlineBotResult'
+  | 'messages.sendScheduledMessages'
+  | 'messages.editMessage';
+
+/** Android `isMessageSendRequest` — GHOST-07's read-after-send kinds. */
+const GHOST_MESSAGE_SEND_METHODS: readonly ExterayondGhostSendMethod[] = [
+  'messages.sendMessage',
+  'messages.sendMedia',
+  'messages.sendMultiMedia',
+  'messages.forwardMessages',
+  'messages.sendInlineBotResult',
+  'messages.sendScheduledMessages'
+];
+
+/** Android `isOnlineRequest` minus the secret-chat sends — GHOST-06's kinds. */
+const GHOST_ONLINE_METHODS: readonly ExterayondGhostSendMethod[] = [
+  ...GHOST_MESSAGE_SEND_METHODS,
+  'messages.editMessage'
+];
+
+/**
+ * GHOST-06: `AyuGhostUtils.handleOfflineAfterSend` — the request is a
+ * send/edit whose completion is followed (after
+ * `GHOST_OFFLINE_AFTER_SEND_DELAY`) by an offline status packet.
+ */
+export const ghostOfflineAfterSendApplies = (method: ExterayondGhostSendMethod, flags: ExterayondGhostFlags): boolean =>
+  flags.sendOfflinePacketAfterOnline && GHOST_ONLINE_METHODS.includes(method);
+
+/**
+ * GHOST-07: `AyuGhostUtils.handleReadAfterSend` — with read receipts
+ * suppressed, a message-send request marks the dialog read on the server
+ * right away (the bypass Android gets from the one-shot
+ * `AyuState.setAllowReadPacket(true, 1)`).
+ */
+export const ghostReadAfterSendApplies = (method: ExterayondGhostSendMethod, flags: ExterayondGhostFlags): boolean =>
+  flags.markReadAfterSend && !flags.sendReadMessagePackets && GHOST_MESSAGE_SEND_METHODS.includes(method);
+
+/** Android `AyuGhostUtils.OFFLINE_DELAY_MS`. */
+export const GHOST_OFFLINE_AFTER_SEND_DELAY = 1000;
 
 /**
  * The worker-side state. The tab-side store is the single writer (through

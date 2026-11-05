@@ -13,16 +13,20 @@ import {
   applyGhostMode,
   ghostBlocksTyping,
   ghostModeTarget,
+  ghostOfflineAfterSendApplies,
+  ghostReadAfterSendApplies,
   ghostStatusToAnnounce,
   ghostSuppressesReadReceipts,
   ghostSuppressesStoryReads,
   GHOST_ESSENTIAL_KEYS,
   GHOST_FLAG_DEFAULTS,
+  GHOST_OFFLINE_AFTER_SEND_DELAY,
   isFlagInGhostState,
   isGhostModeActive,
   setExterayondGhostFlags,
   getExterayondGhostFlags,
-  type ExterayondGhostFlags
+  type ExterayondGhostFlags,
+  type ExterayondGhostSendMethod
 } from '@lib/exterayondGhost';
 
 const localStorageStub = vi.hoisted(() => {
@@ -59,14 +63,18 @@ const loadFresh = async() => {
 };
 
 describe('the Ghost Mode decisions (NekoConfig ghost block)', () => {
-  it('defaults are stock: every packet sends', () => {
+  it('defaults are stock: every packet sends (markReadAfterSend standalone-defaults on like Android)', () => {
     expect(GHOST_FLAG_DEFAULTS).toEqual({
       sendReadMessagePackets: true,
       sendReadStoriesPackets: true,
       sendOnlinePackets: true,
       sendUploadProgress: true,
-      sendOfflinePacketAfterOnline: false
+      sendOfflinePacketAfterOnline: false,
+      markReadAfterSend: true
     });
+    // * the master toggle's item list stays the five essentials — GHOST-07 is
+    // * a standalone config outside ghostToggleItems, like Android's
+    expect(GHOST_ESSENTIAL_KEYS).not.toContain('markReadAfterSend');
   });
 
   it('the ghost state of each flag follows Android\'s (key == offlineAfterOnline) == value', () => {
@@ -82,7 +90,8 @@ describe('the Ghost Mode decisions (NekoConfig ghost block)', () => {
       sendReadStoriesPackets: false,
       sendOnlinePackets: false,
       sendUploadProgress: false,
-      sendOfflinePacketAfterOnline: true
+      sendOfflinePacketAfterOnline: true,
+      markReadAfterSend: true
     };
     expect(isGhostModeActive(ghost)).toBe(true);
 
@@ -122,7 +131,8 @@ describe('the Ghost Mode decisions (NekoConfig ghost block)', () => {
       sendReadStoriesPackets: false,
       sendOnlinePackets: false,
       sendUploadProgress: false,
-      sendOfflinePacketAfterOnline: true
+      sendOfflinePacketAfterOnline: true,
+      markReadAfterSend: true
     });
     expect(applyGhostMode(applyGhostMode(stock, {}, true), {}, false)).toEqual(stock);
 
@@ -139,14 +149,16 @@ describe('the Ghost Mode decisions (NekoConfig ghost block)', () => {
       sendReadStoriesPackets: false,
       sendOnlinePackets: false,
       sendUploadProgress: false,
-      sendOfflinePacketAfterOnline: true
+      sendOfflinePacketAfterOnline: true,
+      markReadAfterSend: true
     };
     expect(applyGhostMode(locked, {sendOfflinePacketAfterOnline: true}, false)).toEqual({
       sendReadMessagePackets: true,
       sendReadStoriesPackets: true,
       sendOnlinePackets: true,
       sendUploadProgress: true,
-      sendOfflinePacketAfterOnline: true
+      sendOfflinePacketAfterOnline: true,
+      markReadAfterSend: true
     });
   });
 
@@ -168,6 +180,59 @@ describe('the Ghost Mode decisions (NekoConfig ghost block)', () => {
     const noOnline = {...flags, sendOnlinePackets: false};
     expect(ghostStatusToAnnounce(false, noOnline)).toBe(true);
     expect(ghostStatusToAnnounce(true, noOnline)).toBe(true);
+  });
+
+  it('the offline-after-send hook applies to every online request (GHOST-06, handleOfflineAfterSend)', () => {
+    const flags: ExterayondGhostFlags = {...GHOST_FLAG_DEFAULTS, sendOfflinePacketAfterOnline: true};
+    // * Android's isOnlineRequest: every send kind plus the edit
+    const online: ExterayondGhostSendMethod[] = [
+      'messages.sendMessage',
+      'messages.sendMedia',
+      'messages.sendMultiMedia',
+      'messages.forwardMessages',
+      'messages.sendInlineBotResult',
+      'messages.sendScheduledMessages',
+      'messages.editMessage'
+    ];
+    for(const method of online) {
+      expect(ghostOfflineAfterSendApplies(method, flags), method).toBe(true);
+    }
+
+    // * the flag off is stock
+    const stock = {...GHOST_FLAG_DEFAULTS};
+    for(const method of online) {
+      expect(ghostOfflineAfterSendApplies(method, stock), method).toBe(false);
+    }
+  });
+
+  it('the read-after-send hook needs the suppression and a message-send request (GHOST-07, handleReadAfterSend)', () => {
+    // * Android's condition: markReadAfterSend && !sendReadMessagePackets
+    const flags: ExterayondGhostFlags = {...GHOST_FLAG_DEFAULTS, sendReadMessagePackets: false};
+    const sends: ExterayondGhostSendMethod[] = [
+      'messages.sendMessage',
+      'messages.sendMedia',
+      'messages.sendMultiMedia',
+      'messages.forwardMessages',
+      'messages.sendInlineBotResult',
+      'messages.sendScheduledMessages'
+    ];
+    for(const method of sends) {
+      expect(ghostReadAfterSendApplies(method, flags), method).toBe(true);
+    }
+
+    // * an edit is an online request for GHOST-06 only — isMessageSendRequest
+    // * excludes it, so no read-after-send
+    expect(ghostReadAfterSendApplies('messages.editMessage', flags)).toBe(false);
+
+    // * the read receipts still on (the stock default) suppresses nothing,
+    // * so the hook must not double-mark reads
+    expect(ghostReadAfterSendApplies('messages.sendMessage', GHOST_FLAG_DEFAULTS)).toBe(false);
+
+    // * markReadAfterSend off (Android default true) disables the hook alone
+    expect(ghostReadAfterSendApplies('messages.sendMessage', {
+      ...flags,
+      markReadAfterSend: false
+    })).toBe(false);
   });
 
   it('the worker-side state answers what the last push set', () => {
@@ -213,8 +278,36 @@ describe('the store pushes the flags into the worker', () => {
       sendReadStoriesPackets: true,
       sendOnlinePackets: false,
       sendUploadProgress: true,
-      sendOfflinePacketAfterOnline: false
+      sendOfflinePacketAfterOnline: false,
+      markReadAfterSend: true
     });
+  });
+
+  it('GHOST-07\'s flag rides the push and the master toggle never moves it (packet 084)', async() => {
+    const {store, rootScope} = await loadFresh();
+    const payloads: ExterayondGhostFlags[] = [];
+    (rootScope as any).managers = {
+      appMessagesManager: {
+        setExterayondGhostFlags: (flags: ExterayondGhostFlags) => payloads.push(flags),
+        setSortByUnread: vi.fn()
+      },
+      appUsersManager: {updateMyOnlineStatus: vi.fn()}
+    };
+
+    // * the standalone default pushes with the essentials
+    store.setExterayondSetting('sendReadMessagePackets', false as never);
+    expect(payloads[payloads.length - 1].markReadAfterSend).toBe(true);
+
+    // * toggling the flag itself pushes (the worker's send hook reads it)...
+    store.setExterayondSetting('markReadAfterSend', false as never);
+    expect(payloads[payloads.length - 1]).toEqual({...GHOST_FLAG_DEFAULTS, sendReadMessagePackets: false, markReadAfterSend: false});
+
+    // * ...while the master toggle leaves it exactly where the user set it
+    store.setExterayondGhostMode(true);
+    expect(store.exterayondSettings.markReadAfterSend).toBe(false);
+    expect(payloads[payloads.length - 1].markReadAfterSend).toBe(false);
+    expect(payloads[payloads.length - 1].sendReadMessagePackets).toBe(false);
+    expect(store.isExterayondGhostModeActive()).toBe(true);
   });
 
   it('a lock change stays tab-side (the worker never sees the locks)', async() => {
@@ -392,9 +485,51 @@ describe('the manager gates (source contracts)', () => {
   });
 
   it('the store pushes on flag changes and on the session events', () => {
-    expect(storeSource).toContain('(GHOST_FLAG_KEYS as readonly ExterayondSettingsKey[]).includes(key) && previous !== clamped');
+    expect(storeSource).toContain('(GHOST_WORKER_KEYS as readonly ExterayondSettingsKey[]).includes(key) && previous !== clamped');
     expect(storeSource).toContain(`hotListen(import.meta.hot, rootScope, 'user_auth', pushWorkerState)`);
     expect(storeSource).toContain(`hotListen(import.meta.hot, rootScope, 'account_switched', pushWorkerState)`);
+  });
+
+  it('every send and edit invoke passes through the send hook (packet 084, the documented call sites)', () => {
+    // * the hook is the web's "message went out" point: one call per send
+    // * invoke site (sendText's two branches, sendFile, sendGrouped,
+    // * sendOther's two branches, forwardMessages, sendScheduledMessages,
+    // * and both editMessage invokes)
+    const calls = messagesSource.match(/(?:this\.)?exteraGhostSendHook\(/g) ?? [];
+    expect(calls.length).toBe(10);
+
+    // * each Android request kind is covered by a literal at its site — the
+    // * ternary sites (sendText's text/media, sendGrouped's media/album)
+    // * name theirs inside the hook call, so a bounded window over the
+    // * whitespace-stripped source finds every kind right after a hook open
+    const flat = messagesSource.replace(/\s+/g, '');
+    for(const method of [
+      'messages.sendMessage',
+      'messages.sendMedia',
+      'messages.sendMultiMedia',
+      'messages.forwardMessages',
+      'messages.sendInlineBotResult',
+      'messages.sendScheduledMessages',
+      'messages.editMessage'
+    ]) {
+      expect(new RegExp(`exteraGhostSendHook\\(.{0,120}?${method}'`, 's').test(flat), method).toBe(true);
+    }
+  });
+
+  it('the hook reads the worker flags live and carries both consumers (packet 084)', () => {
+    expect(messagesSource).toContain('const flags = getExterayondGhostFlags();');
+    expect(messagesSource).toContain('if(ghostReadAfterSendApplies(method, flags)) {');
+    expect(messagesSource).toContain('if(ghostOfflineAfterSendApplies(method, flags)) {');
+    expect(messagesSource).toContain('GHOST_OFFLINE_AFTER_SEND_DELAY);');
+    expect(messagesSource).toContain('this.appUsersManager.updateMyOnlineStatus(true)');
+  });
+
+  it('the read-after-send bypasses the GHOST-02 gate with a direct invoke (packet 084)', () => {
+    // * Android's markReadOnServer builds the read request outside the
+    // * interceptor's read branch — the direct invoke here does the same
+    expect(messagesSource).toContain('private exteraGhostReadAfterSend(peerId: PeerId)');
+    expect(messagesSource).toContain(`this.apiManager.invokeApi('messages.readHistory', {`);
+    expect(messagesSource).toContain(`this.apiManager.invokeApi('channels.readHistory', {`);
   });
 
   it('the section heading carries Android\'s GhostEssentialsHeader wording (packet 083)', () => {

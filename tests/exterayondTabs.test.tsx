@@ -4,6 +4,7 @@ import {JSX} from 'solid-js';
 import Exteraless from '@components/sidebarLeft/tabs/exterayondTab';
 import ExterayondAppearance from '@components/sidebarLeft/tabs/exterayondAppearanceTab';
 import ExterayondChats from '@components/sidebarLeft/tabs/exterayondChatsTab';
+import ExterayondGeneral from '@components/sidebarLeft/tabs/exterayondGeneralTab';
 import ExterayondOther from '@components/sidebarLeft/tabs/exterayondOtherTab';
 import {appSettings, setAppSettingsSilent} from '@stores/appSettings';
 import {SETTINGS_INIT} from '@config/state';
@@ -496,7 +497,40 @@ describe('the exterayond reset action', () => {
   });
 });
 
-describe('the Ghost Mode section of the Other tab (packets 081–082)', () => {
+describe('the Translation section of the General tab (packet 085, TRANS-05)', () => {
+  let dispose: () => void;
+
+  beforeEach(() => {
+    dispose = mount(() => <ExterayondGeneral />);
+  });
+
+  afterEach(() => {
+    dispose();
+    resetExterayondSettings();
+    document.body.replaceChildren();
+  });
+
+  it('renders the translator mode selector with Android\'s bounds and stock value', () => {
+    const section = document.querySelector<HTMLElement>('.section[data-name="Exterayond.Translate"]');
+    expect(section).toBeTruthy();
+    const selector = section.querySelector<HTMLElement>('.range-setting-selector');
+    expect(selector.dataset.name).toBe('Exterayond.Translate.Mode');
+    expect(selector.dataset.min).toBe('0');
+    expect(selector.dataset.max).toBe('2');
+    // * the stock default is off — the popup's copy stays byte-for-byte stock
+    expect(selector.dataset.value).toBe('0');
+  });
+
+  it('writes the mode through the store', () => {
+    const selector = document.querySelector<HTMLElement>('.section[data-name="Exterayond.Translate"] .range-setting-selector');
+    selector.querySelector<HTMLButtonElement>('.slider-zero').click();
+
+    const [settings] = useExterayondSettings();
+    expect(settings.translatorMode).toBe(0);
+  });
+});
+
+describe('the Ghost Mode section of the Other tab (packets 081–082, 084)', () => {
   let dispose: () => void;
   const originalManagers = rootScope.managers;
 
@@ -521,7 +555,7 @@ describe('the Ghost Mode section of the Other tab (packets 081–082)', () => {
     document.body.replaceChildren();
   });
 
-  it('renders the master toggle and the five essentials in Android\'s order and titles', () => {
+  it('renders the master toggle, the five essentials and GHOST-07 in Android\'s order and titles', () => {
     const titles = ghostRows().map((row) => row.querySelector('.row-title')?.childNodes[0]?.textContent);
     expect(titles).toEqual([
       'Exterayond.Ghost.Title',
@@ -529,7 +563,8 @@ describe('the Ghost Mode section of the Other tab (packets 081–082)', () => {
       'Exterayond.Ghost.NoReadStories',
       'Exterayond.Ghost.NoOnline',
       'Exterayond.Ghost.NoTyping',
-      'Exterayond.Ghost.OfflineAfter'
+      'Exterayond.Ghost.OfflineAfter',
+      'Exterayond.Ghost.ReadOnInteract'
     ]);
     // * Android's "%d/5" counter at the stock defaults
     expect(ghostSubtitle()).toBe('0/5');
@@ -577,5 +612,23 @@ describe('the Ghost Mode section of the Other tab (packets 081–082)', () => {
     // * button is refused while four are held (the master row has none)
     expect(ghostLock(1).disabled).toBe(false);
     expect(ghostLock(5).disabled).toBe(true);
+  });
+
+  it('GHOST-07\'s row shows the plain value and is outside the master toggle (packet 084)', () => {
+    const [settings] = useExterayondSettings();
+
+    // * Android's standalone default is on, and the checkbox shows the value
+    // * itself — no ghost-state inversion like the essentials' rows
+    expect(ghostCheckbox(6).checked).toBe(true);
+    expect(ghostCheckbox(6).disabled).toBe(false);
+
+    ghostCheckbox(6).click();
+    expect(settings.markReadAfterSend).toBe(false);
+
+    // * the master toggle moves only the essentials
+    ghostCheckbox(0).click();
+    expect(settings.markReadAfterSend).toBe(false);
+    expect(settings.sendReadMessagePackets).toBe(false);
+    expect(ghostSubtitle()).toBe('5/5');
   });
 });

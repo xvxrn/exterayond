@@ -170,6 +170,20 @@ const ExterayondOther = () => {
             </GhostEssentialRow>
           );
         })}
+        {/* GHOST-07 — Android's row after the essentials group
+            (GhostModeActivity): the checkbox shows the plain value, no
+            inversion and no lock — it is not a master-toggle essential */}
+        <Row>
+          <Row.CheckboxFieldToggle>
+            <CheckboxFieldTsx
+              toggle
+              checked={exterayondSettings.markReadAfterSend as boolean}
+              onChange={(value) => setExterayondSetting('markReadAfterSend', value)}
+            />
+          </Row.CheckboxFieldToggle>
+          <Row.Title>{i18n('Exterayond.Ghost.ReadOnInteract')}</Row.Title>
+          <Row.Subtitle>{i18n('Exterayond.Ghost.ReadOnInteract.Notice')}</Row.Subtitle>
+        </Row>
       </Section>
       <Section caption="Exterayond.Backup.Info">
         <Row clickable={importBackup}>

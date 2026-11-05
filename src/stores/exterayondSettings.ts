@@ -426,9 +426,9 @@ export const OE_DEFAULTS = {
    * `src/lib/exterayondGhost.ts` for the contract. Android `EtgBackup`
    * exports none of the ghost keys (verified against EtgBackup.java), so no
    * backup alias exists. The locks are master-toggle bookkeeping (GHOST-12);
-   * `markReadAfterSend` (GHOST-07), `silentMessageByDefault` (GHOST-08),
-   * `ghostScheduledSend` (GHOST-09), the drawer item (GHOST-10) and the
-   * status indicator (GHOST-11) wait on their web surfaces and are unstored.
+   * `silentMessageByDefault` (GHOST-08), `ghostScheduledSend` (GHOST-09),
+   * the drawer item (GHOST-10) and the status indicator (GHOST-11) wait on
+   * their web surfaces and are unstored.
    */
   sendReadMessagePackets: true,
   sendReadStoriesPackets: true,
@@ -439,7 +439,25 @@ export const OE_DEFAULTS = {
   sendReadStoriesPacketsLocked: false,
   sendOnlinePacketsLocked: false,
   sendUploadProgressLocked: false,
-  sendOfflinePacketAfterOnlineLocked: false
+  sendOfflinePacketAfterOnlineLocked: false,
+  /**
+   * Android `NekoConfig.markReadAfterSend` (default true) — GHOST-07 (packet
+   * 084): with read receipts suppressed, a message-send marks the dialog
+   * read on the server right away ("Read on Interact"). Not a master-toggle
+   * essential — it rides the ghost-flags push because the worker-side send
+   * hook reads it (`src/lib/exterayondGhost.ts`).
+   */
+  markReadAfterSend: true,
+  /**
+   * Android `NaConfig.translatorMode` ("TranslatorMode", int 0..2, default
+   * 0) — TRANS-05 (packet 085): how a manual translation relates to its
+   * original — 0 replaces, 1/2 keep the original beside it. The decisions
+   * live in `src/lib/exterayondTranslate.ts`; the first wired consumer is
+   * the translate popup's copy (the manual takeaway), the inline-into-message
+   * pipeline is the annotated long tail. Android's `EtgBackup` exports no
+   * translator keys, so no backup alias.
+   */
+  translatorMode: 0
 } as const;
 
 export type ExterayondSettingsKey = keyof typeof OE_DEFAULTS;
@@ -459,6 +477,7 @@ const NUMERIC_RANGES: {[K in NumericKey]: readonly [min: number, max: number]} =
   OEAppearanceAvatarCorners: [0, OE_AVATAR_CORNERS_MAX],
   OEAppearanceSectionRadius: [0, OE_AVATAR_CORNERS_MAX],
   SliderStyle: [0, 2],
+  translatorMode: [0, 2],
   SwitchStyle: [0, 3],
   OEChatsStickerShape: [0, 2],
   OEChatsBottomButton: [0, 2],
@@ -583,6 +602,12 @@ export const GHOST_FLAG_KEYS = [
   'sendOfflinePacketAfterOnline'
 ] as const satisfies readonly ExterayondSettingsKey[];
 
+/**
+ * The store keys pushed into the worker: the five essentials plus GHOST-07's
+ * `markReadAfterSend` — the send-pipeline hook reads it worker-side too.
+ */
+const GHOST_WORKER_KEYS = [...GHOST_FLAG_KEYS, 'markReadAfterSend'] as const satisfies readonly ExterayondSettingsKey[];
+
 /** The store key of an essential's master-toggle lock (GHOST-12). */
 export const GHOST_LOCKED_OF: Record<typeof GHOST_FLAG_KEYS[number], ExterayondSettingsKey> = {
   sendReadMessagePackets: 'sendReadMessagePacketsLocked',
@@ -605,7 +630,8 @@ const pushGhostFlags = () => {
       sendReadStoriesPackets: exterayondSettings.sendReadStoriesPackets as boolean,
       sendOnlinePackets: exterayondSettings.sendOnlinePackets as boolean,
       sendUploadProgress: exterayondSettings.sendUploadProgress as boolean,
-      sendOfflinePacketAfterOnline: exterayondSettings.sendOfflinePacketAfterOnline as boolean
+      sendOfflinePacketAfterOnline: exterayondSettings.sendOfflinePacketAfterOnline as boolean,
+      markReadAfterSend: exterayondSettings.markReadAfterSend as boolean
     });
   } catch(e) {
     // * no managers yet (tests, early import): the next auth event pushes it
@@ -634,6 +660,10 @@ const ghostModeState = () => {
     flags[key] = exterayondSettings[key] as boolean;
     locked[key] = exterayondSettings[GHOST_LOCKED_OF[key]] as boolean;
   }
+
+  // * GHOST-07 rides the state but is no master-toggle input: the toggle
+  // * (Android's setGhostMode) never moves it
+  flags.markReadAfterSend = exterayondSettings.markReadAfterSend as boolean;
 
   return {flags, locked};
 };
@@ -693,7 +723,7 @@ const setExterayondSetting = <K extends ExterayondSettingsKey>(key: K, value: Ex
   if(key === 'SortByUnread' && previous !== clamped) {
     pushSortByUnread();
   }
-  if((GHOST_FLAG_KEYS as readonly ExterayondSettingsKey[]).includes(key) && previous !== clamped) {
+  if((GHOST_WORKER_KEYS as readonly ExterayondSettingsKey[]).includes(key) && previous !== clamped) {
     pushGhostFlags();
   }
 };

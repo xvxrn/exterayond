@@ -3599,3 +3599,102 @@ and the row title; the Mode.Info caption stays out by the deny list); the
 import-graph ratchet unchanged. `tsc --noEmit` clean; oxlint clean on the
 nine touched files. Checklist: TRANS-05 checked, TRANS-02 annotated.
 **Checklist count: 83/296.** Runbook 5.29 appended.
+
+## 086 / bug-hunt over 084b–085 — the send-pipeline hook and the translator mode (2026-11-06)
+
+The focused hunt over the two packets: the Android contract re-read from the
+pinned source (`AyuGhostUtils`'s send branch, `GhostModeActivity`,
+`MessageHelper`, `MessageTrans.kt`, `DialogTrans.kt`, `NaConfig.fixConfig`
+@8b7ec40), then every hook call site, both consumers' semantics, the store
+round-trip, the hub rows and the popup's copy path against the OWNING Web K
+behavior.
+
+**Audited clean (no action):**
+
+- The hook's stock path is a true pass-through: both decisions read the
+  worker-side flags live and with stock defaults return the ORIGINAL promise
+  object (no `.finally`, no added tick), so send ordering is untouched. The
+  ten invoke sites are all wrapped — sendText's two branches, sendFile,
+  sendGrouped, sendOther's two branches, forwardMessages, sendScheduled
+  Messages and both editMessage invokes; the only send-kind invoke outside
+  the hook is `messages.sendBotRequestedPeer`, which Android's
+  `isMessageSendRequest` does not list either. The hook's method literal
+  mirrors each invoke (sendText's ternary matches its own invoke's ternary;
+  forwardMessages passes the destination peer, Android's `to_peer`).
+- GHOST-06: the `.finally` wrapper matches Android's unconditional
+  completion-callback wrap (error or not), `GHOST_OFFLINE_AFTER_SEND_DELAY`
+  is Android's `OFFLINE_DELAY_MS` verbatim (1000), and the packet rides
+  `updateMyOnlineStatus` so the GHOST-04 rewrite and the local self status
+  follow it. No timer is cancellable on Android either (one `postRunnable`
+  per send) — parity, not a leak; the fire-and-forget `void` matches the
+  codebase's own status ping and the store's toggle push (unhandled-rejection
+  exposure identical to the pre-existing callers). The documented per-chain
+  vs per-attempt divergence stands.
+- GHOST-07: `maxId` is read at fire time from the peer's own
+  `historyStorage` (never UI-captured, so the foreign-mid-namespace race the
+  normal path guards against cannot arise); the direct
+  `messages/channels.readHistory` invoke uses the exact constructors of the
+  owning `readHistory` (channel megagroups and broadcasts both take
+  `getChannelInput`, chats/users `getInputPeerById`) and the bypass is real —
+  the GHOST-02 gate lives in `readHistory`'s `skipServerCall`, not in
+  `apiManager`, so the direct invoke cannot hit it. The pts handling is the
+  generic absolute-pts path of `processUpdate` (`updatePts` → hole detection
+  → `curState.pts = pts`), the same code the normal readHistory exercises —
+  no layer corruption is possible; the channel response is ignored like in
+  both codebases.
+- The worker push: `GHOST_WORKER_KEYS` gates the push condition and the
+  payload carries `markReadAfterSend`; the payload is exactly
+  `ExterayondGhostFlags` — every pushed key is read worker-side, and
+  `translatorMode` (no worker consumer) is correctly NOT pushed. The master
+  toggle iterates `GHOST_ESSENTIAL_KEYS` only.
+- The hub rows: "Read on Interact" sits after the essentials with Android's
+  verbatim `MarkReadAfterSend`/`MarkReadAfterSendNotice` strings, plain
+  value, no lock (GhostModeActivity's row order); the "Translate" section
+  uses the RangeSettingSelector idiom of the mini-player rows (reactive
+  `props.value` via the component's own `createEffect`), with Android's
+  verbatim "Off"/"Manual Only"/"On" and the `Translate` header; every new
+  lang key exists and the search-index entries reference existing keys.
+- The popup copy: with `translatorMode` 0 the copy path is byte-identical to
+  the pre-085 statements (diffed against 675b91f — only the guarded block was
+  inserted, and it `return`s before the stock try/catch); with 1/2 the join
+  reads the body's rich-message-aware ORIGINAL (raw message text, not the
+  rendered translation) and the clipboard failure is caught into a toast
+  before the return. The decisions are exact MessageHelper ports (truth
+  tables, separator, the `!in 0..2 → 0` clamp), and `DialogTrans.startTrans`'s
+  `appendOriginal` confirms the mode-1/2 condition.
+- The store: `translatorMode` saturates through the shared numeric clamp
+  [0, 2]; `markReadAfterSend` defaults true standalone (outside
+  `ghostToggleItems`), survives the boolean type clamp, and both keys
+  round-trip through persist/read.
+- Design note, recorded not fixed: Android's send branch also consults
+  `AyuGhostPreferences`' per-dialog read/typing exclusions before firing
+  either consumer. The web has no per-dialog exclusion surface (not in
+  GHOST-01..07's ported scope), so the hook consults only the flags — the
+  divergence is inherent to the port scope, like the missing secret-chat
+  sends.
+
+**Fixed (each a contract test that could not fail when its contract broke):**
+
+- **The mode-write test proved nothing.** The General-tab test clicked the
+  mocked `.slider-zero` while the store already held the stock 0 — a broken
+  `onChange` would still pass. The store is now moved to 2 first, so the
+  zero-click must drag the store back (the round-trip the row promises).
+- **The ten-site contract missed the missed-site direction.** It pinned the
+  hook-call count (10) but a NEW send/edit invoke added without the hook
+  would have passed. The invoke-side is now pinned the same way (10
+  send-kind invoke literals in the flattened source, one per site, ternary
+  sites matching on their first literal) — any new invoke must wrap its
+  promise and bump both pins consciously.
+- **The bypass contract read the wrong span.** Its
+  `messages/channels.readHistory` literals also exist in the normal
+  `readHistory`, so deleting the bypass's own invokes would still pass. The
+  assertions now read the `exteraGhostReadAfterSend` body window (maxId
+  source, both direct invokes, the updatePts apply).
+- **The delay constant was unpinned.** `GHOST_OFFLINE_AFTER_SEND_DELAY` was
+  imported but never asserted; it now pins Android's 1000 verbatim.
+
+Tests: the four affected suites rerun only — `exterayondGhost` (30),
+`exterayondTranslate` (8), `exterayondSettings` (41), `exterayondTabs` (24),
+103 green. `scripts/scss-types` and `tsc --noEmit` clean; oxlint clean on the
+two touched files. No source file changed — fixes are test-contract only, so
+the checklist is untouched (**83/296**) and CURRENT.md's state stands.

@@ -1657,6 +1657,30 @@ only prior check was synthetic.
 - PASS/FAIL:
 
 ---
+### 5.29 TRANS-05 — the translator mode and the popup's keep-original copy (packet 085)
+
+- General tab → the **"Translate"** section → **"Translator mode"** with the
+  three options Off / Manual Only / On (Android's `translatorMode` select,
+  default Off). Off is stock everywhere: the popup's copy takes the
+  translation alone, byte-for-byte the stock behavior.
+- Set **Manual Only** or **On**, then open the translate popup (message
+  context menu → Translate, or a profile bio's Translate) and press the
+  result's copy button: the clipboard carries
+  `original` + `--------` + `translation` (Android's
+  `buildTranslatedDisplayText` join — the same text the `startTrans` alert
+  shows and the inline pipeline renders into the message). Set back to Off:
+  the copy carries the translation only again.
+- The popup's two cards always show both sides regardless of the mode (the
+  sheet analog — Android's `TranslateAlert2` behaves the same); the mode
+  changes only what copying takes away.
+- The row is searchable: "Translator mode" (and the section "Translate")
+  come up in the settings search and open the General tab.
+- RTL: the selector rides the standard row layout and mirrors with the rest
+  of the hub.
+- **[AUTH · content: a message in a foreign language, or a bio]**
+- PASS/FAIL:
+
+---
 
 ## Batch 6 — Settings backup (.extera) round-trip
 
@@ -1842,3 +1866,36 @@ account or device — that part is yours; the steps mark where.
 - PASS/FAIL:
 
 ---
+
+---
+### 7.3 GHOST-06, GHOST-07 — the send-pipeline hook: offline after send, read on interact (packet 084)
+
+- The section gains the sixth row **"Read on Interact"** after the five
+  essentials (Android's `GhostModeActivity` row order), with Android's
+  notice text as its subtitle; the checkbox shows the plain value (on by
+  default, like Android's standalone `markReadAfterSend` default true), it
+  has no lock button and the master toggle never moves it. The row comes up
+  in the settings search.
+- **GHOST-06 "Go Offline Automatically"** (an essential, off by default):
+  with it on, each outgoing message (and edit) switches your status back to
+  offline about a second after the request settles — **[second account]**
+  your status reads offline shortly after you send, even with "Don't Send
+  Online" off; the next natural online ping announces online again (Android
+  behaves the same in this mixed config). With the flag off: no extra
+  status packets, stock behavior.
+- **GHOST-07 "Read on Interact"**: with it on AND "Don't Read Messages" on,
+  sending a message marks the dialog read on the server right away —
+  **[second account]** your reply clears the partner's unread badge / the
+  chat's unread state on the server while everything else stays
+  un-acked (opening other chats, reactions, stories). With "Don't Read
+  Messages" off the row does nothing observable (nothing is suppressed, so
+  nothing needs bypassing) — Android's condition
+  `markReadAfterSend && !sendReadMessagePackets` verbatim. Edits do not
+  trigger the read (Android's `isMessageSendRequest` excludes them).
+- **[second account]** The offline-after-send packet and the
+  read-after-send request are ghost-mode internals: they are not blocked by
+  the suppression itself (Android's one-shot `allowReadPacket` bypass,
+  ported as a direct read request).
+- **[no chat data]** (status/unread observations only)
+- PASS/FAIL:
+

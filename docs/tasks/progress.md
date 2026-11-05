@@ -3426,3 +3426,176 @@ Tests: `tests/exterayondGhost.test.ts` 20 → 24, all green;
 `settingsSearchIndex` (8) green after the tab/lang touches. `tsc --noEmit`
 clean; oxlint clean on the touched files. Checklist count unchanged
 (80/296) — corrections inside already-checked entries.
+
+## 084 / GEN verdict batch 2 — pinned retention, archive gestures, profile music (2026-11-05)
+
+Four more verdict-only entries, no code, the 071/072/078/080 pattern; the
+Android contracts re-read from the pinned source. Ran in parallel with the
+Ghost Mode packets (080b-083) — docs only, no shared source files (the
+ghost agent's uncommitted `exterayondGhost.ts` / `exterayondSettings.ts`
+were left untouched; diffs here touch `docs/` only).
+
+- **GEN-13 — class 3, pins are fully server-driven on the web.**
+  `NekoConfig.unlimitedPinnedDialogs` (bool) keeps local pins above the
+  server's pinned list (`keepLocalPins` — dialogs the server never pinned
+  keep `pinned`/`pinnedNum` instead of being reset, MessagesController.java:
+  17824). On the web, pinned state comes only from server updates —
+  `dialogsStorage.onUpdatePinnedDialogs`/`onUpdateDialogPinned` apply
+  `updatePinnedDialogs` and `pFlags.pinned`; locally only the order of
+  server-pinned dialogs is kept, and foreign entries are repaired away. The
+  web has no local-only pin API, so a local pin overlay would be a parallel
+  pin store, not an override of an existing owner. Key not stored; no
+  EtgBackup alias exists (verified empty).
+- **GEN-15 — class 3, no pull gesture on desktop.** `NekoConfig.openArchiveOnPull`
+  (bool; the row is hidden while HideArchive is on) opens the archive by
+  pulling down at the top of the chat list. The web archive is a folder tab
+  (`sidebarLeft.openArchiveTab`), never a gesture surface. Key not stored;
+  the EtgBackup alias `archiveOnPull` stays recognized-unsupported.
+- **GEN-16 — class 3, no swipe actions in the web chat list.**
+  `NaConfig.DoNotUnarchiveBySwipe` (bool) blocks swipe-to-unarchive in the
+  dialog list. The web chat list has no swipe actions at all
+  (`appDialogsManager` knows no swipe), so there is no gesture to gate. Key
+  not stored; the EtgBackup alias `disableUnarchiveSwipe` stays
+  recognized-unsupported.
+- **GEN-17 — saved music already stock, Last.fm class 3.** `ProfileMusicCard`
+  (AppearanceConfig.profileMusicCard bool; EtgBackup.java:338) shows the
+  profile's saved music plus Last.fm now-playing (`LastFmNowPlaying` scraping,
+  nick `OEGeneralLastFmNick`, `lastfmExplained`). The saved-music half is
+  already rendered by Web K's own `peerProfile.tsx` profile-music block from
+  `saved_music` (appSavedMusicManager) — porting it would duplicate stock UI.
+  The Last.fm half is a third-party service integration with no web primitive,
+  and the toggle would be a hide-toggle over stock web UI (inverted off =
+  stock). Key not stored; alias `profileMusicCard` stays
+  recognized-unsupported; the nick has no EtgBackup alias.
+
+Checklist: all four entries annotated, unchecked — count unchanged (80/296).
+
+## 084b / GHOST-06 + GHOST-07 — the send-pipeline hook and its two consumers (2026-11-05)
+
+The deferred half of packets 081–082. Android hangs both consumers off
+`AyuGhostUtils.interceptRequest`'s send branch (`handleReadAfterSend`,
+`handleOfflineAfterSend` @8b7ec40); the web's "message went out" point is
+distributed across the send invokes of `appMessagesManager`, so the hook is
+the explicit, documented call-site form the checklist asked for:
+
+- **The hook.** `appMessagesManager.exteraGhostSendHook(method, peerId,
+  promise)` — every outgoing send (and, per Android's `isOnlineRequest`,
+  edit) invoke site passes its promise through it; ten call sites
+  (sendText's two branches, sendFile, sendGrouped, sendOther's two branches,
+  forwardMessages, sendScheduledMessages, both editMessage invokes). With
+  stock flags it is a pass-through. The request-kind tables
+  (`isMessageSendRequest` → `GHOST_MESSAGE_SEND_METHODS`, `isOnlineRequest`
+  minus the four secret-chat sends that have no web counterpart) and both
+  decisions live in `@lib/exterayondGhost`; a source-contract test pins the
+  call count and every method literal at a site.
+- **GHOST-06** (`sendOfflinePacketAfterOnline`, already stored): the hook
+  wraps the send promise `.finally` (Android wraps the completion callback —
+  error or not) and sends the offline packet through
+  `appUsersManager.updateMyOnlineStatus(true)` after Android's
+  `OFFLINE_DELAY_MS` (1000) — the local self status follows what the server
+  is told, like GHOST-04's rule. The next natural online ping announces
+  online again in the mixed config (sendOnlinePackets on, offline-after on)
+  — Android behaves the same there.
+- **GHOST-07** (`markReadAfterSend`, now stored with Android's standalone
+  default true — outside `ghostToggleItems`, the master toggle never moves
+  it): the hook fires `exteraGhostReadAfterSend(peerId)` when the request
+  goes out — under Android's exact condition
+  (`markReadAfterSend && !sendReadMessagePackets`, message-send kinds only,
+  edits excluded) the dialog is marked read on the server up to its current
+  `historyStorage.maxId` via a direct `messages/channels.readHistory`
+  invoke. The direct request is the port of Android's
+  `AyuState.setAllowReadPacket(true, 1)` bypass: the normal `readHistory` is
+  precisely what the GHOST-02 gate skips, so the bypass must not pass
+  through it; the messages-layer pts is processed like Android's
+  `processNewDifferenceParams` (the channel response is ignored, as in both
+  codebases).
+- The worker payload (`ExterayondGhostFlags`) gained `markReadAfterSend` —
+  one push, one state module; the push condition now keys off
+  `GHOST_WORKER_KEYS` (the five essentials + GHOST-07). The hub's Ghost
+  section gained the "Read on Interact" row after the essentials with
+  Android's verbatim title and notice (the Notice-shaped subtitle stays out
+  of the search index by the generator's deny list; +1 entry, 555 → 556).
+
+Honest divergences (documented in code): the web hook schedules the offline
+packet once per send chain, not per wire attempt (a FILE_REFERENCE retry
+chain is the site's own attempt management); the read-after-send fires once
+per invoke, not per re-intercepted retry (idempotent either way).
+
+Tests: `tests/exterayondGhost.test.ts` 24 → 30 — the two new decisions
+against the Android tables (the online kinds incl. editMessage; the
+read-after-send condition and its edit exclusion, the stock no-op, the
+standalone-default interplay), the GHOST-07 push ride and the master toggle
+leaving it alone, and three source contracts (the ten call sites with every
+kind literal, the hook's live flag read and both consumers, the direct
+read bypass). `tests/exterayondTabs.test.tsx` 21 → 22 (the sixth row's
+order/value/toggle, the master toggle leaving it); `exterayondSettings`
+defaults row extended. All five related suites green (136); the import-graph
+ratchet unchanged (no new modules). `tsc --noEmit` clean; oxlint clean on
+the eight touched files. Checklist: GHOST-06 + GHOST-07 checked.
+**Checklist count: 82/296.** Runbook 7.3 appended (the observable half
+needs the user's second account).
+
+Remaining ghost rows: GHOST-08 (a composer wiring), GHOST-09 (its exact
+`shouldSendAsGhostScheduled` semantics over this same hook), GHOST-10 (a
+burger-menu item) and GHOST-11 (a topbar title ghost icon) — all small UI
+wirings now that the hook exists.
+
+## 085 / TRANS-05 — the translator mode: the decision core and the popup's keep-original copy (2026-11-05)
+
+The translation subsystem's foundation, per GEN-01's verdict (the web's
+translate popup is the sheet analog; the inline pipeline is TRANS-05's
+territory). Android @8b7ec40: `NaConfig.translatorMode` ("TranslatorMode",
+int 0..2, default 0 — the select "With original text: Off / Manual Only /
+On") decides how a translation lands relative to its original; the
+consumers are `MessageHelper.shouldKeepOriginalForManualTranslation`
+(DialogTrans.kt's `startTrans` — the manual takeaway for arbitrary text),
+`shouldKeepOriginalForDisplay` (MessageObject's translated display) and
+`buildTranslatedDisplayText` with `MessageTrans.kt`'s
+`TRANSLATION_SEPARATOR` (`"\n\n--------\n\n"`).
+
+- `src/lib/exterayondTranslate.ts` — the pure decision module: the three
+  mode constants, the separator, Android's load-time clamp
+  (`!in 0..2 → 0`), and exact ports of the three decisions. No DOM, no
+  managers, no providers.
+- **The first wired consumer** — the translate popup's copy button (the
+  web's single manual-translation takeaway, GEN-01): under modes 1/2
+  (`shouldKeepOriginalForManualTranslation`) the copied text is
+  `buildTranslatedDisplayText(original, translation, true)` — the same join
+  Android's `startTrans` alert shows for manual text translations and the
+  inline pipeline renders into the message. The original side comes from the
+  body's existing rich-message-aware computation, passed down to the Result.
+  Off copies the translation alone — the stock path byte-for-byte (plain
+  text + html, as before). The popup's two cards always show both sides —
+  the sheet analog parity Android itself keeps (the sheet ignores the mode).
+- The store: `translatorMode: 0` with the shared numeric clamp [0, 2]
+  (saturation — the hub slider's generic behavior; Android's fallback-to-off
+  lives in `clampTranslatorMode` for untrusted values). `EtgBackup` exports
+  no translator keys (verified against its alias table) — no `.extera`
+  alias; a test pins the absence.
+- The hub: the General tab gains the **"Translate"** section (Android's
+  path: General → translatorRow → NekoTranslatorSettingsActivity's "Translate"
+  header) with the mode selector (0..2, the RangeSettingSelector idiom of
+  the mini-player rows). Android's select row renders untitled; the web
+  selector needs a label — the documented adaptation, like GHOST-12's lock
+  caption. The section caption states the web behavior the modes drive.
+- **The long tail, annotated not built**: the inline-into-message render
+  (MessageTrans.kt's per-message pipeline — providers, caching, rich
+  messages, polls, summaries), auto-translate (TRANS-02), keep-markdown
+  (TRANS-03), provider selection and keys (TRANS-04/09..16), target and
+  do-not-translate languages (TRANS-06/07/08) all wait on a web
+  message-render primitive for translated text inside the bubble; the
+  checklist's TRANS-02 entry now points at this foundation. TRANS-05 is
+  checked with its scope recorded; the rest stay open.
+
+Tests: new `tests/exterayondTranslate.test.ts` (8) — the mode constants and
+the verbatim separator, the clamp's fallback table, the manual/display
+truth tables against MessageHelper's branches, the join's four cases, and
+three source contracts (the popup copy site with the original feed, the
+store key/range with the no-alias pin, the General tab's section/selector).
+`tests/exterayondSettings.test.ts` gained the default row and the clamp
+test; `tests/exterayondTabs.test.tsx` gained the General-tab describe (2).
+Five suites green (117); the settings-search index 556 → 558 (the section
+and the row title; the Mode.Info caption stays out by the deny list); the
+import-graph ratchet unchanged. `tsc --noEmit` clean; oxlint clean on the
+nine touched files. Checklist: TRANS-05 checked, TRANS-02 annotated.
+**Checklist count: 83/296.** Runbook 5.29 appended.

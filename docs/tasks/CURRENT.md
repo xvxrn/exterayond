@@ -213,6 +213,28 @@ indicator) wait on the send-pipeline hook and two small UI wirings —
 annotated per entry, never faked. Runbook batch 7 / step 7.1 appended; the
 suppression's observable half needs the user's second account.
 
+**Packet 084b (2026-11-05) landed the send-pipeline hook and GHOST-06/07**:
+`appMessagesManager.exteraGhostSendHook` is the documented "message went
+out" point (ten wrapped send/edit invoke sites; stock flags = pass-through),
+GHOST-06 sends the offline packet ~1s after each send settles, and
+GHOST-07's "Read on Interact" row (Android's standalone key, default true)
+marks the dialog read on the server right at send time when read receipts
+are suppressed — the direct-invoke port of Android's `allowReadPacket`
+bypass. Runbook 7.3 appended (second-account checks). Checklist count
+**82/296**. Ghost's rest: GHOST-08 (composer silent-by-default), GHOST-09
+(the exact `shouldSendAsGhostScheduled` semantics), GHOST-10 (drawer item),
+GHOST-11 (topbar indicator) — all small wirings over the existing core.
+
+**Packet 085 (2026-11-05) started the translation subsystem** — TRANS-05's
+foundation: `src/lib/exterayondTranslate.ts` (the exact MessageHelper ports
+of the translator-mode decisions), the `translatorMode` key (0..2, default
+off), the General tab's "Translate" section with the mode selector, and the
+first wired consumer — the translate popup's copy, which under Manual Only/
+On carries `original + separator + translation` like Android's `startTrans`
+takeaway (off = stock copy). The inline-into-message pipeline stays the
+annotated long tail (TRANS-02..14 wait on a web bubble-render primitive).
+Runbook 5.29 appended. Checklist count **83/296**.
+
 Remaining player candidates: PLAYER-07 (cover extend — visual), PLAYER-13
 (block order — would reuse the FOLD-10/12 editor pattern over the web
 popup's progress/transport blocks, whose actions block does not exist).
